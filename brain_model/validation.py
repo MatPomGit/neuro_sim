@@ -113,7 +113,7 @@ def evaluate_run(time, activity, diagnostics, oscillations, scenario, behavior=N
     decision_rt = np.asarray(behavior.get("latency", time))
     reaction_time_mean = float(np.mean(decision_rt[decision_mask])) if np.any(decision_mask) else float(time[-1])
     accuracy_proxy = float(np.mean(confidence[decision_mask])) if np.any(decision_mask) else 0.0
-    false_alarm_proxy = float(np.mean(decision_mask & (threat_signal < np.median(threat_signal)))) if np.any(decision_mask) else 0.0
+    false_alarm_proxy = float(np.mean(threat_signal[decision_mask] < np.median(threat_signal))) if np.any(decision_mask) else 0.0
 
     functional = {
         "threat_sal_gain": sal_gain,
