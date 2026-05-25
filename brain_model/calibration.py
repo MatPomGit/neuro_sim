@@ -4,7 +4,7 @@ import argparse
 import csv
 import itertools
 import json
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
 
