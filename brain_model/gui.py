@@ -18,11 +18,68 @@ from .model import CognitiveBrainModel
 from .params import BrainParams
 from .oscillators import WilsonCowanParams
 from .plotting import (
-    plot_activity,
-    plot_band_power,
-    plot_diagnostics,
-    plot_eeg_modules,
+    PlotWindow,
+    draw_activity,
+    draw_band_power,
+    draw_diagnostics,
+    draw_eeg_modules,
 )
+
+
+PARAMETER_DESCRIPTIONS = {
+    "T": "Czas trwania symulacji w sekundach.",
+    "seed": "Ziarno generatora losowego; ta sama wartość daje powtarzalny przebieg.",
+    "dt": "Krok czasowy symulacji.",
+    "noise": "Skala szumu neuronalnego.",
+    "gw_threshold": "Próg nieliniowego zapłonu global workspace.",
+    "gw_gain": "Stromość funkcji zapłonu global workspace.",
+    "learning_rate_semantic": "Tempo powolnego uczenia semantycznego.",
+    "learning_rate_value": "Tempo uczenia wartościowania na podstawie błędu predykcji nagrody.",
+    "decay_semantic": "Powolny zanik aktywacji lub śladu semantycznego.",
+    "enable_oscillators": "Włącza bank oscylatorów Wilsona-Cowana dla modułów poznawczych.",
+    "w_ee": "Waga połączenia populacji pobudzającej z samą sobą.",
+    "w_ei": "Wpływ populacji hamującej na populację pobudzającą.",
+    "w_ie": "Wpływ populacji pobudzającej na populację hamującą.",
+    "w_ii": "Waga połączenia populacji hamującej z samą sobą.",
+    "baseline_e": "Bazowy napęd populacji pobudzającej.",
+    "baseline_i": "Bazowy napęd populacji hamującej.",
+    "cognitive_drive_gain": "Siła wpływu aktywności poznawczej na oscylatory.",
+    "coupling_gain": "Siła sprzężenia międzymodułowego oscylatorów.",
+    "oscillator_noise": "Skala szumu w oscylatorach Wilsona-Cowana.",
+    "phase_drive_gain": "Siła pomocniczego generatora fazy stabilizującego pasmo EEG.",
+}
+
+
+class Tooltip:
+    def __init__(self, widget, text: str):
+        self.widget = widget
+        self.text = text
+        self.tip = None
+        widget.bind("<Enter>", self.show)
+        widget.bind("<Leave>", self.hide)
+
+    def show(self, event=None):
+        if self.tip or not self.text:
+            return
+        x = self.widget.winfo_rootx() + 18
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 6
+        self.tip = tk.Toplevel(self.widget)
+        self.tip.wm_overrideredirect(True)
+        self.tip.wm_geometry(f"+{x}+{y}")
+        ttk.Label(
+            self.tip,
+            text=self.text,
+            padding=(8, 5),
+            relief="solid",
+            borderwidth=1,
+            background="#ffffe0",
+            wraplength=320,
+        ).pack()
+
+    def hide(self, event=None):
+        if self.tip:
+            self.tip.destroy()
+            self.tip = None
 
 
 class ParameterForm(ttk.LabelFrame):
@@ -38,7 +95,9 @@ class ParameterForm(ttk.LabelFrame):
             name = field.name
             value = getattr(defaults, name)
 
-            ttk.Label(self, text=name).grid(row=row, column=0, sticky="w", padx=(0, 8), pady=3)
+            label = ttk.Label(self, text=name)
+            label.grid(row=row, column=0, sticky="w", padx=(0, 8), pady=3)
+            Tooltip(label, PARAMETER_DESCRIPTIONS.get(name, ""))
 
             if isinstance(value, bool):
                 var = tk.BooleanVar(value=value)
@@ -125,9 +184,13 @@ class BrainModelGUI(tk.Tk):
         self.T_var = tk.StringVar(value="45.0")
         self.seed_var = tk.StringVar(value="7")
 
-        ttk.Label(self.sim_frame, text="czas symulacji T [s]").grid(row=0, column=0, sticky="w", padx=(0, 8), pady=3)
+        t_label = ttk.Label(self.sim_frame, text="czas symulacji T [s]")
+        t_label.grid(row=0, column=0, sticky="w", padx=(0, 8), pady=3)
+        Tooltip(t_label, PARAMETER_DESCRIPTIONS["T"])
         ttk.Entry(self.sim_frame, textvariable=self.T_var, width=14).grid(row=0, column=1, sticky="ew", pady=3)
-        ttk.Label(self.sim_frame, text="seed").grid(row=1, column=0, sticky="w", padx=(0, 8), pady=3)
+        seed_label = ttk.Label(self.sim_frame, text="seed")
+        seed_label.grid(row=1, column=0, sticky="w", padx=(0, 8), pady=3)
+        Tooltip(seed_label, PARAMETER_DESCRIPTIONS["seed"])
         ttk.Entry(self.sim_frame, textvariable=self.seed_var, width=14).grid(row=1, column=1, sticky="ew", pady=3)
         self.sim_frame.columnconfigure(1, weight=1)
 
@@ -212,14 +275,55 @@ class BrainModelGUI(tk.Tk):
             )
             time, activity, diagnostics, oscillations = model.simulate(T=T)
 
+            plot_window = PlotWindow(self)
+            has_plots = False
+
             if self.plot_vars["activity"].get():
-                plot_activity(time, activity, model.names, model.idx)
+                plot_window.add_plot(
+                    "Aktywacje",
+                    draw_activity,
+                    time,
+                    activity,
+                    model.names,
+                    model.idx,
+                    figsize=(11, 7),
+                )
+                has_plots = True
             if self.plot_vars["diagnostics"].get():
-                plot_diagnostics(time, diagnostics)
+                plot_window.add_plot(
+                    "Diagnostyka",
+                    draw_diagnostics,
+                    time,
+                    diagnostics,
+                    figsize=(11, 5),
+                )
+                has_plots = True
             if self.plot_vars["eeg"].get():
-                plot_eeg_modules(time, oscillations, model.names, model.idx)
+                plot_window.add_plot(
+                    "EEG modułów",
+                    draw_eeg_modules,
+                    time,
+                    oscillations,
+                    model.names,
+                    model.idx,
+                    figsize=(11, 6),
+                )
+                has_plots = True
             if self.plot_vars["band_power"].get():
-                plot_band_power(time, oscillations)
+                plot_window.add_plot(
+                    "Moc pasm",
+                    draw_band_power,
+                    time,
+                    oscillations,
+                    figsize=(11, 5),
+                )
+                has_plots = True
+
+            if has_plots:
+                plot_window.fit_tabs_to_count()
+                plot_window.focus()
+            else:
+                plot_window.destroy()
 
             self.status_var.set("Symulacja zakończona.")
 
