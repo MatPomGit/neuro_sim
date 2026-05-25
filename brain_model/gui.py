@@ -545,6 +545,8 @@ class BrainModelGUI(tk.Tk):
             raise ValueError("Czas symulacji T musi być większy od zera.")
         if dt <= 0:
             raise ValueError("Krok czasowy dt musi być większy od zera.")
+        if T < dt:
+            raise ValueError("Czas symulacji T nie może być mniejszy od kroku czasowego dt.")
 
         return T, seed, dt
 
