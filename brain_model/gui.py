@@ -148,9 +148,10 @@ class ParameterForm(ttk.LabelFrame):
     def values(self):
         kwargs = {}
         for field in fields(self.dataclass_type):
-            if self.include_fields is not None and field.name not in self.include_fields:
-                continue
             name = field.name
+            if self.include_fields is not None and name not in self.include_fields:
+                kwargs[name] = getattr(self.defaults, name)
+                continue
             default_value = getattr(self.defaults, name)
             raw = self.vars[name].get()
 
