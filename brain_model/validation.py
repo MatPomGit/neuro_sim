@@ -73,9 +73,7 @@ def evaluate_run(time, activity, diagnostics, oscillations, scenario, rules: dic
         uniform = 1.0 / max(len(band_share), 1)
         band_match_score = float(np.clip(1.0 - 0.5 * sum(abs(v - uniform) for v in band_share.values()), 0.0, 1.0))
 
-    from .modules import MODULES
-
-    module_names = list(MODULES)
+    module_names = MODULES
 
     def metric_change(metric_name: str, signal: np.ndarray) -> float:
         cue = np.asarray(diagnostics.get(metric_name, np.zeros_like(time)))
