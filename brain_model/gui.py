@@ -31,6 +31,8 @@ from .plotting import (
     draw_band_power,
     draw_diagnostics,
     draw_eeg_modules,
+    draw_weight_deltas,
+    draw_weight_trajectories,
 )
 
 
@@ -61,6 +63,8 @@ PARAMETER_DESCRIPTIONS = {
     "plot_diagnostics": "Wykres zmiennych diagnostycznych i neuromodulacyjnych, m.in. prediction error, gw_ignition i neuroprzekaźników.",
     "plot_eeg": "Wykres aproksymowanych sygnałów EEG (E-I) dla wybranych modułów modelu.",
     "plot_band_power": "Wykres chwilowej mocy pasm theta/alpha/beta/gamma wyliczanej z banku oscylatorów.",
+    "plot_weight_trajectories": "Wykres trajektorii wybranych adaptowanych wag w macierzy W.",
+    "plot_weight_deltas": "Wykres przyrostów ΔW/krok dla adaptowanych wag.",
 }
 
 APP_VERSION = "0.3.0"
@@ -256,6 +260,8 @@ class BrainModelGUI(tk.Tk):
             "diagnostics": tk.BooleanVar(value=True),
             "eeg": tk.BooleanVar(value=True),
             "band_power": tk.BooleanVar(value=True),
+            "weight_trajectories": tk.BooleanVar(value=True),
+            "weight_deltas": tk.BooleanVar(value=True),
         }
 
         labels = {
@@ -263,6 +269,8 @@ class BrainModelGUI(tk.Tk):
             "diagnostics": "zmienne diagnostyczne i neuromodulacyjne",
             "eeg": "sygnały EEG E-I dla wybranych modułów",
             "band_power": "moc pasm theta/alpha/beta/gamma",
+            "weight_trajectories": "trajektorie adaptowanych wag W",
+            "weight_deltas": "przyrosty wag ΔW / krok",
         }
 
         plot_tooltips = {
@@ -270,6 +278,8 @@ class BrainModelGUI(tk.Tk):
             "diagnostics": PARAMETER_DESCRIPTIONS["plot_diagnostics"],
             "eeg": PARAMETER_DESCRIPTIONS["plot_eeg"],
             "band_power": PARAMETER_DESCRIPTIONS["plot_band_power"],
+            "weight_trajectories": PARAMETER_DESCRIPTIONS["plot_weight_trajectories"],
+            "weight_deltas": PARAMETER_DESCRIPTIONS["plot_weight_deltas"],
         }
 
         for row, key in enumerate(self.plot_vars):
@@ -525,6 +535,24 @@ class BrainModelGUI(tk.Tk):
                     time,
                     oscillations,
                     figsize=(11, 8),
+                )
+                has_plots = True
+            if self.plot_vars["weight_trajectories"].get():
+                self.plot_panel.add_plot(
+                    "Trajektorie wag",
+                    draw_weight_trajectories,
+                    time,
+                    diagnostics,
+                    figsize=(11, 5),
+                )
+                has_plots = True
+            if self.plot_vars["weight_deltas"].get():
+                self.plot_panel.add_plot(
+                    "Przyrosty wag",
+                    draw_weight_deltas,
+                    time,
+                    diagnostics,
+                    figsize=(11, 5),
                 )
                 has_plots = True
 

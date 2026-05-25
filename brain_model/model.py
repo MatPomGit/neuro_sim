@@ -4,6 +4,7 @@ from .activations import sigmoid
 from .connectivity import build_connectivity
 from .modules import MODULES, TAU
 from .params import BrainParams
+from .plasticity import apply_state_learning, build_weight_history_series, update_connectivity
 from .scenarios import get_scenario, CHANNELS
 from .stimuli import build_stimulus_fn
 from .oscillators import WilsonCowanOscillatorBank
@@ -241,10 +242,13 @@ class CognitiveBrainModel:
 
         dx = (-x + target) / self.tau
 
-        # Uczenie semantyczne i wartościowanie.
-        dx[self.idx["SEM"]] += p.learning_rate_semantic * x[self.idx["HIP"]] * gw_ignition
-        dx[self.idx["SEM"]] -= p.decay_semantic * x[self.idx["SEM"]]
-        dx[self.idx["VAL"]] += p.learning_rate_value * dopamine_delta
+        dx = apply_state_learning(
+            dx=dx,
+            x=x,
+            diagnostics={"gw_ignition": gw_ignition, "dopamine_delta": dopamine_delta},
+            params=p,
+            idx=self.idx,
+        )
 
         # Osobna aktualizacja global workspace.
         dx[self.idx["GW"]] += (-x[self.idx["GW"]] + gw_ignition) / self.tau[self.idx["GW"]]
@@ -265,7 +269,16 @@ class CognitiveBrainModel:
             "endorphins": endorphins,
             "cortisol": cortisol,
             "gw_ignition": gw_ignition,
+            "weight_updates": {},
         }
+
+        self.W = update_connectivity(
+            W=self.W,
+            x=x_next,
+            diagnostics=diagnostics,
+            params=p,
+            idx=self.idx,
+        )
 
         return x_next, diagnostics
 
@@ -300,6 +313,8 @@ class CognitiveBrainModel:
             "gw_ignition": np.zeros(steps),
         }
 
+        weight_history = []
+
         for k, t in enumerate(time):
             activity[k] = x
 
@@ -321,6 +336,8 @@ class CognitiveBrainModel:
             for key in diagnostics:
                 diagnostics[key][k] = diag[key]
 
+            weight_history.append(diag.get("weight_updates", {}))
+
         if self.scenario is not None:
             scenario_metadata = self.scenario.to_metadata()
         else:
@@ -335,6 +352,8 @@ class CognitiveBrainModel:
                 "events": [],
                 "context": {},
             }
+
+        diagnostics["weight_history"] = build_weight_history_series(weight_history, steps)
 
         oscillations = {
             "eeg": eeg,
