@@ -48,7 +48,7 @@ def run_sweep(scenario: str, trials: int, method: str, time_horizon: float, seed
     results: list[dict[str, Any]] = []
     for i, param_set in enumerate(params_candidates):
         run_seed = int(base_rng.integers(0, 2**31 - 1))
-        params = BrainParams(**{**asdict(BrainParams()), **param_set})
+        params = replace(BrainParams(), **param_set)
 
         model = CognitiveBrainModel(params=params, stimulus=scenario, seed=run_seed)
         time, activity, diagnostics, oscillations = model.simulate(T=time_horizon)
