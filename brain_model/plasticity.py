@@ -66,7 +66,7 @@ def update_connectivity(W, x, diagnostics, params, idx):
             dW -= cfg.decay * W[dst, src]
 
         if cfg.l2 > 0.0:
-            dW -= cfg.l2 * np.sign(W[dst, src]) * abs(W[dst, src])
+            dW -= cfg.l2 * W[dst, src]
 
         W[dst, src] = float(np.clip(W[dst, src] + dW, cfg.clip_min, cfg.clip_max))
         diagnostics["weight_updates"][f"{src_name}->{dst_name}"] = {
