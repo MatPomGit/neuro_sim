@@ -202,7 +202,16 @@ class CognitiveBrainModel:
 
         err_visual, err_auditory, prediction_error = self.compute_prediction_error(x, u)
 
-        dopamine_delta, noradrenaline, acetylcholine, serotonin, gaba, glutamate, endorphins, cortisol = self.compute_neuromodulation(
+        (
+            dopamine_delta,
+            noradrenaline,
+            acetylcholine,
+            serotonin,
+            gaba,
+            glutamate,
+            endorphins,
+            cortisol,
+        ) = self.compute_neuromodulation(
             x=x,
             u=u,
             prediction_error=prediction_error,
