@@ -30,20 +30,23 @@ def main():
     elapsed = pytime.perf_counter() - start
 
     if args.save:
-        out_dir = build_output_dir(args.scenario, args.label)
-        saved = save_run(
-            out_dir,
-            time,
-            activity,
-            diagnostics,
-            oscillations,
-            model_params=model.p,
-            oscillator_params=model.oscillator_bank.params,
-            scenario=oscillations.get("metadata"),
-            seed=args.seed,
-            duration_s=elapsed,
-        )
-        print(f"Saved run to: {saved['output_dir']}")
+        try:
+            out_dir = build_output_dir(args.scenario, args.label)
+            saved = save_run(
+                out_dir,
+                time,
+                activity,
+                diagnostics,
+                oscillations,
+                model_params=model.p,
+                oscillator_params=model.oscillator_bank.params,
+                scenario=oscillations.get("metadata"),
+                seed=args.seed,
+                duration_s=elapsed,
+            )
+            print(f"Saved run to: {saved['output_dir']}")
+        except Exception as exc:
+            print(f"Warning: Failed to save run results: {exc}")
 
     plot_activity(time, activity, model.names, model.idx)
     plot_diagnostics(time, diagnostics)
