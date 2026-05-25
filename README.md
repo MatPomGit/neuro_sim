@@ -83,3 +83,44 @@ time, activity, diagnostics, oscillations = model.simulate(T=45.0)
 - `diagnostics`: błąd predykcji, neuromodulacja, global workspace,
 - `oscillations["eeg"]`: sygnały E-I dla modułów,
 - `oscillations["band_power"]`: chwilowa moc theta/alpha/beta/gamma.
+
+## GUI do konfiguracji parametrów
+
+Dodano prosty moduł GUI oparty na `tkinter`. Pozwala zmienić parametry przed rozpoczęciem symulacji:
+
+- czas symulacji `T`,
+- `seed`,
+- wszystkie pola `BrainParams`,
+- wszystkie pola `WilsonCowanParams`,
+- wybór wykresów do wygenerowania.
+
+Uruchomienie GUI:
+
+```bash
+python main_gui.py
+```
+
+GUI nie wymaga dodatkowych bibliotek poza standardowym `tkinter`, `numpy` i `matplotlib`. W niektórych dystrybucjach Linuksa `tkinter` trzeba doinstalować oddzielnie, np. `sudo apt install python3-tk`.
+
+Najważniejsze pliki:
+
+```text
+brain_model/gui.py   # okno konfiguracji parametrów
+main_gui.py          # punkt wejścia GUI
+```
+
+Parametry oscylatorów Wilsona-Cowana można teraz przekazać także programistycznie:
+
+```python
+from brain_model.model import CognitiveBrainModel
+from brain_model.params import BrainParams
+from brain_model.oscillators import WilsonCowanParams
+
+model = CognitiveBrainModel(
+    params=BrainParams(dt=0.005, noise=0.01),
+    oscillator_params=WilsonCowanParams(cognitive_drive_gain=3.2),
+    seed=7,
+)
+
+time, activity, diagnostics, oscillations = model.simulate(T=45.0)
+```

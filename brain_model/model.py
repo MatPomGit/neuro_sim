@@ -31,7 +31,7 @@ class CognitiveBrainModel:
             stałe czasowe modułów.
     """
 
-    def __init__(self, params=None, stimulus_fn=None, seed=7):
+    def __init__(self, params=None, stimulus_fn=None, seed=7, oscillator_params=None, oscillator_band_map=None):
         self.p = params or BrainParams()
         self.rng = np.random.default_rng(seed)
 
@@ -47,6 +47,8 @@ class CognitiveBrainModel:
         self.oscillator_bank = WilsonCowanOscillatorBank(
             module_names=self.names,
             connectivity=self.W,
+            band_map=oscillator_band_map,
+            params=oscillator_params,
         )
 
     def initial_state(self):
