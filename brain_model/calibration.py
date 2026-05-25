@@ -28,9 +28,10 @@ def _sample_params(method: str, trials: int, seed: int) -> list[dict[str, float]
     rng = np.random.default_rng(seed)
     keys = list(SEARCH_SPACE)
     if method == "grid":
-        combos = itertools.product(*(SEARCH_SPACE[k] for k in keys))
+        combos = list(itertools.product(*(SEARCH_SPACE[k] for k in keys)))
+        rng.shuffle(combos)
         sampled = []
-        for _, combo in zip(range(trials), combos):
+        for combo in combos[:trials]:
             sampled.append({k: v for k, v in zip(keys, combo)})
         return sampled
 
