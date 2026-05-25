@@ -4,7 +4,7 @@ from .activations import sigmoid
 from .connectivity import build_connectivity
 from .modules import MODULES, TAU
 from .params import BrainParams
-from .scenarios import get_scenario
+from .scenarios import get_scenario, CHANNELS
 from .stimuli import build_stimulus_fn
 from .oscillators import WilsonCowanOscillatorBank
 
