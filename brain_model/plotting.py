@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 
+from .stimuli import build_stimulus_fn
+
 
 MODULE_DESCRIPTIONS = {
     "VIS": "Przetwarzanie wzrokowe.",
@@ -134,6 +136,40 @@ def draw_activity(ax, time, activity, names, idx):
     return [ax]
 
 
+
+
+def draw_simulated_brain_activity(ax, time, activity, names, idx):
+    selected = [
+        "VIS", "AUD", "INT", "SAL", "ATT", "PHON", "VSWM",
+        "EXEC", "EPIS", "SEM", "HIP", "VAL", "MOT", "DMN", "GW",
+    ]
+
+    labels = [name for name in selected if name in idx]
+    if not labels:
+        ax.text(0.5, 0.5, "Brak danych modułów do wizualizacji.", ha="center", va="center", transform=ax.transAxes)
+        ax.set_title("Symulowana aktywność mózgu")
+        return [ax]
+
+    matrix = activity[:, [idx[name] for name in labels]].T
+    image = ax.imshow(
+        matrix,
+        aspect="auto",
+        origin="lower",
+        extent=[float(time[0]), float(time[-1]), -0.5, len(labels) - 0.5],
+        cmap="magma",
+        vmin=0.0,
+        vmax=1.0,
+    )
+
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels)
+    ax.set_xlabel("Czas symulacji [s]")
+    ax.set_ylabel("Moduł")
+    ax.set_title("Symulowana aktywność mózgu (mapa cieplna modułów)")
+
+    colorbar = ax.figure.colorbar(image, ax=ax, pad=0.01)
+    colorbar.set_label("Aktywacja [0-1]")
+    return [ax]
 def draw_diagnostics(ax, time, diagnostics):
     ax.plot(time, diagnostics["prediction_error"], label="błąd predykcji")
     ax.plot(time, diagnostics["gw_ignition"], label="global workspace ignition")
@@ -213,6 +249,46 @@ def draw_eeg_modules(ax, time, oscillations, names, idx):
     _style_lines(ax)
     return [ax]
 
+
+
+
+def draw_scenario_channels(ax, time, scenario):
+    stim = build_stimulus_fn(scenario)
+    series = {k: [] for k in ["visual", "auditory", "task_cue", "threat", "reward", "interoceptive"]}
+    for t in time:
+        u = stim(float(t))
+        for k in series:
+            series[k].append(u[k])
+
+    for k, values in series.items():
+        ax.plot(time, values, label=k)
+    ax.set_xlabel("Czas symulacji [s]")
+    ax.set_ylabel("Amplituda bodźca")
+    ax.set_title("Przebieg kanałów bodźców scenariusza")
+    ax.legend(ncol=3, fontsize=9)
+    _style_lines(ax)
+    return [ax]
+
+
+def draw_scenario_timeline(ax, time, scenario):
+    ax.set_title("Oś czasu scenariusza: fazy i zdarzenia")
+    ax.set_xlabel("Czas symulacji [s]")
+    ax.set_yticks([])
+
+    y = 0.5
+    for i, phase in enumerate(scenario.phases):
+        w = phase["window"]
+        ax.axvspan(w["start"], w["end"], alpha=0.18 + 0.08 * (i % 2), label=phase["name"])
+
+    for event in scenario.events:
+        t = event["time"]
+        ax.axvline(t, color="black", linestyle="--", linewidth=1.0)
+        ax.text(t, y, event["type"], rotation=90, va="bottom", ha="right", fontsize=8)
+
+    ax.set_xlim(float(time[0]), float(time[-1]))
+    if scenario.phases:
+        ax.legend(loc="upper right", fontsize=8)
+    return [ax]
 
 def draw_band_power(ax, time, oscillations):
     band_power = oscillations["band_power"]

@@ -14,7 +14,7 @@ import subprocess
 import sys
 import tkinter as tk
 import time as pytime
-from dataclasses import fields
+from dataclasses import fields, replace
 from datetime import date
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
@@ -24,13 +24,16 @@ from .io import build_output_dir, save_run
 from .model import CognitiveBrainModel
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
-from .scenarios import list_scenarios
+from .scenarios import get_scenario, list_scenarios
 from .plotting import (
     PlotWindow,
     draw_activity,
     draw_band_power,
     draw_diagnostics,
     draw_eeg_modules,
+    draw_simulated_brain_activity,
+    draw_scenario_channels,
+    draw_scenario_timeline,
     draw_weight_deltas,
     draw_weight_trajectories,
 )
@@ -39,6 +42,7 @@ from .plotting import (
 PARAMETER_DESCRIPTIONS = {
     "T": "Czas trwania symulacji w sekundach. Typowo 10-120 s; większe wartości pokazują dłuższe trendy, ale wydłużają obliczenia.",
     "seed": "Ziarno generatora losowego. Typowo dowolna liczba całkowita; ta sama wartość daje powtarzalny przebieg szumu i oscylacji.",
+    "scenario_details": "Opis, pole co się zmienia oraz przebieg wybranego scenariusza: fazy, zdarzenia i aktywne kanały bodźców.",
     "dt": "Krok czasowy symulacji. Typowo 0.001-0.01; mniejszy krok zwiększa dokładność i koszt, większy może wygładzić lub zdestabilizować dynamikę.",
     "noise": "Skala szumu neuronalnego. Typowo 0.0-0.05; większa wartość zwiększa zmienność aktywacji i może maskować słabe efekty bodźców.",
     "gw_threshold": "Próg zapłonu global workspace. Typowo 0.4-0.8; niższy ułatwia globalną aktywację, wyższy wymaga silniejszej uwagi lub salience.",
@@ -60,16 +64,21 @@ PARAMETER_DESCRIPTIONS = {
     "scenario": "Wybór gotowego scenariusza bodźców i kontekstu zadania. Każdy scenariusz uruchamia inne fazy, zdarzenia i profil sygnałów wejściowych.",
     "save_results": "Po zakończeniu symulacji zapisuje wyniki do katalogu outputs/ w formacie NPZ + JSON (z metadanymi eksperymentu).",
     "plot_activity": "Wykres aktywacji modułów poznawczych w czasie (np. ATT, EXEC, SEM, GW).",
+    "plot_simulated_brain_activity": "Mapa cieplna aktywacji modułów mózgu w czasie (symulowana aktywność mózgu).",
     "plot_diagnostics": "Wykres zmiennych diagnostycznych i neuromodulacyjnych, m.in. prediction error, gw_ignition i neuroprzekaźników.",
     "plot_eeg": "Wykres aproksymowanych sygnałów EEG (E-I) dla wybranych modułów modelu.",
     "plot_band_power": "Wykres chwilowej mocy pasm theta/alpha/beta/gamma wyliczanej z banku oscylatorów.",
     "plot_weight_trajectories": "Wykres trajektorii wybranych adaptowanych wag w macierzy W.",
     "plot_weight_deltas": "Wykres przyrostów ΔW/krok dla adaptowanych wag.",
+    "plot_scenario_channels": "Wykres kanałów bodźców scenariusza w funkcji czasu.",
+    "plot_scenario_timeline": "Oś czasu scenariusza: fazy i zdarzenia.",
 }
 
 APP_VERSION = "0.3.0"
 LAST_UPDATED = "2026-05-25"
 APP_AUTHOR = "dr inż. Mateusz Pomianek"
+
+RULE_FIELDS = ("semantic_rule", "value_rule", "connectivity_adaptation")
 
 
 class Tooltip:
@@ -107,13 +116,15 @@ class Tooltip:
 class ParameterForm(ttk.LabelFrame):
     """Small helper widget that builds labeled entries for a dataclass."""
 
-    def __init__(self, parent, title: str, dataclass_type, defaults):
+    def __init__(self, parent, title: str, dataclass_type, defaults, include_fields=None):
         super().__init__(parent, text=title, padding=10)
         self.dataclass_type = dataclass_type
         self.defaults = defaults
         self.vars: Dict[str, tk.Variable] = {}
+        self.include_fields = set(include_fields) if include_fields else None
 
-        for row, field in enumerate(fields(dataclass_type)):
+        form_fields = [f for f in fields(dataclass_type) if self.include_fields is None or f.name in self.include_fields]
+        for row, field in enumerate(form_fields):
             name = field.name
             value = getattr(defaults, name)
 
@@ -138,6 +149,9 @@ class ParameterForm(ttk.LabelFrame):
         kwargs = {}
         for field in fields(self.dataclass_type):
             name = field.name
+            if self.include_fields is not None and name not in self.include_fields:
+                kwargs[name] = getattr(self.defaults, name)
+                continue
             default_value = getattr(self.defaults, name)
             raw = self.vars[name].get()
 
@@ -155,6 +169,8 @@ class ParameterForm(ttk.LabelFrame):
 
     def reset(self):
         for field in fields(self.dataclass_type):
+            if self.include_fields is not None and field.name not in self.include_fields:
+                continue
             name = field.name
             value = getattr(self.defaults, name)
             self.vars[name].set(value if isinstance(value, bool) else str(value))
@@ -172,6 +188,9 @@ class BrainModelGUI(tk.Tk):
         self.brain_defaults = BrainParams()
         self.osc_defaults = WilsonCowanParams()
 
+        visible_brain_fields = [f.name for f in fields(BrainParams) if f.name not in RULE_FIELDS]
+        self.brain_form = ParameterForm(self, "hidden", BrainParams, self.brain_defaults, include_fields=visible_brain_fields)
+        self.osc_form = ParameterForm(self, "hidden", WilsonCowanParams, self.osc_defaults)
         self._build_layout()
         self._build_menu()
 
@@ -220,14 +239,20 @@ class BrainModelGUI(tk.Tk):
         Tooltip(t_label, PARAMETER_DESCRIPTIONS["T"])
         ttk.Entry(self.sim_frame, textvariable=self.T_var, width=14).grid(row=0, column=1, sticky="ew", pady=3)
 
+        self.dt_var = tk.StringVar(value=str(self.brain_defaults.dt))
+        dt_label = ttk.Label(self.sim_frame, text="krok czasowy dt [s]")
+        dt_label.grid(row=1, column=0, sticky="w", padx=(0, 8), pady=3)
+        Tooltip(dt_label, PARAMETER_DESCRIPTIONS["dt"])
+        ttk.Entry(self.sim_frame, textvariable=self.dt_var, width=14).grid(row=1, column=1, sticky="ew", pady=3)
+
         seed_label = ttk.Label(self.sim_frame, text="seed")
-        seed_label.grid(row=1, column=0, sticky="w", padx=(0, 8), pady=3)
+        seed_label.grid(row=2, column=0, sticky="w", padx=(0, 8), pady=3)
         Tooltip(seed_label, PARAMETER_DESCRIPTIONS["seed"])
-        ttk.Entry(self.sim_frame, textvariable=self.seed_var, width=14).grid(row=1, column=1, sticky="ew", pady=3)
+        ttk.Entry(self.sim_frame, textvariable=self.seed_var, width=14).grid(row=2, column=1, sticky="ew", pady=3)
         self.scenario_var = tk.StringVar(value="reward-learning")
 
         scenario_label = ttk.Label(self.sim_frame, text="scenariusz")
-        scenario_label.grid(row=2, column=0, sticky="w", padx=(0, 8), pady=3)
+        scenario_label.grid(row=3, column=0, sticky="w", padx=(0, 8), pady=3)
         Tooltip(scenario_label, PARAMETER_DESCRIPTIONS["scenario"])
         self.scenario_combo = ttk.Combobox(
             self.sim_frame,
@@ -236,50 +261,63 @@ class BrainModelGUI(tk.Tk):
             state="readonly",
             width=16,
         )
-        self.scenario_combo.grid(row=2, column=1, sticky="ew", pady=3)
+        self.scenario_combo.grid(row=3, column=1, sticky="ew", pady=3)
 
         self.save_results_var = tk.BooleanVar(value=True)
         save_checkbox = ttk.Checkbutton(self.sim_frame, text="Zapisz wyniki po symulacji", variable=self.save_results_var)
         save_checkbox.grid(
-            row=3, column=0, columnspan=2, sticky="w", pady=(8, 3)
+            row=5, column=0, columnspan=2, sticky="w", pady=(8, 3)
         )
         Tooltip(save_checkbox, PARAMETER_DESCRIPTIONS["save_results"])
         self.sim_frame.columnconfigure(1, weight=1)
 
-        self.brain_form = ParameterForm(left, "Parametry globalne BrainParams", BrainParams, self.brain_defaults)
-        self.brain_form.pack(fill="both", expand=True)
+        quick_frame = ttk.LabelFrame(left, text="Scenariusz", padding=10)
+        quick_frame.pack(fill="both", expand=True, pady=(0, 10))
+        self.scenario_details_var = tk.StringVar(value="")
+        details_label = ttk.Label(quick_frame, textvariable=self.scenario_details_var, justify="left", wraplength=460)
+        details_label.pack(anchor="w", fill="x")
+        Tooltip(details_label, PARAMETER_DESCRIPTIONS["scenario_details"])
 
-        self.osc_form = ParameterForm(right, "Parametry WilsonCowanParams", WilsonCowanParams, self.osc_defaults)
-        self.osc_form.pack(fill="both", expand=True, pady=(0, 10))
+        settings_btn = ttk.Button(right, text="Parametry zaawansowane...", command=self._open_advanced_settings)
+        settings_btn.pack(anchor="w", pady=(0, 10))
 
         self.plots_frame = ttk.LabelFrame(right, text="Wykresy", padding=10)
         self.plots_frame.pack(fill="x")
 
         self.plot_vars: Dict[str, tk.BooleanVar] = {
             "activity": tk.BooleanVar(value=True),
+            "simulated_brain_activity": tk.BooleanVar(value=True),
             "diagnostics": tk.BooleanVar(value=True),
             "eeg": tk.BooleanVar(value=True),
             "band_power": tk.BooleanVar(value=True),
             "weight_trajectories": tk.BooleanVar(value=True),
             "weight_deltas": tk.BooleanVar(value=True),
+            "scenario_channels": tk.BooleanVar(value=True),
+            "scenario_timeline": tk.BooleanVar(value=True),
         }
 
         labels = {
             "activity": "aktywacje modułów poznawczych",
+            "simulated_brain_activity": "symulowana aktywność mózgu (mapa cieplna)",
             "diagnostics": "zmienne diagnostyczne i neuromodulacyjne",
             "eeg": "sygnały EEG E-I dla wybranych modułów",
             "band_power": "moc pasm theta/alpha/beta/gamma",
             "weight_trajectories": "trajektorie adaptowanych wag W",
             "weight_deltas": "przyrosty wag ΔW / krok",
+            "scenario_channels": "kanały bodźców scenariusza",
+            "scenario_timeline": "oś czasu scenariusza (fazy i zdarzenia)",
         }
 
         plot_tooltips = {
             "activity": PARAMETER_DESCRIPTIONS["plot_activity"],
+            "simulated_brain_activity": PARAMETER_DESCRIPTIONS["plot_simulated_brain_activity"],
             "diagnostics": PARAMETER_DESCRIPTIONS["plot_diagnostics"],
             "eeg": PARAMETER_DESCRIPTIONS["plot_eeg"],
             "band_power": PARAMETER_DESCRIPTIONS["plot_band_power"],
             "weight_trajectories": PARAMETER_DESCRIPTIONS["plot_weight_trajectories"],
             "weight_deltas": PARAMETER_DESCRIPTIONS["plot_weight_deltas"],
+            "scenario_channels": PARAMETER_DESCRIPTIONS["plot_scenario_channels"],
+            "scenario_timeline": PARAMETER_DESCRIPTIONS["plot_scenario_timeline"],
         }
 
         for row, key in enumerate(self.plot_vars):
@@ -297,6 +335,9 @@ class BrainModelGUI(tk.Tk):
 
         self.status_var = tk.StringVar(value="Gotowe.")
         ttk.Label(root, textvariable=self.status_var).pack(anchor="w", pady=(8, 0))
+
+        self.scenario_combo.bind("<<ComboboxSelected>>", lambda _e: self._refresh_scenario_details())
+        self._refresh_scenario_details()
 
         self.plot_panel = PlotWindow(plots_tab)
         self.plot_panel.pack(fill="both", expand=True)
@@ -316,8 +357,8 @@ class BrainModelGUI(tk.Tk):
         edit_menu = tk.Menu(menubar, tearoff=0)
         edit_menu.add_command(label="Konfiguracja symulacji", command=lambda: self.tabs.select(0))
         edit_menu.add_command(label="Konfiguracja wykresów", command=self._focus_plots_section)
-        edit_menu.add_command(label="Parametry globalne (BrainParams)", command=lambda: self.brain_form.focus_set())
-        edit_menu.add_command(label="Parametry oscylatorów", command=lambda: self.osc_form.focus_set())
+        edit_menu.add_command(label="Parametry globalne (BrainParams)", command=self._open_advanced_settings)
+        edit_menu.add_command(label="Parametry oscylatorów", command=self._open_advanced_settings)
         edit_menu.add_separator()
         edit_menu.add_command(label="Przywróć domyślne", command=self.reset_defaults)
         menubar.add_cascade(label="Edycja", menu=edit_menu)
@@ -333,6 +374,47 @@ class BrainModelGUI(tk.Tk):
         self.tabs.select(0)
         self.plots_frame.focus_set()
 
+    def _open_advanced_settings(self):
+        win = tk.Toplevel(self)
+        win.title("Parametry zaawansowane")
+        win.geometry("860x680")
+
+        container = ttk.Frame(win, padding=10)
+        container.pack(fill="both", expand=True)
+
+        brain = ParameterForm(container, "Parametry globalne BrainParams", BrainParams, self.brain_defaults, include_fields=[f.name for f in fields(BrainParams) if f.name not in RULE_FIELDS and f.name != "dt"])
+        brain.pack(fill="both", expand=True, pady=(0, 10))
+        osc = ParameterForm(container, "Parametry WilsonCowanParams", WilsonCowanParams, self.osc_defaults)
+        osc.pack(fill="both", expand=True)
+
+        for name, var in self.brain_form.vars.items():
+            if name in brain.vars:
+                brain.vars[name].set(var.get())
+        for name, var in self.osc_form.vars.items():
+            if name in osc.vars:
+                osc.vars[name].set(var.get())
+
+        def save_and_close():
+            for name, var in brain.vars.items():
+                self.brain_form.vars[name].set(var.get())
+            for name, var in osc.vars.items():
+                self.osc_form.vars[name].set(var.get())
+            win.destroy()
+
+        btns = ttk.Frame(container)
+        btns.pack(fill="x", pady=(10, 0))
+        ttk.Button(btns, text="Anuluj", command=win.destroy).pack(side="right")
+        ttk.Button(btns, text="Zapisz", command=save_and_close).pack(side="right", padx=(0, 8))
+
+    def _refresh_scenario_details(self):
+        scenario = get_scenario(self.scenario_var.get())
+        phases = ", ".join(f"{p['name']} ({p['window']['start']}-{p['window']['end']} s)" for p in scenario.phases) if scenario.phases else "brak"
+        events = ", ".join(f"{e['type']}@{e['time']}s" for e in scenario.events) if scenario.events else "brak"
+        channels = ", ".join(sorted([k for k, v in scenario.channels.items() if v.pulses or v.baseline > 0])) or "brak"
+        self.scenario_details_var.set(
+            f"Opis: {scenario.description}\nCo się zmienia: {scenario.what_changes}\nFazy: {phases}\nZdarzenia: {events}\nKanały aktywne: {channels}"
+        )
+
     def _open_new_instance(self):
         try:
             root_dir = Path(__file__).resolve().parents[1]
@@ -345,6 +427,7 @@ class BrainModelGUI(tk.Tk):
     def _collect_config(self):
         return {
             "T": self.T_var.get(),
+            "dt": self.dt_var.get(),
             "seed": self.seed_var.get(),
             "scenario": self.scenario_var.get(),
             "save_results": self.save_results_var.get(),
@@ -355,7 +438,10 @@ class BrainModelGUI(tk.Tk):
 
     def _apply_config(self, config: dict):
         self.T_var.set(str(config.get("T", self.T_var.get())))
+        self.dt_var.set(str(config.get("dt", self.dt_var.get())))
         self.seed_var.set(str(config.get("seed", self.seed_var.get())))
+        if "dt" in self.brain_form.vars:
+            self.brain_form.vars["dt"].set(str(self.dt_var.get()))
         self.scenario_var.set(str(config.get("scenario", self.scenario_var.get())))
         self.save_results_var.set(bool(config.get("save_results", self.save_results_var.get())))
 
@@ -428,6 +514,7 @@ class BrainModelGUI(tk.Tk):
 
     def reset_defaults(self):
         self.T_var.set("45.0")
+        self.dt_var.set(str(self.brain_defaults.dt))
         self.seed_var.set("7")
         self.scenario_var.set("reward-learning")
         self.save_results_var.set(True)
@@ -437,22 +524,38 @@ class BrainModelGUI(tk.Tk):
             var.set(True)
         self.status_var.set("Przywrócono wartości domyślne.")
 
+    def _build_brain_params(self):
+        scalar_params = self.brain_form.values()
+        return replace(
+            scalar_params,
+            semantic_rule=self.brain_defaults.semantic_rule,
+            value_rule=self.brain_defaults.value_rule,
+            connectivity_adaptation=self.brain_defaults.connectivity_adaptation,
+        )
+
     def _read_scalar_params(self):
         try:
             T = float(self.T_var.get())
             seed = int(self.seed_var.get())
+            dt = float(self.dt_var.get())
         except ValueError as exc:
-            raise ValueError("Niepoprawny czas symulacji lub seed.") from exc
+            raise ValueError("Niepoprawny czas symulacji, seed lub krok czasowy dt.") from exc
 
         if T <= 0:
             raise ValueError("Czas symulacji T musi być większy od zera.")
+        if dt <= 0:
+            raise ValueError("Krok czasowy dt musi być większy od zera.")
+        if T < dt:
+            raise ValueError("Czas symulacji T nie może być mniejszy od kroku czasowego dt.")
 
-        return T, seed
+        return T, seed, dt
 
     def run_simulation(self):
         try:
-            T, seed = self._read_scalar_params()
-            brain_params = self.brain_form.values()
+            T, seed, dt = self._read_scalar_params()
+            if "dt" in self.brain_form.vars:
+                self.brain_form.vars["dt"].set(str(dt))
+            brain_params = self._build_brain_params()
             oscillator_params = self.osc_form.values()
 
             if brain_params.dt <= 0:
@@ -508,6 +611,17 @@ class BrainModelGUI(tk.Tk):
                     figsize=(11, 7),
                 )
                 has_plots = True
+            if self.plot_vars["simulated_brain_activity"].get():
+                self.plot_panel.add_plot(
+                    "Aktywność mózgu",
+                    draw_simulated_brain_activity,
+                    time,
+                    activity,
+                    model.names,
+                    model.idx,
+                    figsize=(11, 7),
+                )
+                has_plots = True
             if self.plot_vars["diagnostics"].get():
                 self.plot_panel.add_plot(
                     "Diagnostyka",
@@ -553,6 +667,24 @@ class BrainModelGUI(tk.Tk):
                     time,
                     diagnostics,
                     figsize=(11, 5),
+                )
+                has_plots = True
+            if self.plot_vars["scenario_channels"].get():
+                self.plot_panel.add_plot(
+                    "Kanały scenariusza",
+                    draw_scenario_channels,
+                    time,
+                    get_scenario(self.scenario_var.get()),
+                    figsize=(11, 5),
+                )
+                has_plots = True
+            if self.plot_vars["scenario_timeline"].get():
+                self.plot_panel.add_plot(
+                    "Oś czasu scenariusza",
+                    draw_scenario_timeline,
+                    time,
+                    get_scenario(self.scenario_var.get()),
+                    figsize=(11, 4),
                 )
                 has_plots = True
 
