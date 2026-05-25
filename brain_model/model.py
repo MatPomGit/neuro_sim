@@ -55,9 +55,9 @@ class CognitiveBrainModel:
             self.stimulus_fn = build_stimulus_fn(self.scenario)
         elif callable(stimulus):
             probe = stimulus(0.0)
-            required = {"visual", "auditory", "task_cue", "threat", "reward", "interoceptive"}
+            required = set(CHANNELS)
             if not isinstance(probe, dict) or not required.issubset(probe):
-                raise ValueError("Callable stimulus must return dict with required channels.")
+                raise ValueError(f"Callable stimulus must return dict with required channels: {CHANNELS}")
             self.stimulus_fn = stimulus
         else:
             raise TypeError("stimulus must be None, scenario id (str), or callable")
