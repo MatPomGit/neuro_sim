@@ -30,6 +30,7 @@ from .plotting import (
     draw_activity,
     draw_band_power,
     draw_diagnostics,
+    draw_behavior,
     draw_eeg_modules,
     draw_simulated_brain_activity,
     draw_scenario_channels,
@@ -51,6 +52,8 @@ PARAMETER_DESCRIPTIONS = {
     "learning_rate_value": "Tempo uczenia wartościowania. Typowo 0.0-0.08; większa wartość szybciej zmienia VAL po błędzie predykcji nagrody.",
     "decay_semantic": "Zanik śladu semantycznego. Typowo 0.0-0.01; większa wartość szybciej wygasza SEM i ogranicza długotrwałe utrzymanie reprezentacji.",
     "enable_oscillators": "Włącza oscylatory Wilsona-Cowana. Typowo włączone; wyłączenie zeruje sygnały EEG i moc pasmową, ale zostawia dynamikę poznawczą.",
+    "decision_threshold": "Próg decyzji behawioralnej. Typowo 0.45-0.8; niższy daje szybsze i częstsze decyzje, wyższy wymaga silniejszego pobudzenia EXEC/VAL/MOT/GW.",
+    "confidence_gain": "Wzmocnienie przeliczenia wyniku decyzji na pewność. Typowo 0.5-3.0; większa wartość szybciej nasyca confidence do wartości bliskich 0 lub 1.",
     "w_ee": "Samowzmacnianie populacji pobudzającej. Typowo 8-14; większa wartość wzmacnia amplitudę i może ułatwiać oscylacje.",
     "w_ei": "Hamowanie populacji pobudzającej przez I. Typowo 7-12; większa wartość mocniej tłumi E i może zmniejszać amplitudę EEG.",
     "w_ie": "Pobudzanie populacji hamującej przez E. Typowo 8-13; większa wartość wzmacnia sprzężenie E-I i wpływa na rytmiczność.",
@@ -66,6 +69,7 @@ PARAMETER_DESCRIPTIONS = {
     "plot_activity": "Wykres aktywacji modułów poznawczych w czasie (np. ATT, EXEC, SEM, GW).",
     "plot_simulated_brain_activity": "Mapa cieplna aktywacji modułów mózgu w czasie (symulowana aktywność mózgu).",
     "plot_diagnostics": "Wykres zmiennych diagnostycznych i neuromodulacyjnych, m.in. prediction error, gw_ignition i neuroprzekaźników.",
+    "plot_behavior": "Wykres strumienia zachowania: decision score, confidence oraz markery punktów decyzji.",
     "plot_eeg": "Wykres aproksymowanych sygnałów EEG (E-I) dla wybranych modułów modelu.",
     "plot_band_power": "Wykres chwilowej mocy pasm theta/alpha/beta/gamma wyliczanej z banku oscylatorów.",
     "plot_weight_trajectories": "Wykres trajektorii wybranych adaptowanych wag w macierzy W.",
@@ -288,6 +292,7 @@ class BrainModelGUI(tk.Tk):
             "activity": tk.BooleanVar(value=True),
             "simulated_brain_activity": tk.BooleanVar(value=True),
             "diagnostics": tk.BooleanVar(value=True),
+            "behavior": tk.BooleanVar(value=True),
             "eeg": tk.BooleanVar(value=True),
             "band_power": tk.BooleanVar(value=True),
             "weight_trajectories": tk.BooleanVar(value=True),
@@ -300,6 +305,7 @@ class BrainModelGUI(tk.Tk):
             "activity": "aktywacje modułów poznawczych",
             "simulated_brain_activity": "symulowana aktywność mózgu (mapa cieplna)",
             "diagnostics": "zmienne diagnostyczne i neuromodulacyjne",
+            "behavior": "przebiegi decyzyjne + markery decyzji",
             "eeg": "sygnały EEG E-I dla wybranych modułów",
             "band_power": "moc pasm theta/alpha/beta/gamma",
             "weight_trajectories": "trajektorie adaptowanych wag W",
@@ -312,6 +318,7 @@ class BrainModelGUI(tk.Tk):
             "activity": PARAMETER_DESCRIPTIONS["plot_activity"],
             "simulated_brain_activity": PARAMETER_DESCRIPTIONS["plot_simulated_brain_activity"],
             "diagnostics": PARAMETER_DESCRIPTIONS["plot_diagnostics"],
+            "behavior": PARAMETER_DESCRIPTIONS["plot_behavior"],
             "eeg": PARAMETER_DESCRIPTIONS["plot_eeg"],
             "band_power": PARAMETER_DESCRIPTIONS["plot_band_power"],
             "weight_trajectories": PARAMETER_DESCRIPTIONS["plot_weight_trajectories"],
@@ -575,7 +582,7 @@ class BrainModelGUI(tk.Tk):
                 seed=seed,
                 stimulus=self.scenario_var.get(),
             )
-            time, activity, diagnostics, oscillations = model.simulate(T=T)
+            time, activity, diagnostics, oscillations, behavior = model.simulate(T=T)
             elapsed = pytime.perf_counter() - start
 
             save_info = None
@@ -588,6 +595,13 @@ class BrainModelGUI(tk.Tk):
                         activity,
                         diagnostics,
                         oscillations,
+                        extra_metadata={"behavior": {
+                            "decision": [str(v) for v in behavior["decision"]],
+                            "latency": behavior["latency"].tolist(),
+                            "confidence": behavior["confidence"].tolist(),
+                            "decision_score": behavior["decision_score"].tolist(),
+                            "decision_event": behavior["decision_event"].astype(int).tolist(),
+                        }},
                         model_params=model.p,
                         oscillator_params=model.oscillator_bank.params,
                         scenario=oscillations.get("metadata"),
@@ -628,6 +642,15 @@ class BrainModelGUI(tk.Tk):
                     draw_diagnostics,
                     time,
                     diagnostics,
+                    figsize=(11, 5),
+                )
+                has_plots = True
+            if self.plot_vars["behavior"].get():
+                self.plot_panel.add_plot(
+                    "Behavior",
+                    draw_behavior,
+                    time,
+                    behavior,
                     figsize=(11, 5),
                 )
                 has_plots = True

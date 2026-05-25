@@ -1,6 +1,7 @@
 import numpy as np
 
 from .activations import sigmoid
+from .behavior import map_behavior_state
 from .connectivity import build_connectivity
 from .modules import MODULES, TAU
 from .params import BrainParams
@@ -258,6 +259,14 @@ class CognitiveBrainModel:
         x_next = x + p.dt * dx + np.sqrt(p.dt) * noise
         x_next = np.clip(x_next, 0.0, 1.0)
 
+        behavior = {
+            "decision": np.empty(steps, dtype=object),
+            "latency": np.zeros(steps),
+            "confidence": np.zeros(steps),
+            "decision_score": np.zeros(steps),
+            "decision_event": np.zeros(steps, dtype=bool),
+        }
+
         diagnostics = {
             "prediction_error": prediction_error,
             "dopamine_delta": dopamine_delta,
@@ -300,6 +309,14 @@ class CognitiveBrainModel:
             "gamma": np.zeros(steps),
         }
 
+        behavior = {
+            "decision": np.empty(steps, dtype=object),
+            "latency": np.zeros(steps),
+            "confidence": np.zeros(steps),
+            "decision_score": np.zeros(steps),
+            "decision_event": np.zeros(steps, dtype=bool),
+        }
+
         diagnostics = {
             "prediction_error": np.zeros(steps),
             "dopamine_delta": np.zeros(steps),
@@ -314,6 +331,8 @@ class CognitiveBrainModel:
         }
 
         weight_history = []
+
+        prev_decision = "wait"
 
         for k, t in enumerate(time):
             activity[k] = x
@@ -330,6 +349,21 @@ class CognitiveBrainModel:
                 inhibitory[k] = oscillator_state[:, 1]
                 for band in band_power:
                     band_power[band][k] = power[band]
+
+            sample = map_behavior_state(
+                x=x,
+                idx=self.idx,
+                dt=self.p.dt,
+                step_index=k,
+                decision_threshold=self.p.decision_threshold,
+                confidence_gain=self.p.confidence_gain,
+            )
+            behavior["decision"][k] = sample.decision
+            behavior["latency"][k] = sample.latency
+            behavior["confidence"][k] = sample.confidence
+            behavior["decision_score"][k] = sample.decision_score
+            behavior["decision_event"][k] = sample.decision != "wait" and prev_decision == "wait"
+            prev_decision = sample.decision
 
             x, diag = self.step(x, t)
 
@@ -365,4 +399,4 @@ class CognitiveBrainModel:
             "metadata": scenario_metadata,
         }
 
-        return time, activity, diagnostics, oscillations
+        return time, activity, diagnostics, oscillations, behavior
