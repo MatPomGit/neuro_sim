@@ -9,11 +9,18 @@ and selected plots before running the simulation.
 
 from __future__ import annotations
 
+import json
+import subprocess
+import sys
 import tkinter as tk
+import time as pytime
 from dataclasses import fields
-from tkinter import messagebox, ttk
+from datetime import date
+from pathlib import Path
+from tkinter import filedialog, messagebox, ttk
 from typing import Dict
 
+from .io import build_output_dir, save_run
 from .model import CognitiveBrainModel
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
@@ -48,7 +55,17 @@ PARAMETER_DESCRIPTIONS = {
     "coupling_gain": "Sprzężenie międzymodułowe oscylatorów. Typowo 0.0-1.0; większa wartość zwiększa synchronizację i propagację aktywności między modułami.",
     "oscillator_noise": "Szum oscylatorów Wilsona-Cowana. Typowo 0.0-0.05; większa wartość dodaje nieregularność do sygnałów EEG.",
     "phase_drive_gain": "Pomocniczy napęd fazy stabilizujący pasmo EEG. Typowo 0.0-0.3; większa wartość wzmacnia rytmiczność przypisanego pasma.",
+    "scenario": "Wybór gotowego scenariusza bodźców i kontekstu zadania. Każdy scenariusz uruchamia inne fazy, zdarzenia i profil sygnałów wejściowych.",
+    "save_results": "Po zakończeniu symulacji zapisuje wyniki do katalogu outputs/ w formacie NPZ + JSON (z metadanymi eksperymentu).",
+    "plot_activity": "Wykres aktywacji modułów poznawczych w czasie (np. ATT, EXEC, SEM, GW).",
+    "plot_diagnostics": "Wykres zmiennych diagnostycznych i neuromodulacyjnych, m.in. prediction error, gw_ignition i neuroprzekaźników.",
+    "plot_eeg": "Wykres aproksymowanych sygnałów EEG (E-I) dla wybranych modułów modelu.",
+    "plot_band_power": "Wykres chwilowej mocy pasm theta/alpha/beta/gamma wyliczanej z banku oscylatorów.",
 }
+
+APP_VERSION = "0.3.0"
+LAST_UPDATED = "2026-05-25"
+APP_AUTHOR = "dr inż. Mateusz Pomianek"
 
 
 class Tooltip:
@@ -152,6 +169,7 @@ class BrainModelGUI(tk.Tk):
         self.osc_defaults = WilsonCowanParams()
 
         self._build_layout()
+        self._build_menu()
 
     def _build_layout(self):
         self.tabs = ttk.Notebook(self)
@@ -206,6 +224,7 @@ class BrainModelGUI(tk.Tk):
 
         scenario_label = ttk.Label(self.sim_frame, text="scenariusz")
         scenario_label.grid(row=2, column=0, sticky="w", padx=(0, 8), pady=3)
+        Tooltip(scenario_label, PARAMETER_DESCRIPTIONS["scenario"])
         self.scenario_combo = ttk.Combobox(
             self.sim_frame,
             textvariable=self.scenario_var,
@@ -214,6 +233,13 @@ class BrainModelGUI(tk.Tk):
             width=16,
         )
         self.scenario_combo.grid(row=2, column=1, sticky="ew", pady=3)
+
+        self.save_results_var = tk.BooleanVar(value=True)
+        save_checkbox = ttk.Checkbutton(self.sim_frame, text="Zapisz wyniki po symulacji", variable=self.save_results_var)
+        save_checkbox.grid(
+            row=3, column=0, columnspan=2, sticky="w", pady=(8, 3)
+        )
+        Tooltip(save_checkbox, PARAMETER_DESCRIPTIONS["save_results"])
         self.sim_frame.columnconfigure(1, weight=1)
 
         self.brain_form = ParameterForm(left, "Parametry globalne BrainParams", BrainParams, self.brain_defaults)
@@ -239,10 +265,19 @@ class BrainModelGUI(tk.Tk):
             "band_power": "moc pasm theta/alpha/beta/gamma",
         }
 
+        plot_tooltips = {
+            "activity": PARAMETER_DESCRIPTIONS["plot_activity"],
+            "diagnostics": PARAMETER_DESCRIPTIONS["plot_diagnostics"],
+            "eeg": PARAMETER_DESCRIPTIONS["plot_eeg"],
+            "band_power": PARAMETER_DESCRIPTIONS["plot_band_power"],
+        }
+
         for row, key in enumerate(self.plot_vars):
-            ttk.Checkbutton(self.plots_frame, text=labels[key], variable=self.plot_vars[key]).grid(
+            checkbox = ttk.Checkbutton(self.plots_frame, text=labels[key], variable=self.plot_vars[key])
+            checkbox.grid(
                 row=row, column=0, sticky="w", pady=2
             )
+            Tooltip(checkbox, plot_tooltips[key])
 
         bottom = ttk.Frame(root)
         bottom.pack(fill="x", pady=(12, 0))
@@ -256,10 +291,136 @@ class BrainModelGUI(tk.Tk):
         self.plot_panel = PlotWindow(plots_tab)
         self.plot_panel.pack(fill="both", expand=True)
 
+    def _build_menu(self):
+        menubar = tk.Menu(self)
+
+        file_menu = tk.Menu(menubar, tearoff=0)
+        file_menu.add_command(label="Nowa instancja", command=self._open_new_instance)
+        file_menu.add_separator()
+        file_menu.add_command(label="Zapisz konfigurację...", command=self._save_current_config)
+        file_menu.add_command(label="Wczytaj konfigurację...", command=self._load_existing_config)
+        file_menu.add_separator()
+        file_menu.add_command(label="Zamknij", command=self.destroy)
+        menubar.add_cascade(label="Plik", menu=file_menu)
+
+        edit_menu = tk.Menu(menubar, tearoff=0)
+        edit_menu.add_command(label="Konfiguracja symulacji", command=lambda: self.tabs.select(0))
+        edit_menu.add_command(label="Konfiguracja wykresów", command=self._focus_plots_section)
+        edit_menu.add_command(label="Parametry globalne (BrainParams)", command=lambda: self.brain_form.focus_set())
+        edit_menu.add_command(label="Parametry oscylatorów", command=lambda: self.osc_form.focus_set())
+        edit_menu.add_separator()
+        edit_menu.add_command(label="Przywróć domyślne", command=self.reset_defaults)
+        menubar.add_cascade(label="Edycja", menu=edit_menu)
+
+        help_menu = tk.Menu(menubar, tearoff=0)
+        help_menu.add_command(label="Instrukcja używania", command=self._show_usage_help)
+        help_menu.add_command(label="O programie", command=self._show_about)
+        menubar.add_cascade(label="Help", menu=help_menu)
+
+        self.config(menu=menubar)
+
+    def _focus_plots_section(self):
+        self.tabs.select(0)
+        self.plots_frame.focus_set()
+
+    def _open_new_instance(self):
+        try:
+            root_dir = Path(__file__).resolve().parents[1]
+            entrypoint = root_dir / "main_gui.py"
+            subprocess.Popen([sys.executable, str(entrypoint)], cwd=str(root_dir))
+            self.status_var.set("Uruchomiono nową instancję programu.")
+        except Exception as exc:
+            messagebox.showerror("Błąd", f"Nie udało się uruchomić nowej instancji: {exc}")
+
+    def _collect_config(self):
+        return {
+            "T": self.T_var.get(),
+            "seed": self.seed_var.get(),
+            "scenario": self.scenario_var.get(),
+            "save_results": self.save_results_var.get(),
+            "brain_params": {name: var.get() for name, var in self.brain_form.vars.items()},
+            "oscillator_params": {name: var.get() for name, var in self.osc_form.vars.items()},
+            "plots": {name: var.get() for name, var in self.plot_vars.items()},
+        }
+
+    def _apply_config(self, config: dict):
+        self.T_var.set(str(config.get("T", self.T_var.get())))
+        self.seed_var.set(str(config.get("seed", self.seed_var.get())))
+        self.scenario_var.set(str(config.get("scenario", self.scenario_var.get())))
+        self.save_results_var.set(bool(config.get("save_results", self.save_results_var.get())))
+
+        for name, value in config.get("brain_params", {}).items():
+            if name in self.brain_form.vars:
+                self.brain_form.vars[name].set(value)
+        for name, value in config.get("oscillator_params", {}).items():
+            if name in self.osc_form.vars:
+                self.osc_form.vars[name].set(value)
+        for name, value in config.get("plots", {}).items():
+            if name in self.plot_vars:
+                self.plot_vars[name].set(bool(value))
+
+    def _save_current_config(self):
+        default_name = f"brain_model_config_{date.today().isoformat()}.json"
+        target = filedialog.asksaveasfilename(
+            title="Zapisz konfigurację",
+            defaultextension=".json",
+            initialfile=default_name,
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+        )
+        if not target:
+            return
+        payload = {
+            "format": "brain-model-gui-config-v1",
+            "app_version": APP_VERSION,
+            "saved_date": date.today().isoformat(),
+            "config": self._collect_config(),
+        }
+        Path(target).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        self.status_var.set(f"Zapisano konfigurację: {target}")
+
+    def _load_existing_config(self):
+        source = filedialog.askopenfilename(
+            title="Wczytaj konfigurację",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+        )
+        if not source:
+            return
+        payload = json.loads(Path(source).read_text(encoding="utf-8"))
+        config = payload.get("config", payload)
+        self._apply_config(config)
+        self.status_var.set(f"Wczytano konfigurację: {source}")
+
+    def _show_usage_help(self):
+        messagebox.showinfo(
+            "Instrukcja używania",
+            (
+                "1) W zakładce Konfiguracja ustaw czas, seed i scenariusz.\n"
+                "2) Dostosuj parametry BrainParams i oscylatorów.\n"
+                "3) Wybierz wykresy do wygenerowania.\n"
+                "4) Kliknij 'Uruchom symulację'.\n"
+                "5) Jeśli aktywna opcja zapisu, wyniki trafią do outputs/.\n\n"
+                "Menu Plik:\n"
+                "- Nowa instancja: uruchamia kolejne okno programu.\n"
+                "- Zapisz/Wczytaj konfigurację: zapis i odtwarzanie ustawień GUI."
+            ),
+        )
+
+    def _show_about(self):
+        messagebox.showinfo(
+            "O programie",
+            (
+                "Cognitive Brain Model\n"
+                f"Wersja: {APP_VERSION}\n"
+                f"Ostatnia aktualizacja: {LAST_UPDATED}\n"
+                f"Autor: {APP_AUTHOR}"
+            ),
+        )
+
     def reset_defaults(self):
         self.T_var.set("45.0")
         self.seed_var.set("7")
         self.scenario_var.set("reward-learning")
+        self.save_results_var.set(True)
         self.brain_form.reset()
         self.osc_form.reset()
         for var in self.plot_vars.values():
@@ -294,6 +455,7 @@ class BrainModelGUI(tk.Tk):
             self.status_var.set("Symulacja w toku...")
             self.update_idletasks()
 
+            start = pytime.perf_counter()
             model = CognitiveBrainModel(
                 params=brain_params,
                 oscillator_params=oscillator_params,
@@ -301,6 +463,23 @@ class BrainModelGUI(tk.Tk):
                 stimulus=self.scenario_var.get(),
             )
             time, activity, diagnostics, oscillations = model.simulate(T=T)
+            elapsed = pytime.perf_counter() - start
+
+            save_info = None
+            if self.save_results_var.get():
+                out_dir = build_output_dir(self.scenario_var.get(), "gui")
+                save_info = save_run(
+                    out_dir,
+                    time,
+                    activity,
+                    diagnostics,
+                    oscillations,
+                    model_params=model.p,
+                    oscillator_params=model.oscillator_bank.params,
+                    scenario=oscillations.get("metadata"),
+                    seed=seed,
+                    duration_s=elapsed,
+                )
 
             self.plot_panel.clear()
             has_plots = False
@@ -351,7 +530,13 @@ class BrainModelGUI(tk.Tk):
             else:
                 self.tabs.select(0)
 
-            self.status_var.set("Symulacja zakończona.")
+            if has_plots:
+                msg = "Symulacja zakończona."
+            else:
+                msg = "Symulacja zakończona (brak wybranych wykresów)."
+            if save_info:
+                msg += f" Wyniki zapisane: {save_info['output_dir']}"
+            self.status_var.set(msg)
 
         except Exception as exc:
             self.status_var.set("Błąd konfiguracji.")
