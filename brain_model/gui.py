@@ -17,6 +17,7 @@ from typing import Dict
 from .model import CognitiveBrainModel
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
+from .scenarios import list_scenarios
 from .plotting import (
     PlotWindow,
     draw_activity,
@@ -201,6 +202,18 @@ class BrainModelGUI(tk.Tk):
         seed_label.grid(row=1, column=0, sticky="w", padx=(0, 8), pady=3)
         Tooltip(seed_label, PARAMETER_DESCRIPTIONS["seed"])
         ttk.Entry(self.sim_frame, textvariable=self.seed_var, width=14).grid(row=1, column=1, sticky="ew", pady=3)
+        self.scenario_var = tk.StringVar(value="reward-learning")
+
+        scenario_label = ttk.Label(self.sim_frame, text="scenariusz")
+        scenario_label.grid(row=2, column=0, sticky="w", padx=(0, 8), pady=3)
+        self.scenario_combo = ttk.Combobox(
+            self.sim_frame,
+            textvariable=self.scenario_var,
+            values=list_scenarios(),
+            state="readonly",
+            width=16,
+        )
+        self.scenario_combo.grid(row=2, column=1, sticky="ew", pady=3)
         self.sim_frame.columnconfigure(1, weight=1)
 
         self.brain_form = ParameterForm(left, "Parametry globalne BrainParams", BrainParams, self.brain_defaults)
@@ -246,6 +259,7 @@ class BrainModelGUI(tk.Tk):
     def reset_defaults(self):
         self.T_var.set("45.0")
         self.seed_var.set("7")
+        self.scenario_var.set("reward-learning")
         self.brain_form.reset()
         self.osc_form.reset()
         for var in self.plot_vars.values():
@@ -284,6 +298,7 @@ class BrainModelGUI(tk.Tk):
                 params=brain_params,
                 oscillator_params=oscillator_params,
                 seed=seed,
+                stimulus=self.scenario_var.get(),
             )
             time, activity, diagnostics, oscillations = model.simulate(T=T)
 

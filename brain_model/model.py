@@ -4,7 +4,8 @@ from .activations import sigmoid
 from .connectivity import build_connectivity
 from .modules import MODULES, TAU
 from .params import BrainParams
-from .stimuli import experimental_stimulus
+from .scenarios import get_scenario, CHANNELS
+from .stimuli import build_stimulus_fn
 from .oscillators import WilsonCowanOscillatorBank
 
 
@@ -31,7 +32,7 @@ class CognitiveBrainModel:
             stałe czasowe modułów.
     """
 
-    def __init__(self, params=None, stimulus_fn=None, seed=7, oscillator_params=None, oscillator_band_map=None):
+    def __init__(self, params=None, stimulus=None, seed=7, oscillator_params=None, oscillator_band_map=None):
         self.p = params or BrainParams()
         self.rng = np.random.default_rng(seed)
 
@@ -42,7 +43,24 @@ class CognitiveBrainModel:
         self.tau = np.array(TAU)
         self.W = build_connectivity(self.names)
 
-        self.stimulus_fn = stimulus_fn or experimental_stimulus
+        self.scenario_id = None
+        self.scenario = None
+        if stimulus is None:
+            self.scenario_id = "reward-learning"
+            self.scenario = get_scenario(self.scenario_id)
+            self.stimulus_fn = build_stimulus_fn(self.scenario)
+        elif isinstance(stimulus, str):
+            self.scenario_id = stimulus
+            self.scenario = get_scenario(stimulus)
+            self.stimulus_fn = build_stimulus_fn(self.scenario)
+        elif callable(stimulus):
+            probe = stimulus(0.0)
+            required = set(CHANNELS)
+            if not isinstance(probe, dict) or not required.issubset(probe):
+                raise ValueError(f"Callable stimulus must return dict with required channels: {CHANNELS}")
+            self.stimulus_fn = stimulus
+        else:
+            raise TypeError("stimulus must be None, scenario id (str), or callable")
 
         self.oscillator_bank = WilsonCowanOscillatorBank(
             module_names=self.names,
@@ -92,6 +110,16 @@ class CognitiveBrainModel:
             pobudzenie zależne od niepewności, zaskoczenia i zagrożenia.
         acetylcholine:
             wzrost precyzji sygnałów związany z zadaniem i uwagą.
+        serotonin:
+            modulacja nastroju, hamowania impulsywności i odporności na stresory.
+        gaba:
+            dominująca inhibicja stabilizująca pobudzenie sieci.
+        glutamate:
+            dominujące pobudzenie i wzmacnianie transmisji korowej.
+        endorphins:
+            analgezja i redukcja awersyjnej odpowiedzi na stres.
+        cortisol:
+            hormonalna odpowiedź stresowa HPA, rośnie przy zagrożeniu i utrzymanym błędzie.
         """
         VAL = self.idx["VAL"]
         ATT = self.idx["ATT"]
@@ -100,7 +128,22 @@ class CognitiveBrainModel:
         noradrenaline = sigmoid(prediction_error + u["threat"] - 0.45)
         acetylcholine = sigmoid(u["task_cue"] + x[ATT] - 0.55)
 
-        return dopamine_delta, noradrenaline, acetylcholine
+        serotonin = sigmoid(0.70 * u["reward"] - 0.45 * u["threat"] + 0.25 * x[self.idx["DMN"]] - 0.2)
+        gaba = sigmoid(0.55 * x[self.idx["ATT"]] + 0.35 * x[self.idx["EXEC"]] + 0.30 * u["interoceptive"] - 0.45)
+        glutamate = sigmoid(0.70 * u["visual"] + 0.65 * u["auditory"] + 0.50 * u["task_cue"] + 0.35 * prediction_error - 0.4)
+        endorphins = sigmoid(0.65 * u["reward"] + 0.40 * u["threat"] + 0.30 * u["interoceptive"] - 0.35)
+        cortisol = sigmoid(0.80 * u["threat"] + 0.45 * prediction_error + 0.30 * u["task_cue"] - 0.40 * serotonin - 0.20)
+
+        return (
+            dopamine_delta,
+            noradrenaline,
+            acetylcholine,
+            serotonin,
+            gaba,
+            glutamate,
+            endorphins,
+            cortisol,
+        )
 
     def compute_global_workspace(self, x):
         """
@@ -159,7 +202,16 @@ class CognitiveBrainModel:
 
         err_visual, err_auditory, prediction_error = self.compute_prediction_error(x, u)
 
-        dopamine_delta, noradrenaline, acetylcholine = self.compute_neuromodulation(
+        (
+            dopamine_delta,
+            noradrenaline,
+            acetylcholine,
+            serotonin,
+            gaba,
+            glutamate,
+            endorphins,
+            cortisol,
+        ) = self.compute_neuromodulation(
             x=x,
             u=u,
             prediction_error=prediction_error,
@@ -207,6 +259,11 @@ class CognitiveBrainModel:
             "dopamine_delta": dopamine_delta,
             "noradrenaline": noradrenaline,
             "acetylcholine": acetylcholine,
+            "serotonin": serotonin,
+            "gaba": gaba,
+            "glutamate": glutamate,
+            "endorphins": endorphins,
+            "cortisol": cortisol,
             "gw_ignition": gw_ignition,
         }
 
@@ -235,6 +292,11 @@ class CognitiveBrainModel:
             "dopamine_delta": np.zeros(steps),
             "noradrenaline": np.zeros(steps),
             "acetylcholine": np.zeros(steps),
+            "serotonin": np.zeros(steps),
+            "gaba": np.zeros(steps),
+            "glutamate": np.zeros(steps),
+            "endorphins": np.zeros(steps),
+            "cortisol": np.zeros(steps),
             "gw_ignition": np.zeros(steps),
         }
 
@@ -259,6 +321,21 @@ class CognitiveBrainModel:
             for key in diagnostics:
                 diagnostics[key][k] = diag[key]
 
+        if self.scenario is not None:
+            scenario_metadata = self.scenario.to_metadata()
+        else:
+            scenario_metadata = {
+                "scenario_id": "custom-callable",
+                "scenario_name": "custom-callable",
+                "scenario_description": "User-provided callable stimulus.",
+                "schema_version": "callable-v1",
+                "duration_hint": T,
+                "tags": ["custom"],
+                "phases": [],
+                "events": [],
+                "context": {},
+            }
+
         oscillations = {
             "eeg": eeg,
             "excitatory": excitatory,
@@ -266,6 +343,7 @@ class CognitiveBrainModel:
             "band_power": band_power,
             "module_bands": self.oscillator_bank.module_bands,
             "frequency": self.oscillator_bank.frequency,
+            "metadata": scenario_metadata,
         }
 
         return time, activity, diagnostics, oscillations
