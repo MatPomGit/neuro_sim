@@ -23,6 +23,8 @@ def _run_metrics(run: dict) -> dict:
 
 
 def generate_comparison_report(run_dirs, output_path: str | Path = "outputs/report_comparison.png"):
+    if not run_dirs:
+        raise ValueError("run_dirs cannot be empty")
     runs = [load_run(path) for path in run_dirs]
     labels = [Path(run["path"]).name for run in runs]
     metrics = [_run_metrics(run) for run in runs]
