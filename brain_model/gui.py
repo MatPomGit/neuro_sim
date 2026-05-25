@@ -612,8 +612,6 @@ class BrainModelGUI(tk.Tk):
                 self.plot_panel.add_plot(
                     "Aktywność mózgu",
                     draw_simulated_brain_activity,
-    draw_scenario_channels,
-    draw_scenario_timeline,
                     time,
                     activity,
                     model.names,
