@@ -539,7 +539,7 @@ class BrainModelGUI(tk.Tk):
             seed = int(self.seed_var.get())
             dt = float(self.dt_var.get())
         except ValueError as exc:
-            raise ValueError("Niepoprawny czas symulacji lub seed.") from exc
+            raise ValueError("Niepoprawny czas symulacji, seed lub krok czasowy dt.") from exc
 
         if T <= 0:
             raise ValueError("Czas symulacji T musi być większy od zera.")
