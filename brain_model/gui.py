@@ -467,19 +467,22 @@ class BrainModelGUI(tk.Tk):
 
             save_info = None
             if self.save_results_var.get():
-                out_dir = build_output_dir(self.scenario_var.get(), "gui")
-                save_info = save_run(
-                    out_dir,
-                    time,
-                    activity,
-                    diagnostics,
-                    oscillations,
-                    model_params=model.p,
-                    oscillator_params=model.oscillator_bank.params,
-                    scenario=oscillations.get("metadata"),
-                    seed=seed,
-                    duration_s=elapsed,
-                )
+                try:
+                    out_dir = build_output_dir(self.scenario_var.get(), "gui")
+                    save_info = save_run(
+                        out_dir,
+                        time,
+                        activity,
+                        diagnostics,
+                        oscillations,
+                        model_params=model.p,
+                        oscillator_params=model.oscillator_bank.params,
+                        scenario=oscillations.get("metadata"),
+                        seed=seed,
+                        duration_s=elapsed,
+                    )
+                except Exception as exc:
+                    messagebox.showwarning("Ostrzeżenie", f"Nie udało się zapisać wyników symulacji: {exc}")
 
             self.plot_panel.clear()
             has_plots = False
