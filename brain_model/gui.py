@@ -10,13 +10,13 @@ and selected plots before running the simulation.
 from __future__ import annotations
 
 import tkinter as tk
-from tkinter import ttk, messagebox
 from dataclasses import fields
-from typing import Callable, Dict, Any
+from tkinter import messagebox, ttk
+from typing import Dict
 
 from .model import CognitiveBrainModel
-from .params import BrainParams
 from .oscillators import WilsonCowanParams
+from .params import BrainParams
 from .plotting import (
     PlotWindow,
     draw_activity,
@@ -27,26 +27,26 @@ from .plotting import (
 
 
 PARAMETER_DESCRIPTIONS = {
-    "T": "Czas trwania symulacji w sekundach.",
-    "seed": "Ziarno generatora losowego; ta sama wartość daje powtarzalny przebieg.",
-    "dt": "Krok czasowy symulacji.",
-    "noise": "Skala szumu neuronalnego.",
-    "gw_threshold": "Próg nieliniowego zapłonu global workspace.",
-    "gw_gain": "Stromość funkcji zapłonu global workspace.",
-    "learning_rate_semantic": "Tempo powolnego uczenia semantycznego.",
-    "learning_rate_value": "Tempo uczenia wartościowania na podstawie błędu predykcji nagrody.",
-    "decay_semantic": "Powolny zanik aktywacji lub śladu semantycznego.",
-    "enable_oscillators": "Włącza bank oscylatorów Wilsona-Cowana dla modułów poznawczych.",
-    "w_ee": "Waga połączenia populacji pobudzającej z samą sobą.",
-    "w_ei": "Wpływ populacji hamującej na populację pobudzającą.",
-    "w_ie": "Wpływ populacji pobudzającej na populację hamującą.",
-    "w_ii": "Waga połączenia populacji hamującej z samą sobą.",
-    "baseline_e": "Bazowy napęd populacji pobudzającej.",
-    "baseline_i": "Bazowy napęd populacji hamującej.",
-    "cognitive_drive_gain": "Siła wpływu aktywności poznawczej na oscylatory.",
-    "coupling_gain": "Siła sprzężenia międzymodułowego oscylatorów.",
-    "oscillator_noise": "Skala szumu w oscylatorach Wilsona-Cowana.",
-    "phase_drive_gain": "Siła pomocniczego generatora fazy stabilizującego pasmo EEG.",
+    "T": "Czas trwania symulacji w sekundach. Typowo 10-120 s; większe wartości pokazują dłuższe trendy, ale wydłużają obliczenia.",
+    "seed": "Ziarno generatora losowego. Typowo dowolna liczba całkowita; ta sama wartość daje powtarzalny przebieg szumu i oscylacji.",
+    "dt": "Krok czasowy symulacji. Typowo 0.001-0.01; mniejszy krok zwiększa dokładność i koszt, większy może wygładzić lub zdestabilizować dynamikę.",
+    "noise": "Skala szumu neuronalnego. Typowo 0.0-0.05; większa wartość zwiększa zmienność aktywacji i może maskować słabe efekty bodźców.",
+    "gw_threshold": "Próg zapłonu global workspace. Typowo 0.4-0.8; niższy ułatwia globalną aktywację, wyższy wymaga silniejszej uwagi lub salience.",
+    "gw_gain": "Stromość funkcji zapłonu global workspace. Typowo 5-20; większa wartość daje bardziej skokowe przejście między brakiem i obecnością zapłonu.",
+    "learning_rate_semantic": "Tempo uczenia semantycznego. Typowo 0.0-0.02; większa wartość szybciej wzmacnia SEM przez HIP i GW.",
+    "learning_rate_value": "Tempo uczenia wartościowania. Typowo 0.0-0.08; większa wartość szybciej zmienia VAL po błędzie predykcji nagrody.",
+    "decay_semantic": "Zanik śladu semantycznego. Typowo 0.0-0.01; większa wartość szybciej wygasza SEM i ogranicza długotrwałe utrzymanie reprezentacji.",
+    "enable_oscillators": "Włącza oscylatory Wilsona-Cowana. Typowo włączone; wyłączenie zeruje sygnały EEG i moc pasmową, ale zostawia dynamikę poznawczą.",
+    "w_ee": "Samowzmacnianie populacji pobudzającej. Typowo 8-14; większa wartość wzmacnia amplitudę i może ułatwiać oscylacje.",
+    "w_ei": "Hamowanie populacji pobudzającej przez I. Typowo 7-12; większa wartość mocniej tłumi E i może zmniejszać amplitudę EEG.",
+    "w_ie": "Pobudzanie populacji hamującej przez E. Typowo 8-13; większa wartość wzmacnia sprzężenie E-I i wpływa na rytmiczność.",
+    "w_ii": "Samooddziaływanie populacji hamującej. Typowo 0.5-2.0; większa wartość zmienia poziom hamowania i stabilność oscylatora.",
+    "baseline_e": "Bazowy napęd populacji pobudzającej. Typowo -3.5 do -1.0; mniej ujemny podnosi aktywność E i zwiększa podatność na napęd poznawczy.",
+    "baseline_i": "Bazowy napęd populacji hamującej. Typowo -4.0 do -1.5; mniej ujemny wzmacnia hamowanie i zmienia równowagę E-I.",
+    "cognitive_drive_gain": "Wpływ aktywności poznawczej na oscylatory. Typowo 1-5; większa wartość silniej przekłada aktywacje modułów na EEG.",
+    "coupling_gain": "Sprzężenie międzymodułowe oscylatorów. Typowo 0.0-1.0; większa wartość zwiększa synchronizację i propagację aktywności między modułami.",
+    "oscillator_noise": "Szum oscylatorów Wilsona-Cowana. Typowo 0.0-0.05; większa wartość dodaje nieregularność do sygnałów EEG.",
+    "phase_drive_gain": "Pomocniczy napęd fazy stabilizujący pasmo EEG. Typowo 0.0-0.3; większa wartość wzmacnia rytmiczność przypisanego pasma.",
 }
 
 
@@ -73,7 +73,7 @@ class Tooltip:
             relief="solid",
             borderwidth=1,
             background="#ffffe0",
-            wraplength=320,
+            wraplength=420,
         ).pack()
 
     def hide(self, event=None):
@@ -144,8 +144,8 @@ class BrainModelGUI(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Cognitive Brain Model - konfiguracja symulacji")
-        self.geometry("920x720")
-        self.minsize(860, 640)
+        self.geometry("1180x780")
+        self.minsize(940, 660)
 
         self.brain_defaults = BrainParams()
         self.osc_defaults = WilsonCowanParams()
@@ -153,7 +153,15 @@ class BrainModelGUI(tk.Tk):
         self._build_layout()
 
     def _build_layout(self):
-        root = ttk.Frame(self, padding=12)
+        self.tabs = ttk.Notebook(self)
+        self.tabs.pack(fill="both", expand=True)
+
+        config_tab = ttk.Frame(self.tabs)
+        plots_tab = ttk.Frame(self.tabs)
+        self.tabs.add(config_tab, text="Konfiguracja")
+        self.tabs.add(plots_tab, text="Wykresy")
+
+        root = ttk.Frame(config_tab, padding=12)
         root.pack(fill="both", expand=True)
 
         top = ttk.Frame(root)
@@ -167,7 +175,7 @@ class BrainModelGUI(tk.Tk):
 
         ttk.Label(
             top,
-            text="Zmień parametry przed uruchomieniem symulacji. Po kliknięciu 'Uruchom' zostaną wygenerowane wykresy matplotlib.",
+            text="Zmień parametry przed uruchomieniem symulacji. Po kliknięciu 'Uruchom' wykresy pojawią się w zakładce Wykresy.",
         ).pack(anchor="w", pady=(3, 0))
 
         panes = ttk.PanedWindow(root, orient="horizontal")
@@ -188,6 +196,7 @@ class BrainModelGUI(tk.Tk):
         t_label.grid(row=0, column=0, sticky="w", padx=(0, 8), pady=3)
         Tooltip(t_label, PARAMETER_DESCRIPTIONS["T"])
         ttk.Entry(self.sim_frame, textvariable=self.T_var, width=14).grid(row=0, column=1, sticky="ew", pady=3)
+
         seed_label = ttk.Label(self.sim_frame, text="seed")
         seed_label.grid(row=1, column=0, sticky="w", padx=(0, 8), pady=3)
         Tooltip(seed_label, PARAMETER_DESCRIPTIONS["seed"])
@@ -230,6 +239,9 @@ class BrainModelGUI(tk.Tk):
 
         self.status_var = tk.StringVar(value="Gotowe.")
         ttk.Label(root, textvariable=self.status_var).pack(anchor="w", pady=(8, 0))
+
+        self.plot_panel = PlotWindow(plots_tab)
+        self.plot_panel.pack(fill="both", expand=True)
 
     def reset_defaults(self):
         self.T_var.set("45.0")
@@ -275,11 +287,11 @@ class BrainModelGUI(tk.Tk):
             )
             time, activity, diagnostics, oscillations = model.simulate(T=T)
 
-            plot_window = PlotWindow(self)
+            self.plot_panel.clear()
             has_plots = False
 
             if self.plot_vars["activity"].get():
-                plot_window.add_plot(
+                self.plot_panel.add_plot(
                     "Aktywacje",
                     draw_activity,
                     time,
@@ -290,7 +302,7 @@ class BrainModelGUI(tk.Tk):
                 )
                 has_plots = True
             if self.plot_vars["diagnostics"].get():
-                plot_window.add_plot(
+                self.plot_panel.add_plot(
                     "Diagnostyka",
                     draw_diagnostics,
                     time,
@@ -299,7 +311,7 @@ class BrainModelGUI(tk.Tk):
                 )
                 has_plots = True
             if self.plot_vars["eeg"].get():
-                plot_window.add_plot(
+                self.plot_panel.add_plot(
                     "EEG modułów",
                     draw_eeg_modules,
                     time,
@@ -310,20 +322,19 @@ class BrainModelGUI(tk.Tk):
                 )
                 has_plots = True
             if self.plot_vars["band_power"].get():
-                plot_window.add_plot(
+                self.plot_panel.add_plot(
                     "Moc pasm",
                     draw_band_power,
                     time,
                     oscillations,
-                    figsize=(11, 5),
+                    figsize=(11, 8),
                 )
                 has_plots = True
 
             if has_plots:
-                plot_window.fit_tabs_to_count()
-                plot_window.focus()
+                self.tabs.select(1)
             else:
-                plot_window.destroy()
+                self.tabs.select(0)
 
             self.status_var.set("Symulacja zakończona.")
 

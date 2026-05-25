@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import math
-import tkinter as tk
 from tkinter import ttk
 
 import matplotlib.pyplot as plt
@@ -48,21 +46,31 @@ def _describe(label):
 
 
 def _attach_line_tooltips(fig, axes):
-    annotation = axes[0].annotate(
-        "",
-        xy=(0, 0),
-        xytext=(14, 14),
-        textcoords="offset points",
-        bbox={"boxstyle": "round,pad=0.3", "fc": "#ffffe0", "ec": "#777777", "alpha": 0.95},
-        arrowprops={"arrowstyle": "->", "color": "#777777"},
-    )
-    annotation.set_visible(False)
+    annotations = {}
+    for ax in axes:
+        annotation = ax.annotate(
+            "",
+            xy=(0, 0),
+            xytext=(14, 14),
+            textcoords="offset points",
+            bbox={"boxstyle": "round,pad=0.3", "fc": "#ffffe0", "ec": "#777777", "alpha": 0.95},
+            arrowprops={"arrowstyle": "->", "color": "#777777"},
+        )
+        annotation.set_visible(False)
+        annotations[ax] = annotation
+
+    def hide_annotations():
+        changed = False
+        for annotation in annotations.values():
+            if annotation.get_visible():
+                annotation.set_visible(False)
+                changed = True
+        if changed:
+            fig.canvas.draw_idle()
 
     def on_move(event):
         if event.inaxes not in axes:
-            if annotation.get_visible():
-                annotation.set_visible(False)
-                fig.canvas.draw_idle()
+            hide_annotations()
             return
 
         best = None
@@ -82,13 +90,15 @@ def _attach_line_tooltips(fig, axes):
                 break
 
         if not best:
-            if annotation.get_visible():
-                annotation.set_visible(False)
-                fig.canvas.draw_idle()
+            hide_annotations()
             return
 
-        _, line, x_value, y_value = best
+        ax, line, x_value, y_value = best
         label = line.get_label()
+        for other_ax, other_annotation in annotations.items():
+            if other_ax is not ax:
+                other_annotation.set_visible(False)
+        annotation = annotations[ax]
         annotation.xy = (x_value, y_value)
         annotation.set_text(f"{label}\n{_describe(label)}\nt={x_value:.3g}, y={y_value:.3g}")
         annotation.set_visible(True)
@@ -116,6 +126,7 @@ def draw_activity(ax, time, activity, names, idx):
     ax.set_title("Mezoskopowa dynamika procesów poznawczych")
     ax.legend(ncol=4, fontsize=9)
     _style_lines(ax)
+    return [ax]
 
 
 def draw_diagnostics(ax, time, diagnostics):
@@ -130,6 +141,7 @@ def draw_diagnostics(ax, time, diagnostics):
     ax.set_title("Zmienne obliczeniowe i neuromodulacyjne")
     ax.legend()
     _style_lines(ax)
+    return [ax]
 
 
 def draw_eeg_modules(ax, time, oscillations, names, idx):
@@ -144,26 +156,32 @@ def draw_eeg_modules(ax, time, oscillations, names, idx):
     ax.set_title("Oscylatory Wilsona-Cowana dla wybranych modułów")
     ax.legend(ncol=4, fontsize=9)
     _style_lines(ax)
+    return [ax]
 
 
 def draw_band_power(ax, time, oscillations):
     band_power = oscillations["band_power"]
+    fig = ax.figure
+    ax.remove()
+    axes = fig.subplots(4, 1, sharex=True)
 
-    for band in ["theta", "alpha", "beta", "gamma"]:
-        ax.plot(time, band_power[band], label=band)
+    for band_ax, band in zip(axes, ["theta", "alpha", "beta", "gamma"]):
+        band_ax.plot(time, band_power[band], label=band)
+        band_ax.set_ylabel(band)
+        band_ax.legend(loc="upper right")
+        _style_lines(band_ax)
 
-    ax.set_xlabel("Czas symulacji [s]")
-    ax.set_ylabel("Uproszczona moc pasmowa")
-    ax.set_title("Symulowana dynamika pasm EEG")
-    ax.legend()
-    _style_lines(ax)
+    axes[0].set_title("Symulowana dynamika pasm EEG")
+    axes[-1].set_xlabel("Czas symulacji [s]")
+    fig.supylabel("Uproszczona moc pasmowa")
+    return list(axes)
 
 
 def _show_standalone(draw_func, *args, figsize=(14, 6)):
     fig, ax = plt.subplots(figsize=figsize)
-    draw_func(ax, *args)
+    axes = draw_func(ax, *args) or [ax]
     fig.tight_layout()
-    _attach_line_tooltips(fig, [ax])
+    _attach_line_tooltips(fig, axes)
     plt.show()
 
 
@@ -180,17 +198,14 @@ def plot_eeg_modules(time, oscillations, names, idx):
 
 
 def plot_band_power(time, oscillations):
-    _show_standalone(draw_band_power, time, oscillations, figsize=(14, 4))
+    _show_standalone(draw_band_power, time, oscillations, figsize=(14, 8))
 
 
-class PlotWindow(tk.Toplevel):
-    """Single Tk window that embeds all selected matplotlib plots."""
+class PlotWindow(ttk.Frame):
+    """Tk frame that embeds all selected matplotlib plots."""
 
-    def __init__(self, parent, title="Wykresy symulacji"):
+    def __init__(self, parent):
         super().__init__(parent)
-        self.title(title)
-        self.geometry("1180x780")
-        self.minsize(900, 620)
 
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True)
@@ -205,17 +220,23 @@ class PlotWindow(tk.Toplevel):
         self._figures = []
         self._canvases = []
 
+    def clear(self):
+        for tab_id in self.notebook.tabs():
+            self.notebook.forget(tab_id)
+        self._figures.clear()
+        self._canvases.clear()
+
     def add_plot(self, tab_title, draw_func, *args, figsize=(10, 6)):
         frame = ttk.Frame(self.notebook)
         self.notebook.add(frame, text=tab_title)
 
         fig = Figure(figsize=figsize, dpi=100)
         ax = fig.add_subplot(111)
-        draw_func(ax, *args)
+        axes = draw_func(ax, *args) or [ax]
         fig.tight_layout()
 
         canvas = FigureCanvasTkAgg(fig, master=frame)
-        _attach_line_tooltips(fig, [ax])
+        _attach_line_tooltips(fig, axes)
         toolbar = NavigationToolbar2Tk(canvas, frame, pack_toolbar=False)
         toolbar.update()
         toolbar.pack(side="top", fill="x")
@@ -226,9 +247,4 @@ class PlotWindow(tk.Toplevel):
         self._canvases.append(canvas)
 
     def fit_tabs_to_count(self):
-        tab_count = len(self.notebook.tabs())
-        if tab_count <= 1:
-            return
-        width = min(1320, max(980, 260 * tab_count))
-        height = min(900, max(700, 170 * math.ceil(tab_count / 2)))
-        self.geometry(f"{width}x{height}")
+        return
