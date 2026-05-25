@@ -1,27 +1,12 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+from .plasticity import ConnectivityAdaptationConfig, PlasticityRuleConfig
 
 
 @dataclass
 class BrainParams:
     """
     Parametry globalne modelu.
-
-    dt:
-        Krok czasowy symulacji.
-    noise:
-        Skala szumu neuronalnego.
-    gw_threshold:
-        Próg nieliniowego zapłonu global workspace.
-    gw_gain:
-        Stromość funkcji zapłonu global workspace.
-    learning_rate_semantic:
-        Powolne uczenie semantyczne.
-    learning_rate_value:
-        Uczenie wartościowania na podstawie błędu predykcji nagrody.
-    decay_semantic:
-        Powolny zanik aktywacji/śladu semantycznego.
-    enable_oscillators:
-        Czy symulować oscylatory Wilsona-Cowana dla modułów poznawczych.
     """
 
     dt: float = 0.005
@@ -32,3 +17,15 @@ class BrainParams:
     learning_rate_value: float = 0.02
     decay_semantic: float = 0.001
     enable_oscillators: bool = True
+
+    semantic_rule: PlasticityRuleConfig = field(default_factory=lambda: PlasticityRuleConfig(
+        enabled=True,
+        learning_rate=0.004,
+        decay=0.001,
+    ))
+    value_rule: PlasticityRuleConfig = field(default_factory=lambda: PlasticityRuleConfig(
+        enabled=True,
+        learning_rate=0.02,
+        decay=0.0,
+    ))
+    connectivity_adaptation: ConnectivityAdaptationConfig = field(default_factory=ConnectivityAdaptationConfig)

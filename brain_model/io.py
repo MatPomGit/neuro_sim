@@ -66,7 +66,11 @@ def save_run(
         "osc_exc": np.asarray(oscillations.get("excitatory", [])),
         "osc_inh": np.asarray(oscillations.get("inhibitory", [])),
     }
+    diagnostics_nested = {}
     for key, val in diagnostics.items():
+        if isinstance(val, dict):
+            diagnostics_nested[key] = _to_jsonable(val)
+            continue
         arrays[f"diag_{key}"] = np.asarray(val)
     for band, val in oscillations.get("band_power", {}).items():
         arrays[f"band_{band}"] = np.asarray(val)
@@ -87,6 +91,8 @@ def save_run(
             "frequency": _to_jsonable(np.asarray(oscillations.get("frequency", [])).tolist()),
         },
     }
+    if diagnostics_nested:
+        metadata["diagnostics_nested"] = diagnostics_nested
     if extra_metadata:
         metadata["extra"] = _to_jsonable(extra_metadata)
 
@@ -122,6 +128,7 @@ def load_run(output_dir: str | Path) -> dict:
         }
 
     metadata = json.loads(meta_path.read_text(encoding="utf-8"))
+    diagnostics.update(metadata.get("diagnostics_nested", {}))
     oscillations["module_bands"] = metadata.get("oscillator_config", {}).get("module_bands", [])
     oscillations["frequency"] = np.asarray(metadata.get("oscillator_config", {}).get("frequency", []), dtype=float)
 

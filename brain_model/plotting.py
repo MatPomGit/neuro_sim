@@ -154,6 +154,51 @@ def draw_diagnostics(ax, time, diagnostics):
     return [ax]
 
 
+
+
+def draw_weight_trajectories(ax, time, diagnostics):
+    history = diagnostics.get("weight_history", {})
+    weights = history.get("weights", {})
+
+    if not weights:
+        ax.text(0.5, 0.5, "Brak adaptacji wag lub brak wybranych par modułów.", ha="center", va="center", transform=ax.transAxes)
+        ax.set_title("Trajektorie wybranych wag W")
+        ax.set_xlabel("Czas symulacji [s]")
+        ax.set_ylabel("Waga")
+        return [ax]
+
+    for pair_name, values in sorted(weights.items()):
+        ax.plot(time, values, label=pair_name)
+
+    ax.set_xlabel("Czas symulacji [s]")
+    ax.set_ylabel("Wartość wagi")
+    ax.set_title("Trajektorie adaptowanych wag W")
+    ax.legend(fontsize=8, ncol=2)
+    _style_lines(ax)
+    return [ax]
+
+
+def draw_weight_deltas(ax, time, diagnostics):
+    history = diagnostics.get("weight_history", {})
+    deltas = history.get("deltas", {})
+
+    if not deltas:
+        ax.text(0.5, 0.5, "Brak zmian wag do wizualizacji.", ha="center", va="center", transform=ax.transAxes)
+        ax.set_title("Zmiany wag ΔW")
+        ax.set_xlabel("Czas symulacji [s]")
+        ax.set_ylabel("ΔW / krok")
+        return [ax]
+
+    for pair_name, values in sorted(deltas.items()):
+        ax.plot(time, values, label=pair_name)
+
+    ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.6)
+    ax.set_xlabel("Czas symulacji [s]")
+    ax.set_ylabel("ΔW / krok")
+    ax.set_title("Przyrosty adaptowanych wag")
+    ax.legend(fontsize=8, ncol=2)
+    _style_lines(ax)
+    return [ax]
 def draw_eeg_modules(ax, time, oscillations, names, idx):
     selected = ["HIP", "VSWM", "VIS", "AUD", "EXEC", "ATT", "SEM", "GW"]
     eeg = oscillations["eeg"]
