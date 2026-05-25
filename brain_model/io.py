@@ -93,6 +93,10 @@ def save_run(
     }
     if diagnostics_nested:
         metadata["diagnostics_nested"] = diagnostics_nested
+    if model_params:
+        for attr in ("semantic_rule", "value_rule", "connectivity_adaptation"):
+            if hasattr(model_params, attr):
+                metadata["model_params"][attr] = _to_jsonable(getattr(model_params, attr))
     if extra_metadata:
         metadata["extra"] = _to_jsonable(extra_metadata)
 
