@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Symulator procesów poznawczych mózgu | Pyodide</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+  <style>
+    :root {
+      --bg: #f7f7f8;
+      --panel: #ffffff;
+      --text: #151515;
+      --muted: #666b73;
+      --line: #dedede;
+      --accent: #263238;
+      --soft: #eef1f4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    header {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 28px 20px 10px;
+    }
+    h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -0.02em; }
+    .lead { color: var(--muted); max-width: 920px; margin: 0; }
+    main {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 16px 20px 40px;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    }
+    .controls { padding: 16px; position: sticky; top: 12px; align-self: start; max-height: calc(100vh - 24px); overflow: auto; }
+    .results { padding: 16px; min-width: 0; }
+    h2 { font-size: 17px; margin: 0 0 12px; }
+    h3 { font-size: 14px; margin: 20px 0 8px; color: #2a2f35; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    input[type="number"], select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 8px 9px;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+    }
+    input[type="checkbox"] { transform: translateY(1px); }
+    .check { display: flex; align-items: center; gap: 8px; margin: 7px 0; font-size: 13px; color: var(--text); }
+    .row { margin-bottom: 10px; }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+    button {
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: white;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    button.secondary { background: white; color: var(--accent); }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .status {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      border-radius: 10px;
+      padding: 9px 10px;
+      color: #374151;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+    .plot { width: 100%; height: 430px; border-top: 1px solid var(--line); margin-top: 14px; padding-top: 10px; }
+    .small { color: var(--muted); font-size: 12px; margin-top: 10px; }
+    .tabs { display:flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .tab { background: white; color: var(--accent); padding: 8px 10px; border-color: var(--line); }
+    .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+    details { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 12px; }
+    summary { cursor: pointer; font-weight: 650; font-size: 14px; }
+    code { background: #f0f0f0; padding: 1px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Symulator mezoskopowy procesów poznawczych mózgu</h1>
+  <p class="lead">Wersja statyczna dla GitHub Pages. Obliczenia wykonuje Python uruchamiany w przeglądarce przez Pyodide. Interfejs odzwierciedla GUI wersji desktopowej: parametry modelu, oscylatory Wilsona-Cowana, wybór wykresów i eksport CSV.</p>
+</header>
+
+<main>
+  <section class="card controls">
+    <h2>Parametry symulacji</h2>
+    <div class="grid2">
+      <div class="row"><label for="T">czas T [s]</label><input id="T" type="number" value="45" step="1" min="1"></div>
+      <div class="row"><label for="seed">seed</label><input id="seed" type="number" value="7" step="1"></div>
+      <div class="row"><label for="dt">dt</label><input id="dt" type="number" value="0.01" step="0.001" min="0.001"></div>
+      <div class="row"><label for="noise">noise</label><input id="noise" type="number" value="0.015" step="0.001" min="0"></div>
+      <div class="row"><label for="gw_threshold">gw_threshold</label><input id="gw_threshold" type="number" value="0.62" step="0.01"></div>
+      <div class="row"><label for="gw_gain">gw_gain</label><input id="gw_gain" type="number" value="10.0" step="0.1"></div>
+      <div class="row"><label for="learning_rate_semantic">learning semantic</label><input id="learning_rate_semantic" type="number" value="0.004" step="0.001" min="0"></div>
+      <div class="row"><label for="learning_rate_value">learning value</label><input id="learning_rate_value" type="number" value="0.02" step="0.001" min="0"></div>
+      <div class="row"><label for="decay_semantic">decay semantic</label><input id="decay_semantic" type="number" value="0.001" step="0.0005" min="0"></div>
+    </div>
+
+    <details open>
+      <summary>Oscylatory Wilsona-Cowana</summary>
+      <label class="check"><input id="enable_oscillators" type="checkbox" checked> włącz oscylatory EEG</label>
+      <div class="grid2">
+        <div class="row"><label for="w_ee">w_ee</label><input id="w_ee" type="number" value="12.0" step="0.1"></div>
+        <div class="row"><label for="w_ei">w_ei</label><input id="w_ei" type="number" value="10.0" step="0.1"></div>
+        <div class="row"><label for="w_ie">w_ie</label><input id="w_ie" type="number" value="10.0" step="0.1"></div>
+        <div class="row"><label for="w_ii">w_ii</label><input id="w_ii" type="number" value="1.0" step="0.1"></div>
+        <div class="row"><label for="baseline_e">baseline_e</label><input id="baseline_e" type="number" value="0.15" step="0.01"></div>
+        <div class="row"><label for="baseline_i">baseline_i</label><input id="baseline_i" type="number" value="0.08" step="0.01"></div>
+        <div class="row"><label for="cognitive_drive_gain">cognitive drive</label><input id="cognitive_drive_gain" type="number" value="3.0" step="0.1"></div>
+        <div class="row"><label for="coupling_gain">coupling gain</label><input id="coupling_gain" type="number" value="0.15" step="0.01"></div>
+        <div class="row"><label for="oscillator_noise">oscillator noise</label><input id="oscillator_noise" type="number" value="0.01" step="0.001"></div>
+        <div class="row"><label for="phase_drive_gain">phase drive</label><input id="phase_drive_gain" type="number" value="0.06" step="0.01"></div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Bodźce eksperymentalne</summary>
+      <div class="grid2">
+        <div class="row"><label for="visual_start">visual start</label><input id="visual_start" type="number" value="2" step="0.5"></div>
+        <div class="row"><label for="visual_end">visual end</label><input id="visual_end" type="number" value="18" step="0.5"></div>
+        <div class="row"><label for="visual_intensity">visual intensity</label><input id="visual_intensity" type="number" value="0.9" step="0.05"></div>
+        <div class="row"><label for="auditory_start">auditory start</label><input id="auditory_start" type="number" value="8" step="0.5"></div>
+        <div class="row"><label for="auditory_end">auditory end</label><input id="auditory_end" type="number" value="24" step="0.5"></div>
+        <div class="row"><label for="auditory_intensity">auditory intensity</label><input id="auditory_intensity" type="number" value="0.75" step="0.05"></div>
+        <div class="row"><label for="task_start">task start</label><input id="task_start" type="number" value="1" step="0.5"></div>
+        <div class="row"><label for="task_end">task end</label><input id="task_end" type="number" value="35" step="0.5"></div>
+        <div class="row"><label for="task_intensity">task intensity</label><input id="task_intensity" type="number" value="0.65" step="0.05"></div>
+        <div class="row"><label for="threat_start">threat start</label><input id="threat_start" type="number" value="22" step="0.5"></div>
+        <div class="row"><label for="threat_end">threat end</label><input id="threat_end" type="number" value="30" step="0.5"></div>
+        <div class="row"><label for="threat_intensity">threat intensity</label><input id="threat_intensity" type="number" value="0.85" step="0.05"></div>
+        <div class="row"><label for="reward_start">reward start</label><input id="reward_start" type="number" value="34" step="0.5"></div>
+        <div class="row"><label for="reward_end">reward end</label><input id="reward_end" type="number" value="38" step="0.5"></div>
+        <div class="row"><label for="reward_intensity">reward intensity</label><input id="reward_intensity" type="number" value="1.0" step="0.05"></div>
+      </div>
+    </details>
+
+    <h3>Wykresy</h3>
+    <label class="check"><input id="plot_activity" type="checkbox" checked> aktywacje modułów poznawczych</label>
+    <label class="check"><input id="plot_diagnostics" type="checkbox" checked> zmienne diagnostyczne</label>
+    <label class="check"><input id="plot_eeg" type="checkbox" checked> sygnały EEG E-I</label>
+    <label class="check"><input id="plot_bands" type="checkbox" checked> moc pasm theta/alpha/beta/gamma</label>
+
+    <div class="buttons">
+      <button id="runBtn" disabled>Uruchom</button>
+      <button id="csvBtn" class="secondary" disabled>Eksport CSV</button>
+    </div>
+    <button id="resetBtn" class="secondary" style="width:100%; margin-top:10px;">Przywróć domyślne</button>
+    <div id="status" class="status">Ładowanie Pyodide i NumPy...</div>
+    <p class="small">Pierwsze uruchomienie może być wolniejsze, ponieważ przeglądarka pobiera środowisko Pythona.</p>
+  </section>
+
+  <section class="card results">
+    <h2>Wyniki</h2>
+    <div class="tabs">
+      <button class="tab active" data-target="activityPlot">Aktywacje</button>
+      <button class="tab" data-target="diagPlot">Diagnostyka</button>
+      <button class="tab" data-target="eegPlot">EEG</button>
+      <button class="tab" data-target="bandPlot">Pasma</button>
+    </div>
+    <div id="activityPlot" class="plot"></div>
+    <div id="diagPlot" class="plot" style="display:none"></div>
+    <div id="eegPlot" class="plot" style="display:none"></div>
+    <div id="bandPlot" class="plot" style="display:none"></div>
+    <p class="small">Model jest demonstracją obliczeniową. Nie jest modelem diagnostycznym ani pełną symulacją biologiczną mózgu.</p>
+  </section>
+</main>
+
+<script id="python-simulator" type="text/plain">
+import json
+import math
+import numpy as np
+
+NAMES = ["VIS", "AUD", "INT", "SAL", "ATT", "PHON", "VSWM", "EXEC", "EPIS", "SEM", "HIP", "VAL", "MOT", "DMN", "LANG", "GW"]
+IDX = {name: i for i, name in enumerate(NAMES)}
+TAU = np.array([0.08, 0.08, 0.12, 0.10, 0.15, 0.25, 0.25, 0.30, 0.35, 0.80, 0.45, 0.40, 0.18, 0.60, 0.30, 0.12], dtype=float)
+MODULE_BANDS = {
+    "VIS": "alpha", "AUD": "alpha", "INT": "alpha", "DMN": "alpha",
+    "HIP": "theta", "EPIS": "theta", "PHON": "theta", "VSWM": "theta",
+    "EXEC": "beta", "ATT": "beta", "SAL": "beta", "MOT": "beta", "LANG": "beta",
+    "SEM": "gamma", "VAL": "gamma", "GW": "gamma",
+}
+BAND_FREQ = {"theta": 6.0, "alpha": 10.0, "beta": 20.0, "gamma": 40.0}
+
+
+def sigmoid(z, beta=4.0):
+    return 1.0 / (1.0 + np.exp(-beta * z))
+
+
+def c(W, target, source, weight):
+    W[IDX[target], IDX[source]] = weight
+
+
+def build_connectivity():
+    W = np.zeros((len(NAMES), len(NAMES)), dtype=float)
+    c(W, "SAL", "VIS", 0.55); c(W, "SAL", "AUD", 0.50); c(W, "SAL", "INT", 0.45)
+    c(W, "ATT", "SAL", 0.65); c(W, "ATT", "EXEC", 0.35); c(W, "ATT", "GW", 0.30)
+    c(W, "PHON", "AUD", 0.55); c(W, "PHON", "LANG", 0.45)
+    c(W, "VSWM", "VIS", 0.60); c(W, "VSWM", "ATT", 0.40)
+    c(W, "EXEC", "ATT", 0.45); c(W, "EXEC", "PHON", 0.25); c(W, "EXEC", "VSWM", 0.25); c(W, "EXEC", "SAL", 0.35); c(W, "EXEC", "DMN", -0.25)
+    c(W, "EPIS", "PHON", 0.30); c(W, "EPIS", "VSWM", 0.30); c(W, "EPIS", "SEM", 0.25); c(W, "EPIS", "HIP", 0.35)
+    c(W, "HIP", "EPIS", 0.45); c(W, "HIP", "ATT", 0.25)
+    c(W, "SEM", "LANG", 0.35); c(W, "LANG", "AUD", 0.40); c(W, "LANG", "PHON", 0.35); c(W, "LANG", "SEM", 0.30)
+    c(W, "VAL", "SAL", 0.30); c(W, "VAL", "HIP", 0.25)
+    c(W, "MOT", "EXEC", 0.45); c(W, "MOT", "VAL", 0.35); c(W, "MOT", "SAL", 0.20)
+    c(W, "DMN", "SEM", 0.25); c(W, "DMN", "HIP", 0.25); c(W, "DMN", "EXEC", -0.35); c(W, "EXEC", "DMN", -0.30)
+    for module in ["ATT", "EXEC", "EPIS", "SEM", "HIP", "LANG", "MOT"]:
+        c(W, module, "GW", 0.35)
+    c(W, "GW", "ATT", 0.40); c(W, "GW", "EXEC", 0.45); c(W, "GW", "EPIS", 0.35); c(W, "GW", "SAL", 0.25)
+    return W
+
+
+def stimulus(t, cfg):
+    u = {"visual": 0.0, "auditory": 0.0, "interoceptive": 0.15, "task_cue": 0.0, "threat": 0.0, "reward": 0.0}
+    if cfg["visual_start"] < t < cfg["visual_end"]:
+        u["visual"] = cfg["visual_intensity"]
+    if cfg["auditory_start"] < t < cfg["auditory_end"]:
+        u["auditory"] = cfg["auditory_intensity"]
+    if cfg["task_start"] < t < cfg["task_end"]:
+        u["task_cue"] = cfg["task_intensity"]
+    if cfg["threat_start"] < t < cfg["threat_end"]:
+        u["threat"] = cfg["threat_intensity"]
+        u["interoceptive"] = max(u["interoceptive"], 0.55)
+    if cfg["reward_start"] < t < cfg["reward_end"]:
+        u["reward"] = cfg["reward_intensity"]
+    return u
+
+
+def wc_step(E, I, phase, x, dt, cfg, rng):
+    n = len(NAMES)
+    eeg = np.zeros(n, dtype=float)
+    for i, name in enumerate(NAMES):
+        band = MODULE_BANDS[name]
+        freq = BAND_FREQ[band]
+        phase[i] += 2.0 * math.pi * freq * dt + cfg["phase_drive_gain"] * x[i]
+        rhythmic = 0.5 + 0.5 * math.sin(phase[i])
+        drive = cfg["baseline_e"] + cfg["cognitive_drive_gain"] * x[i] + cfg["coupling_gain"] * rhythmic
+        inh_drive = cfg["baseline_i"] + 0.65 * E[i]
+        dE = -E[i] + sigmoid(cfg["w_ee"] * E[i] - cfg["w_ei"] * I[i] + drive - 2.0, beta=1.0)
+        dI = -I[i] + sigmoid(cfg["w_ie"] * E[i] - cfg["w_ii"] * I[i] + inh_drive - 2.0, beta=1.0)
+        E[i] += dt * dE + math.sqrt(dt) * cfg["oscillator_noise"] * rng.normal()
+        I[i] += dt * dI + math.sqrt(dt) * cfg["oscillator_noise"] * rng.normal()
+        E[i] = min(1.0, max(0.0, E[i]))
+        I[i] = min(1.0, max(0.0, I[i]))
+        eeg[i] = E[i] - I[i]
+    return E, I, phase, eeg
+
+
+def simulate_json(config_json):
+    cfg = json.loads(config_json)
+    T = float(cfg["T"])
+    dt = float(cfg["dt"])
+    steps = max(2, int(T / dt))
+    rng = np.random.default_rng(int(cfg["seed"]))
+    W = build_connectivity()
+
+    time = np.arange(steps) * dt
+    X = np.zeros((steps, len(NAMES)), dtype=float)
+    EEG = np.zeros((steps, len(NAMES)), dtype=float)
+    E_hist = np.zeros((steps, len(NAMES)), dtype=float)
+    I_hist = np.zeros((steps, len(NAMES)), dtype=float)
+    D = {"prediction_error": np.zeros(steps), "dopamine_delta": np.zeros(steps), "noradrenaline": np.zeros(steps), "acetylcholine": np.zeros(steps), "gw_ignition": np.zeros(steps)}
+
+    x = np.zeros(len(NAMES), dtype=float)
+    x[IDX["DMN"]] = 0.45
+    x[IDX["SEM"]] = 0.25
+    E = np.full(len(NAMES), 0.12, dtype=float)
+    I = np.full(len(NAMES), 0.08, dtype=float)
+    phase = rng.uniform(0.0, 2.0 * math.pi, size=len(NAMES))
+
+    for k, t in enumerate(time):
+        X[k] = x
+        u = stimulus(float(t), cfg)
+        pred_visual = 0.45 * x[IDX["SEM"]] + 0.30 * x[IDX["EPIS"]]
+        pred_auditory = 0.40 * x[IDX["SEM"]] + 0.25 * x[IDX["EPIS"]]
+        err_visual = u["visual"] - pred_visual
+        err_auditory = u["auditory"] - pred_auditory
+        prediction_error = abs(err_visual) + abs(err_auditory)
+        dopamine_delta = u["reward"] - x[IDX["VAL"]]
+        noradrenaline = float(sigmoid(prediction_error + u["threat"] - 0.45))
+        acetylcholine = float(sigmoid(u["task_cue"] + x[IDX["ATT"]] - 0.55))
+        precision_gain = 0.6 + 1.4 * x[IDX["ATT"]]
+
+        external = np.zeros(len(NAMES), dtype=float)
+        external[IDX["VIS"]] += precision_gain * u["visual"]
+        external[IDX["AUD"]] += precision_gain * u["auditory"]
+        external[IDX["INT"]] += u["interoceptive"]
+        external[IDX["SAL"]] += 0.8 * u["threat"] + 0.4 * prediction_error
+        external[IDX["ATT"]] += 0.5 * u["task_cue"] + 0.25 * acetylcholine
+        external[IDX["EXEC"]] += 0.35 * u["task_cue"]
+        external[IDX["VAL"]] += 0.50 * dopamine_delta
+
+        error_drive = np.zeros(len(NAMES), dtype=float)
+        error_drive[IDX["VIS"]] += 0.65 * err_visual
+        error_drive[IDX["AUD"]] += 0.65 * err_auditory
+        error_drive[IDX["SAL"]] += 0.40 * prediction_error
+
+        candidate = max(x[IDX["ATT"]], x[IDX["EXEC"]], x[IDX["EPIS"]], x[IDX["SAL"]])
+        gw_ignition = float(sigmoid(candidate - cfg["gw_threshold"], beta=cfg["gw_gain"]))
+        global_broadcast = np.zeros(len(NAMES), dtype=float)
+        global_broadcast += 0.25 * gw_ignition
+        global_broadcast[IDX["DMN"]] -= 0.25 * gw_ignition
+
+        recurrent = W @ x
+        target = sigmoid(recurrent + external + error_drive + global_broadcast - 0.35, beta=3.5)
+        dx = (-x + target) / TAU
+        dx[IDX["SEM"]] += cfg["learning_rate_semantic"] * x[IDX["HIP"]] * gw_ignition
+        dx[IDX["SEM"]] -= cfg["decay_semantic"] * x[IDX["SEM"]]
+        dx[IDX["VAL"]] += cfg["learning_rate_value"] * dopamine_delta
+        dx[IDX["GW"]] += (-x[IDX["GW"]] + gw_ignition) / TAU[IDX["GW"]]
+
+        noise = cfg["noise"] * rng.normal(size=len(NAMES))
+        x = x + dt * dx + math.sqrt(dt) * noise
+        x = np.clip(x, 0.0, 1.0)
+
+        if cfg.get("enable_oscillators", True):
+            E, I, phase, eeg = wc_step(E, I, phase, x, dt, cfg, rng)
+        else:
+            eeg = np.zeros(len(NAMES), dtype=float)
+        EEG[k] = eeg
+        E_hist[k] = E
+        I_hist[k] = I
+        D["prediction_error"][k] = prediction_error
+        D["dopamine_delta"][k] = dopamine_delta
+        D["noradrenaline"][k] = noradrenaline
+        D["acetylcholine"][k] = acetylcholine
+        D["gw_ignition"][k] = gw_ignition
+
+    band_power = {}
+    for band in ["theta", "alpha", "beta", "gamma"]:
+        ids = [i for i, name in enumerate(NAMES) if MODULE_BANDS[name] == band]
+        band_power[band] = np.mean(EEG[:, ids] ** 2, axis=1) if ids else np.zeros(steps)
+
+    max_points = int(cfg.get("max_points", 2000))
+    stride = max(1, int(math.ceil(steps / max_points)))
+    sl = slice(None, None, stride)
+
+    result = {
+        "names": NAMES,
+        "module_bands": MODULE_BANDS,
+        "time": time[sl].round(5).tolist(),
+        "activity": X[sl].round(6).tolist(),
+        "eeg": EEG[sl].round(6).tolist(),
+        "diagnostics": {k: v[sl].round(6).tolist() for k, v in D.items()},
+        "band_power": {k: v[sl].round(6).tolist() for k, v in band_power.items()},
+        "stride": stride,
+        "steps": steps,
+    }
+    return json.dumps(result)
+</script>
+
+<script>
+let pyodide = null;
+let lastResult = null;
+const $ = (id) => document.getElementById(id);
+const numericIds = ["T","seed","dt","noise","gw_threshold","gw_gain","learning_rate_semantic","learning_rate_value","decay_semantic","w_ee","w_ei","w_ie","w_ii","baseline_e","baseline_i","cognitive_drive_gain","coupling_gain","oscillator_noise","phase_drive_gain","visual_start","visual_end","visual_intensity","auditory_start","auditory_end","auditory_intensity","task_start","task_end","task_intensity","threat_start","threat_end","threat_intensity","reward_start","reward_end","reward_intensity"];
+const defaults = {};
+for (const id of numericIds) defaults[id] = $(id).value;
+defaults.enable_oscillators = $("enable_oscillators").checked;
+defaults.plot_activity = $("plot_activity").checked;
+defaults.plot_diagnostics = $("plot_diagnostics").checked;
+defaults.plot_eeg = $("plot_eeg").checked;
+defaults.plot_bands = $("plot_bands").checked;
+
+function setStatus(text) { $("status").textContent = text; }
+function getConfig() {
+  const cfg = {};
+  for (const id of numericIds) cfg[id] = Number($(id).value);
+  cfg.enable_oscillators = $("enable_oscillators").checked;
+  cfg.max_points = 2000;
+  return cfg;
+}
+function selectedPlots() {
+  return {
+    activity: $("plot_activity").checked,
+    diagnostics: $("plot_diagnostics").checked,
+    eeg: $("plot_eeg").checked,
+    bands: $("plot_bands").checked,
+  };
+}
+async function initPyodide() {
+  try {
+    pyodide = await loadPyodide();
+    await pyodide.loadPackage("numpy");
+    const code = $("python-simulator").textContent;
+    pyodide.runPython(code);
+    $("runBtn").disabled = false;
+    setStatus("Gotowe. Pyodide i NumPy zostały załadowane.");
+  } catch (err) {
+    console.error(err);
+    setStatus("Błąd ładowania Pyodide: " + err.message);
+  }
+}
+function makeLayout(title, ytitle) {
+  return {
+    title: { text: title, font: { size: 15 } },
+    margin: { l: 48, r: 18, t: 42, b: 42 },
+    xaxis: { title: "czas [s]", zeroline: false },
+    yaxis: { title: ytitle, zeroline: false },
+    legend: { orientation: "h", y: -0.24 },
+    paper_bgcolor: "white",
+    plot_bgcolor: "white"
+  };
+}
+function drawResults(res) {
+  const plots = selectedPlots();
+  const time = res.time;
+  const names = res.names;
+  const selected = ["VIS", "AUD", "SAL", "ATT", "PHON", "VSWM", "EXEC", "EPIS", "SEM", "HIP", "VAL", "MOT", "DMN", "GW"];
+  const activityTraces = selected.map(name => {
+    const j = names.indexOf(name);
+    return { x: time, y: res.activity.map(row => row[j]), mode: "lines", name };
+  });
+  const diagTraces = Object.entries(res.diagnostics).map(([name, arr]) => ({ x: time, y: arr, mode: "lines", name }));
+  const eegSelected = ["HIP", "EPIS", "VIS", "AUD", "EXEC", "ATT", "SEM", "GW"];
+  const eegTraces = eegSelected.map(name => {
+    const j = names.indexOf(name);
+    return { x: time, y: res.eeg.map(row => row[j]), mode: "lines", name: name + " (" + res.module_bands[name] + ")" };
+  });
+  const bandTraces = Object.entries(res.band_power).map(([name, arr]) => ({ x: time, y: arr, mode: "lines", name }));
+
+  if (plots.activity) Plotly.newPlot("activityPlot", activityTraces, makeLayout("Aktywacje modułów poznawczych", "aktywacja [0-1]"), {responsive: true});
+  else Plotly.purge("activityPlot");
+  if (plots.diagnostics) Plotly.newPlot("diagPlot", diagTraces, makeLayout("Zmienne diagnostyczne i neuromodulacyjne", "wartość"), {responsive: true});
+  else Plotly.purge("diagPlot");
+  if (plots.eeg) Plotly.newPlot("eegPlot", eegTraces, makeLayout("Sygnały EEG aproksymowane jako E-I", "E-I"), {responsive: true});
+  else Plotly.purge("eegPlot");
+  if (plots.bands) Plotly.newPlot("bandPlot", bandTraces, makeLayout("Moc pasm oscylacyjnych", "moc"), {responsive: true});
+  else Plotly.purge("bandPlot");
+}
+function exportCsv() {
+  if (!lastResult) return;
+  const names = lastResult.names;
+  const header = ["time", ...names.map(n => "act_" + n), ...names.map(n => "eeg_" + n), ...Object.keys(lastResult.diagnostics).map(n => "diag_" + n), ...Object.keys(lastResult.band_power).map(n => "band_" + n)];
+  const rows = [header.join(",")];
+  for (let i = 0; i < lastResult.time.length; i++) {
+    const row = [lastResult.time[i], ...lastResult.activity[i], ...lastResult.eeg[i]];
+    for (const arr of Object.values(lastResult.diagnostics)) row.push(arr[i]);
+    for (const arr of Object.values(lastResult.band_power)) row.push(arr[i]);
+    rows.push(row.join(","));
+  }
+  const blob = new Blob([rows.join("\n")], {type: "text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "brain_simulation_results.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+$("runBtn").addEventListener("click", async () => {
+  if (!pyodide) return;
+  $("runBtn").disabled = true;
+  $("csvBtn").disabled = true;
+  setStatus("Symulacja trwa...");
+  try {
+    const cfg = getConfig();
+    pyodide.globals.set("CONFIG_JSON", JSON.stringify(cfg));
+    const resultJson = await pyodide.runPythonAsync("simulate_json(CONFIG_JSON)");
+    lastResult = JSON.parse(resultJson);
+    drawResults(lastResult);
+    $("csvBtn").disabled = false;
+    setStatus(`Gotowe. Kroki: ${lastResult.steps}, rysowany co ${lastResult.stride}.`);
+  } catch (err) {
+    console.error(err);
+    setStatus("Błąd symulacji: " + err.message);
+  } finally {
+    $("runBtn").disabled = false;
+  }
+});
+$("csvBtn").addEventListener("click", exportCsv);
+$("resetBtn").addEventListener("click", () => {
+  for (const id of numericIds) $(id).value = defaults[id];
+  $("enable_oscillators").checked = defaults.enable_oscillators;
+  $("plot_activity").checked = defaults.plot_activity;
+  $("plot_diagnostics").checked = defaults.plot_diagnostics;
+  $("plot_eeg").checked = defaults.plot_eeg;
+  $("plot_bands").checked = defaults.plot_bands;
+});
+document.querySelectorAll(".tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    ["activityPlot", "diagPlot", "eegPlot", "bandPlot"].forEach(id => $(id).style.display = id === btn.dataset.target ? "block" : "none");
+    setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
+  });
+});
+initPyodide();
+</script>
+</body>
+</html>
