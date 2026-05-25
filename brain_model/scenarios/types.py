@@ -13,7 +13,7 @@ class TimeWindow:
     end: float
 
     def contains(self, t: float) -> bool:
-        return self.start < t < self.end
+        return self.start <= t < self.end
 
 
 @dataclass(frozen=True)
