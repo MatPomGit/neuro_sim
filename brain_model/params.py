@@ -17,6 +17,8 @@ class BrainParams:
     learning_rate_value: float = 0.02
     decay_semantic: float = 0.001
     enable_oscillators: bool = True
+    decision_threshold: float = 0.62
+    confidence_gain: float = 1.8
 
     semantic_rule: PlasticityRuleConfig = field(default_factory=lambda: PlasticityRuleConfig(
         enabled=True,

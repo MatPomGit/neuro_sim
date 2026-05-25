@@ -28,7 +28,7 @@ def _find_module_index(module_names: list[str], module: str) -> int | None:
         return None
 
 
-def evaluate_run(time, activity, diagnostics, oscillations, scenario, rules: dict[str, float] | None = None) -> dict[str, Any]:
+def evaluate_run(time, activity, diagnostics, oscillations, scenario, behavior=None, rules: dict[str, float] | None = None) -> dict[str, Any]:
     """Evaluate one simulation run and return metrics with pass/fail rules."""
     if len(time) == 0:
         raise ValueError("time cannot be empty")
@@ -107,12 +107,23 @@ def evaluate_run(time, activity, diagnostics, oscillations, scenario, rules: dic
     threat_strength = float(np.mean(threat_signal))
     reward_strength = float(np.mean(np.abs(reward_signal)))
 
+    behavior = behavior or {}
+    decision_mask = np.asarray(behavior.get("decision_event", np.zeros(steps, dtype=bool)))
+    confidence = np.asarray(behavior.get("confidence", np.zeros(steps)))
+    decision_rt = np.asarray(behavior.get("latency", time))
+    reaction_time_mean = float(np.mean(decision_rt[decision_mask])) if np.any(decision_mask) else float(time[-1])
+    accuracy_proxy = float(np.mean(confidence[decision_mask])) if np.any(decision_mask) else 0.0
+    false_alarm_proxy = float(np.mean(decision_mask & (threat_signal < np.median(threat_signal)))) if np.any(decision_mask) else 0.0
+
     functional = {
         "threat_sal_gain": sal_gain,
         "threat_int_gain": int_gain,
         "reward_val_gain": val_gain,
         "threat_signal_mean": threat_strength,
         "reward_signal_mean_abs": reward_strength,
+        "accuracy_proxy": accuracy_proxy,
+        "false_alarm_proxy": false_alarm_proxy,
+        "reaction_time_mean": reaction_time_mean,
     }
 
     rules_status = {

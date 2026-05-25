@@ -290,6 +290,25 @@ def draw_scenario_timeline(ax, time, scenario):
         ax.legend(loc="upper right", fontsize=8)
     return [ax]
 
+
+
+def draw_behavior(ax, time, behavior):
+    ax.plot(time, behavior["decision_score"], label="decision score", color="#1f77b4")
+    ax.plot(time, behavior["confidence"], label="confidence", color="#2ca02c", alpha=0.9)
+    ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.5)
+
+    decision_times = time[behavior["decision_event"]]
+    decision_scores = behavior["decision_score"][behavior["decision_event"]]
+    if len(decision_times):
+        ax.scatter(decision_times, decision_scores, marker="o", color="#d62728", label="decision event", zorder=3)
+
+    ax.set_xlabel("Czas symulacji [s]")
+    ax.set_ylabel("Skala decyzyjna")
+    ax.set_title("Przebiegi decyzyjne i punkty decyzji")
+    ax.legend()
+    _style_lines(ax)
+    return [ax]
+
 def draw_band_power(ax, time, oscillations):
     band_power = oscillations["band_power"]
     fig = ax.figure
