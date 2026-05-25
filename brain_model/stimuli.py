@@ -20,7 +20,7 @@ def build_stimulus_fn(scenario: StimulusScenario) -> StimulusFn:
             profile = normalized[channel]
             for pulse in profile.pulses:
                 if pulse.window.contains(t):
-                    u[channel] = pulse.amplitude
+                    u[channel] = max(u[channel], pulse.amplitude)
 
         for perturbation in scenario.perturbations:
             if perturbation.window.contains(t):
