@@ -32,6 +32,8 @@ def evaluate_run(time, activity, diagnostics, oscillations, scenario, rules: dic
     """Evaluate one simulation run and return metrics with pass/fail rules."""
     if len(time) == 0:
         raise ValueError("time cannot be empty")
+    if activity.shape[0] != len(time):
+        raise ValueError("activity steps must match the length of time")
 
     config = {**DEFAULT_RULES, **(rules or {})}
 
