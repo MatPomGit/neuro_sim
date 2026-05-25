@@ -31,6 +31,11 @@ DIAGNOSTIC_DESCRIPTIONS = {
     "błąd predykcji nagrody": "Różnica między nagrodą a aktualnym wartościowaniem.",
     "noradrenalina": "Pobudzenie zależne od niepewności, zaskoczenia i zagrożenia.",
     "acetylocholina": "Wzrost precyzji sygnałów związany z zadaniem i uwagą.",
+    "serotonina": "Regulacja nastroju i obniżanie reaktywności na stresory.",
+    "gaba": "Dominująca inhibicja stabilizująca pobudzenie sieci neuronowych.",
+    "glutaminian": "Dominujący neuroprzekaźnik pobudzający wzmacniający transmisję korową.",
+    "endorfiny": "Endogenna analgezja i tłumienie awersyjnego komponentu stresu.",
+    "kortyzol": "Hormonalna odpowiedź stresowa osi HPA, rośnie przy zagrożeniu i niepewności.",
 }
 
 BAND_DESCRIPTIONS = {
@@ -135,6 +140,11 @@ def draw_diagnostics(ax, time, diagnostics):
     ax.plot(time, diagnostics["dopamine_delta"], label="błąd predykcji nagrody")
     ax.plot(time, diagnostics["noradrenaline"], label="noradrenalina")
     ax.plot(time, diagnostics["acetylcholine"], label="acetylocholina")
+    ax.plot(time, diagnostics["serotonin"], label="serotonina")
+    ax.plot(time, diagnostics["gaba"], label="gaba")
+    ax.plot(time, diagnostics["glutamate"], label="glutaminian")
+    ax.plot(time, diagnostics["endorphins"], label="endorfiny")
+    ax.plot(time, diagnostics["cortisol"], label="kortyzol")
 
     ax.set_xlabel("Czas symulacji [s]")
     ax.set_ylabel("Wartość")
