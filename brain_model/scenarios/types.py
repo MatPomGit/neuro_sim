@@ -42,6 +42,7 @@ class StimulusScenario:
     id: str
     name: str
     description: str
+    what_changes: str
     schema_version: str = SCENARIO_SCHEMA_VERSION
     duration_hint: float = 45.0
     channels: Dict[str, ChannelProfile] = field(default_factory=dict)
@@ -59,6 +60,7 @@ class StimulusScenario:
             "scenario_id": self.id,
             "scenario_name": self.name,
             "scenario_description": self.description,
+            "scenario_what_changes": self.what_changes,
             "schema_version": self.schema_version,
             "duration_hint": self.duration_hint,
             "tags": list(self.tags),
