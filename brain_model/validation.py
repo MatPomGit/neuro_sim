@@ -4,6 +4,7 @@ from typing import Any
 
 import numpy as np
 
+from .modules import MODULES
 
 DEFAULT_RULES = {
     "saturation_fraction_max": 0.08,
