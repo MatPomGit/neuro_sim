@@ -154,11 +154,20 @@
       </div>
     </details>
 
+    <h3>Scenariusz</h3>
+    <div class="row"><label for="scenario">scenariusz</label><select id="scenario"><option value="reward-learning">reward-learning</option><option value="baseline">baseline</option><option value="task-switching">task-switching</option><option value="threat-only">threat-only</option><option value="sensory-overload">sensory-overload</option><option value="stress-recovery">stress-recovery</option></select></div>
+    <label class="check"><input id="save_results" type="checkbox" checked disabled> zapisz wyniki po symulacji (desktop only)</label>
+
     <h3>Wykresy</h3>
     <label class="check"><input id="plot_activity" type="checkbox" checked> aktywacje modułów poznawczych</label>
     <label class="check"><input id="plot_diagnostics" type="checkbox" checked> zmienne diagnostyczne</label>
     <label class="check"><input id="plot_eeg" type="checkbox" checked> sygnały EEG E-I</label>
     <label class="check"><input id="plot_bands" type="checkbox" checked> moc pasm theta/alpha/beta/gamma</label>
+    <label class="check"><input id="plot_simulated_brain_activity" type="checkbox" checked> symulowana aktywność mózgu (mapa cieplna)</label>
+    <label class="check"><input id="plot_weight_trajectories" type="checkbox" checked> trajektorie adaptowanych wag W</label>
+    <label class="check"><input id="plot_weight_deltas" type="checkbox" checked> przyrosty wag ΔW / krok</label>
+    <label class="check"><input id="plot_scenario_channels" type="checkbox" checked> kanały bodźców scenariusza</label>
+    <label class="check"><input id="plot_scenario_timeline" type="checkbox" checked> oś czasu scenariusza</label>
 
     <div class="buttons">
       <button id="runBtn" disabled>Uruchom</button>
@@ -176,11 +185,21 @@
       <button class="tab" data-target="diagPlot">Diagnostyka</button>
       <button class="tab" data-target="eegPlot">EEG</button>
       <button class="tab" data-target="bandPlot">Pasma</button>
+      <button class="tab" data-target="brainHeatPlot">Mapa</button>
+      <button class="tab" data-target="weightsPlot">Wagi</button>
+      <button class="tab" data-target="deltasPlot">ΔW</button>
+      <button class="tab" data-target="scenarioChannelsPlot">Kanały</button>
+      <button class="tab" data-target="scenarioTimelinePlot">Timeline</button>
     </div>
     <div id="activityPlot" class="plot"></div>
     <div id="diagPlot" class="plot" style="display:none"></div>
     <div id="eegPlot" class="plot" style="display:none"></div>
     <div id="bandPlot" class="plot" style="display:none"></div>
+    <div id="brainHeatPlot" class="plot" style="display:none"></div>
+    <div id="weightsPlot" class="plot" style="display:none"></div>
+    <div id="deltasPlot" class="plot" style="display:none"></div>
+    <div id="scenarioChannelsPlot" class="plot" style="display:none"></div>
+    <div id="scenarioTimelinePlot" class="plot" style="display:none"></div>
     <p class="small">Model jest demonstracją obliczeniową. Nie jest modelem diagnostycznym ani pełną symulacją biologiczną mózgu.</p>
   </section>
 </main>
@@ -371,15 +390,42 @@ def simulate_json(config_json):
 <script>
 let pyodide = null;
 let lastResult = null;
+let cfgLast = null;
 const $ = (id) => document.getElementById(id);
 const numericIds = ["T","seed","dt","noise","gw_threshold","gw_gain","learning_rate_semantic","learning_rate_value","decay_semantic","w_ee","w_ei","w_ie","w_ii","baseline_e","baseline_i","cognitive_drive_gain","coupling_gain","oscillator_noise","phase_drive_gain","visual_start","visual_end","visual_intensity","auditory_start","auditory_end","auditory_intensity","task_start","task_end","task_intensity","threat_start","threat_end","threat_intensity","reward_start","reward_end","reward_intensity"];
-const defaults = {};
-for (const id of numericIds) defaults[id] = $(id).value;
-defaults.enable_oscillators = $("enable_oscillators").checked;
-defaults.plot_activity = $("plot_activity").checked;
-defaults.plot_diagnostics = $("plot_diagnostics").checked;
-defaults.plot_eeg = $("plot_eeg").checked;
-defaults.plot_bands = $("plot_bands").checked;
+
+async function applyGuiDefaults() {
+  try {
+    const res = await fetch("./gui_defaults.json", { cache: "no-store" });
+    if (!res.ok) return;
+    const data = await res.json();
+    const merged = { ...(data.simulation || {}), ...(data.brain || {}), ...(data.osc || {}) };
+    for (const [id, value] of Object.entries(merged)) {
+      const el = $(id);
+      if (!el) continue;
+      if (el.type === "checkbox") el.checked = Boolean(value);
+      else el.value = String(value);
+    }
+    for (const [id, text] of Object.entries(data.descriptions || {})) {
+      const input = $(id);
+      if (input) input.title = text;
+      const label = document.querySelector(`label[for="${id}"]`);
+      if (label) label.title = text;
+    }
+  } catch (_err) {}
+}
+let defaults = null;
+function captureDefaults() {
+  defaults = {};
+  for (const id of numericIds) defaults[id] = $(id).value;
+  defaults.enable_oscillators = $("enable_oscillators").checked;
+  defaults.plot_activity = $("plot_activity").checked;
+  defaults.plot_diagnostics = $("plot_diagnostics").checked;
+  defaults.plot_eeg = $("plot_eeg").checked;
+  defaults.plot_bands = $("plot_bands").checked;
+  defaults.scenario = $("scenario").value;
+  for (const id of ["plot_simulated_brain_activity","plot_weight_trajectories","plot_weight_deltas","plot_scenario_channels","plot_scenario_timeline"]) defaults[id] = $(id).checked;
+}
 
 function setStatus(text) { $("status").textContent = text; }
 function getConfig() {
@@ -387,6 +433,7 @@ function getConfig() {
   for (const id of numericIds) cfg[id] = Number($(id).value);
   cfg.enable_oscillators = $("enable_oscillators").checked;
   cfg.max_points = 2000;
+  cfg.scenario = $("scenario").value;
   return cfg;
 }
 function selectedPlots() {
@@ -395,6 +442,11 @@ function selectedPlots() {
     diagnostics: $("plot_diagnostics").checked,
     eeg: $("plot_eeg").checked,
     bands: $("plot_bands").checked,
+    simulated_brain_activity: $("plot_simulated_brain_activity").checked,
+    weight_trajectories: $("plot_weight_trajectories").checked,
+    weight_deltas: $("plot_weight_deltas").checked,
+    scenario_channels: $("plot_scenario_channels").checked,
+    scenario_timeline: $("plot_scenario_timeline").checked,
   };
 }
 async function initPyodide() {
@@ -437,6 +489,18 @@ function drawResults(res) {
     return { x: time, y: res.eeg.map(row => row[j]), mode: "lines", name: name + " (" + res.module_bands[name] + ")" };
   });
   const bandTraces = Object.entries(res.band_power).map(([name, arr]) => ({ x: time, y: arr, mode: "lines", name }));
+  const heatZ = names.map((_, j) => res.activity.map(row => row[j]));
+  const weightNames = ["VIS→SAL","AUD→SAL","SAL→ATT","ATT→EXEC","EXEC→GW"];
+  const idx = n => names.indexOf(n);
+  const tracks = [
+    [idx("SAL"), idx("VIS")], [idx("SAL"), idx("AUD")], [idx("ATT"), idx("SAL")], [idx("EXEC"), idx("ATT")], [idx("GW"), idx("EXEC")]
+  ];
+  const wTraj = tracks.map(([t,s],k)=>({x:time,y:res.activity.map(r=>Math.max(0, r[t]*r[s])),mode:"lines",name:weightNames[k]}));
+  const wDelta = wTraj.map(tr=>({x:tr.x.slice(1),y:tr.y.slice(1).map((v,i)=>v-tr.y[i]),mode:"lines",name:tr.name}));
+  const ch = ["visual","auditory","task","threat","reward"];
+  const cvals = ch.map(k => cfgLast?.[k + '_intensity'] || 0);
+  const scenarioChannels = ch.map((n,i)=>({x:[0, time[time.length-1]], y:[cvals[i], cvals[i]], mode:"lines", name:n}));
+  const scenarioTimeline = [{x:[0, time[time.length-1]], y:[1,1], mode:"lines", name: cfgLast?.scenario || "scenario"}];
 
   if (plots.activity) Plotly.newPlot("activityPlot", activityTraces, makeLayout("Aktywacje modułów poznawczych", "aktywacja [0-1]"), {responsive: true});
   else Plotly.purge("activityPlot");
@@ -446,6 +510,11 @@ function drawResults(res) {
   else Plotly.purge("eegPlot");
   if (plots.bands) Plotly.newPlot("bandPlot", bandTraces, makeLayout("Moc pasm oscylacyjnych", "moc"), {responsive: true});
   else Plotly.purge("bandPlot");
+  if (plots.simulated_brain_activity) Plotly.newPlot("brainHeatPlot", [{z:heatZ,x:time,y:names,type:"heatmap",colorscale:"Viridis"}], makeLayout("Symulowana aktywność mózgu", "moduł"), {responsive:true}); else Plotly.purge("brainHeatPlot");
+  if (plots.weight_trajectories) Plotly.newPlot("weightsPlot", wTraj, makeLayout("Trajektorie adaptowanych wag W (aproksymacja)", "waga"), {responsive:true}); else Plotly.purge("weightsPlot");
+  if (plots.weight_deltas) Plotly.newPlot("deltasPlot", wDelta, makeLayout("Przyrosty wag ΔW / krok (aproksymacja)", "ΔW"), {responsive:true}); else Plotly.purge("deltasPlot");
+  if (plots.scenario_channels) Plotly.newPlot("scenarioChannelsPlot", scenarioChannels, makeLayout("Kanały bodźców scenariusza", "intensywność"), {responsive:true}); else Plotly.purge("scenarioChannelsPlot");
+  if (plots.scenario_timeline) Plotly.newPlot("scenarioTimelinePlot", scenarioTimeline, makeLayout("Oś czasu scenariusza", "faza"), {responsive:true}); else Plotly.purge("scenarioTimelinePlot");
 }
 function exportCsv() {
   if (!lastResult) return;
@@ -475,6 +544,7 @@ $("runBtn").addEventListener("click", async () => {
   setStatus("Symulacja trwa...");
   try {
     const cfg = getConfig();
+    cfgLast = cfg;
     pyodide.globals.set("CONFIG_JSON", JSON.stringify(cfg));
     const resultJson = await pyodide.runPythonAsync("simulate_json(CONFIG_JSON)");
     lastResult = JSON.parse(resultJson);
@@ -490,22 +560,25 @@ $("runBtn").addEventListener("click", async () => {
 });
 $("csvBtn").addEventListener("click", exportCsv);
 $("resetBtn").addEventListener("click", () => {
+  if (!defaults) captureDefaults();
   for (const id of numericIds) $(id).value = defaults[id];
   $("enable_oscillators").checked = defaults.enable_oscillators;
   $("plot_activity").checked = defaults.plot_activity;
   $("plot_diagnostics").checked = defaults.plot_diagnostics;
   $("plot_eeg").checked = defaults.plot_eeg;
   $("plot_bands").checked = defaults.plot_bands;
+  $("scenario").value = defaults.scenario;
+  for (const id of ["plot_simulated_brain_activity","plot_weight_trajectories","plot_weight_deltas","plot_scenario_channels","plot_scenario_timeline"]) $(id).checked = defaults[id];
 });
 document.querySelectorAll(".tab").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    ["activityPlot", "diagPlot", "eegPlot", "bandPlot"].forEach(id => $(id).style.display = id === btn.dataset.target ? "block" : "none");
+    ["activityPlot", "diagPlot", "eegPlot", "bandPlot", "brainHeatPlot", "weightsPlot", "deltasPlot", "scenarioChannelsPlot", "scenarioTimelinePlot"].forEach(id => $(id).style.display = id === btn.dataset.target ? "block" : "none");
     setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
   });
 });
-initPyodide();
+applyGuiDefaults().finally(() => { captureDefaults(); initPyodide(); });
 </script>
 </body>
 </html>
