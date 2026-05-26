@@ -132,7 +132,8 @@ class RegionWilsonCowanModel:
             tau_E = tau_E * (1.0 - 0.20 * ach + 0.08 * ser + 0.08 * cort)
             tau_I = tau_I * (1.0 - 0.15 * gaba + 0.05 * glu + 0.05 * adr)
             noise_scale = np.maximum(0.0, 0.03 + 0.05 * na + 0.03 * adr + 0.02 * da - 0.05 * gaba)
-            external_e = external_e + np.random.normal(0.0, noise_scale, size=self.E.shape)
+            rng_to_use = rng if rng is not None else np.random.default_rng()
+            external_e = external_e + rng_to_use.normal(0.0, noise_scale, size=self.E.shape)
 
         input_E = w_EE * self.E - w_EI * self.I + external_e
         input_I = w_IE * self.E - w_II * self.I + external_i
