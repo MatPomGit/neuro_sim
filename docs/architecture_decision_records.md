@@ -253,3 +253,42 @@ Dodatkowo dodajemy dedykowane moduły synaptyczne `noradrenaline.py`, `cortisol.
 - `brain_core/populations/wilson_cowan.py`
 - `brain_core/experiments/pharmacology.py`
 - `brain_model/model.py`
+
+---
+
+## ADR-0006: Synaptyczna plastyczność neural-mass z dwiema skalami czasowymi
+
+**Status:** proposed  
+**Data:** 2026-05-26
+
+### Kontekst
+Potrzebne jest porównywalne uczenie między eksperymentami z jawną regułą aktualizacji wag, kontrolą stabilności (homeostaza, clamp) oraz rozdzieleniem szybkich i wolnych procesów plastyczności (forgetting/consolidation).
+
+### Decyzja
+Dodajemy moduł `brain_core/synapses/plasticity.py` zawierający:
+- regułę neural-mass `dW_ij/dt = eta * pre_j * post_i * neuromod - lambda * W_ij`,
+- szybki składnik aktualizacji (hebbowski + forgetting),
+- wolny składnik aktualizacji (consolidation + homeostatic scaling),
+- clamp wag `min_weight/max_weight`,
+- tracker historii wag i metryk (`mean/std`, normy szybkich/wolnych aktualizacji).
+
+Rozszerzamy też `brain_core/experiments` o prosty protokół fazowy train/test do standaryzacji przebiegów porównawczych.
+
+### Konsekwencje
+**Pozytywne:**
+- jawna, testowalna i stabilizowana dynamika wag,
+- gotowa telemetria do analizy porównawczej,
+- spójny szablon eksperymentów train/test.
+
+**Negatywne / koszty:**
+- dodatkowe parametry wymagające kalibracji (`eta`, `lambda`, homeostasis, forgetting, consolidation),
+- konieczność utrzymania zgodności integracji między modelem i protokołami.
+
+### Alternatywy rozważane
+- Jednoskalowa aktualizacja wag bez consolidation: prostsza, ale słabsze modelowanie trwałości śladu.
+- Brak homeostazy i clamp: mniej kodu, ale wyższe ryzyko niestabilności.
+
+### Powiązane
+- `brain_core/synapses/plasticity.py`
+- `brain_core/experiments/protocols.py`
+- `tests/test_plasticity_protocols.py`
