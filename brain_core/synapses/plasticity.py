@@ -19,12 +19,8 @@ class NeuralMassPlasticityConfig:
 
 @dataclass(slots=True)
 class PlasticityTracker:
-    weight_history: list[np.ndarray]
-    metrics_history: list[dict[str, float]]
-
-    def __init__(self) -> None:
-        self.weight_history = []
-        self.metrics_history = []
+    weight_history: list[np.ndarray] = field(default_factory=list)
+    metrics_history: list[dict[str, float]] = field(default_factory=list)
 
     def record(self, weights: np.ndarray, dW_fast: np.ndarray, dW_slow: np.ndarray) -> None:
         self.weight_history.append(weights.copy())
