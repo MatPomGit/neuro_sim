@@ -165,11 +165,12 @@ class CognitiveBrainModel:
 
 
     def _add_drive_to_module_regions(self, external, module_name, value):
-        regions = regions_for_module(module_name)
-        share = value / max(len(regions), 1)
+        regions = [r for r in regions_for_module(module_name) if r in self.idx]
+        if not regions:
+            return
+        share = value / len(regions)
         for region in regions:
-            if region in self.idx:
-                external[self.idx[region]] += share
+            external[self.idx[region]] += share
 
     def build_external_drive(self, x, u, err_visual, err_auditory, prediction_error, acetylcholine):
         VIS = self.idx["VIS"]
