@@ -102,6 +102,31 @@ python main_gui.py
 
 GUI nie wymaga dodatkowych bibliotek poza standardowym `tkinter`, `numpy` i `matplotlib`. W niektórych dystrybucjach Linuksa `tkinter` trzeba doinstalować oddzielnie, np. `sudo apt install python3-tk`.
 
+### Komendy GUI do eksperymentów badawczych
+
+W module GUI dostępne są teraz dwa tryby uruchamiania:
+
+- `run` – pojedyncza symulacja dla wybranego `seed` i scenariusza,
+- `batch` – seria symulacji dla wielu seedów/scenariuszy z uśrednianiem metryk i perturbacjami `sensitivity`.
+
+Przykładowy workflow (w GUI, zakładka **Konfiguracja**):
+
+1. Ustaw `komenda=run`, `T=60`, `seed=7`, `scenariusz=reward-learning` aby uruchomić przebieg referencyjny.
+2. Przełącz `komenda=batch`.
+3. Ustaw:
+   - `batch seeds`: `7,11,19,23`
+   - `batch scenariusze`: `reward-learning,threat-reversal`
+   - `sensitivity parametry`: `noise,gw_threshold`
+   - `sensitivity delta`: `0.1` (czyli ±10% dla wskazanych parametrów)
+4. Uruchom symulację i obserwuj pasek postępu oraz podsumowanie metryk po zakończeniu.
+
+Podsumowanie batch raportuje średnie wartości m.in.:
+
+- `prediction_error`,
+- `gw_ignition`,
+- `confidence`,
+- liczby zdarzeń decyzyjnych (`decision_events`).
+
 Najważniejsze pliki:
 
 ```text
