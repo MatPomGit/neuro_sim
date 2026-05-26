@@ -154,7 +154,7 @@ W modelach symulacyjnych brak kontroli nad losowością utrudnia debugowanie, ka
 ## Krótki szablon (copy/paste)
 
 ```md
-## ADR-XXXX: Tytuł decyzji
+# ADR-XXXX: Tytuł decyzji
 
 **Status:** proposed  
 **Data:** RRRR-MM-DD
