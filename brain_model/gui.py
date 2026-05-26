@@ -623,10 +623,22 @@ class BrainModelGUI(tk.Tk):
         self._worker_thread.start()
         self.after(100, self._poll_worker)
 
-    def _run_simulation_worker(self):
+    def _run_simulation_worker(
+        self,
+        T,
+        seed,
+        dt,
+        brain_params,
+        oscillator_params,
+        command,
+        scenario,
+        save_results,
+        batch_seeds,
+        batch_scenarios,
+        sensitivity_params,
+        sensitivity_delta,
+    ):
         try:
-            T, seed, dt = self._read_scalar_params()
-            if "dt" in self.brain_form.vars:
                 self.brain_form.vars["dt"].set(str(dt))
             brain_params = self._build_brain_params()
             oscillator_params = self.osc_form.values()
