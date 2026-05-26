@@ -259,14 +259,6 @@ class CognitiveBrainModel:
         x_next = x + p.dt * dx + np.sqrt(p.dt) * noise
         x_next = np.clip(x_next, 0.0, 1.0)
 
-        behavior = {
-            "decision": np.empty(steps, dtype=object),
-            "latency": np.zeros(steps),
-            "confidence": np.zeros(steps),
-            "decision_score": np.zeros(steps),
-            "decision_event": np.zeros(steps, dtype=bool),
-        }
-
         diagnostics = {
             "prediction_error": prediction_error,
             "dopamine_delta": dopamine_delta,
