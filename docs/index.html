@@ -498,7 +498,7 @@ function drawResults(res) {
   const wTraj = tracks.map(([t,s],k)=>({x:time,y:res.activity.map(r=>Math.max(0, r[t]*r[s])),mode:"lines",name:weightNames[k]}));
   const wDelta = wTraj.map(tr=>({x:tr.x.slice(1),y:tr.y.slice(1).map((v,i)=>v-tr.y[i]),mode:"lines",name:tr.name}));
   const ch = ["visual","auditory","task","threat","reward"];
-  const cvals = ["visual","auditory","task_cue","threat","reward"].map(k=>cfgLast?.[`${k}_intensity`]||0);
+  const cvals = ch.map(k => cfgLast?.[k + '_intensity'] || 0);
   const scenarioChannels = ch.map((n,i)=>({x:[0, time[time.length-1]], y:[cvals[i], cvals[i]], mode:"lines", name:n}));
   const scenarioTimeline = [{x:[0, time[time.length-1]], y:[1,1], mode:"lines", name: cfgLast?.scenario || "scenario"}];
 
