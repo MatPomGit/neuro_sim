@@ -119,6 +119,12 @@ class RegionWilsonCowanModel:
         threshold_I = self._threshold_I
 
         if neuromodulators is not None:
+            expected_shape = self.E.shape
+            for k, v in neuromodulators.items():
+                if v.shape != expected_shape:
+                    raise ValueError(
+                        f"Neuromodulator '{k}' shape {v.shape} does not match expected shape {expected_shape}"
+                    )
             nvec = self.neuromodulation_vector(neuromodulators)
             da, na, ach, ser, gaba, glu, cort, adr = [nvec[:, i] for i in range(8)]
             gain_E = gain_E * (1.0 + 0.35 * ach + 0.20 * da + 0.25 * na - 0.15 * ser)
