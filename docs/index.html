@@ -164,6 +164,8 @@
     <label class="check"><input id="plot_eeg" type="checkbox" checked> sygnały EEG E-I</label>
     <label class="check"><input id="plot_bands" type="checkbox" checked> moc pasm theta/alpha/beta/gamma</label>
     <label class="check"><input id="plot_simulated_brain_activity" type="checkbox" checked> symulowana aktywność mózgu (mapa cieplna)</label>
+    <label class="check"><input id="plot_brain_region_projections" type="checkbox" checked> 4 rzuty mózgu: aktywacja regionów SVG</label>
+    <label class="check"><input id="plot_region_activity_2d" type="checkbox" checked> 2D: aktywacja regionów mózgu w czasie</label>
     <label class="check"><input id="plot_weight_trajectories" type="checkbox" checked> trajektorie adaptowanych wag W</label>
     <label class="check"><input id="plot_weight_deltas" type="checkbox" checked> przyrosty wag ΔW / krok</label>
     <label class="check"><input id="plot_scenario_channels" type="checkbox" checked> kanały bodźców scenariusza</label>
@@ -186,6 +188,8 @@
       <button class="tab" data-target="eegPlot">EEG</button>
       <button class="tab" data-target="bandPlot">Pasma</button>
       <button class="tab" data-target="brainHeatPlot">Mapa</button>
+      <button class="tab" data-target="brainProjPlot">Rzuty SVG</button>
+      <button class="tab" data-target="region2dPlot">Regiony 2D</button>
       <button class="tab" data-target="weightsPlot">Wagi</button>
       <button class="tab" data-target="deltasPlot">ΔW</button>
       <button class="tab" data-target="scenarioChannelsPlot">Kanały</button>
@@ -196,6 +200,8 @@
     <div id="eegPlot" class="plot" style="display:none"></div>
     <div id="bandPlot" class="plot" style="display:none"></div>
     <div id="brainHeatPlot" class="plot" style="display:none"></div>
+    <div id="brainProjPlot" class="plot" style="display:none"></div>
+    <div id="region2dPlot" class="plot" style="display:none"></div>
     <div id="weightsPlot" class="plot" style="display:none"></div>
     <div id="deltasPlot" class="plot" style="display:none"></div>
     <div id="scenarioChannelsPlot" class="plot" style="display:none"></div>
@@ -392,6 +398,21 @@ let pyodide = null;
 let lastResult = null;
 let cfgLast = null;
 const $ = (id) => document.getElementById(id);
+const REGION_TO_MODULE_WEIGHTS = {
+  DLPFC_L: [["EXEC", 0.6], ["VSWM", 0.4]], DLPFC_R: [["EXEC", 0.6], ["VSWM", 0.4]],
+  OFC_L: [["VAL", 1.0]], OFC_R: [["VAL", 1.0]], ACC: [["SAL", 0.45], ["EXEC", 0.35], ["GW", 0.2]],
+  M1_L: [["MOT", 1.0]], M1_R: [["MOT", 1.0]], S1_L: [["INT", 0.6], ["ATT", 0.4]], S1_R: [["INT", 0.6], ["ATT", 0.4]],
+  IPS_L: [["ATT", 0.65], ["VSWM", 0.35]], IPS_R: [["ATT", 0.65], ["VSWM", 0.35]], A1_L: [["AUD", 1.0]], A1_R: [["AUD", 1.0]],
+  STG_L: [["AUD", 0.6], ["PHON", 0.4]], STG_R: [["AUD", 0.6], ["PHON", 0.4]], IFG_L: [["PHON", 0.75], ["EXEC", 0.25]], IFG_R: [["PHON", 0.75], ["EXEC", 0.25]],
+  Insula_L: [["SAL", 0.6], ["INT", 0.4]], Insula_R: [["SAL", 0.6], ["INT", 0.4]], Thalamus_L: [["GW", 0.8], ["ATT", 0.2]], Thalamus_R: [["GW", 0.8], ["ATT", 0.2]],
+  BasalGanglia_L: [["VAL", 0.55], ["MOT", 0.45]], BasalGanglia_R: [["VAL", 0.55], ["MOT", 0.45]],
+  HIP_L: [["HIP", 0.7], ["EPIS", 0.3]], HIP_R: [["HIP", 0.7], ["EPIS", 0.3]], AMY_L: [["SAL", 0.6], ["VAL", 0.4]], AMY_R: [["SAL", 0.6], ["VAL", 0.4]],
+  PCC: [["DMN", 0.65], ["EPIS", 0.35]], mPFC: [["DMN", 0.55], ["GW", 0.25], ["VAL", 0.2]],
+  Angular_L: [["SEM", 0.65], ["DMN", 0.35]], Angular_R: [["SEM", 0.65], ["DMN", 0.35]],
+  V1_L: [["VIS", 1.0]], V1_R: [["VIS", 1.0]], V2_L: [["VIS", 1.0]], V2_R: [["VIS", 1.0]],
+  Cerebellum_L: [["MOT", 0.85], ["ATT", 0.15]], Cerebellum_R: [["MOT", 0.85], ["ATT", 0.15]],
+  Brainstem: [["INT", 0.55], ["SAL", 0.25], ["GW", 0.2]],
+};
 const numericIds = ["T","seed","dt","noise","gw_threshold","gw_gain","learning_rate_semantic","learning_rate_value","decay_semantic","w_ee","w_ei","w_ie","w_ii","baseline_e","baseline_i","cognitive_drive_gain","coupling_gain","oscillator_noise","phase_drive_gain","visual_start","visual_end","visual_intensity","auditory_start","auditory_end","auditory_intensity","task_start","task_end","task_intensity","threat_start","threat_end","threat_intensity","reward_start","reward_end","reward_intensity"];
 
 async function applyGuiDefaults() {
@@ -424,7 +445,7 @@ function captureDefaults() {
   defaults.plot_eeg = $("plot_eeg").checked;
   defaults.plot_bands = $("plot_bands").checked;
   defaults.scenario = $("scenario").value;
-  for (const id of ["plot_simulated_brain_activity","plot_weight_trajectories","plot_weight_deltas","plot_scenario_channels","plot_scenario_timeline"]) defaults[id] = $(id).checked;
+  for (const id of ["plot_simulated_brain_activity","plot_brain_region_projections","plot_region_activity_2d","plot_weight_trajectories","plot_weight_deltas","plot_scenario_channels","plot_scenario_timeline"]) defaults[id] = $(id).checked;
 }
 
 function setStatus(text) { $("status").textContent = text; }
@@ -443,6 +464,8 @@ function selectedPlots() {
     eeg: $("plot_eeg").checked,
     bands: $("plot_bands").checked,
     simulated_brain_activity: $("plot_simulated_brain_activity").checked,
+    brain_region_projections: $("plot_brain_region_projections").checked,
+    region_activity_2d: $("plot_region_activity_2d").checked,
     weight_trajectories: $("plot_weight_trajectories").checked,
     weight_deltas: $("plot_weight_deltas").checked,
     scenario_channels: $("plot_scenario_channels").checked,
@@ -490,6 +513,32 @@ function drawResults(res) {
   });
   const bandTraces = Object.entries(res.band_power).map(([name, arr]) => ({ x: time, y: arr, mode: "lines", name }));
   const heatZ = names.map((_, j) => res.activity.map(row => row[j]));
+  const regionNames = Object.keys(REGION_TO_MODULE_WEIGHTS);
+  const regionSeries = {};
+  for (const region of regionNames) {
+    const mapping = REGION_TO_MODULE_WEIGHTS[region];
+    const y = [];
+    for (const row of res.activity) {
+      let num = 0.0, den = 0.0;
+      for (const [mod, w] of mapping) {
+        const j = names.indexOf(mod);
+        if (j >= 0) { num += row[j] * w; den += w; }
+      }
+      y.push(den > 0 ? num / den : 0.0);
+    }
+    regionSeries[region] = y;
+  }
+  const regionHeatZ = regionNames.map(r => regionSeries[r]);
+  const lastRegionVals = regionNames.map(r => regionSeries[r][regionSeries[r].length - 1]);
+  const regionX = Array.from({length: regionNames.length}, (_, i) => i % 8);
+  const regionY = Array.from({length: regionNames.length}, (_, i) => Math.floor(i / 8));
+  const projectionTrace = {
+    x: regionX, y: regionY, mode: "markers+text",
+    text: regionNames, textposition: "top center",
+    marker: { size: 13, color: lastRegionVals, colorscale: "Magma", cmin: 0, cmax: 1, line: {color: "#111", width: 0.5}, showscale: true, colorbar: {title: "Aktywacja [0-1]"} },
+    hovertemplate: "%{text}<br>aktywacja=%{marker.color:.3f}<extra></extra>",
+    name: "Regiony"
+  };
   const weightNames = ["VIS→SAL","AUD→SAL","SAL→ATT","ATT→EXEC","EXEC→GW"];
   const idx = n => names.indexOf(n);
   const tracks = [
@@ -511,6 +560,29 @@ function drawResults(res) {
   if (plots.bands) Plotly.newPlot("bandPlot", bandTraces, makeLayout("Moc pasm oscylacyjnych", "moc"), {responsive: true});
   else Plotly.purge("bandPlot");
   if (plots.simulated_brain_activity) Plotly.newPlot("brainHeatPlot", [{z:heatZ,x:time,y:names,type:"heatmap",colorscale:"Viridis"}], makeLayout("Symulowana aktywność mózgu", "moduł"), {responsive:true}); else Plotly.purge("brainHeatPlot");
+  if (plots.brain_region_projections) {
+    const projLayout = {
+      title: { text: "4 rzuty mózgu: aktywacja regionów SVG (ostatni krok czasu)", font: { size: 15 } },
+      margin: { l: 28, r: 16, t: 46, b: 24 },
+      grid: {rows: 2, columns: 2, pattern: "independent"},
+      annotations: [
+        {text: "Axial", x: 0.21, y: 1.03, xref: "paper", yref: "paper", showarrow: false},
+        {text: "Coronal", x: 0.79, y: 1.03, xref: "paper", yref: "paper", showarrow: false},
+        {text: "Sagittal", x: 0.21, y: 0.48, xref: "paper", yref: "paper", showarrow: false},
+        {text: "Lateral", x: 0.79, y: 0.48, xref: "paper", yref: "paper", showarrow: false},
+      ],
+      xaxis: {visible: false}, yaxis: {visible: false},
+      xaxis2: {visible: false}, yaxis2: {visible: false},
+      xaxis3: {visible: false}, yaxis3: {visible: false},
+      xaxis4: {visible: false}, yaxis4: {visible: false},
+      paper_bgcolor: "white", plot_bgcolor: "white"
+    };
+    const mk = (ax, ay) => ({...projectionTrace, xaxis: ax, yaxis: ay, showlegend: false});
+    Plotly.newPlot("brainProjPlot", [mk("x","y"), mk("x2","y2"), mk("x3","y3"), mk("x4","y4")], projLayout, {responsive:true});
+  } else Plotly.purge("brainProjPlot");
+  if (plots.region_activity_2d) {
+    Plotly.newPlot("region2dPlot", [{z:regionHeatZ,x:time,y:regionNames,type:"heatmap",colorscale:"Magma",zmin:0,zmax:1}], makeLayout("Aktywacja regionów mózgu w czasie (2D)", "region"), {responsive:true});
+  } else Plotly.purge("region2dPlot");
   if (plots.weight_trajectories) Plotly.newPlot("weightsPlot", wTraj, makeLayout("Trajektorie adaptowanych wag W (aproksymacja)", "waga"), {responsive:true}); else Plotly.purge("weightsPlot");
   if (plots.weight_deltas) Plotly.newPlot("deltasPlot", wDelta, makeLayout("Przyrosty wag ΔW / krok (aproksymacja)", "ΔW"), {responsive:true}); else Plotly.purge("deltasPlot");
   if (plots.scenario_channels) Plotly.newPlot("scenarioChannelsPlot", scenarioChannels, makeLayout("Kanały bodźców scenariusza", "intensywność"), {responsive:true}); else Plotly.purge("scenarioChannelsPlot");
@@ -568,13 +640,13 @@ $("resetBtn").addEventListener("click", () => {
   $("plot_eeg").checked = defaults.plot_eeg;
   $("plot_bands").checked = defaults.plot_bands;
   $("scenario").value = defaults.scenario;
-  for (const id of ["plot_simulated_brain_activity","plot_weight_trajectories","plot_weight_deltas","plot_scenario_channels","plot_scenario_timeline"]) $(id).checked = defaults[id];
+  for (const id of ["plot_simulated_brain_activity","plot_brain_region_projections","plot_region_activity_2d","plot_weight_trajectories","plot_weight_deltas","plot_scenario_channels","plot_scenario_timeline"]) $(id).checked = defaults[id];
 });
 document.querySelectorAll(".tab").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    ["activityPlot", "diagPlot", "eegPlot", "bandPlot", "brainHeatPlot", "weightsPlot", "deltasPlot", "scenarioChannelsPlot", "scenarioTimelinePlot"].forEach(id => $(id).style.display = id === btn.dataset.target ? "block" : "none");
+    ["activityPlot", "diagPlot", "eegPlot", "bandPlot", "brainHeatPlot", "brainProjPlot", "region2dPlot", "weightsPlot", "deltasPlot", "scenarioChannelsPlot", "scenarioTimelinePlot"].forEach(id => $(id).style.display = id === btn.dataset.target ? "block" : "none");
     setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
   });
 });

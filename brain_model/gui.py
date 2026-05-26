@@ -33,6 +33,8 @@ from .plotting import (
     draw_behavior,
     draw_eeg_modules,
     draw_simulated_brain_activity,
+    draw_brain_region_projections,
+    draw_region_activity_2d,
     draw_scenario_channels,
     draw_scenario_timeline,
     draw_weight_deltas,
@@ -68,6 +70,8 @@ PARAMETER_DESCRIPTIONS = {
     "save_results": "Po zakończeniu symulacji zapisuje wyniki do katalogu outputs/ w formacie NPZ + JSON (z metadanymi eksperymentu).",
     "plot_activity": "Wykres aktywacji modułów poznawczych w czasie (np. ATT, EXEC, SEM, GW).",
     "plot_simulated_brain_activity": "Mapa cieplna aktywacji modułów mózgu w czasie (symulowana aktywność mózgu).",
+    "plot_brain_region_projections": "Cztery rzuty mózgu na bazie szkieletu SVG z aktywacją regionów dla kolejnych kroków czasu.",
+    "plot_region_activity_2d": "Wykres 2D (heatmapa): aktywacja poszczególnych regionów mózgu w funkcji czasu eksperymentu.",
     "plot_diagnostics": "Wykres zmiennych diagnostycznych i neuromodulacyjnych, m.in. prediction error, gw_ignition i neuroprzekaźników.",
     "plot_behavior": "Wykres strumienia zachowania: decision score, confidence oraz markery punktów decyzji.",
     "plot_eeg": "Wykres aproksymowanych sygnałów EEG (E-I) dla wybranych modułów modelu.",
@@ -291,6 +295,8 @@ class BrainModelGUI(tk.Tk):
         self.plot_vars: Dict[str, tk.BooleanVar] = {
             "activity": tk.BooleanVar(value=True),
             "simulated_brain_activity": tk.BooleanVar(value=True),
+            "brain_region_projections": tk.BooleanVar(value=True),
+            "region_activity_2d": tk.BooleanVar(value=True),
             "diagnostics": tk.BooleanVar(value=True),
             "behavior": tk.BooleanVar(value=True),
             "eeg": tk.BooleanVar(value=True),
@@ -304,6 +310,8 @@ class BrainModelGUI(tk.Tk):
         labels = {
             "activity": "aktywacje modułów poznawczych",
             "simulated_brain_activity": "symulowana aktywność mózgu (mapa cieplna)",
+            "brain_region_projections": "4 rzuty mózgu: aktywacja regionów SVG",
+            "region_activity_2d": "2D: aktywacja regionów mózgu w czasie",
             "diagnostics": "zmienne diagnostyczne i neuromodulacyjne",
             "behavior": "przebiegi decyzyjne + markery decyzji",
             "eeg": "sygnały EEG E-I dla wybranych modułów",
@@ -317,6 +325,8 @@ class BrainModelGUI(tk.Tk):
         plot_tooltips = {
             "activity": PARAMETER_DESCRIPTIONS["plot_activity"],
             "simulated_brain_activity": PARAMETER_DESCRIPTIONS["plot_simulated_brain_activity"],
+            "brain_region_projections": PARAMETER_DESCRIPTIONS["plot_brain_region_projections"],
+            "region_activity_2d": PARAMETER_DESCRIPTIONS["plot_region_activity_2d"],
             "diagnostics": PARAMETER_DESCRIPTIONS["plot_diagnostics"],
             "behavior": PARAMETER_DESCRIPTIONS["plot_behavior"],
             "eeg": PARAMETER_DESCRIPTIONS["plot_eeg"],
@@ -634,6 +644,28 @@ class BrainModelGUI(tk.Tk):
                     model.names,
                     model.idx,
                     figsize=(11, 7),
+                )
+                has_plots = True
+            if self.plot_vars["brain_region_projections"].get():
+                self.plot_panel.add_plot(
+                    "Rzuty mózgu SVG",
+                    draw_brain_region_projections,
+                    time,
+                    activity,
+                    model.names,
+                    model.idx,
+                    figsize=(11, 8),
+                )
+                has_plots = True
+            if self.plot_vars["region_activity_2d"].get():
+                self.plot_panel.add_plot(
+                    "Regiony 2D w czasie",
+                    draw_region_activity_2d,
+                    time,
+                    activity,
+                    model.names,
+                    model.idx,
+                    figsize=(11, 8),
                 )
                 has_plots = True
             if self.plot_vars["diagnostics"].get():
