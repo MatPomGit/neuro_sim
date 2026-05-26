@@ -1,0 +1,16 @@
+model:
+  noise: 0.02
+  gw_threshold: 0.55
+integrator:
+  method: euler
+  oscillator:
+    cognitive_drive_gain: 3.2
+timestep: 0.005
+seed: 11
+task:
+  scenario: threat-reversal
+  duration: 60.0
+output:
+  save_results: true
+  label: cognitive-demo
+  output_dir: outputs

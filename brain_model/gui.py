@@ -14,6 +14,8 @@ import subprocess
 import sys
 import tkinter as tk
 import time as pytime
+import threading
+import queue
 from dataclasses import fields, replace
 from datetime import date
 from pathlib import Path
@@ -23,6 +25,8 @@ import numpy as np
 
 from .io import build_output_dir, save_run
 from .model import CognitiveBrainModel
+from brain_core.simulation.config_loader import load_config_from_string
+from brain_core.simulation.engine import run_experiment
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
 from .scenarios import get_scenario, list_scenarios
@@ -202,6 +206,9 @@ class BrainModelGUI(tk.Tk):
         self.osc_form = ParameterForm(self, "hidden", WilsonCowanParams, self.osc_defaults)
         self._build_layout()
         self._build_menu()
+        self._worker_thread = None
+        self._result_queue = queue.Queue()
+        self._running = False
 
     def _build_layout(self):
         self.tabs = ttk.Notebook(self)
@@ -365,7 +372,7 @@ class BrainModelGUI(tk.Tk):
         bottom.pack(fill="x", pady=(12, 0))
 
         ttk.Button(bottom, text="Przywróć domyślne", command=self.reset_defaults).pack(side="left")
-        ttk.Button(bottom, text="Uruchom symulację", command=self.run_simulation).pack(side="right")
+        ttk.Button(bottom, text="Uruchom symulację", command=self.start_simulation).pack(side="right")
 
         self.status_var = tk.StringVar(value="Gotowe.")
         ttk.Label(root, textvariable=self.status_var).pack(anchor="w", pady=(8, 0))
@@ -604,10 +611,34 @@ class BrainModelGUI(tk.Tk):
 
         return T, seed, dt
 
-    def run_simulation(self):
+    def start_simulation(self):
+        if self._running:
+            messagebox.showinfo("Informacja", "Symulacja już trwa.")
+            return
+        self._running = True
+        self.status_var.set("Symulacja w toku...")
+        self.progress_var.set(0)
+        self.summary_var.set("")
+        self._worker_thread = threading.Thread(target=self._run_simulation_worker, daemon=True)
+        self._worker_thread.start()
+        self.after(100, self._poll_worker)
+
+    def _run_simulation_worker(
+        self,
+        T,
+        seed,
+        dt,
+        brain_params,
+        oscillator_params,
+        command,
+        scenario,
+        save_results,
+        batch_seeds,
+        batch_scenarios,
+        sensitivity_params,
+        sensitivity_delta,
+    ):
         try:
-            T, seed, dt = self._read_scalar_params()
-            if "dt" in self.brain_form.vars:
                 self.brain_form.vars["dt"].set(str(dt))
             brain_params = self._build_brain_params()
             oscillator_params = self.osc_form.values()
@@ -619,20 +650,25 @@ class BrainModelGUI(tk.Tk):
             if oscillator_params.oscillator_noise < 0:
                 raise ValueError("oscillator_noise nie może być ujemny.")
 
-            self.status_var.set("Symulacja w toku...")
-            self.progress_var.set(0)
-            self.summary_var.set("")
-            self.update_idletasks()
-
             start = pytime.perf_counter()
             if self.command_var.get() == "run":
-                model = CognitiveBrainModel(
-                    params=brain_params,
-                    oscillator_params=oscillator_params,
-                    seed=seed,
-                    stimulus=self.scenario_var.get(),
-                )
-                time, activity, diagnostics, oscillations, behavior = model.simulate(T=T, progress_callback=self._progress_single)
+                config_doc = {
+                    "model": {"noise": brain_params.noise, "gw_threshold": brain_params.gw_threshold, "gw_gain": brain_params.gw_gain},
+                    "integrator": {"method": "euler", "oscillator": {"cognitive_drive_gain": oscillator_params.cognitive_drive_gain, "oscillator_noise": oscillator_params.oscillator_noise}},
+                    "timestep": dt,
+                    "seed": seed,
+                    "task": {"scenario": self.scenario_var.get(), "duration": T},
+                    "output": {"save_results": False, "label": "gui", "output_dir": "outputs"},
+                }
+                config_payload = json.dumps(config_doc)
+                cfg = load_config_from_string(config_payload, format_hint="json")
+                result = run_experiment(cfg, progress_callback=self._progress_single)
+                model = result["model"]
+                time = result["time"]
+                activity = result["activity"]
+                diagnostics = result["diagnostics"]
+                oscillations = result["oscillations"]
+                behavior = result["behavior"]
                 summary_text = self._summarize_metrics([self._extract_metrics(diagnostics, behavior)])
             else:
                 runs, model, time, activity, diagnostics, oscillations, behavior = self._run_batch(
@@ -667,152 +703,130 @@ class BrainModelGUI(tk.Tk):
                         duration_s=elapsed,
                     )
                 except Exception as exc:
-                    messagebox.showwarning("Ostrzeżenie", f"Nie udało się zapisać wyników symulacji: {exc}")
+                    self._result_queue.put(("warning", f"Nie udało się zapisać wyników symulacji: {exc}"))
 
-            self.plot_panel.clear()
-            has_plots = False
-
-            if self.plot_vars["activity"].get():
-                self.plot_panel.add_plot(
-                    "Aktywacje",
-                    draw_activity,
-                    time,
-                    activity,
-                    model.names,
-                    model.idx,
-                    figsize=(11, 7),
-                )
-                has_plots = True
-            if self.plot_vars["simulated_brain_activity"].get():
-                self.plot_panel.add_plot(
-                    "Aktywność mózgu",
-                    draw_simulated_brain_activity,
-                    time,
-                    activity,
-                    model.names,
-                    model.idx,
-                    figsize=(11, 7),
-                )
-                has_plots = True
-            if self.plot_vars["brain_region_projections"].get():
-                self.plot_panel.add_plot(
-                    "Rzuty mózgu SVG",
-                    draw_brain_region_projections,
-                    time,
-                    activity,
-                    model.names,
-                    model.idx,
-                    figsize=(11, 8),
-                )
-                has_plots = True
-            if self.plot_vars["region_activity_2d"].get():
-                self.plot_panel.add_plot(
-                    "Regiony 2D w czasie",
-                    draw_region_activity_2d,
-                    time,
-                    activity,
-                    model.names,
-                    model.idx,
-                    figsize=(11, 8),
-                )
-                has_plots = True
-            if self.plot_vars["diagnostics"].get():
-                self.plot_panel.add_plot(
-                    "Diagnostyka",
-                    draw_diagnostics,
-                    time,
-                    diagnostics,
-                    figsize=(11, 5),
-                )
-                has_plots = True
-            if self.plot_vars["behavior"].get():
-                self.plot_panel.add_plot(
-                    "Behavior",
-                    draw_behavior,
-                    time,
-                    behavior,
-                    figsize=(11, 5),
-                )
-                has_plots = True
-            if self.plot_vars["eeg"].get():
-                self.plot_panel.add_plot(
-                    "EEG modułów",
-                    draw_eeg_modules,
-                    time,
-                    oscillations,
-                    model.names,
-                    model.idx,
-                    figsize=(11, 6),
-                )
-                has_plots = True
-            if self.plot_vars["band_power"].get():
-                self.plot_panel.add_plot(
-                    "Moc pasm",
-                    draw_band_power,
-                    time,
-                    oscillations,
-                    figsize=(11, 8),
-                )
-                has_plots = True
-            if self.plot_vars["weight_trajectories"].get():
-                self.plot_panel.add_plot(
-                    "Trajektorie wag",
-                    draw_weight_trajectories,
-                    time,
-                    diagnostics,
-                    figsize=(11, 5),
-                )
-                has_plots = True
-            if self.plot_vars["weight_deltas"].get():
-                self.plot_panel.add_plot(
-                    "Przyrosty wag",
-                    draw_weight_deltas,
-                    time,
-                    diagnostics,
-                    figsize=(11, 5),
-                )
-                has_plots = True
-            if self.plot_vars["scenario_channels"].get():
-                self.plot_panel.add_plot(
-                    "Kanały scenariusza",
-                    draw_scenario_channels,
-                    time,
-                    get_scenario(self.scenario_var.get()),
-                    figsize=(11, 5),
-                )
-                has_plots = True
-            if self.plot_vars["scenario_timeline"].get():
-                self.plot_panel.add_plot(
-                    "Oś czasu scenariusza",
-                    draw_scenario_timeline,
-                    time,
-                    get_scenario(self.scenario_var.get()),
-                    figsize=(11, 4),
-                )
-                has_plots = True
-
-            if has_plots:
-                self.tabs.select(1)
-            else:
-                self.tabs.select(0)
-
-            if has_plots:
-                msg = "Symulacja zakończona."
-            else:
-                msg = "Symulacja zakończona (brak wybranych wykresów)."
+            msg = "Symulacja zakończona."
             if save_info:
                 msg += f" Wyniki zapisane: {save_info['output_dir']}"
-            self.status_var.set(msg)
-            self.summary_var.set(summary_text)
-            self.progress_var.set(100.0)
+            payload = (msg, summary_text, save_info, model, time, activity, diagnostics, oscillations, behavior)
+            self._result_queue.put(("done", payload))
 
         except Exception as exc:
-            self.status_var.set("Błąd konfiguracji.")
-            messagebox.showerror("Błąd", str(exc))
+            self._result_queue.put(("error", str(exc)))
 
     def _progress_single(self, ratio: float):
-        self.progress_var.set(max(0.0, min(100.0, ratio * 100.0)))
-        self.update_idletasks()
+        self._result_queue.put(("progress", max(0.0, min(100.0, ratio * 100.0))))
+
+    def _poll_worker(self):
+        while True:
+            try:
+                kind, payload = self._result_queue.get_nowait()
+            except queue.Empty:
+                break
+            if kind == "progress":
+                self.progress_var.set(payload)
+            elif kind == "done":
+                self._running = False
+                self._apply_run_result(payload)
+            elif kind == "error":
+                self._running = False
+                self.status_var.set("Błąd konfiguracji.")
+                messagebox.showerror("Błąd", payload)
+            elif kind == "warning":
+                messagebox.showwarning("Ostrzeżenie", payload)
+        if self._running:
+            self.after(100, self._poll_worker)
+
+    def _apply_run_result(self, payload):
+        (
+            msg,
+            summary_text,
+            save_info,
+            model,
+            time,
+            activity,
+            diagnostics,
+            oscillations,
+            behavior,
+        ) = payload
+        self.plot_panel.clear()
+        has_plots = False
+        if self.plot_vars["activity"].get():
+            self.plot_panel.add_plot("Aktywacje", draw_activity, time, activity, model.names, model.idx, figsize=(11, 7))
+            has_plots = True
+        if self.plot_vars["simulated_brain_activity"].get():
+            self.plot_panel.add_plot(
+                "Aktywność mózgu",
+                draw_simulated_brain_activity,
+                time,
+                activity,
+                model.names,
+                model.idx,
+                figsize=(11, 7),
+            )
+            has_plots = True
+        if self.plot_vars["brain_region_projections"].get():
+            self.plot_panel.add_plot(
+                "Rzuty mózgu SVG",
+                draw_brain_region_projections,
+                time,
+                activity,
+                model.names,
+                model.idx,
+                figsize=(11, 8),
+            )
+            has_plots = True
+        if self.plot_vars["region_activity_2d"].get():
+            self.plot_panel.add_plot(
+                "Regiony 2D w czasie",
+                draw_region_activity_2d,
+                time,
+                activity,
+                model.names,
+                model.idx,
+                figsize=(11, 8),
+            )
+            has_plots = True
+        if self.plot_vars["diagnostics"].get():
+            self.plot_panel.add_plot("Diagnostyka", draw_diagnostics, time, diagnostics, figsize=(11, 5))
+            has_plots = True
+        if self.plot_vars["behavior"].get():
+            self.plot_panel.add_plot("Behavior", draw_behavior, time, behavior, figsize=(11, 5))
+            has_plots = True
+        if self.plot_vars["eeg"].get():
+            self.plot_panel.add_plot("EEG modułów", draw_eeg_modules, time, oscillations, model.names, model.idx, figsize=(11, 6))
+            has_plots = True
+        if self.plot_vars["band_power"].get():
+            self.plot_panel.add_plot("Moc pasm", draw_band_power, time, oscillations, figsize=(11, 8))
+            has_plots = True
+        if self.plot_vars["weight_trajectories"].get():
+            self.plot_panel.add_plot("Trajektorie wag", draw_weight_trajectories, time, diagnostics, figsize=(11, 5))
+            has_plots = True
+        if self.plot_vars["weight_deltas"].get():
+            self.plot_panel.add_plot("Przyrosty wag", draw_weight_deltas, time, diagnostics, figsize=(11, 5))
+            has_plots = True
+        if self.plot_vars["scenario_channels"].get():
+            self.plot_panel.add_plot(
+                "Kanały scenariusza",
+                draw_scenario_channels,
+                time,
+                get_scenario(self.scenario_var.get()),
+                figsize=(11, 5),
+            )
+            has_plots = True
+        if self.plot_vars["scenario_timeline"].get():
+            self.plot_panel.add_plot(
+                "Oś czasu scenariusza",
+                draw_scenario_timeline,
+                time,
+                get_scenario(self.scenario_var.get()),
+                figsize=(11, 4),
+            )
+            has_plots = True
+        self.tabs.select(1 if has_plots else 0)
+        self.status_var.set(msg)
+        self.summary_var.set(summary_text)
+        self.progress_var.set(100.0)
 
     def _extract_metrics(self, diagnostics, behavior):
         return {
@@ -858,8 +872,7 @@ class BrainModelGUI(tk.Tk):
                 metrics.append(self._extract_metrics(diagnostics, behavior))
                 last = (model, time, activity, diagnostics, oscillations, behavior)
                 completed += 1
-                self.progress_var.set((completed / total_runs) * 100.0)
-                self.update_idletasks()
+                self._progress_single(completed / total_runs)
                 for p_name in sens_params:
                     if not hasattr(base_params, p_name):
                         continue
@@ -870,8 +883,7 @@ class BrainModelGUI(tk.Tk):
                         _, _, diag_p, _, beh_p = model.simulate(T=T)
                         metrics.append(self._extract_metrics(diag_p, beh_p))
                         completed += 1
-                        self.progress_var.set((completed / total_runs) * 100.0)
-                        self.update_idletasks()
+                        self._progress_single(completed / total_runs)
         if last is None:
             raise ValueError("Batch nie wygenerował żadnych przebiegów.")
         return metrics, *last

@@ -70,6 +70,41 @@ neuro_sim/
 └── README.md
 ```
 
+
+## Konfiguracje i silnik eksperymentów (brain_core)
+
+Od tego etapu uruchamianie eksperymentów jest oparte o wspólny silnik `brain_core.simulation`, niezależny od GUI.
+
+Najważniejsze elementy:
+
+- `brain_core/simulation/engine.py` – API `run_experiment(config, progress_callback=...)`,
+- `brain_core/simulation/config_schema.py` – schema + walidacja konfiguracji,
+- `brain_core/simulation/config_loader.py` – loader YAML/JSON,
+- `brain_core/simulation/run.py` – CLI (`python -m brain_core.simulation.run --config ...`),
+- `configs/default.yaml` i `configs/cognitive_demo.yaml` – przykładowe konfiguracje.
+
+Przykład uruchomienia z pliku konfiguracyjnego:
+
+```bash
+python -m brain_core.simulation.run --config configs/default.yaml
+```
+
+Alternatywnie po instalacji pakietu:
+
+```bash
+neuro-sim-run --config configs/cognitive_demo.yaml
+```
+
+### GUI i uruchamianie asynchroniczne
+
+GUI uruchamia symulację asynchronicznie (w tle), dzięki czemu interfejs nie blokuje się podczas długich eksperymentów i na bieżąco aktualizuje pasek postępu.
+
+Punkty wejścia GUI są zgodne i delegują do jednej implementacji:
+
+- `main_gui.py`
+- `run_gui.py`
+- `brain_model.gui:run_gui`
+
 ## Wyniki symulacji
 
 `model.simulate()` zwraca:

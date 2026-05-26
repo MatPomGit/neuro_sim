@@ -1,0 +1,14 @@
+model:
+  noise: 0.01
+integrator:
+  method: euler
+  oscillator: {}
+timestep: 0.005
+seed: 7
+task:
+  scenario: reward-learning
+  duration: 45.0
+output:
+  save_results: true
+  label: default
+  output_dir: outputs
