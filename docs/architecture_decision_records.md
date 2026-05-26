@@ -292,3 +292,76 @@ Rozszerzamy też `brain_core/experiments` o prosty protokół fazowy train/test 
 - `brain_core/synapses/plasticity.py`
 - `brain_core/experiments/protocols.py`
 - `tests/test_plasticity_protocols.py`
+
+## ADR-0007: Kanał obserwacyjny EEG/BOLD i zestaw walidacji porównawczej
+
+**Status:** proposed  
+**Data:** 2026-05-26
+
+### Kontekst
+Model `brain_core` miał dynamikę neuronalną, ale brakowało prostego toru obserwacyjnego do mapowania aktywności na sygnały porównywalne z danymi EEG/fMRI oraz brakowało zunifikowanych metryk porównania do targetów eksperymentalnych.
+
+### Decyzja
+Dodajemy minimalny, deterministyczny tor obserwacyjny:
+- `brain_core/physiology/eeg_forward_model.py`: liniowy model forward EEG z macierzą leadfield,
+- `brain_core/physiology/neurovascular_coupling.py` + `brain_core/physiology/bold_hrf.py`: neurovascular drive i konwolucję HRF dla BOLD,
+- `brain_core/analysis/signal_metrics.py`: moc pasm, PLV, macierz connectivity i raport porównawczy,
+- `analysis/reports.py`: raport końcowy agregujący metryki EEG/fMRI/behawior,
+- `data/validation/*.csv`: minimalne benchmarki referencyjne.
+
+### Konsekwencje
+**Pozytywne:**
+- możliwa jest szybka walidacja jakości symulacji względem targetów,
+- utrzymujemy prostotę (liniowy leadfield, konwolucja 1D/2D bez ciężkich zależności),
+- przygotowujemy spójny format raportu końcowego.
+
+**Negatywne / koszty:**
+- model HRF jest uproszczony i nie zastępuje pełnego modelu hemodynamicznego,
+- metryki connectivity opierają się na korelacji liniowej.
+
+### Alternatywy rozważane
+- Integracja z zewnętrznymi bibliotekami neuroimagingowymi: bogatsza funkcjonalność, ale większa złożoność i zależności.
+- Brak dedykowanego toru obserwacyjnego: mniejszy zakres zmian, ale brak obiektywnej walidacji względem EEG/fMRI.
+
+### Powiązane
+- `brain_core/physiology/eeg_forward_model.py`
+- `brain_core/physiology/neurovascular_coupling.py`
+- `brain_core/physiology/bold_hrf.py`
+- `brain_core/analysis/signal_metrics.py`
+- `analysis/reports.py`
+- `data/validation/eeg_target.csv`
+- `data/validation/fmri_target.csv`
+- `data/validation/behavior_target.csv`
+
+---
+
+## ADR-0008: Rozszerzenie EEG o warianty forward i solvery inverse
+
+**Status:** proposed  
+**Data:** 2026-05-26
+
+### Kontekst
+Pierwotny model EEG obejmował wyłącznie prostą projekcję leadfield bez referencjonowania i bez odtwarzania źródeł z przestrzeni sensorowej.
+
+### Decyzja
+Rozszerzamy `brain_core/physiology/eeg_forward_model.py` o:
+- konfigurowalne forward modelowanie (`reference=none|average`, opcjonalny szum sensorowy),
+- klasę `EEGInverseSolver` z solverami `minimum_norm` (ridge/MNE) i `weighted_minimum_norm` (depth-weighted MNE).
+
+### Konsekwencje
+**Pozytywne:**
+- spójne API dla projekcji i rekonstrukcji źródeł,
+- możliwość porównań symulacja↔EEG także w kierunku inverse,
+- nadal brak ciężkich zależności zewnętrznych.
+
+**Negatywne / koszty:**
+- inverse jest uproszczone (brak pełnego modelu szumu i regularizacji przestrzennej typu LORETA),
+- dobór `lam` i wag głębokości wymaga kalibracji.
+
+### Alternatywy rozważane
+- Użycie zewnętrznych toolboxów EEG (MNE/FieldTrip): większa dokładność i zakres metod, ale wyższy koszt integracji.
+- Pozostanie przy samym forward: prostsze, ale bez obsługi inverse problem.
+
+### Powiązane
+- `brain_core/physiology/eeg_forward_model.py`
+- `tests/test_observation_and_analysis.py`
