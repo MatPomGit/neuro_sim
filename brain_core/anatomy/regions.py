@@ -18,5 +18,5 @@ class RegionAtlas:
         return tuple(region.name for region in self.regions)
 
     @property
-    def tau_vector(self):
-        return [region.tau for region in self.regions]
+    def tau_vector(self) -> tuple[float, ...]:
+        return tuple(region.tau for region in self.regions)
