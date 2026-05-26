@@ -30,9 +30,15 @@ def _load_square_matrix(path: Path, expected_names: tuple[str, ...]) -> np.ndarr
         reader = csv.reader(f)
         rows = list(reader)
 
+    if not rows:
+        raise ValueError(f"Matrix file {path.name} is empty")
+
     header = tuple(cell.strip() for cell in rows[0][1:])
     if header != expected_names:
         raise ValueError(f"Matrix header mismatch for {path.name}")
+
+    if len(rows) - 1 != len(expected_names):
+        raise ValueError(f"Matrix row count mismatch for {path.name}: expected {len(expected_names)}, got {len(rows) - 1}")
 
     matrix = np.zeros((len(expected_names), len(expected_names)), dtype=float)
     for i, row in enumerate(rows[1:]):
