@@ -5,6 +5,7 @@ from .behavior import map_behavior_state
 from .connectivity import build_connectivity
 from .modules import MODULES, TAU
 from .params import BrainParams
+from brain_core.cognition import regions_for_module
 from .plasticity import apply_state_learning, build_weight_history_series, update_connectivity
 from .scenarios import get_scenario, CHANNELS
 from .stimuli import build_stimulus_fn
@@ -162,6 +163,14 @@ class CognitiveBrainModel:
         )
         return sigmoid(candidate - self.p.gw_threshold, beta=self.p.gw_gain)
 
+
+    def _add_drive_to_module_regions(self, external, module_name, value):
+        regions = regions_for_module(module_name)
+        share = value / max(len(regions), 1)
+        for region in regions:
+            if region in self.idx:
+                external[self.idx[region]] += share
+
     def build_external_drive(self, x, u, err_visual, err_auditory, prediction_error, acetylcholine):
         VIS = self.idx["VIS"]
         AUD = self.idx["AUD"]
@@ -178,13 +187,13 @@ class CognitiveBrainModel:
         external[VIS] += precision_gain * u["visual"]
         external[AUD] += precision_gain * u["auditory"]
         external[INT] += u["interoceptive"]
-        external[SAL] += 0.8 * u["threat"] + 0.4 * prediction_error
-        external[ATT] += 0.5 * u["task_cue"] + 0.25 * acetylcholine
-        external[EXEC] += 0.35 * u["task_cue"]
+        self._add_drive_to_module_regions(external, "SAL", 0.8 * u["threat"] + 0.4 * prediction_error)
+        self._add_drive_to_module_regions(external, "ATT", 0.5 * u["task_cue"] + 0.25 * acetylcholine)
+        self._add_drive_to_module_regions(external, "EXEC", 0.35 * u["task_cue"])
 
         external[VIS] += 0.65 * err_visual
         external[AUD] += 0.65 * err_auditory
-        external[SAL] += 0.40 * prediction_error
+        self._add_drive_to_module_regions(external, "SAL", 0.40 * prediction_error)
 
         return external
 
