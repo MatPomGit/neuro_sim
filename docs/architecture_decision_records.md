@@ -1,0 +1,176 @@
+# Architecture Decision Records (ADR)
+
+Ten dokument wprowadza standard ADR w projekcie **neuro_sim** i zawiera pierwsze, bazowe decyzje architektoniczne.
+
+## Cel
+
+ADR (Architecture Decision Record) służy do:
+- dokumentowania istotnych decyzji technicznych,
+- utrzymania kontekstu „dlaczego” obok kodu,
+- ułatwienia onboardingu i przeglądów zmian,
+- ograniczania regresji decyzji (powrotu do dawnych problemów).
+
+## Zakres stosowania ADR
+
+Tworzymy ADR, gdy decyzja:
+- wpływa na wiele modułów,
+- zmienia sposób modelowania domeny lub strukturę projektu,
+- dotyczy długoterminowych kompromisów (np. wydajność vs. czytelność),
+- może być kwestionowana w przyszłości.
+
+Przykłady:
+- wybór architektury silnika symulacji,
+- standard konfiguracji i walidacji,
+- podejście do I/O, serializacji i raportowania,
+- zasady modularności i granic odpowiedzialności.
+
+## Format ADR
+
+Każdy ADR powinien zawierać sekcje:
+
+1. **Status** (proposed / accepted / superseded / deprecated)
+2. **Kontekst**
+3. **Decyzja**
+4. **Konsekwencje**
+5. **Alternatywy rozważane**
+6. **Powiązane dokumenty / issue / PR**
+
+## Konwencja nazewnictwa
+
+Docelowo rekomendujemy przechowywanie ADR jako osobnych plików w `docs/adr/`:
+
+- `0001-nazwa-decyzji.md`
+- `0002-kolejna-decyzja.md`
+
+W przypadku pojedynczego pliku zbiorczego (ten dokument), każda decyzja dostaje własny nagłówek `## ADR-XXXX`.
+
+---
+
+## ADR-0001: Podział na warstwy `brain_core` i `brain_model`
+
+**Status:** accepted  
+**Data:** 2026-05-26
+
+### Kontekst
+Projekt zawiera zarówno logikę niskopoziomową (silnik, integratory, scheduler, stan symulacji), jak i logikę domenową (moduły poznawcze, zachowania, scenariusze, raportowanie). Bez rozdziału warstw kod szybko staje się trudny w utrzymaniu.
+
+### Decyzja
+Utrzymujemy separację:
+- `brain_core/` — warstwa infrastrukturalna i mechanika symulacji,
+- `brain_model/` — warstwa domenowa modelu neuronalno-poznawczego.
+
+Interakcja ma przebiegać przez jawne API, a nie przez wzajemne „przecieki” implementacyjne.
+
+### Konsekwencje
+**Pozytywne:**
+- czytelny podział odpowiedzialności,
+- łatwiejsze testowanie i wymiana elementów silnika,
+- mniejsza podatność na sprzężenia zwrotne między domeną a infrastrukturą.
+
+**Negatywne / koszty:**
+- większa dyscyplina przy projektowaniu interfejsów,
+- czasem dodatkowy kod mapujący dane między warstwami.
+
+### Alternatywy rozważane
+- Monolityczny moduł bez warstw: szybszy start, ale gorsza skalowalność i utrzymanie.
+- Podział tylko funkcjonalny bez granicy core/model: prostsza nawigacja, ale wyższe ryzyko zależności cyklicznych.
+
+### Powiązane
+- `brain_core/simulation/`
+- `brain_model/`
+
+---
+
+## ADR-0002: Konfiguracja oparta o pliki YAML + schemat
+
+**Status:** accepted  
+**Data:** 2026-05-26
+
+### Kontekst
+Symulacje muszą być łatwo odtwarzalne i porównywalne między uruchomieniami/scenariuszami. Parametry „zaszyte” w kodzie utrudniają reprodukcję wyników.
+
+### Decyzja
+Konfigurację trzymamy w `configs/*.yaml`, a jej interpretację i walidację opieramy o dedykowane moduły loadera/schematu.
+
+### Konsekwencje
+**Pozytywne:**
+- powtarzalność eksperymentów,
+- łatwe porównywanie wariantów,
+- możliwość walidacji i szybkiego wykrywania błędów konfiguracji.
+
+**Negatywne / koszty:**
+- konieczność utrzymania zgodności schema ↔ konfiguracje,
+- dodatkowa złożoność przy migracjach parametrów.
+
+### Alternatywy rozważane
+- Konfiguracja wyłącznie przez CLI: mniej plików, ale słabsza czytelność i wersjonowanie.
+- Konfiguracja „hardcoded”: najprostsza lokalnie, nieakceptowalna dla badań porównawczych.
+
+### Powiązane
+- `configs/default.yaml`
+- `brain_core/simulation/config_loader.py`
+- `brain_core/simulation/config_schema.py`
+
+---
+
+## ADR-0003: Deterministyczność przez kontrolę źródeł losowości
+
+**Status:** accepted  
+**Data:** 2026-05-26
+
+### Kontekst
+W modelach symulacyjnych brak kontroli nad losowością utrudnia debugowanie, kalibrację i walidację wyników.
+
+### Decyzja
+Źródła losowe centralizujemy i inicjalizujemy w kontrolowany sposób (seed, strumienie RNG), tak aby możliwa była reprodukcja przebiegu symulacji.
+
+### Konsekwencje
+**Pozytywne:**
+- powtarzalne eksperymenty,
+- łatwiejsza diagnostyka odchyleń,
+- możliwość porównań A/B.
+
+**Negatywne / koszty:**
+- konieczność świadomego przekazywania RNG między komponentami,
+- ryzyko pozornej deterministyczności, jeśli część kodu omija wspólne źródła.
+
+### Alternatywy rozważane
+- Lokalny RNG „gdzie wygodnie”: mniejszy próg wejścia, ale chaos w reprodukcji.
+- Brak deterministyczności: niedopuszczalne w kontekście badań/kalibracji.
+
+### Powiązane
+- `brain_core/simulation/random_sources.py`
+
+---
+
+## Procedura dodawania kolejnego ADR
+
+1. Utwórz nowy rekord (`docs/adr/NNNN-*.md` lub sekcja `ADR-XXXX` w tym pliku).
+2. Oznacz **Status: proposed**.
+3. Podlinkuj ADR w PR i poproś o review architektoniczny.
+4. Po akceptacji zmień status na **accepted**.
+5. Jeśli decyzja została zastąpiona — oznacz jako **superseded** i dodaj link do nowego ADR.
+
+## Krótki szablon (copy/paste)
+
+```md
+## ADR-XXXX: Tytuł decyzji
+
+**Status:** proposed  
+**Data:** RRRR-MM-DD
+
+### Kontekst
+...
+
+### Decyzja
+...
+
+### Konsekwencje
+...
+
+### Alternatywy rozważane
+...
+
+### Powiązane
+...
+```
