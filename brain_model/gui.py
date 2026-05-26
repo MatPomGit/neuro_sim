@@ -19,6 +19,7 @@ from datetime import date
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 from typing import Dict
+import numpy as np
 
 from .io import build_output_dir, save_run
 from .model import CognitiveBrainModel
@@ -241,6 +242,11 @@ class BrainModelGUI(tk.Tk):
 
         self.T_var = tk.StringVar(value="45.0")
         self.seed_var = tk.StringVar(value="7")
+        self.command_var = tk.StringVar(value="run")
+        self.batch_seeds_var = tk.StringVar(value="7,11,19")
+        self.batch_scenarios_var = tk.StringVar(value="reward-learning")
+        self.sensitivity_var = tk.StringVar(value="noise,gw_threshold")
+        self.sensitivity_delta_var = tk.StringVar(value="0.1")
 
         t_label = ttk.Label(self.sim_frame, text="czas symulacji T [s]")
         t_label.grid(row=0, column=0, sticky="w", padx=(0, 8), pady=3)
@@ -257,6 +263,17 @@ class BrainModelGUI(tk.Tk):
         seed_label.grid(row=2, column=0, sticky="w", padx=(0, 8), pady=3)
         Tooltip(seed_label, PARAMETER_DESCRIPTIONS["seed"])
         ttk.Entry(self.sim_frame, textvariable=self.seed_var, width=14).grid(row=2, column=1, sticky="ew", pady=3)
+        ttk.Label(self.sim_frame, text="komenda").grid(row=4, column=0, sticky="w", padx=(0, 8), pady=3)
+        cmd_combo = ttk.Combobox(self.sim_frame, textvariable=self.command_var, values=["run", "batch"], state="readonly", width=16)
+        cmd_combo.grid(row=4, column=1, sticky="ew", pady=3)
+        ttk.Label(self.sim_frame, text="batch seeds").grid(row=6, column=0, sticky="w", padx=(0, 8), pady=3)
+        ttk.Entry(self.sim_frame, textvariable=self.batch_seeds_var, width=14).grid(row=6, column=1, sticky="ew", pady=3)
+        ttk.Label(self.sim_frame, text="batch scenariusze").grid(row=7, column=0, sticky="w", padx=(0, 8), pady=3)
+        ttk.Entry(self.sim_frame, textvariable=self.batch_scenarios_var, width=14).grid(row=7, column=1, sticky="ew", pady=3)
+        ttk.Label(self.sim_frame, text="sensitivity parametry").grid(row=8, column=0, sticky="w", padx=(0, 8), pady=3)
+        ttk.Entry(self.sim_frame, textvariable=self.sensitivity_var, width=14).grid(row=8, column=1, sticky="ew", pady=3)
+        ttk.Label(self.sim_frame, text="sensitivity delta").grid(row=9, column=0, sticky="w", padx=(0, 8), pady=3)
+        ttk.Entry(self.sim_frame, textvariable=self.sensitivity_delta_var, width=14).grid(row=9, column=1, sticky="ew", pady=3)
         self.scenario_var = tk.StringVar(value="reward-learning")
 
         scenario_label = ttk.Label(self.sim_frame, text="scenariusz")
@@ -352,6 +369,11 @@ class BrainModelGUI(tk.Tk):
 
         self.status_var = tk.StringVar(value="Gotowe.")
         ttk.Label(root, textvariable=self.status_var).pack(anchor="w", pady=(8, 0))
+        self.progress_var = tk.DoubleVar(value=0.0)
+        self.progress = ttk.Progressbar(root, variable=self.progress_var, maximum=100, mode="determinate")
+        self.progress.pack(fill="x", pady=(4, 0))
+        self.summary_var = tk.StringVar(value="")
+        ttk.Label(root, textvariable=self.summary_var, justify="left").pack(anchor="w", pady=(4, 0))
 
         self.scenario_combo.bind("<<ComboboxSelected>>", lambda _e: self._refresh_scenario_details())
         self._refresh_scenario_details()
@@ -446,6 +468,11 @@ class BrainModelGUI(tk.Tk):
             "T": self.T_var.get(),
             "dt": self.dt_var.get(),
             "seed": self.seed_var.get(),
+            "command": self.command_var.get(),
+            "batch_seeds": self.batch_seeds_var.get(),
+            "batch_scenarios": self.batch_scenarios_var.get(),
+            "sensitivity_params": self.sensitivity_var.get(),
+            "sensitivity_delta": self.sensitivity_delta_var.get(),
             "scenario": self.scenario_var.get(),
             "save_results": self.save_results_var.get(),
             "brain_params": {name: var.get() for name, var in self.brain_form.vars.items()},
@@ -457,6 +484,11 @@ class BrainModelGUI(tk.Tk):
         self.T_var.set(str(config.get("T", self.T_var.get())))
         self.dt_var.set(str(config.get("dt", self.dt_var.get())))
         self.seed_var.set(str(config.get("seed", self.seed_var.get())))
+        self.command_var.set(str(config.get("command", self.command_var.get())))
+        self.batch_seeds_var.set(str(config.get("batch_seeds", self.batch_seeds_var.get())))
+        self.batch_scenarios_var.set(str(config.get("batch_scenarios", self.batch_scenarios_var.get())))
+        self.sensitivity_var.set(str(config.get("sensitivity_params", self.sensitivity_var.get())))
+        self.sensitivity_delta_var.set(str(config.get("sensitivity_delta", self.sensitivity_delta_var.get())))
         if "dt" in self.brain_form.vars:
             self.brain_form.vars["dt"].set(str(self.dt_var.get()))
         self.scenario_var.set(str(config.get("scenario", self.scenario_var.get())))
@@ -533,6 +565,11 @@ class BrainModelGUI(tk.Tk):
         self.T_var.set("45.0")
         self.dt_var.set(str(self.brain_defaults.dt))
         self.seed_var.set("7")
+        self.command_var.set("run")
+        self.batch_seeds_var.set("7,11,19")
+        self.batch_scenarios_var.set("reward-learning")
+        self.sensitivity_var.set("noise,gw_threshold")
+        self.sensitivity_delta_var.set("0.1")
         self.scenario_var.set("reward-learning")
         self.save_results_var.set(True)
         self.brain_form.reset()
@@ -583,16 +620,27 @@ class BrainModelGUI(tk.Tk):
                 raise ValueError("oscillator_noise nie może być ujemny.")
 
             self.status_var.set("Symulacja w toku...")
+            self.progress_var.set(0)
+            self.summary_var.set("")
             self.update_idletasks()
 
             start = pytime.perf_counter()
-            model = CognitiveBrainModel(
-                params=brain_params,
-                oscillator_params=oscillator_params,
-                seed=seed,
-                stimulus=self.scenario_var.get(),
-            )
-            time, activity, diagnostics, oscillations, behavior = model.simulate(T=T)
+            if self.command_var.get() == "run":
+                model = CognitiveBrainModel(
+                    params=brain_params,
+                    oscillator_params=oscillator_params,
+                    seed=seed,
+                    stimulus=self.scenario_var.get(),
+                )
+                time, activity, diagnostics, oscillations, behavior = model.simulate(T=T, progress_callback=self._progress_single)
+                summary_text = self._summarize_metrics([self._extract_metrics(diagnostics, behavior)])
+            else:
+                runs, model, time, activity, diagnostics, oscillations, behavior = self._run_batch(
+                    T=T,
+                    base_params=brain_params,
+                    oscillator_params=oscillator_params,
+                )
+                summary_text = self._summarize_metrics(runs)
             elapsed = pytime.perf_counter() - start
 
             save_info = None
@@ -755,10 +803,78 @@ class BrainModelGUI(tk.Tk):
             if save_info:
                 msg += f" Wyniki zapisane: {save_info['output_dir']}"
             self.status_var.set(msg)
+            self.summary_var.set(summary_text)
+            self.progress_var.set(100.0)
 
         except Exception as exc:
             self.status_var.set("Błąd konfiguracji.")
             messagebox.showerror("Błąd", str(exc))
+
+    def _progress_single(self, ratio: float):
+        self.progress_var.set(max(0.0, min(100.0, ratio * 100.0)))
+        self.update_idletasks()
+
+    def _extract_metrics(self, diagnostics, behavior):
+        return {
+            "prediction_error_mean": float(np.mean(diagnostics["prediction_error"])),
+            "gw_ignition_mean": float(np.mean(diagnostics["gw_ignition"])),
+            "confidence_mean": float(np.mean(behavior["confidence"])),
+            "decision_events": int(np.sum(behavior["decision_event"])),
+        }
+
+    def _summarize_metrics(self, runs):
+        agg = {
+            "prediction_error_mean": np.mean([r["prediction_error_mean"] for r in runs]),
+            "gw_ignition_mean": np.mean([r["gw_ignition_mean"] for r in runs]),
+            "confidence_mean": np.mean([r["confidence_mean"] for r in runs]),
+            "decision_events": np.mean([r["decision_events"] for r in runs]),
+        }
+        return (
+            f"Podsumowanie metryk:\n"
+            f"mean(prediction_error)={agg['prediction_error_mean']:.4f}, "
+            f"mean(gw_ignition)={agg['gw_ignition_mean']:.4f}, "
+            f"mean(confidence)={agg['confidence_mean']:.4f}, "
+            f"mean(decision_events)={agg['decision_events']:.2f}"
+        )
+
+    def _parse_list(self, raw: str):
+        return [part.strip() for part in raw.split(",") if part.strip()]
+
+    def _run_batch(self, T, base_params, oscillator_params):
+        seeds = [int(s) for s in self._parse_list(self.batch_seeds_var.get())]
+        scenarios = self._parse_list(self.batch_scenarios_var.get()) or [self.scenario_var.get()]
+        sens_params = self._parse_list(self.sensitivity_var.get())
+        delta = float(self.sensitivity_delta_var.get())
+        base_total = len(seeds) * len(scenarios)
+        perturb_total = base_total * len(sens_params) * 2
+        total_runs = base_total + perturb_total if sens_params else base_total
+        completed = 0
+        metrics = []
+        last = None
+        for scenario in scenarios:
+            for seed in seeds:
+                model = CognitiveBrainModel(params=base_params, oscillator_params=oscillator_params, seed=seed, stimulus=scenario)
+                time, activity, diagnostics, oscillations, behavior = model.simulate(T=T)
+                metrics.append(self._extract_metrics(diagnostics, behavior))
+                last = (model, time, activity, diagnostics, oscillations, behavior)
+                completed += 1
+                self.progress_var.set((completed / total_runs) * 100.0)
+                self.update_idletasks()
+                for p_name in sens_params:
+                    if not hasattr(base_params, p_name):
+                        continue
+                    base_val = getattr(base_params, p_name)
+                    for sign in (-1.0, 1.0):
+                        perturbed = replace(base_params, **{p_name: base_val * (1.0 + sign * delta)})
+                        model = CognitiveBrainModel(params=perturbed, oscillator_params=oscillator_params, seed=seed, stimulus=scenario)
+                        _, _, diag_p, _, beh_p = model.simulate(T=T)
+                        metrics.append(self._extract_metrics(diag_p, beh_p))
+                        completed += 1
+                        self.progress_var.set((completed / total_runs) * 100.0)
+                        self.update_idletasks()
+        if last is None:
+            raise ValueError("Batch nie wygenerował żadnych przebiegów.")
+        return metrics, *last
 
 
 def run_gui():

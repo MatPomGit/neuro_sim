@@ -291,7 +291,7 @@ class CognitiveBrainModel:
 
         return x_next, diagnostics
 
-    def simulate(self, T=45.0):
+    def simulate(self, T=45.0, progress_callback=None):
         steps = int(T / self.p.dt)
         time = np.arange(steps) * self.p.dt
 
@@ -334,6 +334,8 @@ class CognitiveBrainModel:
 
         prev_decision = "wait"
 
+        progress_stride = max(1, steps // 100)
+
         for k, t in enumerate(time):
             activity[k] = x
 
@@ -371,6 +373,8 @@ class CognitiveBrainModel:
                 diagnostics[key][k] = diag[key]
 
             weight_history.append(diag.get("weight_updates", {}))
+            if progress_callback and (k % progress_stride == 0 or k == steps - 1):
+                progress_callback((k + 1) / steps)
 
         if self.scenario is not None:
             scenario_metadata = self.scenario.to_metadata()
