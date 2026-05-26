@@ -317,13 +317,7 @@ def draw_brain_region_projections(ax, time, activity, names, idx):
 
 
 def draw_region_activity_2d(ax, time, activity, names, idx):
-    axial_regions = _load_svg_region_centroids(str(SVG_VIEW_FILES["axial"]))
-    if not axial_regions:
-        ax.text(0.5, 0.5, "Brak regionów do wizualizacji 2D.", ha="center", va="center", transform=ax.transAxes)
-        ax.set_title("Aktywacja regionów mózgu w czasie")
-        return [ax]
-
-    region_names = sorted(axial_regions.keys())
+    region_names = sorted(REGION_TO_MODULE_WEIGHTS.keys())
     region_activity_t = _compute_region_activity_series(activity, idx, region_names)
     matrix = [region_activity_t[name] for name in region_names]
     image = ax.imshow(
