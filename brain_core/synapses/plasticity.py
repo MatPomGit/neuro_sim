@@ -46,6 +46,13 @@ def update_weights_two_timescales(
 
     dW_ij/dt = eta * pre_j * post_i * neuromod - lambda * W_ij
     """
+    if weights.ndim != 2:
+        raise ValueError("weights must be a 2D array")
+    if len(post_activity) != weights.shape[0] or len(pre_activity) != weights.shape[1]:
+        raise ValueError(
+            f"Shape mismatch: weights is {weights.shape}, but post_activity has length {len(post_activity)} "
+            f"and pre_activity has length {len(pre_activity)}"
+        )
     hebbian_drive = np.outer(post_activity, pre_activity)
     dW_fast = config.eta * neuromod * hebbian_drive - config.decay_lambda * weights
     dW_fast -= config.forgetting_rate * weights
