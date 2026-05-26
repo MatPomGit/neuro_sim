@@ -1,0 +1,30 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+import numpy as np
+
+
+@dataclass(slots=True)
+class SimulationState:
+    """Centralny obiekt stanu symulacji.
+
+    Przechowuje cały mutowalny stan potrzebny schedulerowi i modułom.
+    """
+
+    time: float = 0.0
+    step: int = 0
+    regions: dict[str, np.ndarray] = field(default_factory=dict)
+    connections: dict[str, np.ndarray] = field(default_factory=dict)
+    neuromodulators: dict[str, float] = field(default_factory=dict)
+    metrics: dict[str, Any] = field(default_factory=dict)
+
+    def snapshot_metrics(self) -> dict[str, Any]:
+        """Zwraca płytką kopię metryk do logowania/zapisu."""
+        return dict(self.metrics)
+
+    def advance(self, dt: float) -> None:
+        """Przesuwa licznik czasu i indeks kroku."""
+        self.time += dt
+        self.step += 1
