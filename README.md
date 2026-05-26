@@ -183,3 +183,12 @@ model = CognitiveBrainModel(
 
 time, activity, diagnostics, oscillations = model.simulate(T=45.0)
 ```
+
+
+## Dokumentacja struktury programu
+
+Szczegółowy opis aktualnej architektury repozytorium znajduje się w:
+
+- `docs/program_structure.md`
+
+Dokument zawiera również opis nowej infrastruktury symulacyjnej (`SimulationState`, `SimulationScheduler`, integratory i `RandomSources`) oraz wskazuje, które elementy są już gotowe, a które wymagają pełnej integracji z pętlą symulacji.
