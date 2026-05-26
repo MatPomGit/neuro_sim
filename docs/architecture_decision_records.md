@@ -210,3 +210,46 @@ Dodatkowo dodajemy demonstracyjny plik konfiguracji `configs/multi_region_delay_
 - `brain_core/networks/structural_network.py`
 - `brain_core/networks/delays.py`
 - `configs/multi_region_delay_demo.yaml`
+
+---
+
+## ADR-0005: Ujednolicenie typów neuromodulatorów między `brain_model` i `brain_core`
+
+**Status:** proposed  
+**Data:** 2026-05-26
+
+### Kontekst
+W `brain_model` neuromodulacja obejmuje m.in. `noradrenaline`, `acetylcholine`, `serotonin`, `gaba`, `glutamate`, `cortisol`. W pierwszej implementacji `brain_core/synapses` użyto częściowo innego zestawu nazw i pól, co utrudnia spójne mapowanie sygnałów między warstwami i scenariuszami farmakologicznymi.
+
+### Decyzja
+Rozszerzamy i normalizujemy stan neuromodulacji w `brain_core` tak, aby obejmował:
+- `dopamine`,
+- `noradrenaline`,
+- `acetylcholine`,
+- `serotonin`,
+- `gaba`,
+- `glutamate`,
+- `cortisol`,
+- `adrenaline`.
+
+Dodatkowo dodajemy dedykowane moduły synaptyczne `noradrenaline.py`, `cortisol.py`, `adrenaline.py` oraz aktualizujemy interfejs farmakologiczny i mapowanie wpływu neuromodulacji w modelu regionowym Wilson-Cowan.
+
+### Konsekwencje
+**Pozytywne:**
+- spójny słownik neuromodulatorów między warstwami projektu,
+- łatwiejsze porównywanie scenariuszy i translacja diagnostyki,
+- czytelniejsze rozszerzanie modeli o kolejne manipulacje farmakologiczne.
+
+**Negatywne / koszty:**
+- większy wektor stanu i więcej parametrów modulacji do kalibracji,
+- konieczność aktualizacji testów i interfejsów używających poprzedniego zestawu pól.
+
+### Alternatywy rozważane
+- Utrzymanie lokalnych mapowań/adaptorów nazw bez zmiany stanu: mniejszy diff, ale rosnący dług techniczny.
+- Redukcja do absolutnie wspólnego minimum (bez adrenaliny): prostsze, ale mniej elastyczne dla scenariuszy stresowych.
+
+### Powiązane
+- `brain_core/synapses/`
+- `brain_core/populations/wilson_cowan.py`
+- `brain_core/experiments/pharmacology.py`
+- `brain_model/model.py`
