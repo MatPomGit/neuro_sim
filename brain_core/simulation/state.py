@@ -21,8 +21,9 @@ class SimulationState:
     metrics: dict[str, Any] = field(default_factory=dict)
 
     def snapshot_metrics(self) -> dict[str, Any]:
-        """Zwraca płytką kopię metryk do logowania/zapisu."""
-        return dict(self.metrics)
+        """Zwraca głęboką kopię metryk do logowania/zapisu."""
+        import copy
+        return copy.deepcopy(self.metrics)
 
     def advance(self, dt: float) -> None:
         """Przesuwa licznik czasu i indeks kroku."""
