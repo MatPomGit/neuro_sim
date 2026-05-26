@@ -19,5 +19,8 @@ neuro-sim = "main:main"
 neuro-sim-gui = "brain_model.gui:run_gui"
 neuro-sim-run = "brain_core.simulation.run:main"
 
+[tool.setuptools]
+py-modules = ["main"]
+
 [tool.setuptools.packages.find]
 include = ["brain_model*", "brain_core*"]
