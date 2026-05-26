@@ -99,9 +99,9 @@ Agent AI ma obowiązek sprawdzić:
 ## 6) Reguła rozstrzygania konfliktów zasad
 
 Jeżeli występuje konflikt między wytycznymi:
-1. Polecenie użytkownika,
-2. Bezpieczeństwo i poprawność systemu,
-3. Ten dokument (`AGENTS.md`),
+1. Bezpieczeństwo i poprawność systemu,
+2. Polecenie użytkownika,
+3. Ten dokument (AGENTS.md),
 4. Lokalna wygoda implementacyjna.
 
 Agent ma zawsze wybrać opcję bezpieczniejszą i lepiej udokumentowaną.
