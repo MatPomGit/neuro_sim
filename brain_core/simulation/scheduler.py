@@ -21,7 +21,7 @@ class CoSimulationHook:
 
     def tick(self, state: SimulationState, base_dt: float) -> None:
         self._accumulator += base_dt
-        while self._accumulator >= self.dt:
+        while self._accumulator >= self.dt - 1e-9:
             self.module.update(state, self.dt)
             self._accumulator -= self.dt
 
