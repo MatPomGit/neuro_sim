@@ -174,3 +174,39 @@ W modelach symulacyjnych brak kontroli nad losowością utrudnia debugowanie, ka
 ### Powiązane
 ...
 ```
+
+
+## ADR-0004: Model regionowy Wilson-Cowan z opóźnionym sprzężeniem strukturalnym
+
+**Status:** accepted  
+**Data:** 2026-05-26
+
+### Kontekst
+Potrzebny jest minimalny, ale jawny fundament pod symulacje multi-region: osobne stany pobudzające/hamujące (E/I) na region, macierz połączeń strukturalnych i opóźnienia przewodzenia w sprzężeniu międzyregionowym.
+
+### Decyzja
+Dodajemy trzy małe komponenty w `brain_core`:
+- `populations/wilson_cowan.py`: regionowy model Wilson-Cowan z parametrami per region (`tau_E`, `tau_I`, `w_EE`, `w_EI`, `w_IE`, `w_II`, `gain`, `threshold`),
+- `networks/structural_network.py`: macierzowe sprzężenie strukturalne,
+- `networks/delays.py`: bufor historii i obliczenie `coupling_i(t) = Σ_j C_ij * activity_j(t-delay_ij)`.
+
+Dodatkowo dodajemy demonstracyjny plik konfiguracji `configs/multi_region_delay_demo.yaml`.
+
+### Konsekwencje
+**Pozytywne:**
+- czytelna separacja odpowiedzialności: dynamika regionu vs sieć połączeń vs opóźnienia,
+- bezpośrednie wsparcie dla scenariuszy whole-brain o niskim koszcie obliczeniowym,
+- łatwe testowanie komponentowe.
+
+**Negatywne / koszty:**
+- nowa konfiguracja demo nie jest jeszcze automatycznie podpięta pod `run_experiment`.
+
+### Alternatywy rozważane
+- Jedna klasa łącząca dynamikę, połączenia i opóźnienia: mniej plików, ale słabsza testowalność i większe mieszanie odpowiedzialności.
+- Natychmiastowa pełna integracja z istniejącym `brain_model`: większy zakres zmian i ryzyko regresji poza aktualnym zadaniem.
+
+### Powiązane
+- `brain_core/populations/wilson_cowan.py`
+- `brain_core/networks/structural_network.py`
+- `brain_core/networks/delays.py`
+- `configs/multi_region_delay_demo.yaml`

@@ -1,0 +1,30 @@
+model:
+  regions: [V1_L, V1_R, ACC, PCC]
+  region_params:
+    V1_L: {tau_E: 0.020, tau_I: 0.010, w_EE: 12.0, w_EI: 10.0, w_IE: 10.0, w_II: 2.0, gain_E: 1.10, gain_I: 1.00, threshold_E: 0.20, threshold_I: 0.10}
+    V1_R: {tau_E: 0.022, tau_I: 0.011, w_EE: 11.5, w_EI: 9.8,  w_IE: 9.5,  w_II: 2.2, gain_E: 1.00, gain_I: 1.00, threshold_E: 0.20, threshold_I: 0.10}
+    ACC:  {tau_E: 0.018, tau_I: 0.009, w_EE: 12.5, w_EI: 10.5, w_IE: 10.2, w_II: 2.1, gain_E: 1.20, gain_I: 1.10, threshold_E: 0.25, threshold_I: 0.12}
+    PCC:  {tau_E: 0.024, tau_I: 0.012, w_EE: 11.8, w_EI: 10.2, w_IE: 9.9,  w_II: 2.0, gain_E: 1.05, gain_I: 1.00, threshold_E: 0.22, threshold_I: 0.10}
+  connectivity:
+    - [0.00, 0.30, 0.15, 0.10]
+    - [0.25, 0.00, 0.10, 0.12]
+    - [0.20, 0.20, 0.00, 0.18]
+    - [0.14, 0.16, 0.22, 0.00]
+  delays_steps:
+    - [0, 2, 3, 4]
+    - [2, 0, 2, 3]
+    - [3, 1, 0, 2]
+    - [4, 2, 2, 0]
+  external_drive_E: [0.12, 0.10, 0.08, 0.07]
+  external_drive_I: [0.05, 0.05, 0.04, 0.04]
+integrator:
+  method: euler
+timestep: 0.005
+seed: 13
+task:
+  scenario: multi-region-delay-demo
+  duration: 8.0
+output:
+  save_results: false
+  label: multi-region-delay-demo
+  output_dir: outputs
