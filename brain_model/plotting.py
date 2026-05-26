@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import re
+from functools import lru_cache
+from pathlib import Path
 from tkinter import ttk
 
 import matplotlib.pyplot as plt
@@ -7,6 +10,14 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 
 from .stimuli import build_stimulus_fn
+
+SVG_ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets" / "svg"
+SVG_VIEW_FILES = {
+    "axial": SVG_ASSETS_DIR / "brain_axial_inline_regions.svg",
+    "coronal": SVG_ASSETS_DIR / "brain_coronal_inline_regions.svg",
+    "sagittal": SVG_ASSETS_DIR / "brain_sagittal_inline_regions.svg",
+    "lateral": SVG_ASSETS_DIR / "brain_lateral_inline_regions.svg",
+}
 
 
 MODULE_DESCRIPTIONS = {
@@ -46,6 +57,114 @@ BAND_DESCRIPTIONS = {
     "beta": "Pasmo beta: kontrola wykonawcza i nastawienie zadaniowe.",
     "gamma": "Pasmo gamma: lokalne wiązanie cech i reprezentacji.",
 }
+
+REGION_TO_MODULE_WEIGHTS = {
+    "DLPFC_L": [("EXEC", 0.6), ("VSWM", 0.4)],
+    "DLPFC_R": [("EXEC", 0.6), ("VSWM", 0.4)],
+    "OFC_L": [("VAL", 1.0)],
+    "OFC_R": [("VAL", 1.0)],
+    "ACC": [("SAL", 0.45), ("EXEC", 0.35), ("GW", 0.2)],
+    "M1_L": [("MOT", 1.0)],
+    "M1_R": [("MOT", 1.0)],
+    "S1_L": [("INT", 0.6), ("ATT", 0.4)],
+    "S1_R": [("INT", 0.6), ("ATT", 0.4)],
+    "IPS_L": [("ATT", 0.65), ("VSWM", 0.35)],
+    "IPS_R": [("ATT", 0.65), ("VSWM", 0.35)],
+    "A1_L": [("AUD", 1.0)],
+    "A1_R": [("AUD", 1.0)],
+    "STG_L": [("AUD", 0.6), ("PHON", 0.4)],
+    "STG_R": [("AUD", 0.6), ("PHON", 0.4)],
+    "IFG_L": [("PHON", 0.75), ("EXEC", 0.25)],
+    "IFG_R": [("PHON", 0.75), ("EXEC", 0.25)],
+    "Insula_L": [("SAL", 0.6), ("INT", 0.4)],
+    "Insula_R": [("SAL", 0.6), ("INT", 0.4)],
+    "Thalamus_L": [("GW", 0.8), ("ATT", 0.2)],
+    "Thalamus_R": [("GW", 0.8), ("ATT", 0.2)],
+    "BasalGanglia_L": [("VAL", 0.55), ("MOT", 0.45)],
+    "BasalGanglia_R": [("VAL", 0.55), ("MOT", 0.45)],
+    "HIP_L": [("HIP", 0.7), ("EPIS", 0.3)],
+    "HIP_R": [("HIP", 0.7), ("EPIS", 0.3)],
+    "AMY_L": [("SAL", 0.6), ("VAL", 0.4)],
+    "AMY_R": [("SAL", 0.6), ("VAL", 0.4)],
+    "PCC": [("DMN", 0.65), ("EPIS", 0.35)],
+    "mPFC": [("DMN", 0.55), ("GW", 0.25), ("VAL", 0.2)],
+    "Angular_L": [("SEM", 0.65), ("DMN", 0.35)],
+    "Angular_R": [("SEM", 0.65), ("DMN", 0.35)],
+    "V1_L": [("VIS", 1.0)],
+    "V1_R": [("VIS", 1.0)],
+    "V2_L": [("VIS", 1.0)],
+    "V2_R": [("VIS", 1.0)],
+    "Cerebellum_L": [("MOT", 0.85), ("ATT", 0.15)],
+    "Cerebellum_R": [("MOT", 0.85), ("ATT", 0.15)],
+    "Brainstem": [("INT", 0.55), ("SAL", 0.25), ("GW", 0.2)],
+}
+
+
+@lru_cache(maxsize=8)
+def _load_svg_region_centroids(svg_path: str):
+    text = Path(svg_path).read_text(encoding="utf-8")
+    region_matches = re.findall(r'<path[^>]*data-region="([^"]+)"[^>]*d="([^"]+)"', text)
+    centroids = {}
+    for region, d_attr in region_matches:
+        numbers = [float(v) for v in re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", d_attr)]
+        if len(numbers) < 2:
+            continue
+        xs = numbers[0::2]
+        ys = numbers[1::2]
+        if not xs or not ys:
+            continue
+        centroids[region] = (sum(xs) / len(xs), sum(ys) / len(ys))
+    return centroids
+
+
+def _draw_brain_projection(ax, time, activity, idx, svg_path: str, title: str):
+    centroids = _load_svg_region_centroids(svg_path)
+    if not centroids:
+        ax.text(0.5, 0.5, "Brak regionów SVG do wizualizacji.", ha="center", va="center", transform=ax.transAxes)
+        ax.set_title(title)
+        return
+
+    region_activity_t = _compute_region_activity_series(activity, idx, centroids.keys())
+    region_activity = {region: float(values[-1]) for region, values in region_activity_t.items()}
+
+    xs, ys, vals, labels = [], [], [], []
+    for region, (x, y) in centroids.items():
+        xs.append(x)
+        ys.append(y)
+        vals.append(region_activity.get(region, 0.0))
+        labels.append(region)
+
+    scatter = ax.scatter(xs, ys, c=vals, cmap="magma", vmin=0.0, vmax=1.0, s=95, edgecolors="#111827", linewidths=0.4)
+    ax.set_xlim(0, 2048)
+    ax.set_ylim(2048, 0)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_title(title)
+    ax.text(0.02, 0.02, f"T={float(time[-1]):.2f}s\nwartość w ostatnim kroku", transform=ax.transAxes, fontsize=8,
+            bbox={"facecolor": "white", "alpha": 0.8, "edgecolor": "#d1d5db", "boxstyle": "round,pad=0.2"})
+    return scatter
+
+
+def _compute_region_activity_series(activity, idx, regions):
+    region_activity_t = {}
+    for region in regions:
+        mapping = REGION_TO_MODULE_WEIGHTS.get(region, [])
+        if not mapping:
+            region_activity_t[region] = activity[:, 0] * 0.0
+            continue
+        numerator = None
+        weight_sum = 0.0
+        for module, weight in mapping:
+            if module not in idx:
+                continue
+            values = activity[:, idx[module]]
+            numerator = values * weight if numerator is None else numerator + values * weight
+            weight_sum += weight
+        if numerator is None or weight_sum <= 0.0:
+            region_activity_t[region] = activity[:, 0] * 0.0
+        else:
+            region_activity_t[region] = numerator / weight_sum
+    return region_activity_t
 
 
 def _describe(label):
@@ -169,6 +288,54 @@ def draw_simulated_brain_activity(ax, time, activity, names, idx):
 
     colorbar = ax.figure.colorbar(image, ax=ax, pad=0.01)
     colorbar.set_label("Aktywacja [0-1]")
+    return [ax]
+
+
+def draw_brain_region_projections(ax, time, activity, names, idx):
+    fig = ax.figure
+    ax.remove()
+    axes = fig.subplots(2, 2)
+
+    views = [
+        (str(SVG_VIEW_FILES["axial"]), "Axial"),
+        (str(SVG_VIEW_FILES["coronal"]), "Coronal"),
+        (str(SVG_VIEW_FILES["sagittal"]), "Sagittal"),
+        (str(SVG_VIEW_FILES["lateral"]), "Lateral"),
+    ]
+
+    scatter_ref = None
+    for sub_ax, (svg, label) in zip(axes.flatten(), views):
+        scatter = _draw_brain_projection(sub_ax, time, activity, idx, svg, f"{label}: regiony SVG")
+        if scatter is not None:
+            scatter_ref = scatter
+
+    if scatter_ref is not None:
+        cbar = fig.colorbar(scatter_ref, ax=axes.ravel().tolist(), fraction=0.02, pad=0.01)
+        cbar.set_label("Aktywacja [0-1]")
+    fig.suptitle("Aktywacja regionów mózgu na 4 rzutach (na bazie szkieletu SVG)")
+    return list(axes.flatten())
+
+
+def draw_region_activity_2d(ax, time, activity, names, idx):
+    region_names = sorted(REGION_TO_MODULE_WEIGHTS.keys())
+    region_activity_t = _compute_region_activity_series(activity, idx, region_names)
+    matrix = [region_activity_t[name] for name in region_names]
+    image = ax.imshow(
+        matrix,
+        aspect="auto",
+        origin="lower",
+        extent=[float(time[0]), float(time[-1]), -0.5, len(region_names) - 0.5],
+        cmap="magma",
+        vmin=0.0,
+        vmax=1.0,
+    )
+    ax.set_yticks(range(len(region_names)))
+    ax.set_yticklabels(region_names, fontsize=7)
+    ax.set_xlabel("Czas symulacji [s]")
+    ax.set_ylabel("Region mózgu")
+    ax.set_title("Aktywacja regionów mózgu w czasie (2D)")
+    cbar = ax.figure.colorbar(image, ax=ax, pad=0.01)
+    cbar.set_label("Aktywacja [0-1]")
     return [ax]
 def draw_diagnostics(ax, time, diagnostics):
     ax.plot(time, diagnostics["prediction_error"], label="błąd predykcji")
