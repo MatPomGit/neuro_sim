@@ -44,8 +44,7 @@ Interpretacja:
 ## Instalacja
 
 ```bash
-pip install numpy matplotlib
-```
+pip install .
 
 ## Uruchomienie
 
@@ -56,7 +55,7 @@ python main.py
 ## Struktura
 
 ```text
-cognitive_brain_model/
+neuro_sim/
 ├── main.py
 ├── brain_model/
 │   ├── __init__.py
