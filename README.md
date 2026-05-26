@@ -44,21 +44,7 @@ Interpretacja:
 ## Instalacja
 
 ```bash
-pip install -r requirements.txt
-```
-
-Alternatywnie (Conda):
-
-```bash
-conda env create -f environment.yml
-conda activate neuro-sim
-```
-
-Instalacja jako pakiet (opcjonalnie):
-
-```bash
 pip install .
-```
 
 ## Uruchomienie
 
