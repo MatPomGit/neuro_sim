@@ -44,7 +44,20 @@ Interpretacja:
 ## Instalacja
 
 ```bash
-pip install numpy matplotlib
+pip install -r requirements.txt
+```
+
+Alternatywnie (Conda):
+
+```bash
+conda env create -f environment.yml
+conda activate neuro-sim
+```
+
+Instalacja jako pakiet (opcjonalnie):
+
+```bash
+pip install .
 ```
 
 ## Uruchomienie
@@ -56,7 +69,7 @@ python main.py
 ## Struktura
 
 ```text
-cognitive_brain_model/
+neuro_sim/
 ├── main.py
 ├── brain_model/
 │   ├── __init__.py
