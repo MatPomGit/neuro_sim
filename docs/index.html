@@ -517,12 +517,19 @@ function drawResults(res) {
   const regionSeries = {};
   for (const region of regionNames) {
     const mapping = REGION_TO_MODULE_WEIGHTS[region];
+    const activeModules = [];
+    for (const [mod, w] of mapping) {
+      const j = names.indexOf(mod);
+      if (j >= 0) {
+        activeModules.push([j, w]);
+      }
+    }
     const y = [];
     for (const row of res.activity) {
       let num = 0.0, den = 0.0;
-      for (const [mod, w] of mapping) {
-        const j = names.indexOf(mod);
-        if (j >= 0) { num += row[j] * w; den += w; }
+      for (const [j, w] of activeModules) {
+        num += row[j] * w;
+        den += w;
       }
       y.push(den > 0 ? num / den : 0.0);
     }
