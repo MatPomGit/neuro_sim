@@ -45,16 +45,16 @@ class RegionWilsonCowanModel:
         if external_e.shape != self.E.shape or external_i.shape != self.I.shape:
             raise ValueError("external_e/external_i muszą pasować rozmiarem do regionów")
 
-        tau_E = np.array([self.params[r].tau_E for r in self.region_names], dtype=float)
-        tau_I = np.array([self.params[r].tau_I for r in self.region_names], dtype=float)
-        w_EE = np.array([self.params[r].w_EE for r in self.region_names], dtype=float)
-        w_EI = np.array([self.params[r].w_EI for r in self.region_names], dtype=float)
-        w_IE = np.array([self.params[r].w_IE for r in self.region_names], dtype=float)
-        w_II = np.array([self.params[r].w_II for r in self.region_names], dtype=float)
-        gain_E = np.array([self.params[r].gain_E for r in self.region_names], dtype=float)
-        gain_I = np.array([self.params[r].gain_I for r in self.region_names], dtype=float)
-        threshold_E = np.array([self.params[r].threshold_E for r in self.region_names], dtype=float)
-        threshold_I = np.array([self.params[r].threshold_I for r in self.region_names], dtype=float)
+        tau_E = self._tau_E
+        tau_I = self._tau_I
+        w_EE = self._w_EE
+        w_EI = self._w_EI
+        w_IE = self._w_IE
+        w_II = self._w_II
+        gain_E = self._gain_E
+        gain_I = self._gain_I
+        threshold_E = self._threshold_E
+        threshold_I = self._threshold_I
 
         input_E = w_EE * self.E - w_EI * self.I + external_e
         input_I = w_IE * self.E - w_II * self.I + external_i
