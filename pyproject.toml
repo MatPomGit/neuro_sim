@@ -14,11 +14,8 @@ dependencies = [
 ]
 
 [project.scripts]
-neuro-sim = "main:main"
+neuro-sim = "brain_model.main:main"
 neuro-sim-gui = "brain_model.gui:run_gui"
 
 [tool.setuptools]
-py-modules = ["main", "main_gui"]
-
-[tool.setuptools.packages.find]
-include = ["brain_model*"]
+packages = ["brain_model"]
