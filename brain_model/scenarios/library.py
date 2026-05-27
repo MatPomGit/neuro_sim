@@ -15,7 +15,11 @@ SCENARIOS = {
     "baseline": StimulusScenario(
         id="baseline",
         name="baseline",
-        description="Spokojny przebieg kontrolny: visual 1.0-5.0 s, auditory 5.5-9.0 s, task_cue 1.0-11.5 s, interoceptive baseline=0.15.",
+        description=(
+            "Spokojny przebieg kontrolny: visual 1.0-5.0 s, "
+            "auditory 5.5-9.0 s, task_cue 1.0-11.5 s, "
+            "interoceptive baseline=0.15."
+        ),
         what_changes="Wyniki: stabilne, niskie fluktuacje aktywacji i neutralny profil stresu/nagrody.",
         duration_hint=12.0,
         tags=["control", "low-arousal", "universal"],
