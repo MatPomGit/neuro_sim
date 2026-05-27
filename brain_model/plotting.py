@@ -592,6 +592,6 @@ class PlotWindow(ttk.Frame):
         self._figures.append(fig)
         self._canvases.append(canvas)
 
-    def fit_tabs_to_count(self) -> Any:
-        """Opis funkcji fit_tabs_to_count."""
+    def fit_tabs_to_count(self) -> None:
+        """Dopasowuje szerokość zakładek do ich liczby (obecnie pusta implementacja)."""
         return
