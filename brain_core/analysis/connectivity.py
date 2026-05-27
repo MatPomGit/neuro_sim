@@ -34,6 +34,8 @@ def compute_connectivity(signals: np.ndarray) -> ConnectivityMetricResult:
     x = np.asarray(signals, dtype=float)
     if x.ndim != 2:
         raise ValueError("signals must be [n_samples, n_channels]")
+    if x.shape[0] < 2:
+        raise ValueError("signals must have at least 2 samples to compute connectivity")
 
     corr = np.corrcoef(x, rowvar=False)
     pli = _pairwise_pli_proxy(x)
