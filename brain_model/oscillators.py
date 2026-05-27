@@ -88,8 +88,8 @@ class WilsonCowanOscillatorBank:
     Sygnał EEG modułu jest aproksymowany jako E - I.
     """
 
-    def __init__(self, module_names: Any, connectivity: Any, band_map: Any=None, params: Any=None) -> Any:
-        """Opis funkcji __init__."""
+    def __init__(self, module_names: list[str], connectivity: np.ndarray, band_map: dict[str, str] | None = None, params: WilsonCowanParams | None = None) -> None:
+        """Inicjalizuje bank oscylatorów Wilsona-Cowana dla podanych modułów."""
         self.module_names = list(module_names)
         self.idx = {name: i for i, name in enumerate(self.module_names)}
         self.n = len(self.module_names)
