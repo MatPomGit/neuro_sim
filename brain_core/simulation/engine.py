@@ -43,7 +43,7 @@ def _simulate_task_trials(config: ExperimentConfig) -> tuple[list[dict], list[di
 
     scheduler = SimulationScheduler(stimuli=[TaskStimulusPlayer(stimuli=stimuli)])
     state = SimulationState()
-    for _ in range(int(duration / config.timestep)):
+    for _ in range(round(duration / config.timestep)):
         scheduler.run_step(state, config.timestep)
 
     trial_results: list[dict] = []
