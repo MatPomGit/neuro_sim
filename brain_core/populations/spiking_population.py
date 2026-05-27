@@ -60,8 +60,12 @@ class Brian2SpikingPopulationAdapter:
         )
 
     def _validate_input(self, signal: NeuralMassToSNNInput) -> None:
+        if signal is None:
+            raise ValueError("signal nie może być None")
         expected = (len(self.region_names),)
         if signal.excitatory_drive_hz.shape != expected or signal.inhibitory_drive_hz.shape != expected:
             raise ValueError("Rozmiar wejścia kontraktu NM->SNN nie pasuje do region_names")
         if signal.sync_dt <= 0:
             raise ValueError("sync_dt musi być > 0")
+        if not np.all(np.isfinite(signal.excitatory_drive_hz)) or not np.all(np.isfinite(signal.inhibitory_drive_hz)):
+            raise ValueError("Sygnały wejściowe muszą zawierać wyłącznie skończone wartości")
