@@ -15,12 +15,15 @@ from .scheduler import SimulationScheduler, TaskStimulusPlayer
 from .state import SimulationState
 
 
-def _deterministic_observed_response(task_name: str, condition: str, trial_id: int, seed: int):
+def _deterministic_observed_response(task_name: str, condition: str, trial_id: int, seed: int, expected: str | None = None):
     key = (trial_id + seed) % 7
     if task_name == "stroop":
         if key == 0:
             return None
-        return "red" if key == 1 else None
+        if key == 1:
+            colors = [c for c in ("red", "green", "blue", "yellow") if c != expected]
+            return colors[(trial_id + seed) % len(colors)]
+        return expected
     if task_name == "go_nogo":
         if condition == "go":
             return "press" if key != 0 else None
