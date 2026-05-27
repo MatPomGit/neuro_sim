@@ -405,7 +405,7 @@ Wprowadzamy minimalny, testowalny szkielet:
 
 ---
 
-## ADR-0007: Ujednolicony postprocessing analityczny i raport benchmarkowy
+## ADR-0010: Ujednolicony postprocessing analityczny i raport benchmarkowy
 
 **Status:** proposed  
 **Data:** 2026-05-27
