@@ -24,8 +24,8 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> Any:
-    """Opis funkcji main."""
+def main() -> None:
+    """Główna funkcja uruchamiająca symulację na podstawie parametrów z CLI."""
     args = build_parser().parse_args()
     model = CognitiveBrainModel(seed=args.seed, stimulus=args.scenario)
     start = pytime.perf_counter()
