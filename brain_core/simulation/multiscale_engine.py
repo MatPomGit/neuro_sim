@@ -77,6 +77,11 @@ class MultiScaleEngine:
             raise ValueError("base_dt musi być > 0")
         if tasks is None:
             raise ValueError("tasks nie może być None")
+        
+        task_names = [t.name for t in tasks]
+        if len(task_names) != len(set(task_names)):
+            raise ValueError("Zadania (tasks) muszą mieć unikalne nazwy")
+
         self.base_dt = float(base_dt)
         self.tasks = tasks
         self.io_contract = io_contract
