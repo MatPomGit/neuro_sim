@@ -211,7 +211,7 @@ Backlog jest uporządkowany według priorytetów (P0–P3) i gotowości wdrożen
 
 **Deliverables:**
 - Widoki edukacyjne v1.
-- Szablony lekcji laboratorjnych.
+- Szablony lekcji laboratoryjnych.
 
 ---
 
