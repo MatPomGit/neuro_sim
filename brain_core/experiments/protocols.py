@@ -179,7 +179,7 @@ def get_task(task_name: str, **kwargs: Any) -> CognitiveTask:
         return GoNoGoTask()
     if name in {"n_back", "n-back"}:
         return NBackTask(n=int(kwargs.get("n", 2)))
-    raise ValueError(f"Nieznany task: {task_name}")
+    raise ValueError(f"Unknown task: {task_name}")
 
 
 def default_train_test_protocol() -> ExperimentProtocol:
