@@ -212,8 +212,8 @@ class CognitiveBrainModel:
         broadcast[self.idx["DMN"]] -= 0.25 * gw_ignition
         return broadcast
 
-    def step(self, x: Any, t: Any) -> Any:
-        """Opis funkcji step."""
+    def step(self, x: np.ndarray, t: float) -> tuple[np.ndarray, dict[str, Any]]:
+        """Wykonuje pojedynczy krok integracji numerycznej modelu dla czasu t."""
         p = self.p
         u = self.stimulus_fn(t)
 
