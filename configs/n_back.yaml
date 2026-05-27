@@ -1,0 +1,14 @@
+model: {}
+integrator:
+  method: euler
+timestep: 0.005
+seed: 13
+task:
+  name: n_back
+  n: 2
+  scenario: n_back
+  duration: 30.0
+output:
+  save_results: false
+  label: n_back
+  output_dir: outputs

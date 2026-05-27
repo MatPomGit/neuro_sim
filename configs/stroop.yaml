@@ -1,0 +1,13 @@
+model: {}
+integrator:
+  method: euler
+timestep: 0.005
+seed: 13
+task:
+  name: stroop
+  scenario: stroop
+  duration: 30.0
+output:
+  save_results: false
+  label: stroop
+  output_dir: outputs

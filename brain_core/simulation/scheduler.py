@@ -27,6 +27,30 @@ class CoSimulationHook:
 
 
 @dataclass(slots=True)
+class TaskStimulusPlayer:
+    """Injects cognitive-task stimuli into SimulationState metrics timeline."""
+
+    stimuli: list
+    cursor: int = 0
+
+    def update(self, state: SimulationState, dt: float) -> None:
+        del dt
+        emitted = state.metrics.setdefault("trial_events", [])
+        while self.cursor < len(self.stimuli) and self.stimuli[self.cursor].onset_s <= state.time + 1e-9:
+            stimulus = self.stimuli[self.cursor]
+            emitted.append(
+                {
+                    "trial_id": stimulus.trial_id,
+                    "onset_s": stimulus.onset_s,
+                    "duration_s": stimulus.duration_s,
+                    "condition": stimulus.condition,
+                    "payload": stimulus.payload,
+                }
+            )
+            self.cursor += 1
+
+
+@dataclass(slots=True)
 class SimulationScheduler:
     """Wykonuje krok symulacji w ustalonej kolejności faz."""
 
