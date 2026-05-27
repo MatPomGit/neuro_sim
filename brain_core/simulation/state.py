@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+"""Definicja mutowalnego stanu globalnego używanego przez symulację."""
+
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -21,11 +23,12 @@ class SimulationState:
     metrics: dict[str, Any] = field(default_factory=dict)
 
     def snapshot_metrics(self) -> dict[str, Any]:
-        """Zwraca głęboką kopię metryk do logowania/zapisu."""
+        """Zwraca głęboką kopię metryk do logowania i zapisu."""
         import copy
+
         return copy.deepcopy(self.metrics)
 
     def advance(self, dt: float) -> None:
-        """Przesuwa licznik czasu i indeks kroku."""
+        """Przesuwa licznik czasu i indeks kroku symulacji."""
         self.time += dt
         self.step += 1

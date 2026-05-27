@@ -1,6 +1,7 @@
 import numpy as np
 
-from brain_core.populations.spiking_population import Brian2SpikingPopulationAdapter, NeuralMassToSNNInput
+from brain_core.populations.spiking_population import Brian2SpikingPopulationAdapter, NeuralMassToSNNInput, SNNToNeuralMassOutput
+from brain_core.simulation.signal_adapter import CouplingSignalAdapter, SNNPopulationMapping
 
 
 def test_signal_contract_and_shape_validation():
@@ -20,7 +21,6 @@ def test_signal_contract_and_shape_validation():
 
 
 def test_pilot_circuits_only_hippocampus_dlpfc():
-    # Zakres pilotażu: 1-2 obwody, tu hipokamp + DLPFC.
     adapter = Brian2SpikingPopulationAdapter(region_names=["hippocampus", "dlpfc"], dt=0.001)
     signal = NeuralMassToSNNInput(
         excitatory_drive_hz=np.array([25.0, 15.0]),
@@ -30,3 +30,29 @@ def test_pilot_circuits_only_hippocampus_dlpfc():
 
     out = adapter.step(signal)
     assert out.firing_rate_hz[0] > out.firing_rate_hz[1]
+
+
+def test_coupling_adapter_roundtrip_mapping_and_units():
+    mapping = SNNPopulationMapping(
+        snn_region_names=("hippocampus",),
+        neural_mass_region_names=("hippocampus", "acc", "pcc"),
+    )
+    adapter = CouplingSignalAdapter(mapping=mapping, sync_dt=0.01)
+
+    nm_to_snn = adapter.rate_to_spike_drive(
+        excitatory_rate_hz=np.array([18.0, 6.0, 7.0]),
+        inhibitory_rate_hz=np.array([5.0, 2.0, 2.0]),
+    )
+    assert np.allclose(nm_to_snn.excitatory_drive_hz, np.array([18.0]))
+    assert np.allclose(nm_to_snn.inhibitory_drive_hz, np.array([5.0]))
+    assert nm_to_snn.sync_dt == 0.01
+
+    regional = adapter.spike_summary_to_regional_activity(
+        SNNToNeuralMassOutput(
+            firing_rate_hz=np.array([45.0]),
+            mean_membrane_potential_mv=np.array([-62.0]),
+            sync_dt=0.01,
+        ),
+        n_regions=3,
+    )
+    assert np.allclose(regional, np.array([0.45, 0.0, 0.0]))

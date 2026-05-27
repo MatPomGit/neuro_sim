@@ -34,3 +34,16 @@ output:
   save_results: false
   label: multi-region-delay-extended
   output_dir: outputs
+
+snn:
+  enabled: true
+  sync_dt: 0.010
+  circuits:
+    - region: ACC
+      backend: brian2
+      neurons: 1200
+      coupling_gain: 0.8
+    - region: PCC
+      backend: brian2
+      neurons: 1000
+      coupling_gain: 0.7
