@@ -134,6 +134,8 @@ class NBackTask:
     name = "n_back"
 
     def __init__(self, n: int = 2):
+        if n < 1:
+            raise ValueError("n must be at least 1 for NBackTask")
         self.n = n
 
     def generate_stimuli(self, seed: int, duration_s: float) -> list[TrialStimulus]:
