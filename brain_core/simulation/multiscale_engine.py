@@ -40,6 +40,8 @@ class MultiScaleEngine:
     def __init__(self, base_dt: float, tasks: list[TimeScaleTask]):
         if base_dt <= 0:
             raise ValueError("base_dt musi być > 0")
+        if tasks is None:
+            raise ValueError("tasks nie może być None")
         self.base_dt = float(base_dt)
         self.tasks = tasks
 
