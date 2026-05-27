@@ -66,3 +66,41 @@ def test_analysis_metrics_outputs():
 
     rep = comparative_report(np.column_stack([s1, s2]), np.column_stack([s1, s2]))
     assert rep["mae"] == 0.0
+
+from brain_core.analysis.benchmark_loader import load_reference_benchmarks
+from brain_core.analysis.reports import build_analysis_report
+from brain_core.simulation.config_schema import ExperimentConfig
+from brain_core.simulation.engine import run_experiment
+
+
+def test_reference_benchmark_loader_shapes():
+    benchmark = load_reference_benchmarks()
+    assert set(benchmark.keys()) == {"eeg", "fmri", "behavior"}
+    assert benchmark["eeg"].ndim == 2
+    assert benchmark["fmri"].ndim == 2
+    assert benchmark["behavior"].ndim == 2
+
+
+def test_report_structure_and_metric_stability():
+    cfg = ExperimentConfig(output={"save_results": False, "label": "test", "output_dir": "outputs"}, seed=11)
+    run_a = run_experiment(cfg)
+    run_b = run_experiment(cfg)
+
+    report_a = run_a["analysis_report"]
+    report_b = run_b["analysis_report"]
+
+    assert "metrics" in report_a
+    assert "comparison" in report_a
+    required = {
+        "band_power_alpha",
+        "band_power_beta",
+        "erp_proxy_peak_to_peak",
+        "phase_locking_value",
+        "connectivity_mean",
+        "behavior_mean",
+        "fmri_mean",
+    }
+    assert required.issubset(report_a["metrics"].keys())
+
+    for key in required:
+        assert np.isclose(report_a["metrics"][key], report_b["metrics"][key])

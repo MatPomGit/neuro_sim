@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import time as pytime
+
+import numpy as np
 from pathlib import Path
 
 from brain_model.io import build_output_dir, save_run
@@ -9,6 +11,9 @@ from brain_model.oscillators import WilsonCowanParams
 from brain_model.params import BrainParams
 
 from brain_core.experiments.protocols import ErrorType, TrialResult, get_task
+
+from brain_core.analysis.benchmark_loader import load_reference_benchmarks
+from brain_core.analysis.reports import build_analysis_report, write_report_files
 
 from .config_schema import ExperimentConfig
 from .scheduler import SimulationScheduler, TaskStimulusPlayer
@@ -34,6 +39,24 @@ def _deterministic_observed_response(task_name: str, condition: str, trial_id: i
         return "match" if key == 0 else None
     return None
 
+
+
+
+def _align_rows(reference, target_rows: int):
+    if reference.shape[0] == target_rows:
+        return reference
+    idx = np.linspace(0, reference.shape[0] - 1, num=target_rows).astype(int)
+    return reference[idx]
+
+
+def _align_cols(reference, target_cols: int):
+    if reference.shape[1] == target_cols:
+        return reference
+    if reference.shape[1] > target_cols:
+        return reference[:, :target_cols]
+    reps = int(np.ceil(target_cols / reference.shape[1]))
+    expanded = np.tile(reference, (1, reps))
+    return expanded[:, :target_cols]
 
 def _simulate_task_trials(config: ExperimentConfig) -> tuple[list[dict], list[dict]]:
     task_name = str(config.task.get("name", "stroop"))
@@ -92,9 +115,24 @@ def run_experiment(config: ExperimentConfig, progress_callback=None):
 
     trial_events, trial_results = _simulate_task_trials(config)
 
+    eeg_raw = oscillations.get("eeg", activity[:, :2])
+    eeg = eeg_raw[:, None] if getattr(eeg_raw, "ndim", 1) == 1 else eeg_raw
+    fmri = activity[:, :2]
+    behavior_series = behavior.get("decision_score", activity[:, 0]) if isinstance(behavior, dict) else activity[:, 0]
+    behavior_matrix = behavior_series[:, None] if getattr(behavior_series, "ndim", 1) == 1 else behavior_series
+
+    benchmark = load_reference_benchmarks()
+    benchmark = {
+        "eeg": _align_cols(_align_rows(benchmark["eeg"], eeg.shape[0]), eeg.shape[1]),
+        "fmri": _align_cols(_align_rows(benchmark["fmri"], fmri.shape[0]), fmri.shape[1]),
+        "behavior": _align_cols(_align_rows(benchmark["behavior"], behavior_matrix.shape[0]), behavior_matrix.shape[1]),
+    }
+    analysis_report = build_analysis_report(eeg=eeg, fmri=fmri, behavior=behavior_matrix, benchmark=benchmark, fs=1.0 / config.timestep)
+
     save_info = None
     if config.output.get("save_results", False):
         out_dir = build_output_dir(config.task.get("scenario", "run"), config.output.get("label", "run"))
+        report_files = write_report_files(analysis_report, Path(out_dir), stem="analysis_report")
         save_info = save_run(
             out_dir,
             time,
@@ -107,6 +145,7 @@ def run_experiment(config: ExperimentConfig, progress_callback=None):
             seed=config.seed,
             duration_s=elapsed,
         )
+        save_info["analysis_report_files"] = report_files
     return {
         "model": model,
         "time": time,
@@ -116,6 +155,7 @@ def run_experiment(config: ExperimentConfig, progress_callback=None):
         "behavior": behavior,
         "trial_events": trial_events,
         "trial_results": trial_results,
+        "analysis_report": analysis_report.payload,
         "save_info": save_info,
         "elapsed": elapsed,
     }
