@@ -241,8 +241,8 @@ def _attach_line_tooltips(fig: Any, axes: Any) -> Any:
     fig.canvas.mpl_connect("motion_notify_event", on_move)
 
 
-def _style_lines(ax: Any) -> Any:
-    """Opis funkcji _style_lines."""
+def _style_lines(ax: Any) -> None:
+    """Ustawia parametry interaktywności (picker) dla wszystkich linii na wykresie."""
     for line in ax.get_lines():
         line.set_picker(6)
 
