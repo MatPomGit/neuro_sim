@@ -65,6 +65,9 @@ def build_analysis_report(
     fmri = np.asarray(fmri, dtype=float)
     behavior = np.asarray(behavior, dtype=float)
 
+    if eeg.size == 0 or fmri.size == 0 or behavior.size == 0:
+        raise ValueError("Sygnały wejściowe do raportu analizy nie mogą być puste.")
+
     primary = eeg[:, 0] if eeg.ndim == 2 else eeg
     secondary = eeg[:, 1] if eeg.ndim == 2 and eeg.shape[1] > 1 else primary
 
