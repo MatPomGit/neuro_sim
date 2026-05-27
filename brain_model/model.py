@@ -298,8 +298,8 @@ class CognitiveBrainModel:
 
         return x_next, diagnostics
 
-    def simulate(self, T: Any=45.0, progress_callback: Any=None) -> Any:
-        """Opis funkcji simulate."""
+    def simulate(self, T: float = 45.0, progress_callback: Any = None) -> tuple[np.ndarray, np.ndarray, dict[str, Any], dict[str, Any], dict[str, Any]]:
+        """Przeprowadza pełną symulację modelu w przedziale czasowym od 0 do T."""
         steps = int(T / self.p.dt)
         time = np.arange(steps) * self.p.dt
 
