@@ -22,7 +22,7 @@ Docelowo aplikacja ma umożliwiać studentom i badaczom:
 2. **Rozdzielenie warstw** — `brain_core` (silnik), `brain_model` (modele domenowe), UI/raporty jako warstwa prezentacji.
 3. **Konfiguracja ponad hardcoding** — eksperymenty uruchamiane przez YAML/JSON (reproducibility).
 4. **Deterministyczność** — kontrola RNG, wersjonowanie parametrów i danych.
-5. **Didaktyczność by design** — „explainability panel” i raport krok-po-kroku dla każdej symulacji.
+5. **Dydaktyczność by design** — „explainability panel” i raport krok-po-kroku dla każdej symulacji.
 
 ---
 
