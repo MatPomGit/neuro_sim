@@ -564,8 +564,8 @@ class PlotWindow(ttk.Frame):
         self._figures = []
         self._canvases = []
 
-    def clear(self) -> Any:
-        """Opis funkcji clear."""
+    def clear(self) -> None:
+        """Usuwa wszystkie zakładki z wykresami oraz czyści listy figur i płócien."""
         for tab_id in self.notebook.tabs():
             self.notebook.forget(tab_id)
         self._figures.clear()
