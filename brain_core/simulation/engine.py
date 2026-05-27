@@ -147,7 +147,7 @@ def run_experiment(
         behavior=behavior_matrix,
         benchmark=benchmark,
         fs=1.0 / config.timestep,
-        analysis_set=list(config.analysis.get("sets", [])),
+        analysis_set=config.analysis.get("sets"),
     )
 
     save_info: dict[str, Any] | None = None
