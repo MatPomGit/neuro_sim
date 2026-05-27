@@ -12,6 +12,7 @@ class ExperimentConfig:
     timestep: float = 0.005
     seed: int = 7
     task: Dict[str, Any] = field(default_factory=lambda: {"scenario": "reward-learning", "duration": 45.0})
+    pathology: Dict[str, Any] = field(default_factory=lambda: {"enabled": False, "mutations": [], "scenario": None})
     output: Dict[str, Any] = field(default_factory=lambda: {"save_results": True, "label": "run", "output_dir": "outputs"})
 
 
@@ -34,6 +35,18 @@ def validate_config(raw: Dict[str, Any]) -> ExperimentConfig:
     method = str(cfg.integrator.get("method", "euler"))
     if method != "euler":
         raise ConfigValidationError("integrator.method aktualnie wspiera tylko 'euler'")
+
+    if not isinstance(cfg.pathology, dict):
+        raise ConfigValidationError("pathology musi być obiektem")
+    mutations = cfg.pathology.get("mutations", [])
+    if not isinstance(mutations, list):
+        raise ConfigValidationError("pathology.mutations musi być listą")
+    for idx, mutation in enumerate(mutations):
+        if not isinstance(mutation, dict):
+            raise ConfigValidationError(f"pathology.mutations[{idx}] musi być obiektem")
+        for required_key in ("kind", "scope", "target"):
+            if required_key not in mutation:
+                raise ConfigValidationError(f"Brak pola pathology.mutations[{idx}].{required_key}")
 
     cfg.output["output_dir"] = str(Path(cfg.output.get("output_dir", "outputs")))
     return cfg
