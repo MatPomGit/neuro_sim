@@ -55,8 +55,11 @@ class CouplingSignalAdapter:
 
     def spike_summary_to_regional_activity(self, snn_output: SNNToNeuralMassOutput, n_regions: int) -> np.ndarray:
         """Konwersja podsumowania SNN do znormalizowanej aktywności regionalnej [0, 1]."""
-        if n_regions <= 0:
-            raise ValueError("n_regions musi być > 0")
+        if n_regions != len(self.mapping.neural_mass_region_names):
+            raise ValueError(
+                f"n_regions ({n_regions}) must match the number of neural mass regions "
+                f"({len(self.mapping.neural_mass_region_names)}) in the mapping"
+            )
         if snn_output.firing_rate_hz.shape != (len(self.mapping.snn_region_names),):
             raise ValueError("Niepoprawny rozmiar firing_rate_hz względem mapowania")
         if snn_output.sync_dt <= 0:
