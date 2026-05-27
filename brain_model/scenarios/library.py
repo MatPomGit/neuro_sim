@@ -15,15 +15,19 @@ SCENARIOS = {
     "baseline": StimulusScenario(
         id="baseline",
         name="baseline",
-        description="Spokojny przebieg kontrolny z łagodnymi bodźcami wzrokowo-słuchowymi i stałym sygnałem zadaniowym.",
+        description=(
+            "Spokojny przebieg kontrolny: visual 1.0-5.0 s, "
+            "auditory 5.5-9.0 s, task_cue 1.0-11.5 s, "
+            "interoceptive baseline=0.15."
+        ),
         what_changes="Wyniki: stabilne, niskie fluktuacje aktywacji i neutralny profil stresu/nagrody.",
         duration_hint=12.0,
         tags=["control", "low-arousal", "universal"],
-        phases=[{"name": "adaptation", "window": {"start": 0.0, "end": 45.0}}],
+        phases=[{"name": "adaptation", "window": {"start": 0.0, "end": 12.0}}],
         channels={
-            "visual": ChannelProfile(pulses=[_p(4.0, 14.0, 0.6)]),
-            "auditory": ChannelProfile(pulses=[_p(10.0, 20.0, 0.55)]),
-            "task_cue": ChannelProfile(pulses=[_p(2.0, 28.0, 0.45)]),
+            "visual": ChannelProfile(pulses=[_p(1.0, 5.0, 0.6)]),
+            "auditory": ChannelProfile(pulses=[_p(5.5, 9.0, 0.55)]),
+            "task_cue": ChannelProfile(pulses=[_p(1.0, 11.5, 0.45)]),
             "interoceptive": ChannelProfile(baseline=0.15),
         },
     ),
