@@ -29,6 +29,10 @@ def _load_csv_matrix(path: Path) -> np.ndarray:
     return matrix
 
 
+import functools
+
+
+@functools.lru_cache(maxsize=4)
 def load_reference_benchmarks(base_dir: str | Path = "data/validation") -> dict[str, np.ndarray]:
     root = Path(base_dir)
     eeg = _load_csv_matrix(root / "eeg_target.csv")
