@@ -105,3 +105,24 @@ Jeżeli występuje konflikt między wytycznymi:
 4. Lokalna wygoda implementacyjna.
 
 Agent ma zawsze wybrać opcję bezpieczniejszą i lepiej udokumentowaną.
+
+---
+
+## 7) Polityka językowa (MUST)
+
+1. **Interfejs i opisy dla użytkownika w języku polskim**
+   - Wszystkie treści prezentowane użytkownikowi końcowemu (GUI, CLI, raporty, logi użytkowe, opisy scenariuszy, dokumentacja użytkowa) twórz po polsku.
+
+2. **Komentarze w kodzie w języku polskim**
+   - Komentarze inline, docstringi objaśniające implementację oraz komentarze projektowe zapisuj po polsku.
+
+3. **Kod i nazewnictwo techniczne w języku angielskim**
+   - Nazwy zmiennych, funkcji, klas, modułów, plików konfiguracyjnych i identyfikatorów API muszą pozostać angielskie.
+   - Nie tłumacz nazw technicznych używanych w kodzie na polski.
+
+4. **Mapowanie nazw EN→PL dla warstwy prezentacji**
+   - Gdy nazwa techniczna (EN) jest pokazywana użytkownikowi, udostępnij czytelny odpowiednik PL w warstwie UI/opisu.
+   - Jako źródło mapowania stosuj słownik: `docs/english_polish_glossary.md`.
+
+5. **Spójność terminologiczna**
+   - Dla tego samego pojęcia używaj jednej, konsekwentnej formy polskiej we wszystkich interfejsach i dokumentach.
