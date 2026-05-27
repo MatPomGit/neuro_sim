@@ -13,8 +13,8 @@ from brain_model.scenarios import list_scenarios
 from typing import Any
 
 
-def build_parser() -> Any:
-    """Opis funkcji build_parser."""
+def build_parser() -> argparse.ArgumentParser:
+    """Tworzy i konfiguruje parser argumentów wiersza poleceń dla symulacji."""
     parser = argparse.ArgumentParser(description="Uruchom symulację modelu poznawczego.")
     parser.add_argument("--scenario", default="reward-learning", choices=list_scenarios(), help="Identyfikator scenariusza bodźców")
     parser.add_argument("--time", type=float, default=45.0, help="Czas symulacji [s]")
