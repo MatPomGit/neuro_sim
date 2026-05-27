@@ -115,7 +115,8 @@ def run_experiment(config: ExperimentConfig, progress_callback=None):
 
     trial_events, trial_results = _simulate_task_trials(config)
 
-    eeg = oscillations.get("eeg", activity[:, :2])
+    eeg_raw = oscillations.get("eeg", activity[:, :2])
+    eeg = eeg_raw[:, None] if getattr(eeg_raw, "ndim", 1) == 1 else eeg_raw
     fmri = activity[:, :2]
     behavior_series = behavior.get("decision_score", activity[:, 0]) if isinstance(behavior, dict) else activity[:, 0]
     behavior_matrix = behavior_series[:, None] if getattr(behavior_series, "ndim", 1) == 1 else behavior_series
