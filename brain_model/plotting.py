@@ -515,8 +515,8 @@ def draw_band_power(ax: Any, time: Any, oscillations: Any) -> Any:
     return list(axes)
 
 
-def _show_standalone(draw_func: Any, *args: Any, figsize: Any=(14, 6)) -> Any:
-    """Opis funkcji _show_standalone."""
+def _show_standalone(draw_func: Any, *args: Any, figsize: tuple[int, int] = (14, 6)) -> None:
+    """Tworzy nową figurę, uruchamia funkcję rysującą i wyświetla interaktywne okno wykresu."""
     fig, ax = plt.subplots(figsize=figsize)
     axes = draw_func(ax, *args) or [ax]
     fig.tight_layout()
