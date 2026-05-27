@@ -228,3 +228,14 @@ signal = NeuralMassToSNNInput(
 )
 out = adapter.step(signal)
 ```
+
+## Polityka językowa projektu
+
+W projekcie obowiązują następujące zasady językowe:
+
+- interfejs użytkownika, opisy scenariuszy, raporty i dokumentacja użytkowa są przygotowywane w języku polskim,
+- komentarze i objaśnienia w kodzie są przygotowywane w języku polskim,
+- kod źródłowy i nazewnictwo techniczne (zmienne, funkcje, klasy, moduły, klucze konfiguracji) pozostają w języku angielskim,
+- mapowanie nazw technicznych EN→PL dla warstwy prezentacji jest utrzymywane w słowniku `docs/english_polish_glossary.md`.
+
+Szczegółowe wytyczne dla agentów znajdują się w `AGENTS.md`.
