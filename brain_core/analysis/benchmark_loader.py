@@ -12,6 +12,9 @@ class BenchmarkValidationError(ValueError):
 
 
 def _load_csv_matrix(path: Path) -> np.ndarray:
+    if not path.exists():
+        raise BenchmarkValidationError(f"Plik benchmarku nie istnieje: {path}")
+    data = np.genfromtxt(path, delimiter=",", names=True)
     data = np.genfromtxt(path, delimiter=",", names=True)
     if data.size == 0:
         raise BenchmarkValidationError(f"Pusty plik benchmarku: {path}")
