@@ -85,7 +85,7 @@ class CognitiveBrainModel:
         x[self.idx["SEM"]] = 0.25
         return x
 
-    def compute_prediction_error(self, x: Any, u: Any) -> Any:
+    def compute_prediction_error(self, x: np.ndarray, u: dict[str, float]) -> tuple[float, float, float]:
         """
         Uproszczony mechanizm predictive processing.
 
