@@ -40,7 +40,7 @@ class PathologyMutation:
             signal = signal + self.magnitude
         elif self.kind == "ei_imbalance":
             state.metrics[f"ei_shift:{self.target}"] = float(self.magnitude)
-            signal = np.clip(signal + (0.5 * self.magnitude), 0.0, None)
+            signal = np.maximum(0.0, signal + (0.5 * self.magnitude))
         elif self.kind == "atrophy":
             signal *= max(0.0, 1.0 - 0.5 * self.magnitude)
         else:
