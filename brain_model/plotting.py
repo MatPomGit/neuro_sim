@@ -102,8 +102,8 @@ REGION_TO_MODULE_WEIGHTS = {
 
 
 @lru_cache(maxsize=8)
-def _load_svg_region_centroids(svg_path: str) -> Any:
-    """Opis funkcji _load_svg_region_centroids."""
+def _load_svg_region_centroids(svg_path: str) -> dict[str, tuple[float, float]]:
+    """Wczytuje plik SVG i oblicza środki ciężkości dla zdefiniowanych regionów."""
     text = Path(svg_path).read_text(encoding="utf-8")
     region_matches = re.findall(r'<path[^>]*data-region="([^"]+)"[^>]*d="([^"]+)"', text)
     centroids = {}
