@@ -46,6 +46,8 @@ class MultiScaleEngine:
         self.tasks = tasks
 
     def run_step(self, state: SimulationState) -> dict[str, int]:
+        if state is None:
+            raise ValueError("state nie może być None")
         run_counts: dict[str, int] = {}
         for task in self.tasks:
             run_counts[task.name] = task.tick(state, self.base_dt)
