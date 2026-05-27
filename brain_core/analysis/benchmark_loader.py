@@ -1,0 +1,36 @@
+"""Loader benchmarków referencyjnych z walidacją spójności."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import numpy as np
+
+
+class BenchmarkValidationError(ValueError):
+    pass
+
+
+def _load_csv_matrix(path: Path) -> np.ndarray:
+    data = np.genfromtxt(path, delimiter=",", names=True)
+    if data.size == 0:
+        raise BenchmarkValidationError(f"Pusty plik benchmarku: {path}")
+    cols = [name for name in data.dtype.names if name not in {"time", "trial"}]
+    if not cols:
+        raise BenchmarkValidationError(f"Brak kolumn metryk w pliku: {path}")
+    matrix = np.column_stack([np.asarray(data[name], dtype=float) for name in cols])
+    if matrix.ndim != 2:
+        raise BenchmarkValidationError(f"Niepoprawny kształt danych: {path}")
+    return matrix
+
+
+def load_reference_benchmarks(base_dir: str | Path = "data/validation") -> dict[str, np.ndarray]:
+    root = Path(base_dir)
+    eeg = _load_csv_matrix(root / "eeg_target.csv")
+    fmri = _load_csv_matrix(root / "fmri_target.csv")
+    behavior = _load_csv_matrix(root / "behavior_target.csv")
+
+    if eeg.shape[0] < 2 or fmri.shape[0] < 2 or behavior.shape[0] < 2:
+        raise BenchmarkValidationError("Benchmarki muszą mieć co najmniej 2 wiersze.")
+
+    return {"eeg": eeg, "fmri": fmri, "behavior": behavior}

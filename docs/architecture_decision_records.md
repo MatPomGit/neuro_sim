@@ -402,3 +402,40 @@ Wprowadzamy minimalny, testowalny szkielet:
 - `brain_core/simulation/multiscale_engine.py`
 - `tests/test_multiscale_engine.py`
 - `tests/test_spiking_population_adapter.py`
+
+---
+
+## ADR-0007: Ujednolicony postprocessing analityczny i raport benchmarkowy
+
+**Status:** proposed  
+**Data:** 2026-05-27
+
+### Kontekst
+Silnik symulacji zwracał surowe artefakty (`activity`, `oscillations`, `behavior`), ale brakowało jednolitego etapu postprocessingu: obliczenia metryk, porównania z benchmarkami referencyjnymi oraz raportu końcowego w spójnych formatach.
+
+### Decyzja
+Dodajemy moduły `brain_core/analysis/reports.py` oraz `brain_core/analysis/benchmark_loader.py`, a w `brain_core/simulation/engine.py` nowy etap po symulacji:
+1. ekstrakcja sygnałów EEG/fMRI/behavior,
+2. obliczenie metryk analitycznych (moc pasm, ERP proxy, phase-locking, connectivity, metryki behawioralne),
+3. porównanie do benchmarków z `data/validation/`,
+4. publikacja raportu w strukturze JSON oraz (opcjonalnie przy zapisie wyników) eksport JSON/CSV/Markdown.
+
+### Konsekwencje
+**Pozytywne:**
+- powtarzalny i jednolity pipeline oceny wyników,
+- prostsza automatyczna walidacja oraz testy integracyjne,
+- gotowe artefakty raportowe do dalszej analizy.
+
+**Negatywne / koszty:**
+- dodatkowy czas postprocessingu,
+- konieczność utrzymywania zgodności formatu benchmarków i raportu.
+
+### Alternatywy rozważane
+- Pozostawienie raportowania poza silnikiem (w osobnym skrypcie): mniejsza ingerencja, ale brak jednolitego przepływu i większe ryzyko rozjazdu metryk.
+- Raport tylko JSON: prostsze I/O, ale mniejsza użyteczność dla użytkowników preferujących CSV/Markdown.
+
+### Powiązane
+- `brain_core/analysis/reports.py`
+- `brain_core/analysis/benchmark_loader.py`
+- `brain_core/simulation/engine.py`
+- `data/validation/*.csv`
