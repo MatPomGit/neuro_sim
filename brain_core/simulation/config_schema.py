@@ -72,7 +72,15 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
         if "region" not in circuit:
             raise ConfigValidationError(f"Brak pola snn.circuits[{idx}].region")
 
-    sync_dt = float(cfg.snn.get("sync_dt", cfg.timestep))
+    sync_dt_val = cfg.snn.get("sync_dt")
+    if sync_dt_val is None:
+        sync_dt = cfg.timestep
+    else:
+        try:
+            sync_dt = float(sync_dt_val)
+        except (ValueError, TypeError):
+            raise ConfigValidationError("snn.sync_dt musi być liczbą")
+
     if sync_dt <= 0:
         raise ConfigValidationError("snn.sync_dt musi być > 0")
     ratio = sync_dt / cfg.timestep
