@@ -76,7 +76,7 @@ def build_analysis_report(
     primary = eeg[:, 0] if eeg.ndim == 2 else eeg
     secondary = eeg[:, 1] if eeg.ndim == 2 and eeg.shape[1] > 1 else primary
 
-    selected = set(analysis_set or ["spectral", "phase_locking", "connectivity", "information_flow"])
+    selected = set(analysis_set if analysis_set is not None else ["spectral", "phase_locking", "connectivity", "information_flow"])
     bands = compute_band_powers(primary, fs) if "spectral" in selected else None
     plv = compute_phase_locking(primary, secondary) if "phase_locking" in selected else None
     net_input = eeg if eeg.ndim == 2 else np.column_stack([primary, secondary])
