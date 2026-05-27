@@ -18,11 +18,16 @@ class TimeScaleTask:
     _accumulator: float = 0.0
 
     def tick(self, state: SimulationState, base_dt: float) -> int:
+        if state is None:
+            raise ValueError("state nie może być None")
+        if base_dt <= 0:
+            raise ValueError("base_dt musi być > 0")
         if self.dt <= 0:
             raise ValueError(f"Task '{self.name}' ma niepoprawne dt={self.dt}")
         self._accumulator += base_dt
         runs = 0
-        while self._accumulator >= self.dt - 1e-12:
+        eps = self.dt * 1e-9
+        while self._accumulator >= self.dt - eps:
             self.module.update(state, self.dt)
             self._accumulator -= self.dt
             runs += 1
