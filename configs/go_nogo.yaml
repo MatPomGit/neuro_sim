@@ -1,0 +1,13 @@
+model: {}
+integrator:
+  method: euler
+timestep: 0.005
+seed: 13
+task:
+  name: go_nogo
+  scenario: go_nogo
+  duration: 30.0
+output:
+  save_results: false
+  label: go_nogo
+  output_dir: outputs
