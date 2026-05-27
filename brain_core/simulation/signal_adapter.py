@@ -63,7 +63,7 @@ class CouplingSignalAdapter:
             raise ValueError("sync_dt na wyjściu SNN musi być > 0")
 
         regional_activity = np.zeros(n_regions, dtype=float)
-        normalized = np.clip(snn_output.firing_rate_hz / 100.0, 0.0, 1.0)
+        normalized = np.clip(snn_output.firing_rate_hz / self.MAX_FIRING_RATE_HZ, 0.0, 1.0)
         regional_activity[self._indices] = normalized
         return regional_activity
 
