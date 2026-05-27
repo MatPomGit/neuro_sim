@@ -150,7 +150,7 @@ class CognitiveBrainModel:
             cortisol,
         )
 
-    def compute_global_workspace(self, x: Any) -> Any:
+    def compute_global_workspace(self, x: np.ndarray) -> float:
         """
         Nieliniowy zapłon global workspace.
 
