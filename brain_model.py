@@ -56,8 +56,8 @@ class CognitiveBrainModel:
     GW      global workspace
     """
 
-    def __init__(self, params: Any=BrainParams(), seed: Any=7) -> Any:
-        """Opis funkcji __init__."""
+    def __init__(self, params: BrainParams = BrainParams(), seed: int = 7) -> None:
+        """Inicjalizuje parametry i generator liczb losowych dla modelu."""
         self.p = params
         self.rng = np.random.default_rng(seed)
 
