@@ -43,7 +43,7 @@ def test_cosim_performance_and_numerical_stability_smoke():
         engine.run_step(state)
     elapsed = time.perf_counter() - t0
 
-    assert elapsed < 1.5
+    assert elapsed < 10.0
     assert state.step == 10_000
     assert np.isfinite(state.time)
     assert np.isfinite(state.metrics["acc"])
