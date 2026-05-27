@@ -74,7 +74,7 @@ class CognitiveBrainModel:
             params=oscillator_params,
         )
 
-    def initial_state(self) -> Any:
+    def initial_state(self) -> np.ndarray:
         """
         Stan początkowy modelu.
 
