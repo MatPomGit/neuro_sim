@@ -48,7 +48,7 @@ def _simulate_task_trials(config: ExperimentConfig) -> tuple[list[dict], list[di
 
     trial_results: list[dict] = []
     for stimulus in stimuli:
-        observed = _deterministic_observed_response(task.name, stimulus.condition, stimulus.trial_id, config.seed)
+        observed = _deterministic_observed_response(task.name, stimulus.condition, stimulus.trial_id, config.seed, expected=task.expected_response(stimulus))
         reaction_time = None if observed is None else round(0.25 + ((stimulus.trial_id + config.seed) % 5) * 0.05, 3)
         result: TrialResult = task.score_trial(stimulus, observed, reaction_time)
         trial_results.append(
