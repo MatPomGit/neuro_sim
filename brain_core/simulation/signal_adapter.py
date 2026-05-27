@@ -34,6 +34,8 @@ class CouplingSignalAdapter:
     - mapowanie regionów opiera się wyłącznie o jawny słownik nazw.
     """
 
+    MAX_FIRING_RATE_HZ = 100.0
+
     def __init__(self, mapping: SNNPopulationMapping, sync_dt: float):
         if sync_dt <= 0:
             raise ValueError("sync_dt musi być > 0")
