@@ -18,8 +18,9 @@ def band_powers(signal: np.ndarray, fs: float, bands: dict[str, tuple[float, flo
     x = np.asarray(signal, dtype=float)
     if x.ndim != 1:
         raise ValueError("signal must be 1D")
-    freqs = np.fft.rfftfreq(x.shape[0], d=1.0 / fs)
-    spectrum = np.abs(np.fft.rfft(x)) ** 2
+    n = x.shape[0]
+    freqs = np.fft.rfftfreq(n, d=1.0 / fs)
+    spectrum = np.abs(np.fft.rfft(x)) ** 2 / (n ** 2)
     selected = bands or BAND_LIMITS
     out: dict[str, float] = {}
     for name, (f_lo, f_hi) in selected.items():
