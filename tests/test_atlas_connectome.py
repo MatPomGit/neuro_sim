@@ -9,8 +9,8 @@ from brain_core.anatomy.atlases import (
 from typing import Any
 
 
-def test_load_default_atlas_and_connectome() -> Any:
-    """Opis funkcji test_load_default_atlas_and_connectome."""
+def test_load_default_atlas_and_connectome() -> None:
+    """Testuje poprawne ładowanie domyślnego atlasu i konektomu oraz ich spójność wymiarową."""
     atlas = load_region_atlas()
     connectome = load_connectome(atlas)
 
