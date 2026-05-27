@@ -9,7 +9,11 @@ import json
 
 import numpy as np
 
-from .signal_metrics import band_powers, comparative_report, connectivity_matrix, phase_locking_value
+from .connectivity import compute_connectivity
+from .information_flow import compute_information_flow
+from .phase_locking import compute_phase_locking
+from .signal_metrics import comparative_report
+from .spectral import compute_band_powers
 
 
 @dataclass
@@ -60,6 +64,7 @@ def build_analysis_report(
     behavior: np.ndarray,
     benchmark: dict[str, np.ndarray] | None = None,
     fs: float = 100.0,
+    analysis_set: list[str] | None = None,
 ) -> AnalysisReport:
     eeg = np.asarray(eeg, dtype=float)
     fmri = np.asarray(fmri, dtype=float)
@@ -71,21 +76,27 @@ def build_analysis_report(
     primary = eeg[:, 0] if eeg.ndim == 2 else eeg
     secondary = eeg[:, 1] if eeg.ndim == 2 and eeg.shape[1] > 1 else primary
 
-    bands = band_powers(primary, fs)
+    selected = set(analysis_set or ["spectral", "phase_locking", "connectivity", "information_flow"])
+    bands = compute_band_powers(primary, fs) if "spectral" in selected else None
+    plv = compute_phase_locking(primary, secondary) if "phase_locking" in selected else None
+    net_input = eeg if eeg.ndim == 2 else np.column_stack([primary, secondary])
+    conn = compute_connectivity(net_input) if "connectivity" in selected else None
+    flow = compute_information_flow(net_input) if "information_flow" in selected else None
     erp_proxy = float(np.max(primary) - np.min(primary))
-    plv = phase_locking_value(primary, secondary)
-    conn = connectivity_matrix(eeg if eeg.ndim == 2 else np.column_stack([primary, secondary]))
 
     beh_mean = float(np.mean(behavior))
     beh_std = float(np.std(behavior))
 
     metrics = {
-        "band_power_alpha": float(bands.get("alpha", 0.0)),
-        "band_power_beta": float(bands.get("beta", 0.0)),
+        "band_power_alpha": float(bands.summary.get("alpha", 0.0)) if bands else 0.0,
+        "band_power_beta": float(bands.summary.get("beta", 0.0)) if bands else 0.0,
         "erp_proxy_peak_to_peak": erp_proxy,
-        "phase_locking_value": float(plv),
-        "connectivity_mean": float(np.mean(conn)),
-        "connectivity_abs_mean": float(np.mean(np.abs(conn))),
+        "phase_locking_value": float(plv.summary["plv"]) if plv else 0.0,
+        "connectivity_mean": float(conn.summary["correlation_mean"]) if conn else 0.0,
+        "connectivity_abs_mean": float(conn.summary["correlation_abs_mean"]) if conn else 0.0,
+        "pli_proxy_mean": float(conn.summary["pli_proxy_mean"]) if conn else 0.0,
+        "region_strength_mean": float(conn.summary["region_strength_mean"]) if conn else 0.0,
+        "directional_mean": float(flow.summary["directional_mean"]) if flow else 0.0,
         "behavior_mean": beh_mean,
         "behavior_std": beh_std,
         "fmri_mean": float(np.mean(fmri)),

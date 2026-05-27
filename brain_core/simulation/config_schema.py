@@ -19,6 +19,7 @@ class ExperimentConfig:
     pathology: dict[str, Any] = field(default_factory=lambda: {"enabled": False, "mutations": [], "scenario": None})
     output: dict[str, Any] = field(default_factory=lambda: {"save_results": True, "label": "run", "output_dir": "outputs"})
     snn: dict[str, Any] = field(default_factory=lambda: {"enabled": False, "circuits": [], "sync_dt": 0.005})
+    analysis: dict[str, Any] = field(default_factory=lambda: {"sets": ["spectral", "phase_locking", "connectivity", "information_flow"]})
 
 
 class ConfigValidationError(ValueError):
@@ -55,6 +56,7 @@ def validate_config(raw: dict[str, Any]) -> ExperimentConfig:
                 raise ConfigValidationError(f"Brak pola pathology.mutations[{idx}].{required_key}")
 
     _validate_snn_config(cfg)
+    _validate_analysis_config(cfg)
     cfg.output["output_dir"] = str(Path(cfg.output.get("output_dir", "outputs")))
     return cfg
 
@@ -86,3 +88,16 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
     ratio = sync_dt / cfg.timestep
     if abs(round(ratio) - ratio) > 1e-9:
         raise ConfigValidationError("snn.sync_dt musi być wielokrotnością timestep")
+
+
+def _validate_analysis_config(cfg: ExperimentConfig) -> None:
+    """Waliduje wybór zestawów analiz uruchamianych po symulacji."""
+    if not isinstance(cfg.analysis, dict):
+        raise ConfigValidationError("analysis musi być obiektem")
+    sets_val = cfg.analysis.get("sets", [])
+    if not isinstance(sets_val, list):
+        raise ConfigValidationError("analysis.sets musi być listą")
+    allowed = {"spectral", "phase_locking", "connectivity", "information_flow"}
+    unknown = [name for name in sets_val if name not in allowed]
+    if unknown:
+        raise ConfigValidationError(f"Nieznane analysis.sets: {unknown}")

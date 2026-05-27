@@ -141,7 +141,14 @@ def run_experiment(
         "fmri": _align_cols(_align_rows(benchmark["fmri"], fmri.shape[0]), fmri.shape[1]),
         "behavior": _align_cols(_align_rows(benchmark["behavior"], behavior_matrix.shape[0]), behavior_matrix.shape[1]),
     }
-    analysis_report = build_analysis_report(eeg=eeg, fmri=fmri, behavior=behavior_matrix, benchmark=benchmark, fs=1.0 / config.timestep)
+    analysis_report = build_analysis_report(
+        eeg=eeg,
+        fmri=fmri,
+        behavior=behavior_matrix,
+        benchmark=benchmark,
+        fs=1.0 / config.timestep,
+        analysis_set=list(config.analysis.get("sets", [])),
+    )
 
     save_info: dict[str, Any] | None = None
     if config.output.get("save_results", False):

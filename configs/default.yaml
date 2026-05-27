@@ -12,3 +12,10 @@ output:
   save_results: true
   label: default
   output_dir: outputs
+
+analysis:
+  sets:
+    - spectral
+    - phase_locking
+    - connectivity
+    - information_flow

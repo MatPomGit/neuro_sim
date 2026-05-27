@@ -88,3 +88,24 @@ W `brain_core/populations/spiking_population.py` dodano startowy adapter `Brian2
 - wyjście SNN→NM: `firing_rate_hz`, `mean_membrane_potential_mv`, `sync_dt`.
 
 Zakres pilotażu jest celowo ograniczony do 1–2 obwodów (hipokamp, DLPFC), aby utrzymać minimalny zakres zmian i prostą walidację.
+
+
+## 7. Moduł analizy sygnałów (`brain_core/analysis/`)
+
+Warstwa analityczna została rozdzielona na wyspecjalizowane moduły metryk:
+
+- `spectral.py` — metryki spektralne (`compute_band_powers`),
+- `phase_locking.py` — metryki fazowe (`compute_phase_locking`),
+- `connectivity.py` — metryki per region i per parę regionów (`compute_connectivity`, w tym `pli_proxy` i `region_strength`),
+- `information_flow.py` — uproszczona kierunkowość przepływu (`compute_information_flow`).
+
+Każda funkcja `compute_*` zwraca spójny kontrakt:
+
+- `series` — serie pośrednie (np. macierze, przebiegi faz),
+- `summary` — statystyki zbiorcze używane w raportach.
+
+Plik `signal_metrics.py` pełni rolę fasady kompatybilności wstecznej dla starszego API (`band_powers`, `phase_locking_value`, `connectivity_matrix`).
+
+W `brain_core/analysis/reports.py` raport końcowy agreguje również metryki sieciowe (`pli_proxy_mean`, `region_strength_mean`) i uproszczoną kierunkowość (`directional_mean`).
+
+Wybór aktywnych analiz jest konfigurowalny przez `analysis.sets` w konfiguracji eksperymentu.
