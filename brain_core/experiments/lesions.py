@@ -33,7 +33,7 @@ class PathologyMutation:
         if self.target not in state.regions:
             raise KeyError(f"Nie znaleziono regionu: {self.target}")
 
-        signal = np.asarray(state.regions[self.target], dtype=float)
+        signal = np.asarray(state.regions[self.target], dtype=float).copy()
         if self.kind == "lesion":
             signal *= max(0.0, 1.0 - self.magnitude)
         elif self.kind == "noise_increase":
