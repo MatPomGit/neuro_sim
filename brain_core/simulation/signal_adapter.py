@@ -73,8 +73,9 @@ class CouplingSignalAdapter:
         return regional_activity
 
     def _validate_nm_vector(self, signal: np.ndarray, name: str) -> None:
+        signal_arr = np.asarray(signal)
         expected_shape = (len(self.mapping.neural_mass_region_names),)
-        if signal.shape != expected_shape:
+        if signal_arr.shape != expected_shape:
             raise ValueError(f"{name} musi mieć rozmiar {expected_shape}")
-        if not np.all(np.isfinite(signal)):
+        if not np.all(np.isfinite(signal_arr)):
             raise ValueError(f"{name} musi zawierać wyłącznie wartości skończone")
