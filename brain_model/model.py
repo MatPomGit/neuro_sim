@@ -36,8 +36,8 @@ class CognitiveBrainModel:
             stałe czasowe modułów.
     """
 
-    def __init__(self, params: Any=None, stimulus: Any=None, seed: Any=7, oscillator_params: Any=None, oscillator_band_map: Any=None) -> Any:
-        """Opis funkcji __init__."""
+    def __init__(self, params: BrainParams | None = None, stimulus: Any = None, seed: int = 7, oscillator_params: Any = None, oscillator_band_map: dict[str, str] | None = None) -> None:
+        """Inicjalizuje mezoskopowy model dynamiki poznawczej z określonymi parametrami."""
         self.p = params or BrainParams()
         self.rng = np.random.default_rng(seed)
 
