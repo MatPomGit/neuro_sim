@@ -56,7 +56,7 @@ class PathologyMutation:
         if key not in state.connections:
             raise KeyError(f"Nie znaleziono połączenia: {key}")
 
-        edge = np.asarray(state.connections[key], dtype=float)
+        edge = np.asarray(state.connections[key], dtype=float).copy()
         if self.kind == "disconnection":
             edge *= max(0.0, 1.0 - self.magnitude)
         elif self.kind == "delay_increase":
