@@ -11,6 +11,8 @@ def canonical_hrf(length: int, dt: float, peak_latency: float = 5.0, undershoot_
         raise ValueError("length must be > 0")
     if dt <= 0:
         raise ValueError("dt must be > 0")
+    if peak_latency <= 0 or undershoot_latency <= 0:
+        raise ValueError("peak_latency and undershoot_latency must be > 0")
 
     t = np.arange(length, dtype=float) * dt
     peak = (t / peak_latency) ** 8 * np.exp(-(t - peak_latency) / peak_latency)
