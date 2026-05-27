@@ -247,3 +247,33 @@ Każda nowa funkcja i klasa **musi** zawierać:
 - docstring opisujący cel, parametry i wynik działania.
 
 Brak `type hints` lub docstringa jest traktowany jako błąd jakościowy i wymaga poprawy przed mergem.
+
+
+## Konfigurowalne zestawy analiz i metryki sieciowe
+
+Pipeline analizy w `brain_core/analysis/` wspiera modułowe metryki (`compute_*`) ze spójnym wynikiem:
+
+- `series` (artefakty pośrednie),
+- `summary` (metryki zbiorcze).
+
+Dostępne moduły:
+
+- `spectral.py`
+- `phase_locking.py`
+- `connectivity.py`
+- `information_flow.py`
+
+Raport (`brain_core/analysis/reports.py`) obejmuje m.in. metryki per region/per para regionów (`pli_proxy_mean`, `region_strength_mean`) oraz uproszczoną kierunkowość (`directional_mean`).
+
+Zestaw uruchamianych analiz wybierasz w konfiguracji:
+
+```yaml
+analysis:
+  sets:
+    - spectral
+    - phase_locking
+    - connectivity
+    - information_flow
+```
+
+Dozwolone wartości `analysis.sets` są walidowane przez `brain_core/simulation/config_schema.py`.

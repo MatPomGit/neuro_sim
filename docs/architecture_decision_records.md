@@ -478,3 +478,53 @@ Dodatkowo rozszerzamy konfigurację `configs/multi_region_delay_*.yaml` o sekcj�
 - `brain_core/populations/spiking_population.py`
 - `configs/multi_region_delay_demo.yaml`
 - `configs/multi_region_delay_extended.yaml`
+
+
+## ADR-0011: Modularizacja metryk analizy sygnałów i konfigurowalne zestawy analiz
+
+**Status:** accepted  
+**Data:** 2026-05-27
+
+### Kontekst
+Monolityczny moduł metryk sygnałowych utrudniał utrzymanie, testowanie i rozszerzanie raportów o metryki sieciowe per region, per parę regionów oraz uproszczoną kierunkowość.
+
+### Decyzja
+Rozdzielamy metryki do wyspecjalizowanych modułów:
+- `brain_core/analysis/spectral.py`,
+- `brain_core/analysis/phase_locking.py`,
+- `brain_core/analysis/connectivity.py`,
+- `brain_core/analysis/information_flow.py`.
+
+Każda funkcja `compute_*` zwraca wspólny kontrakt:
+- `series` (artefakty pośrednie),
+- `summary` (statystyki zbiorcze).
+
+Dodatkowo:
+- utrzymujemy kompatybilność wsteczną przez fasadę `signal_metrics.py`,
+- integrujemy metryki w `reports.py`,
+- dodajemy konfigurację `analysis.sets` z walidacją w `config_schema.py`.
+
+### Konsekwencje
+**Pozytywne:**
+- lepsza separacja odpowiedzialności i testowalność,
+- czytelne API metryk dla raportowania i dalszych integracji,
+- kontrola kosztu obliczeń przez wybór zestawów analiz.
+
+**Negatywne / koszty:**
+- większa liczba plików i punktów utrzymania,
+- potrzeba utrzymywania spójności między fasadą legacy a nowym API.
+
+### Alternatywy rozważane
+- Rozbudowa jednego pliku `signal_metrics.py`: prostsza nawigacja, gorsza modularność i większy dług techniczny.
+- Wprowadzenie rozbudowanego frameworka analiz: nadmiarowe wobec obecnego zakresu projektu.
+
+### Powiązane
+- `brain_core/analysis/signal_metrics.py`
+- `brain_core/analysis/spectral.py`
+- `brain_core/analysis/phase_locking.py`
+- `brain_core/analysis/connectivity.py`
+- `brain_core/analysis/information_flow.py`
+- `brain_core/analysis/reports.py`
+- `brain_core/simulation/config_schema.py`
+- `brain_core/simulation/engine.py`
+- `configs/default.yaml`
