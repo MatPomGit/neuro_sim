@@ -44,19 +44,19 @@ def build_output_dir(scenario: str, label: str | None = None, root: str | Path =
 
 def save_run(
     output_dir: str | Path,
-    time: Any,
-    activity: Any,
-    diagnostics: Any,
-    oscillations: Any,
+    time: np.ndarray,
+    activity: np.ndarray,
+    diagnostics: dict[str, Any],
+    oscillations: dict[str, Any],
     *,
-    model_params: Any=None,
-    oscillator_params: Any=None,
-    scenario: Any=None,
+    model_params: Any = None,
+    oscillator_params: Any = None,
+    scenario: dict[str, Any] | None = None,
     seed: int | None = None,
     duration_s: float | None = None,
-    extra_metadata: dict | None = None,
-) -> dict:
-    """Opis funkcji save_run."""
+    extra_metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Zapisuje wyniki symulacji i metadane do plików NPZ oraz JSON."""
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
