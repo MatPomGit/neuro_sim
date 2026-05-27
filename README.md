@@ -192,3 +192,39 @@ Szczegółowy opis aktualnej architektury repozytorium znajduje się w:
 - `docs/program_structure.md`
 
 Dokument zawiera również opis nowej infrastruktury symulacyjnej (`SimulationState`, `SimulationScheduler`, integratory i `RandomSources`) oraz wskazuje, które elementy są już gotowe, a które wymagają pełnej integracji z pętlą symulacji.
+
+
+## Pilotaż NM ↔ SNN (Brian2 backend startowy)
+
+Dodano minimalny most współsymulacji neural-mass ↔ spiking z jednym backendem startowym: `brian2`.
+
+Najważniejsze elementy:
+
+- `brain_core/populations/spiking_population.py`
+  - `NeuralMassToSNNInput(excitatory_drive_hz, inhibitory_drive_hz, sync_dt)`
+  - `SNNToNeuralMassOutput(firing_rate_hz, mean_membrane_potential_mv, sync_dt)`
+  - `Brian2SpikingPopulationAdapter(region_names, dt=...)`
+- `brain_core/simulation/multiscale_engine.py`
+  - `TimeScaleTask(name, module, dt)`
+  - `MultiScaleEngine(base_dt, tasks)`
+
+Kontrakt synchronizacji:
+
+- `sync_dt` określa krok wymiany NM↔SNN,
+- adapter i scheduler walidują dodatnie `dt`,
+- w pilotażu zakres ograniczono do 1–2 obwodów (hipokamp, DLPFC).
+
+Krótki przykład użycia:
+
+```python
+import numpy as np
+from brain_core.populations import Brian2SpikingPopulationAdapter, NeuralMassToSNNInput
+
+adapter = Brian2SpikingPopulationAdapter(region_names=["hippocampus", "dlpfc"], dt=0.001)
+signal = NeuralMassToSNNInput(
+    excitatory_drive_hz=np.array([20.0, 16.0]),
+    inhibitory_drive_hz=np.array([6.0, 5.0]),
+    sync_dt=0.005,
+)
+out = adapter.step(signal)
+```

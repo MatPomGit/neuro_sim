@@ -55,7 +55,7 @@ Dodane elementy pod rozbudowę wieloskalową:
 - `integrators.py` — wspólny interfejs integratora + `EulerMaruyamaIntegrator` i `RK4Integrator`,
 - `random_sources.py` — `RandomSources`: deterministyczne strumienie RNG per-moduł.
 
-> Uwaga: komponenty scheduler/integratory/RNG są obecnie przygotowane jako infrastruktura i API do kolejnych etapów integracji z `engine.py`.
+> Uwaga: `scheduler.py` i `multiscale_engine.py` współistnieją — pierwszy definiuje fazowy scheduler kroku, drugi prosty scheduler wieloskalowy (`base_dt` + zadania z własnym `dt`) dla współsymulacji NM↔SNN.
 
 ## 4. `brain_viewer/` i zasoby wizualne
 
@@ -78,3 +78,13 @@ Aby w pełni wykorzystać nowe API symulacyjne:
 - spiąć `SimulationScheduler` w głównej pętli symulacji,
 - mapować metody z konfiguracji (`integrator.method`) na klasy integratorów,
 - przypisać odseparowane strumienie z `RandomSources` do poszczególnych podsystemów.
+
+
+## 3.2. Pilotażowy most neural-mass ↔ SNN
+
+W `brain_core/populations/spiking_population.py` dodano startowy adapter `Brian2SpikingPopulationAdapter` oraz jawny kontrakt wymiany sygnałów:
+
+- wejście NM→SNN: `excitatory_drive_hz`, `inhibitory_drive_hz`, `sync_dt`,
+- wyjście SNN→NM: `firing_rate_hz`, `mean_membrane_potential_mv`, `sync_dt`.
+
+Zakres pilotażu jest celowo ograniczony do 1–2 obwodów (hipokamp, DLPFC), aby utrzymać minimalny zakres zmian i prostą walidację.

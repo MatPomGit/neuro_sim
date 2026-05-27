@@ -365,3 +365,40 @@ Rozszerzamy `brain_core/physiology/eeg_forward_model.py` o:
 ### Powiązane
 - `brain_core/physiology/eeg_forward_model.py`
 - `tests/test_observation_and_analysis.py`
+
+## ADR-0009: Pilotażowa współsymulacja neural-mass ↔ SNN z backendem Brian2
+
+**Status:** proposed  
+**Data:** 2026-05-27
+
+### Kontekst
+Projekt potrzebuje praktycznego punktu startowego do hybrydowej współsymulacji (neural-mass + SNN) bez rozszerzania od razu na cały mózg. Jednocześnie wymagane jest jawne API wymiany sygnałów oraz obsługa różnych kroków czasowych.
+
+### Decyzja
+Wprowadzamy minimalny, testowalny szkielet:
+- `brain_core/populations/spiking_population.py` z adapterem `Brian2SpikingPopulationAdapter` jako backendem startowym,
+- jawny kontrakt wymiany sygnałów:
+  - wejście NM→SNN: `excitatory_drive_hz`, `inhibitory_drive_hz`, `sync_dt`,
+  - wyjście SNN→NM: `firing_rate_hz`, `mean_membrane_potential_mv`, `sync_dt`,
+- `brain_core/simulation/multiscale_engine.py` z prostym schedulerem wieloskalowym (`base_dt` + zadania z własnym `dt`),
+- ograniczenie pilotażu do 1–2 obwodów (hipokamp, DLPFC) na poziomie konfiguracji eksperymentu i testów integracyjnych.
+
+### Konsekwencje
+**Pozytywne:**
+- szybki i prosty start (KISS) pod dalszą integrację z pełnym modelem Brian2,
+- jednoznaczny kontrakt danych między warstwami,
+- deterministyczna walidacja działania harmonogramu wieloskalowego.
+
+**Negatywne / koszty:**
+- adapter startowy ma uproszczoną dynamikę (fallback) i nie zastępuje pełnej sieci kolców,
+- konieczne późniejsze dopracowanie mapowania biologicznego i kalibracji.
+
+### Alternatywy rozważane
+- Od razu pełna integracja całego mózgu: większe ryzyko i koszt, trudniejszy debugging.
+- Wybór innego backendu startowego (NEST): sensowny, ale cięższy wdrożeniowo w tym etapie.
+
+### Powiązane
+- `brain_core/populations/spiking_population.py`
+- `brain_core/simulation/multiscale_engine.py`
+- `tests/test_multiscale_engine.py`
+- `tests/test_spiking_population_adapter.py`

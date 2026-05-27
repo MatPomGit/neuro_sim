@@ -508,13 +508,24 @@ homeostatic regulation
 
 Cel: lokalnie szczegółowa symulacja biologiczna.
 
-Dodać backend:
+Status (2026-05-27): **częściowo zrealizowane**
+
+Zrealizowano:
 
 ```text
-Brian2 dla szybkich prototypów
-NEST dla dużych SNN
-NEURON/NetPyNE dla modeli biokomórkowych
-Arbor dla symulacji wielkoskalowych/HPC
+[x] Brian2 jako backend startowy (adapter: brain_core/populations/spiking_population.py)
+[x] Kontrakt NM↔SNN (wejścia/wyjścia + sync_dt)
+[x] Ograniczenie pilotażu do 1-2 obwodów (hipokamp, DLPFC)
+[x] Scheduler wieloskalowy (brain_core/simulation/multiscale_engine.py)
+[x] Test wydajności/stabilności smoke dla współsymulacji
+```
+
+Do dalszej realizacji:
+
+```text
+[ ] NEST dla dużych SNN
+[ ] NEURON/NetPyNE dla modeli biokomórkowych
+[ ] Arbor dla symulacji wielkoskalowych/HPC
 ```
 
 ### Etap 7: walidacja
