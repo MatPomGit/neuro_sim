@@ -239,3 +239,11 @@ W projekcie obowiązują następujące zasady językowe:
 - mapowanie nazw technicznych EN→PL dla warstwy prezentacji jest utrzymywane w słowniku `docs/english_polish_glossary.md`.
 
 Szczegółowe wytyczne dla agentów znajdują się w `AGENTS.md`.
+
+## Wymóg dokumentacji kodu
+
+Każda nowa funkcja i klasa **musi** zawierać:
+- pełny `type hint` dla argumentów i typu zwracanego,
+- docstring opisujący cel, parametry i wynik działania.
+
+Brak `type hints` lub docstringa jest traktowany jako błąd jakościowy i wymaga poprawy przed mergem.

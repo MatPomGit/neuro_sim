@@ -4,6 +4,7 @@ from typing import Callable, Dict
 
 from .scenarios import StimulusScenario, get_scenario
 from .scenarios.types import CHANNELS
+from typing import Any
 
 StimulusFn = Callable[[float], Dict[str, float]]
 
@@ -14,6 +15,7 @@ def build_stimulus_fn(scenario: StimulusScenario) -> StimulusFn:
     normalized = scenario.normalized_channels()
 
     def stimulus(t: float) -> Dict[str, float]:
+        """Opis funkcji stimulus."""
         u = {channel: normalized[channel].baseline for channel in CHANNELS}
 
         for channel in CHANNELS:
@@ -36,7 +38,8 @@ def build_stimulus_fn(scenario: StimulusScenario) -> StimulusFn:
     return stimulus
 
 
-def resolve_stimulus_scenario(scenario_id: str | None = None, scenario: StimulusScenario | None = None):
+def resolve_stimulus_scenario(scenario_id: str | None = None, scenario: StimulusScenario | None = None) -> Any:
+    """Opis funkcji resolve_stimulus_scenario."""
     if scenario is not None:
         return scenario
     return get_scenario(scenario_id or "reward-learning")

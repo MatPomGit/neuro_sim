@@ -3,9 +3,11 @@ import numpy as np
 from brain_core.experiments.pharmacology import comparison_scenarios
 from brain_core.populations.wilson_cowan import RegionWilsonCowanModel, RegionWilsonCowanParams
 from brain_core.synapses.state import NeuromodulationState, update_region_state
+from typing import Any
 
 
-def test_neuromodulation_state_update_bounds():
+def test_neuromodulation_state_update_bounds() -> Any:
+    """Opis funkcji test_neuromodulation_state_update_bounds."""
     s0 = NeuromodulationState()
     s1 = update_region_state(
         s0,
@@ -32,12 +34,14 @@ def test_neuromodulation_state_update_bounds():
         assert 0.0 <= value <= 1.0
 
 
-def test_pharmacology_scenarios_are_available():
+def test_pharmacology_scenarios_are_available() -> Any:
+    """Opis funkcji test_pharmacology_scenarios_are_available."""
     scenarios = comparison_scenarios()
     assert set(scenarios.keys()) == {"baseline", "high_ach", "high_na", "low_gaba"}
 
 
-def test_wilson_cowan_accepts_neuromodulation_vector():
+def test_wilson_cowan_accepts_neuromodulation_vector() -> Any:
+    """Opis funkcji test_wilson_cowan_accepts_neuromodulation_vector."""
     regions = ["R1", "R2"]
     params = {r: RegionWilsonCowanParams() for r in regions}
     model = RegionWilsonCowanModel(region_names=regions, params=params)

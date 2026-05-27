@@ -3,9 +3,11 @@ import pytest
 from brain_core.experiments.protocols import GoNoGoTask, NBackTask, StroopTask
 from brain_core.simulation.config_schema import ExperimentConfig
 from brain_core.simulation.engine import run_experiment
+from typing import Any
 
 
-def test_tasks_generate_deterministic_stimuli():
+def test_tasks_generate_deterministic_stimuli() -> Any:
+    """Opis funkcji test_tasks_generate_deterministic_stimuli."""
     duration = 10.0
     s1 = StroopTask().generate_stimuli(seed=7, duration_s=duration)
     s2 = StroopTask().generate_stimuli(seed=7, duration_s=duration)
@@ -20,7 +22,8 @@ def test_tasks_generate_deterministic_stimuli():
     assert n1 == n2
 
 
-def test_trial_results_have_unified_schema_and_are_deterministic():
+def test_trial_results_have_unified_schema_and_are_deterministic() -> Any:
+    """Opis funkcji test_trial_results_have_unified_schema_and_are_deterministic."""
     cfg = ExperimentConfig(task={"name": "stroop", "scenario": "stroop", "duration": 5.0}, output={"save_results": False})
     r1 = run_experiment(cfg)
     r2 = run_experiment(cfg)
@@ -33,7 +36,8 @@ def test_trial_results_have_unified_schema_and_are_deterministic():
     assert isinstance(first["correct"], bool)
 
 
-def test_all_task_configs_exist():
+def test_all_task_configs_exist() -> Any:
+    """Opis funkcji test_all_task_configs_exist."""
     pytest.importorskip("yaml")
     import yaml
     from pathlib import Path

@@ -280,3 +280,35 @@ Zadanie uznaje się za ukończone, gdy:
 - raport dydaktyczny jest aktualny,
 - dokumentacja i (jeśli potrzeba) ADR zostały dodane,
 - zmiana jest reprodukowalna z konfiguracji.
+
+---
+
+## Zadanie jakościowe (uzupełniające)
+
+### Q1. Uzupełnienie docstringów i type hints w całym repozytorium
+**Cel:** domknięcie standardu dokumentacji i typowania dla wszystkich modułów Python.
+
+**Kontekst (audyt 2026-05-27):**
+- wykryto **162** elementy (funkcje/klasy) bez docstringów,
+- wykryto **50** funkcji bez pełnych adnotacji typów.
+
+**Największe luki:**
+- `brain_model/gui.py` (docstringi + typy),
+- `brain_core/experiments/protocols.py`,
+- `brain_core/populations/wilson_cowan.py`,
+- `brain_model/scenarios/types.py`,
+- `brain_core/experiments/lesions.py`,
+- `brain_core/physiology/eeg_forward_model.py`.
+
+**Zakres prac:**
+- Uzupełnić docstringi dla wszystkich funkcji, klas i metod publicznych/prywatnych.
+- Uzupełnić type hints dla argumentów i typów zwracanych.
+- Unikać nadmiarowego `Any` tam, gdzie możliwe jest wskazanie typu domenowego.
+- Dodać kontrolę CI (lint/type check) egzekwującą minimalny poziom pokrycia.
+
+**Deliverables:**
+- Zamknięty raport audytu „0 braków docstringów / 0 braków type hints”.
+- Aktualizacja wybranych modułów + testy regresji.
+
+**Akceptacja:**
+- Skan AST repozytorium zwraca brak braków docstringów i type hints.

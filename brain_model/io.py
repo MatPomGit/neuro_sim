@@ -10,7 +10,8 @@ from typing import Any
 import numpy as np
 
 
-def _to_jsonable(value: Any):
+def _to_jsonable(value: Any) -> Any:
+    """Opis funkcji _to_jsonable."""
     if is_dataclass(value):
         return asdict(value)
     if isinstance(value, dict):
@@ -21,6 +22,7 @@ def _to_jsonable(value: Any):
 
 
 def _git_commit_hash() -> str | None:
+    """Opis funkcji _git_commit_hash."""
     try:
         return (
             subprocess.check_output(["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL)
@@ -31,6 +33,7 @@ def _git_commit_hash() -> str | None:
 
 
 def build_output_dir(scenario: str, label: str | None = None, root: str | Path = "outputs") -> Path:
+    """Opis funkcji build_output_dir."""
     stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     safe_scenario = (scenario or "scenario").replace("/", "-").replace(" ", "-")
     safe_label = (label or "run").replace("/", "-").replace(" ", "-")
@@ -41,18 +44,19 @@ def build_output_dir(scenario: str, label: str | None = None, root: str | Path =
 
 def save_run(
     output_dir: str | Path,
-    time,
-    activity,
-    diagnostics,
-    oscillations,
+    time: Any,
+    activity: Any,
+    diagnostics: Any,
+    oscillations: Any,
     *,
-    model_params=None,
-    oscillator_params=None,
-    scenario=None,
+    model_params: Any=None,
+    oscillator_params: Any=None,
+    scenario: Any=None,
     seed: int | None = None,
     duration_s: float | None = None,
     extra_metadata: dict | None = None,
 ) -> dict:
+    """Opis funkcji save_run."""
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -105,6 +109,7 @@ def save_run(
 
 
 def load_run(output_dir: str | Path) -> dict:
+    """Opis funkcji load_run."""
     out = Path(output_dir)
     npz_path = out / "run_data.npz"
     meta_path = out / "metadata.json"

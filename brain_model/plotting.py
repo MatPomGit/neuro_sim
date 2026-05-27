@@ -10,6 +10,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 
 from .stimuli import build_stimulus_fn
+from typing import Any
 
 SVG_ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets" / "svg"
 SVG_VIEW_FILES = {
@@ -101,7 +102,8 @@ REGION_TO_MODULE_WEIGHTS = {
 
 
 @lru_cache(maxsize=8)
-def _load_svg_region_centroids(svg_path: str):
+def _load_svg_region_centroids(svg_path: str) -> Any:
+    """Opis funkcji _load_svg_region_centroids."""
     text = Path(svg_path).read_text(encoding="utf-8")
     region_matches = re.findall(r'<path[^>]*data-region="([^"]+)"[^>]*d="([^"]+)"', text)
     centroids = {}
@@ -117,7 +119,8 @@ def _load_svg_region_centroids(svg_path: str):
     return centroids
 
 
-def _draw_brain_projection(ax, time, activity, idx, svg_path: str, title: str):
+def _draw_brain_projection(ax: Any, time: Any, activity: Any, idx: Any, svg_path: str, title: str) -> Any:
+    """Opis funkcji _draw_brain_projection."""
     centroids = _load_svg_region_centroids(svg_path)
     if not centroids:
         ax.text(0.5, 0.5, "Brak regionów SVG do wizualizacji.", ha="center", va="center", transform=ax.transAxes)
@@ -145,7 +148,8 @@ def _draw_brain_projection(ax, time, activity, idx, svg_path: str, title: str):
     return scatter
 
 
-def _compute_region_activity_series(activity, idx, regions):
+def _compute_region_activity_series(activity: Any, idx: Any, regions: Any) -> Any:
+    """Opis funkcji _compute_region_activity_series."""
     region_activity_t = {}
     for region in regions:
         mapping = REGION_TO_MODULE_WEIGHTS.get(region, [])
@@ -167,11 +171,13 @@ def _compute_region_activity_series(activity, idx, regions):
     return region_activity_t
 
 
-def _describe(label):
+def _describe(label: Any) -> Any:
+    """Opis funkcji _describe."""
     return MODULE_DESCRIPTIONS.get(label) or DIAGNOSTIC_DESCRIPTIONS.get(label) or BAND_DESCRIPTIONS.get(label) or label
 
 
-def _attach_line_tooltips(fig, axes):
+def _attach_line_tooltips(fig: Any, axes: Any) -> Any:
+    """Opis funkcji _attach_line_tooltips."""
     annotations = {}
     for ax in axes:
         annotation = ax.annotate(
@@ -185,7 +191,8 @@ def _attach_line_tooltips(fig, axes):
         annotation.set_visible(False)
         annotations[ax] = annotation
 
-    def hide_annotations():
+    def hide_annotations() -> Any:
+        """Opis funkcji hide_annotations."""
         changed = False
         for annotation in annotations.values():
             if annotation.get_visible():
@@ -194,7 +201,8 @@ def _attach_line_tooltips(fig, axes):
         if changed:
             fig.canvas.draw_idle()
 
-    def on_move(event):
+    def on_move(event: Any) -> Any:
+        """Opis funkcji on_move."""
         if event.inaxes not in axes:
             hide_annotations()
             return
@@ -233,12 +241,14 @@ def _attach_line_tooltips(fig, axes):
     fig.canvas.mpl_connect("motion_notify_event", on_move)
 
 
-def _style_lines(ax):
+def _style_lines(ax: Any) -> Any:
+    """Opis funkcji _style_lines."""
     for line in ax.get_lines():
         line.set_picker(6)
 
 
-def draw_activity(ax, time, activity, names, idx):
+def draw_activity(ax: Any, time: Any, activity: Any, names: Any, idx: Any) -> Any:
+    """Opis funkcji draw_activity."""
     selected = [
         "VIS", "AUD", "SAL", "ATT", "PHON", "VSWM",
         "EXEC", "EPIS", "SEM", "HIP", "VAL", "MOT", "DMN", "GW"
@@ -257,7 +267,8 @@ def draw_activity(ax, time, activity, names, idx):
 
 
 
-def draw_simulated_brain_activity(ax, time, activity, names, idx):
+def draw_simulated_brain_activity(ax: Any, time: Any, activity: Any, names: Any, idx: Any) -> Any:
+    """Opis funkcji draw_simulated_brain_activity."""
     selected = [
         "VIS", "AUD", "INT", "SAL", "ATT", "PHON", "VSWM",
         "EXEC", "EPIS", "SEM", "HIP", "VAL", "MOT", "DMN", "GW",
@@ -291,7 +302,8 @@ def draw_simulated_brain_activity(ax, time, activity, names, idx):
     return [ax]
 
 
-def draw_brain_region_projections(ax, time, activity, names, idx):
+def draw_brain_region_projections(ax: Any, time: Any, activity: Any, names: Any, idx: Any) -> Any:
+    """Opis funkcji draw_brain_region_projections."""
     fig = ax.figure
     ax.remove()
     axes = fig.subplots(2, 2)
@@ -316,7 +328,8 @@ def draw_brain_region_projections(ax, time, activity, names, idx):
     return list(axes.flatten())
 
 
-def draw_region_activity_2d(ax, time, activity, names, idx):
+def draw_region_activity_2d(ax: Any, time: Any, activity: Any, names: Any, idx: Any) -> Any:
+    """Opis funkcji draw_region_activity_2d."""
     region_names = sorted(REGION_TO_MODULE_WEIGHTS.keys())
     region_activity_t = _compute_region_activity_series(activity, idx, region_names)
     matrix = [region_activity_t[name] for name in region_names]
@@ -337,7 +350,8 @@ def draw_region_activity_2d(ax, time, activity, names, idx):
     cbar = ax.figure.colorbar(image, ax=ax, pad=0.01)
     cbar.set_label("Aktywacja [0-1]")
     return [ax]
-def draw_diagnostics(ax, time, diagnostics):
+def draw_diagnostics(ax: Any, time: Any, diagnostics: Any) -> Any:
+    """Opis funkcji draw_diagnostics."""
     ax.plot(time, diagnostics["prediction_error"], label="błąd predykcji")
     ax.plot(time, diagnostics["gw_ignition"], label="global workspace ignition")
     ax.plot(time, diagnostics["dopamine_delta"], label="błąd predykcji nagrody")
@@ -359,7 +373,8 @@ def draw_diagnostics(ax, time, diagnostics):
 
 
 
-def draw_weight_trajectories(ax, time, diagnostics):
+def draw_weight_trajectories(ax: Any, time: Any, diagnostics: Any) -> Any:
+    """Opis funkcji draw_weight_trajectories."""
     history = diagnostics.get("weight_history", {})
     weights = history.get("weights", {})
 
@@ -381,7 +396,8 @@ def draw_weight_trajectories(ax, time, diagnostics):
     return [ax]
 
 
-def draw_weight_deltas(ax, time, diagnostics):
+def draw_weight_deltas(ax: Any, time: Any, diagnostics: Any) -> Any:
+    """Opis funkcji draw_weight_deltas."""
     history = diagnostics.get("weight_history", {})
     deltas = history.get("deltas", {})
 
@@ -402,7 +418,8 @@ def draw_weight_deltas(ax, time, diagnostics):
     ax.legend(fontsize=8, ncol=2)
     _style_lines(ax)
     return [ax]
-def draw_eeg_modules(ax, time, oscillations, names, idx):
+def draw_eeg_modules(ax: Any, time: Any, oscillations: Any, names: Any, idx: Any) -> Any:
+    """Opis funkcji draw_eeg_modules."""
     selected = ["HIP", "VSWM", "VIS", "AUD", "EXEC", "ATT", "SEM", "GW"]
     eeg = oscillations["eeg"]
 
@@ -419,7 +436,8 @@ def draw_eeg_modules(ax, time, oscillations, names, idx):
 
 
 
-def draw_scenario_channels(ax, time, scenario):
+def draw_scenario_channels(ax: Any, time: Any, scenario: Any) -> Any:
+    """Opis funkcji draw_scenario_channels."""
     stim = build_stimulus_fn(scenario)
     series = {k: [] for k in ["visual", "auditory", "task_cue", "threat", "reward", "interoceptive"]}
     for t in time:
@@ -437,7 +455,8 @@ def draw_scenario_channels(ax, time, scenario):
     return [ax]
 
 
-def draw_scenario_timeline(ax, time, scenario):
+def draw_scenario_timeline(ax: Any, time: Any, scenario: Any) -> Any:
+    """Opis funkcji draw_scenario_timeline."""
     ax.set_title("Oś czasu scenariusza: fazy i zdarzenia")
     ax.set_xlabel("Czas symulacji [s]")
     ax.set_yticks([])
@@ -459,7 +478,8 @@ def draw_scenario_timeline(ax, time, scenario):
 
 
 
-def draw_behavior(ax, time, behavior):
+def draw_behavior(ax: Any, time: Any, behavior: Any) -> Any:
+    """Opis funkcji draw_behavior."""
     ax.plot(time, behavior["decision_score"], label="decision score", color="#1f77b4")
     ax.plot(time, behavior["confidence"], label="confidence", color="#2ca02c", alpha=0.9)
     ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.5)
@@ -476,7 +496,8 @@ def draw_behavior(ax, time, behavior):
     _style_lines(ax)
     return [ax]
 
-def draw_band_power(ax, time, oscillations):
+def draw_band_power(ax: Any, time: Any, oscillations: Any) -> Any:
+    """Opis funkcji draw_band_power."""
     band_power = oscillations["band_power"]
     fig = ax.figure
     ax.remove()
@@ -494,7 +515,8 @@ def draw_band_power(ax, time, oscillations):
     return list(axes)
 
 
-def _show_standalone(draw_func, *args, figsize=(14, 6)):
+def _show_standalone(draw_func: Any, *args: Any, figsize: Any=(14, 6)) -> Any:
+    """Opis funkcji _show_standalone."""
     fig, ax = plt.subplots(figsize=figsize)
     axes = draw_func(ax, *args) or [ax]
     fig.tight_layout()
@@ -502,26 +524,31 @@ def _show_standalone(draw_func, *args, figsize=(14, 6)):
     plt.show()
 
 
-def plot_activity(time, activity, names, idx):
+def plot_activity(time: Any, activity: Any, names: Any, idx: Any) -> Any:
+    """Opis funkcji plot_activity."""
     _show_standalone(draw_activity, time, activity, names, idx, figsize=(14, 8))
 
 
-def plot_diagnostics(time, diagnostics):
+def plot_diagnostics(time: Any, diagnostics: Any) -> Any:
+    """Opis funkcji plot_diagnostics."""
     _show_standalone(draw_diagnostics, time, diagnostics, figsize=(14, 4))
 
 
-def plot_eeg_modules(time, oscillations, names, idx):
+def plot_eeg_modules(time: Any, oscillations: Any, names: Any, idx: Any) -> Any:
+    """Opis funkcji plot_eeg_modules."""
     _show_standalone(draw_eeg_modules, time, oscillations, names, idx, figsize=(14, 6))
 
 
-def plot_band_power(time, oscillations):
+def plot_band_power(time: Any, oscillations: Any) -> Any:
+    """Opis funkcji plot_band_power."""
     _show_standalone(draw_band_power, time, oscillations, figsize=(14, 8))
 
 
 class PlotWindow(ttk.Frame):
     """Tk frame that embeds all selected matplotlib plots."""
 
-    def __init__(self, parent):
+    def __init__(self, parent: Any) -> Any:
+        """Opis funkcji __init__."""
         super().__init__(parent)
 
         self.notebook = ttk.Notebook(self)
@@ -537,13 +564,15 @@ class PlotWindow(ttk.Frame):
         self._figures = []
         self._canvases = []
 
-    def clear(self):
+    def clear(self) -> Any:
+        """Opis funkcji clear."""
         for tab_id in self.notebook.tabs():
             self.notebook.forget(tab_id)
         self._figures.clear()
         self._canvases.clear()
 
-    def add_plot(self, tab_title, draw_func, *args, figsize=(10, 6)):
+    def add_plot(self, tab_title: Any, draw_func: Any, *args: Any, figsize: Any=(10, 6)) -> Any:
+        """Opis funkcji add_plot."""
         frame = ttk.Frame(self.notebook)
         self.notebook.add(frame, text=tab_title)
 
@@ -563,5 +592,6 @@ class PlotWindow(ttk.Frame):
         self._figures.append(fig)
         self._canvases.append(canvas)
 
-    def fit_tabs_to_count(self):
+    def fit_tabs_to_count(self) -> Any:
+        """Opis funkcji fit_tabs_to_count."""
         return

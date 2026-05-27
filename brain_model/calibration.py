@@ -25,6 +25,7 @@ SEARCH_SPACE = {
 
 
 def _sample_params(method: str, trials: int, seed: int) -> list[dict[str, float]]:
+    """Opis funkcji _sample_params."""
     rng = np.random.default_rng(seed)
     keys = list(SEARCH_SPACE)
     if method == "grid":
@@ -42,6 +43,7 @@ def _sample_params(method: str, trials: int, seed: int) -> list[dict[str, float]
 
 
 def run_sweep(scenario: str, trials: int, method: str, time_horizon: float, seed: int, output_dir: str) -> list[dict[str, Any]]:
+    """Opis funkcji run_sweep."""
     params_candidates = _sample_params(method=method, trials=trials, seed=seed)
     base_rng = np.random.default_rng(seed)
 
@@ -71,6 +73,7 @@ def run_sweep(scenario: str, trials: int, method: str, time_horizon: float, seed
 
 
 def save_results(results: list[dict[str, Any]], output_dir: str, scenario: str, method: str) -> None:
+    """Opis funkcji save_results."""
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
 
@@ -111,6 +114,7 @@ def save_results(results: list[dict[str, Any]], output_dir: str, scenario: str, 
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Opis funkcji build_parser."""
     parser = argparse.ArgumentParser(description="Parametryczny sweep kalibracyjny modelu.")
     parser.add_argument("--scenario", default="threat-response", help="Scenariusz bodźca")
     parser.add_argument("--trials", type=int, default=100, help="Liczba prób")
@@ -122,6 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    """Opis funkcji main."""
     args = build_parser().parse_args()
     results = run_sweep(
         scenario=args.scenario,

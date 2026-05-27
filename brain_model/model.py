@@ -10,6 +10,7 @@ from .plasticity import apply_state_learning, build_weight_history_series, updat
 from .scenarios import get_scenario, CHANNELS
 from .stimuli import build_stimulus_fn
 from .oscillators import WilsonCowanOscillatorBank
+from typing import Any
 
 
 class CognitiveBrainModel:
@@ -35,7 +36,8 @@ class CognitiveBrainModel:
             stałe czasowe modułów.
     """
 
-    def __init__(self, params=None, stimulus=None, seed=7, oscillator_params=None, oscillator_band_map=None):
+    def __init__(self, params: Any=None, stimulus: Any=None, seed: Any=7, oscillator_params: Any=None, oscillator_band_map: Any=None) -> Any:
+        """Opis funkcji __init__."""
         self.p = params or BrainParams()
         self.rng = np.random.default_rng(seed)
 
@@ -72,7 +74,7 @@ class CognitiveBrainModel:
             params=oscillator_params,
         )
 
-    def initial_state(self):
+    def initial_state(self) -> Any:
         """
         Stan początkowy modelu.
 
@@ -83,7 +85,7 @@ class CognitiveBrainModel:
         x[self.idx["SEM"]] = 0.25
         return x
 
-    def compute_prediction_error(self, x, u):
+    def compute_prediction_error(self, x: Any, u: Any) -> Any:
         """
         Uproszczony mechanizm predictive processing.
 
@@ -103,7 +105,7 @@ class CognitiveBrainModel:
 
         return err_visual, err_auditory, total_error
 
-    def compute_neuromodulation(self, x, u, prediction_error):
+    def compute_neuromodulation(self, x: Any, u: Any, prediction_error: Any) -> Any:
         """
         Bardzo uproszczone zmienne neuromodulacyjne.
 
@@ -148,7 +150,7 @@ class CognitiveBrainModel:
             cortisol,
         )
 
-    def compute_global_workspace(self, x):
+    def compute_global_workspace(self, x: Any) -> Any:
         """
         Nieliniowy zapłon global workspace.
 
@@ -164,7 +166,8 @@ class CognitiveBrainModel:
         return sigmoid(candidate - self.p.gw_threshold, beta=self.p.gw_gain)
 
 
-    def _add_drive_to_module_regions(self, external, module_name, value):
+    def _add_drive_to_module_regions(self, external: Any, module_name: Any, value: Any) -> Any:
+        """Opis funkcji _add_drive_to_module_regions."""
         regions = [r for r in regions_for_module(module_name) if r in self.idx]
         if not regions:
             return
@@ -172,7 +175,8 @@ class CognitiveBrainModel:
         for region in regions:
             external[self.idx[region]] += share
 
-    def build_external_drive(self, x, u, err_visual, err_auditory, prediction_error, acetylcholine):
+    def build_external_drive(self, x: Any, u: Any, err_visual: Any, err_auditory: Any, prediction_error: Any, acetylcholine: Any) -> Any:
+        """Opis funkcji build_external_drive."""
         VIS = self.idx["VIS"]
         AUD = self.idx["AUD"]
         INT = self.idx["INT"]
@@ -198,7 +202,7 @@ class CognitiveBrainModel:
 
         return external
 
-    def build_global_broadcast(self, gw_ignition):
+    def build_global_broadcast(self, gw_ignition: Any) -> Any:
         """
         Global workspace wzmacnia aktywność systemów zadaniowych
         i hamuje DMN w warunkach aktywnej kontroli.
@@ -208,7 +212,8 @@ class CognitiveBrainModel:
         broadcast[self.idx["DMN"]] -= 0.25 * gw_ignition
         return broadcast
 
-    def step(self, x, t):
+    def step(self, x: Any, t: Any) -> Any:
+        """Opis funkcji step."""
         p = self.p
         u = self.stimulus_fn(t)
 
@@ -293,7 +298,8 @@ class CognitiveBrainModel:
 
         return x_next, diagnostics
 
-    def simulate(self, T=45.0, progress_callback=None):
+    def simulate(self, T: Any=45.0, progress_callback: Any=None) -> Any:
+        """Opis funkcji simulate."""
         steps = int(T / self.p.dt)
         time = np.arange(steps) * self.p.dt
 

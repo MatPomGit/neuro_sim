@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
+from typing import Any
 
 """
 Interpretacja modułów jest następująca. VIS, AUD i INT reprezentują wejścia sensoryczne i interoceptywne.
@@ -15,12 +16,14 @@ Po bodźcu słuchowym aktywuje się AUD, PHON i LANG. Bodziec zagrażający powi
 i chwilowo wzmocnić GW. Nagroda zwiększa sygnał dopaminowy i aktualizuje VAL.
 """
 
-def sigmoid(z, beta=4.0):
+def sigmoid(z: Any, beta: Any=4.0) -> Any:
+    """Opis funkcji sigmoid."""
     return 1.0 / (1.0 + np.exp(-beta * z))
 
 
 @dataclass
 class BrainParams:
+    """Opis klasy BrainParams."""
     dt: float = 0.01
     noise: float = 0.015
     gw_threshold: float = 0.62
@@ -53,7 +56,8 @@ class CognitiveBrainModel:
     GW      global workspace
     """
 
-    def __init__(self, params=BrainParams(), seed=7):
+    def __init__(self, params: Any=BrainParams(), seed: Any=7) -> Any:
+        """Opis funkcji __init__."""
         self.p = params
         self.rng = np.random.default_rng(seed)
 
@@ -86,10 +90,12 @@ class CognitiveBrainModel:
         self.W = np.zeros((self.n, self.n))
         self._build_connectivity()
 
-    def _c(self, target, source, weight):
+    def _c(self, target: Any, source: Any, weight: Any) -> Any:
+        """Opis funkcji _c."""
         self.W[self.idx[target], self.idx[source]] = weight
 
-    def _build_connectivity(self):
+    def _build_connectivity(self) -> Any:
+        """Opis funkcji _build_connectivity."""
         # Sensory -> salience / attention
         self._c("SAL", "VIS", 0.55)
         self._c("SAL", "AUD", 0.50)
@@ -148,7 +154,7 @@ class CognitiveBrainModel:
         self._c("GW", "EPIS", 0.35)
         self._c("GW", "SAL", 0.25)
 
-    def stimulus(self, t):
+    def stimulus(self, t: Any) -> Any:
         """
         Scenariusz eksperymentalny:
         1. pojawia się bodziec wzrokowy,
@@ -183,7 +189,8 @@ class CognitiveBrainModel:
 
         return u
 
-    def step(self, x, t):
+    def step(self, x: Any, t: Any) -> Any:
+        """Opis funkcji step."""
         p = self.p
         u = self.stimulus(t)
 
@@ -271,7 +278,8 @@ class CognitiveBrainModel:
 
         return x_next, diagnostics
 
-    def simulate(self, T=45.0):
+    def simulate(self, T: Any=45.0) -> Any:
+        """Opis funkcji simulate."""
         steps = int(T / self.p.dt)
         time = np.arange(steps) * self.p.dt
 
@@ -296,7 +304,8 @@ class CognitiveBrainModel:
 
         return time, X, D
 
-    def plot(self, time, X, D):
+    def plot(self, time: Any, X: Any, D: Any) -> Any:
+        """Opis funkcji plot."""
         selected = [
             "VIS", "AUD", "SAL", "ATT", "PHON", "VSWM",
             "EXEC", "EPIS", "SEM", "HIP", "VAL", "MOT", "DMN", "GW"
