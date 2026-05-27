@@ -113,7 +113,7 @@ Ten dokument definiuje mapowanie nazw technicznych używanych w kodzie (angielsk
 | path_length | długość ścieżki | Neuroobrazowanie |
 | hubness | centralność węzłowa | Neuroobrazowanie |
 | major_depressive_disorder | zaburzenie depresyjne większe (duża depresja) | Psychiatria — zaburzenia nastroju |
-| persistent_depressive_disorder | dystymia (przewlekłe zaburzenie depresyjne) | Psychiatria — zaburzenia nastroju |
+| persistent_depressive_disorder | uporczywe zaburzenie depresyjne (dystymia) | Psychiatria — zaburzenia nastroju |
 | bipolar_i_disorder | choroba afektywna dwubiegunowa typu I | Psychiatria — zaburzenia nastroju |
 | bipolar_ii_disorder | choroba afektywna dwubiegunowa typu II | Psychiatria — zaburzenia nastroju |
 | cyclothymic_disorder | zaburzenie cyklotymiczne | Psychiatria — zaburzenia nastroju |
