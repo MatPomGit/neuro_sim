@@ -45,11 +45,13 @@ class CouplingSignalAdapter:
 
     def rate_to_spike_drive(self, excitatory_rate_hz: np.ndarray, inhibitory_rate_hz: np.ndarray) -> NeuralMassToSNNInput:
         """Konwersja aktywności regionalnej do pobudzenia SNN (Hz)."""
-        self._validate_nm_vector(excitatory_rate_hz, "excitatory_rate_hz")
-        self._validate_nm_vector(inhibitory_rate_hz, "inhibitory_rate_hz")
+        exc_arr = np.asarray(excitatory_rate_hz)
+        inh_arr = np.asarray(inhibitory_rate_hz)
+        self._validate_nm_vector(exc_arr, "excitatory_rate_hz")
+        self._validate_nm_vector(inh_arr, "inhibitory_rate_hz")
         return NeuralMassToSNNInput(
-            excitatory_drive_hz=np.asarray(excitatory_rate_hz[self._indices], dtype=float),
-            inhibitory_drive_hz=np.asarray(inhibitory_rate_hz[self._indices], dtype=float),
+            excitatory_drive_hz=np.asarray(exc_arr[self._indices], dtype=float),
+            inhibitory_drive_hz=np.asarray(inh_arr[self._indices], dtype=float),
             sync_dt=self.sync_dt,
         )
 
