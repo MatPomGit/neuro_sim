@@ -104,7 +104,22 @@ def pathology_scenarios() -> dict[str, list[PathologyMutation]]:
     return {name: list(mutations) for name, mutations in REFERENCE_PATHOLOGY_SCENARIOS.items()}
 
 
-def build_pathology_controller(entries: list[dict[str, Any]] | None) -> PathologyController:
-    entries = entries or []
-    mutations = [PathologyMutation(**entry) for entry in entries]
+def build_pathology_controller(
+    entries: list[dict[str, Any]] | None,
+    scenario_name: str | None = None
+) -> PathologyController:
+    mutations: list[PathologyMutation] = []
+    if scenario_name:
+        scenarios = pathology_scenarios()
+        if scenario_name in scenarios:
+            mutations.extend(scenarios[scenario_name])
+        else:
+            raise ValueError(f"Nieznany scenariusz patologii: {scenario_name}")
+
+    if entries:
+        allowed_keys = {"kind", "target", "scope", "magnitude", "stage", "source"}
+        for entry in entries:
+            filtered = {k: v for k, v in entry.items() if k in allowed_keys}
+            mutations.append(PathologyMutation(**filtered))
+
     return PathologyController(mutations)
