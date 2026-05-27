@@ -55,7 +55,7 @@ Backlog jest uporządkowany według priorytetów (P0–P3) i gotowości wdrożen
 - Testy regresji baseline.
 
 **Deliverables:**
-- `healthy_v1` profile + dokumentacja.
+- Profil healthy_v1 + dokumentacja.
 - Zestaw referencyjnych wykresów.
 
 **Akceptacja:**
