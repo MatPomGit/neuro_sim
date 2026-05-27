@@ -439,3 +439,42 @@ Dodajemy moduły `brain_core/analysis/reports.py` oraz `brain_core/analysis/benc
 - `brain_core/analysis/benchmark_loader.py`
 - `brain_core/simulation/engine.py`
 - `data/validation/*.csv`
+
+## ADR-0007: Formalny kontrakt I/O dla współsymulacji neural-mass i SNN
+
+**Status:** proposed  
+**Data:** 2026-05-27
+
+### Kontekst
+Współsymulacja `MultiScaleEngine` i adaptera populacji SNN wymaga jawnego kontraktu częstotliwości aktualizacji, jednostek sygnałów oraz mapowania regionów. Bez tego łatwo o ciche niespójności czasowe i błędy mapowania.
+
+### Decyzja
+Wprowadzamy formalny kontrakt `MultiScaleIOContract` oraz dedykowany `CouplingSignalAdapter`.
+Kontrakt wymusza:
+- `snn_sync_dt` jako całkowitą wielokrotność `base_dt`,
+- jednostki `Hz` dla sygnału `rate -> spike drive`,
+- jednostkę `fraction` dla `spike summary -> regional activity`,
+- jawne mapowanie regionów SNN do regionów neural-mass.
+
+Dodatkowo rozszerzamy konfigurację `configs/multi_region_delay_*.yaml` o sekcję `snn`.
+
+### Konsekwencje
+**Pozytywne:**
+- jednoznaczny interfejs między warstwami,
+- mniej ukrytych błędów synchronizacji,
+- prostsza walidacja konfiguracji i testowalność.
+
+**Negatywne / koszty:**
+- więcej pól konfiguracyjnych,
+- potrzeba migracji starszych konfiguracji niestosujących sekcji `snn`.
+
+### Alternatywy rozważane
+- Kontrakt niejawny oparty wyłącznie o konwencję kodową: mniejszy narzut, ale większe ryzyko regresji.
+- Integracja „na skróty” bez adaptera: prostsze lokalnie, ale gorsza separacja odpowiedzialności.
+
+### Powiązane
+- `brain_core/simulation/multiscale_engine.py`
+- `brain_core/simulation/signal_adapter.py`
+- `brain_core/populations/spiking_population.py`
+- `configs/multi_region_delay_demo.yaml`
+- `configs/multi_region_delay_extended.yaml`

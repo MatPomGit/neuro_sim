@@ -2,7 +2,8 @@ import time
 
 import numpy as np
 
-from brain_core.simulation.multiscale_engine import MultiScaleEngine, TimeScaleTask
+from brain_core.networks.delays import DelayBuffer
+from brain_core.simulation.multiscale_engine import MultiScaleEngine, MultiScaleIOContract, TimeScaleTask
 from brain_core.simulation.state import SimulationState
 
 
@@ -19,7 +20,14 @@ class CounterModule:
 def test_multiscale_scheduler_respects_different_dt():
     fast = CounterModule()
     slow = CounterModule()
-    engine = MultiScaleEngine(0.001, [TimeScaleTask("neural_mass", fast, 0.001), TimeScaleTask("snn_sync", slow, 0.005)])
+    contract = MultiScaleIOContract(
+        base_dt=0.001,
+        snn_sync_dt=0.005,
+        rate_unit="Hz",
+        activity_unit="fraction",
+        mapped_populations=("hippocampus",),
+    )
+    engine = MultiScaleEngine(0.001, [TimeScaleTask("neural_mass", fast, 0.001), TimeScaleTask("snn_sync", slow, 0.005)], io_contract=contract)
     state = SimulationState()
 
     for _ in range(20):
@@ -47,3 +55,16 @@ def test_cosim_performance_and_numerical_stability_smoke():
     assert state.step == 10_000
     assert np.isfinite(state.time)
     assert np.isfinite(state.metrics["acc"])
+
+
+def test_delay_buffer_length_and_no_nan_drift():
+    delays = np.array([[0, 3], [2, 0]])
+    buffer = DelayBuffer(n_regions=2, delays_steps=delays)
+
+    for _ in range(5000):
+        buffer.push(np.array([0.1, 0.2]))
+        delayed = buffer.delayed_activity_matrix()
+        assert delayed.shape == (2, 2)
+        assert np.all(np.isfinite(delayed))
+
+    assert buffer._history.shape[0] == int(np.max(delays)) + 1

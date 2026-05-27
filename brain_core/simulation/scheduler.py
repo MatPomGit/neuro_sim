@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+"""Harmonogram faz symulacji oraz hooki współsymulacyjne."""
+
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Any, Protocol
 
 from .state import SimulationState
 
 
 class SimulationModule(Protocol):
+    """Interfejs modułu wykonywanego przez harmonogram."""
+
     def update(self, state: SimulationState, dt: float) -> None: ...
 
 
@@ -20,6 +24,7 @@ class CoSimulationHook:
     _accumulator: float = 0.0
 
     def tick(self, state: SimulationState, base_dt: float) -> None:
+        """Akumuluje czas bazowy i wywołuje moduł, gdy osiągnięto lokalny krok."""
         self._accumulator += base_dt
         while self._accumulator >= self.dt - 1e-9:
             self.module.update(state, self.dt)
@@ -28,12 +33,13 @@ class CoSimulationHook:
 
 @dataclass(slots=True)
 class TaskStimulusPlayer:
-    """Injects cognitive-task stimuli into SimulationState metrics timeline."""
+    """Wstrzykuje bodźce zadania poznawczego do osi czasu metryk."""
 
-    stimuli: list
+    stimuli: list[Any]
     cursor: int = 0
 
     def update(self, state: SimulationState, dt: float) -> None:
+        """Emituje wszystkie bodźce, których czas onset został osiągnięty."""
         del dt
         emitted = state.metrics.setdefault("trial_events", [])
         while self.cursor < len(self.stimuli) and self.stimuli[self.cursor].onset_s <= state.time + 1e-9:
@@ -62,6 +68,7 @@ class SimulationScheduler:
     co_simulation_hooks: list[CoSimulationHook] = field(default_factory=list)
 
     def run_step(self, state: SimulationState, dt: float) -> None:
+        """Wykonuje pojedynczy krok we wszystkich fazach harmonogramu."""
         self._run_group(self.stimuli, state, dt)
         self._run_group(self.neuronal_dynamics, state, dt)
         self._run_group(self.couplings, state, dt)
@@ -75,5 +82,6 @@ class SimulationScheduler:
 
     @staticmethod
     def _run_group(group: list[SimulationModule], state: SimulationState, dt: float) -> None:
+        """Uruchamia wszystkie moduły w jednej fazie."""
         for module in group:
             module.update(state, dt)
