@@ -63,7 +63,7 @@ Roving oddball task (sekwencje powtarzanych bodźców z okazjonalną zmianą sta
 
 **Minimalna implementacja (MVP):**
 - generator sekwencji `standard -> deviant -> nowy standard` z kontrolą długości runów,
-- rejestr eventów: onset bodźca, typ bodźca, surprise index, aktualizacja stanu sieci,
+- rejestr zdarzeń: rozpoczęcie (onset) bodźca, typ bodźca, wskaźnik zaskoczenia (surprise index), aktualizacja stanu sieci,
 - raport dydaktyczny pokazujący przebieg adaptacji trial-by-trial,
 - dashboard porównawczy dla profili healthy/disorder/lesion.
 
