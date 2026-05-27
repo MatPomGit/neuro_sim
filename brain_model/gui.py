@@ -52,6 +52,7 @@ PARAMETER_DESCRIPTIONS = {
     "seed": "Ziarno generatora losowego. Typowo dowolna liczba całkowita; ta sama wartość daje powtarzalny przebieg szumu i oscylacji.",
     "scenario_details": "Opis, pole co się zmienia oraz przebieg wybranego scenariusza: fazy, zdarzenia i aktywne kanały bodźców.",
     "dt": "Krok czasowy symulacji. Typowo 0.001-0.01; mniejszy krok zwiększa dokładność i koszt, większy może wygładzić lub zdestabilizować dynamikę.",
+    "auto_dt": "Automatycznie dobiera krok dt do czasu T, aby utrzymać rozsądną liczbę kroków i stabilność symulacji.",
     "noise": "Skala szumu neuronalnego. Typowo 0.0-0.05; większa wartość zwiększa zmienność aktywacji i może maskować słabe efekty bodźców.",
     "gw_threshold": "Próg zapłonu global workspace. Typowo 0.4-0.8; niższy ułatwia globalną aktywację, wyższy wymaga silniejszej uwagi lub salience.",
     "gw_gain": "Stromość funkcji zapłonu global workspace. Typowo 5-20; większa wartość daje bardziej skokowe przejście między brakiem i obecnością zapłonu.",
@@ -247,7 +248,7 @@ class BrainModelGUI(tk.Tk):
         self.sim_frame = ttk.LabelFrame(left, text="Symulacja", padding=10)
         self.sim_frame.pack(fill="x", pady=(0, 10))
 
-        self.T_var = tk.StringVar(value="45.0")
+        self.T_var = tk.StringVar(value="12.0")
         self.seed_var = tk.StringVar(value="7")
         self.command_var = tk.StringVar(value="run")
         self.batch_seeds_var = tk.StringVar(value="7,11,19")
@@ -266,25 +267,30 @@ class BrainModelGUI(tk.Tk):
         Tooltip(dt_label, PARAMETER_DESCRIPTIONS["dt"])
         ttk.Entry(self.sim_frame, textvariable=self.dt_var, width=14).grid(row=1, column=1, sticky="ew", pady=3)
 
+        self.auto_dt_var = tk.BooleanVar(value=True)
+        auto_dt_checkbox = ttk.Checkbutton(self.sim_frame, text="Automatyczny dobór dt", variable=self.auto_dt_var, command=self._on_auto_dt_toggle)
+        auto_dt_checkbox.grid(row=2, column=0, columnspan=2, sticky="w", pady=(0, 3))
+        Tooltip(auto_dt_checkbox, PARAMETER_DESCRIPTIONS["auto_dt"])
+
         seed_label = ttk.Label(self.sim_frame, text="seed")
-        seed_label.grid(row=2, column=0, sticky="w", padx=(0, 8), pady=3)
+        seed_label.grid(row=3, column=0, sticky="w", padx=(0, 8), pady=3)
         Tooltip(seed_label, PARAMETER_DESCRIPTIONS["seed"])
-        ttk.Entry(self.sim_frame, textvariable=self.seed_var, width=14).grid(row=2, column=1, sticky="ew", pady=3)
-        ttk.Label(self.sim_frame, text="komenda").grid(row=4, column=0, sticky="w", padx=(0, 8), pady=3)
+        ttk.Entry(self.sim_frame, textvariable=self.seed_var, width=14).grid(row=3, column=1, sticky="ew", pady=3)
+        ttk.Label(self.sim_frame, text="komenda").grid(row=5, column=0, sticky="w", padx=(0, 8), pady=3)
         cmd_combo = ttk.Combobox(self.sim_frame, textvariable=self.command_var, values=["run", "batch"], state="readonly", width=16)
-        cmd_combo.grid(row=4, column=1, sticky="ew", pady=3)
+        cmd_combo.grid(row=5, column=1, sticky="ew", pady=3)
         ttk.Label(self.sim_frame, text="batch seeds").grid(row=6, column=0, sticky="w", padx=(0, 8), pady=3)
-        ttk.Entry(self.sim_frame, textvariable=self.batch_seeds_var, width=14).grid(row=6, column=1, sticky="ew", pady=3)
-        ttk.Label(self.sim_frame, text="batch scenariusze").grid(row=7, column=0, sticky="w", padx=(0, 8), pady=3)
-        ttk.Entry(self.sim_frame, textvariable=self.batch_scenarios_var, width=14).grid(row=7, column=1, sticky="ew", pady=3)
-        ttk.Label(self.sim_frame, text="sensitivity parametry").grid(row=8, column=0, sticky="w", padx=(0, 8), pady=3)
-        ttk.Entry(self.sim_frame, textvariable=self.sensitivity_var, width=14).grid(row=8, column=1, sticky="ew", pady=3)
-        ttk.Label(self.sim_frame, text="sensitivity delta").grid(row=9, column=0, sticky="w", padx=(0, 8), pady=3)
-        ttk.Entry(self.sim_frame, textvariable=self.sensitivity_delta_var, width=14).grid(row=9, column=1, sticky="ew", pady=3)
-        self.scenario_var = tk.StringVar(value="reward-learning")
+        ttk.Entry(self.sim_frame, textvariable=self.batch_seeds_var, width=14).grid(row=7, column=1, sticky="ew", pady=3)
+        ttk.Label(self.sim_frame, text="batch scenariusze").grid(row=8, column=0, sticky="w", padx=(0, 8), pady=3)
+        ttk.Entry(self.sim_frame, textvariable=self.batch_scenarios_var, width=14).grid(row=8, column=1, sticky="ew", pady=3)
+        ttk.Label(self.sim_frame, text="sensitivity parametry").grid(row=9, column=0, sticky="w", padx=(0, 8), pady=3)
+        ttk.Entry(self.sim_frame, textvariable=self.sensitivity_var, width=14).grid(row=9, column=1, sticky="ew", pady=3)
+        ttk.Label(self.sim_frame, text="sensitivity delta").grid(row=10, column=0, sticky="w", padx=(0, 8), pady=3)
+        ttk.Entry(self.sim_frame, textvariable=self.sensitivity_delta_var, width=14).grid(row=10, column=1, sticky="ew", pady=3)
+        self.scenario_var = tk.StringVar(value="baseline")
 
         scenario_label = ttk.Label(self.sim_frame, text="scenariusz")
-        scenario_label.grid(row=3, column=0, sticky="w", padx=(0, 8), pady=3)
+        scenario_label.grid(row=4, column=0, sticky="w", padx=(0, 8), pady=3)
         Tooltip(scenario_label, PARAMETER_DESCRIPTIONS["scenario"])
         self.scenario_combo = ttk.Combobox(
             self.sim_frame,
@@ -293,12 +299,12 @@ class BrainModelGUI(tk.Tk):
             state="readonly",
             width=16,
         )
-        self.scenario_combo.grid(row=3, column=1, sticky="ew", pady=3)
+        self.scenario_combo.grid(row=4, column=1, sticky="ew", pady=3)
 
         self.save_results_var = tk.BooleanVar(value=True)
         save_checkbox = ttk.Checkbutton(self.sim_frame, text="Zapisz wyniki po symulacji", variable=self.save_results_var)
         save_checkbox.grid(
-            row=5, column=0, columnspan=2, sticky="w", pady=(8, 3)
+            row=6, column=0, columnspan=2, sticky="w", pady=(8, 3)
         )
         Tooltip(save_checkbox, PARAMETER_DESCRIPTIONS["save_results"])
         self.sim_frame.columnconfigure(1, weight=1)
@@ -384,6 +390,8 @@ class BrainModelGUI(tk.Tk):
 
         self.scenario_combo.bind("<<ComboboxSelected>>", lambda _e: self._refresh_scenario_details())
         self._refresh_scenario_details()
+        self.T_var.trace_add("write", lambda *_: self._on_auto_dt_toggle())
+        self._on_auto_dt_toggle()
 
         self.plot_panel = PlotWindow(plots_tab)
         self.plot_panel.pack(fill="both", expand=True)
@@ -458,8 +466,22 @@ class BrainModelGUI(tk.Tk):
         events = ", ".join(f"{e['type']}@{e['time']}s" for e in scenario.events) if scenario.events else "brak"
         channels = ", ".join(sorted([k for k, v in scenario.channels.items() if v.pulses or v.baseline > 0])) or "brak"
         self.scenario_details_var.set(
-            f"Opis: {scenario.description}\nCo się zmienia: {scenario.what_changes}\nFazy: {phases}\nZdarzenia: {events}\nKanały aktywne: {channels}"
+            f"Opis: {scenario.description}\nPrzewidywane wyniki: {scenario.what_changes}\nSugerowany czas: {scenario.duration_hint:.1f} s\nFazy: {phases}\nZdarzenia: {events}\nKanały aktywne: {channels}"
         )
+
+    @staticmethod
+    def _auto_dt_for_duration(duration_s: float) -> float:
+        target_steps = 2400.0
+        raw_dt = duration_s / target_steps
+        return max(0.001, min(0.01, raw_dt))
+
+    def _on_auto_dt_toggle(self):
+        if self.auto_dt_var.get():
+            try:
+                T = float(self.T_var.get())
+            except ValueError:
+                return
+            self.dt_var.set(f"{self._auto_dt_for_duration(T):.4f}")
 
     def _open_new_instance(self):
         try:
@@ -474,6 +496,7 @@ class BrainModelGUI(tk.Tk):
         return {
             "T": self.T_var.get(),
             "dt": self.dt_var.get(),
+            "auto_dt": self.auto_dt_var.get(),
             "seed": self.seed_var.get(),
             "command": self.command_var.get(),
             "batch_seeds": self.batch_seeds_var.get(),
@@ -491,6 +514,7 @@ class BrainModelGUI(tk.Tk):
         self.T_var.set(str(config.get("T", self.T_var.get())))
         self.dt_var.set(str(config.get("dt", self.dt_var.get())))
         self.seed_var.set(str(config.get("seed", self.seed_var.get())))
+        self.auto_dt_var.set(bool(config.get("auto_dt", self.auto_dt_var.get())))
         self.command_var.set(str(config.get("command", self.command_var.get())))
         self.batch_seeds_var.set(str(config.get("batch_seeds", self.batch_seeds_var.get())))
         self.batch_scenarios_var.set(str(config.get("batch_scenarios", self.batch_scenarios_var.get())))
@@ -500,6 +524,7 @@ class BrainModelGUI(tk.Tk):
             self.brain_form.vars["dt"].set(str(self.dt_var.get()))
         self.scenario_var.set(str(config.get("scenario", self.scenario_var.get())))
         self.save_results_var.set(bool(config.get("save_results", self.save_results_var.get())))
+        self._on_auto_dt_toggle()
 
         for name, value in config.get("brain_params", {}).items():
             if name in self.brain_form.vars:
@@ -569,7 +594,7 @@ class BrainModelGUI(tk.Tk):
         )
 
     def reset_defaults(self):
-        self.T_var.set("45.0")
+        self.T_var.set("12.0")
         self.dt_var.set(str(self.brain_defaults.dt))
         self.seed_var.set("7")
         self.command_var.set("run")
@@ -577,12 +602,14 @@ class BrainModelGUI(tk.Tk):
         self.batch_scenarios_var.set("reward-learning")
         self.sensitivity_var.set("noise,gw_threshold")
         self.sensitivity_delta_var.set("0.1")
-        self.scenario_var.set("reward-learning")
+        self.scenario_var.set("baseline")
+        self.auto_dt_var.set(True)
         self.save_results_var.set(True)
         self.brain_form.reset()
         self.osc_form.reset()
         for var in self.plot_vars.values():
             var.set(True)
+        self._on_auto_dt_toggle()
         self.status_var.set("Przywrócono wartości domyślne.")
 
     def _build_brain_params(self):
@@ -598,7 +625,7 @@ class BrainModelGUI(tk.Tk):
         try:
             T = float(self.T_var.get())
             seed = int(self.seed_var.get())
-            dt = float(self.dt_var.get())
+            dt = self._auto_dt_for_duration(T) if self.auto_dt_var.get() else float(self.dt_var.get())
         except ValueError as exc:
             raise ValueError("Niepoprawny czas symulacji, seed lub krok czasowy dt.") from exc
 
@@ -623,23 +650,10 @@ class BrainModelGUI(tk.Tk):
         self._worker_thread.start()
         self.after(100, self._poll_worker)
 
-    def _run_simulation_worker(
-        self,
-        T,
-        seed,
-        dt,
-        brain_params,
-        oscillator_params,
-        command,
-        scenario,
-        save_results,
-        batch_seeds,
-        batch_scenarios,
-        sensitivity_params,
-        sensitivity_delta,
-    ):
+    def _run_simulation_worker(self):
         try:
-                self.brain_form.vars["dt"].set(str(dt))
+            T, seed, dt = self._read_scalar_params()
+            self.brain_form.vars["dt"].set(str(dt))
             brain_params = self._build_brain_params()
             oscillator_params = self.osc_form.values()
 
