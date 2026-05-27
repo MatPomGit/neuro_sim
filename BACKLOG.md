@@ -163,7 +163,7 @@ Backlog jest uporządkowany według priorytetów (P0–P3) i gotowości wdrożen
   - `roving_oddball_disorder_*.yaml`,
   - `roving_oddball_lesion_*.yaml`.
 - Implementacja metryk:
-  - novelty/surprise index,
+  - wskaźnik nowości/zaskoczenia (novelty/surprise index),
   - tempo habituacji,
   - latencja readaptacji po zmianie standardu,
   - różnice odpowiedzi E/I i neuromodulacyjnej.
