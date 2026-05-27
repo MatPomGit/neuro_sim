@@ -126,3 +126,8 @@ Agent ma zawsze wybrać opcję bezpieczniejszą i lepiej udokumentowaną.
 
 5. **Spójność terminologiczna**
    - Dla tego samego pojęcia używaj jednej, konsekwentnej formy polskiej we wszystkich interfejsach i dokumentach.
+
+
+8. **Wymóg docstringów i type hints (MUST)**
+   - Każda nowa funkcja i klasa dodawana przez agenta musi zawierać kompletne adnotacje typów oraz docstring.
+   - Dotyczy to także funkcji pomocniczych i metod prywatnych.

@@ -6,9 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .io import load_run
+from typing import Any
 
 
 def _run_metrics(run: dict) -> dict:
+    """Opis funkcji _run_metrics."""
     d = run["diagnostics"]
     o = run["oscillations"]["band_power"]
     return {
@@ -22,7 +24,8 @@ def _run_metrics(run: dict) -> dict:
     }
 
 
-def generate_comparison_report(run_dirs, output_path: str | Path = "outputs/report_comparison.png"):
+def generate_comparison_report(run_dirs: Any, output_path: str | Path = "outputs/report_comparison.png") -> Any:
+    """Opis funkcji generate_comparison_report."""
     if not run_dirs:
         raise ValueError("run_dirs cannot be empty")
     runs = [load_run(path) for path in run_dirs]

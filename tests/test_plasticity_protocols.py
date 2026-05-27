@@ -6,16 +6,19 @@ from brain_core.synapses.plasticity import (
     PlasticityTracker,
     update_weights_two_timescales,
 )
+from typing import Any
 
 
-def test_protocol_contains_train_and_test_phases():
+def test_protocol_contains_train_and_test_phases() -> Any:
+    """Opis funkcji test_protocol_contains_train_and_test_phases."""
     protocol = default_train_test_protocol()
     phases = {step.phase for step in protocol.steps}
     assert phases == {ProtocolPhase.TRAIN, ProtocolPhase.TEST}
     assert protocol.total_duration(ProtocolPhase.TRAIN) > protocol.total_duration(ProtocolPhase.TEST)
 
 
-def test_plasticity_update_clamps_and_records_metrics():
+def test_plasticity_update_clamps_and_records_metrics() -> Any:
+    """Opis funkcji test_plasticity_update_clamps_and_records_metrics."""
     cfg = NeuralMassPlasticityConfig(
         eta=0.4,
         decay_lambda=0.01,

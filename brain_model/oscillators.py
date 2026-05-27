@@ -2,6 +2,7 @@ import numpy as np
 from dataclasses import dataclass
 
 from .activations import sigmoid
+from typing import Any
 
 
 @dataclass
@@ -87,7 +88,8 @@ class WilsonCowanOscillatorBank:
     Sygnał EEG modułu jest aproksymowany jako E - I.
     """
 
-    def __init__(self, module_names, connectivity, band_map=None, params=None):
+    def __init__(self, module_names: list[str], connectivity: np.ndarray, band_map: dict[str, str] | None = None, params: WilsonCowanParams | None = None) -> None:
+        """Inicjalizuje bank oscylatorów Wilsona-Cowana dla podanych modułów."""
         self.module_names = list(module_names)
         self.idx = {name: i for i, name in enumerate(self.module_names)}
         self.n = len(self.module_names)
@@ -100,7 +102,8 @@ class WilsonCowanOscillatorBank:
         self.tau_e = np.array([BAND_TIME_CONSTANTS[b][0] for b in self.module_bands], dtype=float)
         self.tau_i = np.array([BAND_TIME_CONSTANTS[b][1] for b in self.module_bands], dtype=float)
 
-    def initial_state(self, rng=None):
+    def initial_state(self, rng: Any=None) -> Any:
+        """Opis funkcji initial_state."""
         rng = rng or np.random.default_rng()
         state = np.zeros((self.n, 3), dtype=float)
         state[:, 0] = 0.10 + 0.02 * rng.normal(size=self.n)  # E
@@ -109,7 +112,8 @@ class WilsonCowanOscillatorBank:
         state[:, :2] = np.clip(state[:, :2], 0.0, 1.0)
         return state
 
-    def step(self, state, cognitive_activity, dt, rng=None):
+    def step(self, state: Any, cognitive_activity: Any, dt: Any, rng: Any=None) -> Any:
+        """Opis funkcji step."""
         rng = rng or np.random.default_rng()
         p = self.params
 
@@ -158,7 +162,7 @@ class WilsonCowanOscillatorBank:
 
         return next_state, eeg, band_power
 
-    def compute_band_power(self, eeg_vector):
+    def compute_band_power(self, eeg_vector: Any) -> Any:
         """
         Chwilowa, uproszczona moc pasmowa: suma kwadratów sygnałów E-I
         w modułach przypisanych do danego pasma.

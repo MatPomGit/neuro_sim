@@ -5,19 +5,24 @@ import numpy as np
 from brain_core.networks.delays import DelayBuffer
 from brain_core.simulation.multiscale_engine import MultiScaleEngine, MultiScaleIOContract, TimeScaleTask
 from brain_core.simulation.state import SimulationState
+from typing import Any
 
 
 class CounterModule:
-    def __init__(self):
+    """Opis klasy CounterModule."""
+    def __init__(self) -> Any:
+        """Opis funkcji __init__."""
         self.steps = 0
 
     def update(self, state: SimulationState, dt: float) -> None:
+        """Opis funkcji update."""
         self.steps += 1
         state.metrics.setdefault("acc", 0.0)
         state.metrics["acc"] += 0.001 * dt
 
 
-def test_multiscale_scheduler_respects_different_dt():
+def test_multiscale_scheduler_respects_different_dt() -> Any:
+    """Opis funkcji test_multiscale_scheduler_respects_different_dt."""
     fast = CounterModule()
     slow = CounterModule()
     contract = MultiScaleIOContract(
@@ -40,7 +45,8 @@ def test_multiscale_scheduler_respects_different_dt():
     assert np.isfinite(state.metrics["acc"])
 
 
-def test_cosim_performance_and_numerical_stability_smoke():
+def test_cosim_performance_and_numerical_stability_smoke() -> Any:
+    """Opis funkcji test_cosim_performance_and_numerical_stability_smoke."""
     fast = CounterModule()
     slow = CounterModule()
     engine = MultiScaleEngine(0.001, [TimeScaleTask("hippocampus_nm", fast, 0.001), TimeScaleTask("dlpfc_snn", slow, 0.002)])
@@ -57,7 +63,8 @@ def test_cosim_performance_and_numerical_stability_smoke():
     assert np.isfinite(state.metrics["acc"])
 
 
-def test_delay_buffer_length_and_no_nan_drift():
+def test_delay_buffer_length_and_no_nan_drift() -> Any:
+    """Opis funkcji test_delay_buffer_length_and_no_nan_drift."""
     delays = np.array([[0, 3], [2, 0]])
     buffer = DelayBuffer(n_regions=2, delays_steps=delays)
 

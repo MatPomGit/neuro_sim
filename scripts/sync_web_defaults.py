@@ -1,11 +1,13 @@
 from __future__ import annotations
 import ast, json
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def read_dataclass_defaults(path: Path, class_name: str):
+def read_dataclass_defaults(path: Path, class_name: str) -> Any:
+    """Opis funkcji read_dataclass_defaults."""
     tree = ast.parse(path.read_text(encoding='utf-8'))
     out = {}
     for node in tree.body:
@@ -19,7 +21,8 @@ def read_dataclass_defaults(path: Path, class_name: str):
     return out
 
 
-def read_param_desc(path: Path):
+def read_param_desc(path: Path) -> Any:
+    """Opis funkcji read_param_desc."""
     tree = ast.parse(path.read_text(encoding='utf-8'))
     for node in tree.body:
         if isinstance(node, ast.Assign):

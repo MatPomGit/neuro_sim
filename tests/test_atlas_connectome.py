@@ -6,9 +6,11 @@ from brain_core.anatomy.atlases import (
     load_region_atlas,
     validate_atlas_connectome_consistency,
 )
+from typing import Any
 
 
-def test_load_default_atlas_and_connectome():
+def test_load_default_atlas_and_connectome() -> None:
+    """Testuje poprawne ładowanie domyślnego atlasu i konektomu oraz ich spójność wymiarową."""
     atlas = load_region_atlas()
     connectome = load_connectome(atlas)
 
@@ -17,7 +19,8 @@ def test_load_default_atlas_and_connectome():
     assert np.any(connectome.weights != 0.0)
 
 
-def test_consistency_validation_rejects_wrong_region_order():
+def test_consistency_validation_rejects_wrong_region_order() -> Any:
+    """Opis funkcji test_consistency_validation_rejects_wrong_region_order."""
     atlas = load_region_atlas()
     connectome = load_connectome(atlas)
 

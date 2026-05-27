@@ -16,19 +16,21 @@ DEFAULT_RULES = {
 
 
 def _window_mean(signal: np.ndarray, from_idx: int, to_idx: int) -> float:
+    """Opis funkcji _window_mean."""
     if to_idx <= from_idx:
         return float(np.mean(signal))
     return float(np.mean(signal[from_idx:to_idx]))
 
 
 def _find_module_index(module_names: list[str], module: str) -> int | None:
+    """Opis funkcji _find_module_index."""
     try:
         return module_names.index(module)
     except ValueError:
         return None
 
 
-def evaluate_run(time, activity, diagnostics, oscillations, scenario, behavior=None, rules: dict[str, float] | None = None) -> dict[str, Any]:
+def evaluate_run(time: Any, activity: Any, diagnostics: Any, oscillations: Any, scenario: Any, behavior: Any=None, rules: dict[str, float] | None = None) -> dict[str, Any]:
     """Evaluate one simulation run and return metrics with pass/fail rules."""
     if len(time) == 0:
         raise ValueError("time cannot be empty")
@@ -76,6 +78,7 @@ def evaluate_run(time, activity, diagnostics, oscillations, scenario, behavior=N
     module_names = MODULES
 
     def metric_change(metric_name: str, signal: np.ndarray) -> float:
+        """Opis funkcji metric_change."""
         cue = np.asarray(diagnostics.get(metric_name, np.zeros_like(time)))
         trigger_idx = int(np.argmax(cue > np.percentile(cue, 70))) if np.any(cue > np.percentile(cue, 70)) else 0
         early = _window_mean(signal, 0, max(1, trigger_idx))

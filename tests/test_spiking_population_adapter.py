@@ -2,9 +2,11 @@ import numpy as np
 
 from brain_core.populations.spiking_population import Brian2SpikingPopulationAdapter, NeuralMassToSNNInput, SNNToNeuralMassOutput
 from brain_core.simulation.signal_adapter import CouplingSignalAdapter, SNNPopulationMapping
+from typing import Any
 
 
-def test_signal_contract_and_shape_validation():
+def test_signal_contract_and_shape_validation() -> Any:
+    """Opis funkcji test_signal_contract_and_shape_validation."""
     adapter = Brian2SpikingPopulationAdapter(region_names=["hippocampus", "dlpfc"], dt=0.001)
     signal = NeuralMassToSNNInput(
         excitatory_drive_hz=np.array([18.0, 14.0]),
@@ -20,7 +22,8 @@ def test_signal_contract_and_shape_validation():
     assert np.all(out.firing_rate_hz >= 0.0)
 
 
-def test_pilot_circuits_only_hippocampus_dlpfc():
+def test_pilot_circuits_only_hippocampus_dlpfc() -> Any:
+    """Opis funkcji test_pilot_circuits_only_hippocampus_dlpfc."""
     adapter = Brian2SpikingPopulationAdapter(region_names=["hippocampus", "dlpfc"], dt=0.001)
     signal = NeuralMassToSNNInput(
         excitatory_drive_hz=np.array([25.0, 15.0]),
@@ -32,7 +35,8 @@ def test_pilot_circuits_only_hippocampus_dlpfc():
     assert out.firing_rate_hz[0] > out.firing_rate_hz[1]
 
 
-def test_coupling_adapter_roundtrip_mapping_and_units():
+def test_coupling_adapter_roundtrip_mapping_and_units() -> Any:
+    """Opis funkcji test_coupling_adapter_roundtrip_mapping_and_units."""
     mapping = SNNPopulationMapping(
         snn_region_names=("hippocampus",),
         neural_mass_region_names=("hippocampus", "acc", "pcc"),

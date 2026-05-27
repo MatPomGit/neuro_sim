@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(frozen=True)
 class BehaviorSample:
+    """Opis klasy BehaviorSample."""
     decision: str
     latency: float
     confidence: float
     decision_score: float
 
 
-def map_behavior_state(x, idx: dict[str, int], dt: float, step_index: int, decision_threshold: float, confidence_gain: float) -> BehaviorSample:
+def map_behavior_state(x: Any, idx: dict[str, int], dt: float, step_index: int, decision_threshold: float, confidence_gain: float) -> BehaviorSample:
     """Map key module states into behavior readout (decision, latency, confidence)."""
     exec_level = float(x[idx["EXEC"]])
     val_level = float(x[idx["VAL"]])
