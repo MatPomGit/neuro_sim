@@ -51,7 +51,7 @@ def save_run(
     *,
     model_params: Any = None,
     oscillator_params: Any = None,
-    scenario: Any = None,
+    scenario: dict[str, Any] | None = None,
     seed: int | None = None,
     duration_s: float | None = None,
     extra_metadata: dict[str, Any] | None = None,
