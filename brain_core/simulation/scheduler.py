@@ -38,6 +38,10 @@ class TaskStimulusPlayer:
     stimuli: list[Any]
     cursor: int = 0
 
+    def __post_init__(self) -> None:
+        """Zapewnia kolejność chronologiczną bodźców względem onset."""
+        self.stimuli = sorted(self.stimuli, key=lambda stimulus: stimulus.onset_s)
+
     def update(self, state: SimulationState, dt: float) -> None:
         """Emituje wszystkie bodźce, których czas onset został osiągnięty."""
         del dt
