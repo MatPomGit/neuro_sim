@@ -100,8 +100,7 @@ class EEGInverseSolver:
             raise ValueError("depth must have shape [n_sources]")
         if np.any(d <= 0):
             raise ValueError("depth weights must be positive")
-        w = np.diag(d)
-        gw = g @ w
+        gw = g * d
         inv = np.linalg.inv(gw @ gw.T + lam * np.eye(g.shape[0]))
-        operator = w @ g.T @ inv
+        operator = (d[:, None] * gw.T) @ inv
         return self._solve(eeg, operator)
