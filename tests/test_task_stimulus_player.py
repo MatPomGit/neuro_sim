@@ -18,3 +18,10 @@ def test_task_stimulus_player_sorts_stimuli_before_playback() -> None:
 
     assert [event["trial_id"] for event in state.metrics["trial_events"]] == [1]
     assert player.cursor == 1
+
+    # Advance time to cover the second stimulus
+    state.time = 2.5
+    player.update(state, dt=0.1)
+
+    assert [event["trial_id"] for event in state.metrics["trial_events"]] == [1, 2]
+    assert player.cursor == 2
