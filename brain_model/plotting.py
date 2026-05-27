@@ -171,8 +171,8 @@ def _compute_region_activity_series(activity: Any, idx: Any, regions: Any) -> An
     return region_activity_t
 
 
-def _describe(label: Any) -> Any:
-    """Opis funkcji _describe."""
+def _describe(label: str) -> str:
+    """Zwraca polski opis dla podanej etykiety modułu, zmiennej lub pasma."""
     return MODULE_DESCRIPTIONS.get(label) or DIAGNOSTIC_DESCRIPTIONS.get(label) or BAND_DESCRIPTIONS.get(label) or label
 
 
