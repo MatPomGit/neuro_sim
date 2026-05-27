@@ -15,6 +15,8 @@ def _load_csv_matrix(path: Path) -> np.ndarray:
     data = np.genfromtxt(path, delimiter=",", names=True)
     if data.size == 0:
         raise BenchmarkValidationError(f"Pusty plik benchmarku: {path}")
+    if data.dtype.names is None:
+        raise BenchmarkValidationError(f"Brak nagłówków kolumn w pliku: {path}")
     cols = [name for name in data.dtype.names if name not in {"time", "trial"}]
     if not cols:
         raise BenchmarkValidationError(f"Brak kolumn metryk w pliku: {path}")
