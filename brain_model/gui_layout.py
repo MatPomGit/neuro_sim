@@ -39,6 +39,110 @@ from .plotting import (
 from .scenarios import get_scenario, list_scenarios
 
 
+def configure_styles(root: tk.Tk) -> None:
+    """Skonfiguruj spójną, spokojną paletę stylów ttk dla głównego okna GUI."""
+    palette = {
+        "primary": "#2563eb",
+        "primary_active": "#1d4ed8",
+        "panel_bg": "#f8fafc",
+        "panel_border": "#dbe4ef",
+        "scenario_bg": "#eef6ff",
+        "warning": "#b45309",
+        "advanced_fg": "#64748b",
+        "text": "#0f172a",
+    }
+
+    style = ttk.Style(root)
+    if "clam" in style.theme_names():
+        style.theme_use("clam")
+
+    root.configure(background=palette["panel_bg"])
+    style.configure("TFrame", background=palette["panel_bg"])
+    style.configure("Header.TFrame", background=palette["panel_bg"])
+    style.configure(
+        "HeaderTitle.TLabel",
+        background=palette["panel_bg"],
+        foreground=palette["text"],
+        font=("TkDefaultFont", 13, "bold"),
+    )
+    style.configure(
+        "HeaderSubtitle.TLabel",
+        background=palette["panel_bg"],
+        foreground=palette["advanced_fg"],
+    )
+    style.configure(
+        "QuickStart.TLabelframe",
+        background=palette["panel_bg"],
+        bordercolor=palette["panel_border"],
+        relief="solid",
+    )
+    style.configure(
+        "QuickStart.TLabelframe.Label",
+        background=palette["panel_bg"],
+        foreground=palette["text"],
+        font=("TkDefaultFont", 10, "bold"),
+    )
+    style.configure(
+        "ScenarioInfo.TLabel",
+        background=palette["scenario_bg"],
+        foreground=palette["text"],
+        padding=8,
+    )
+    style.configure(
+        "Primary.TButton",
+        background=palette["primary"],
+        foreground="#ffffff",
+        font=("TkDefaultFont", 10, "bold"),
+        padding=(10, 6),
+    )
+    style.map(
+        "Primary.TButton",
+        background=[("active", palette["primary_active"]), ("pressed", palette["primary_active"])],
+        foreground=[("disabled", "#e2e8f0")],
+    )
+    style.configure(
+        "Status.TLabel",
+        background=palette["panel_bg"],
+        foreground=palette["advanced_fg"],
+    )
+    style.configure(
+        "Warning.Status.TLabel",
+        background=palette["panel_bg"],
+        foreground=palette["warning"],
+        font=("TkDefaultFont", 9, "bold"),
+    )
+    style.configure(
+        "Status.Horizontal.TProgressbar",
+        background=palette["primary"],
+        troughcolor="#e2e8f0",
+        bordercolor=palette["panel_border"],
+        lightcolor=palette["primary"],
+        darkcolor=palette["primary"],
+    )
+    style.configure(
+        "Advanced.TCheckbutton",
+        background=palette["panel_bg"],
+        foreground=palette["advanced_fg"],
+    )
+    style.configure(
+        "Advanced.TLabelframe",
+        background=palette["panel_bg"],
+        bordercolor=palette["panel_border"],
+    )
+    style.configure(
+        "Advanced.TLabelframe.Label",
+        background=palette["panel_bg"],
+        foreground=palette["advanced_fg"],
+    )
+    style.configure(
+        "Advanced.TButton",
+        background="#e2e8f0",
+        foreground=palette["advanced_fg"],
+        padding=(8, 4),
+    )
+    style.map("Advanced.TButton", background=[("active", "#cbd5e1")])
+
+
 class GuiLayoutMixin:
     """Mixin zawierający budowę i aktualizację elementów układu GUI."""
 
@@ -55,13 +159,13 @@ class GuiLayoutMixin:
         root = ttk.Frame(config_tab, padding=12)
         root.pack(fill="both", expand=True)
 
-        top = ttk.Frame(root)
+        top = ttk.Frame(root, style="Header.TFrame")
         top.pack(fill="x", pady=(0, 10))
 
         ttk.Label(
             top,
             text="Parametry modelu poznawczego i oscylatorów Wilsona-Cowana",
-            font=("TkDefaultFont", 13, "bold"),
+            style="HeaderTitle.TLabel",
         ).pack(anchor="w")
 
         ttk.Label(
@@ -70,6 +174,7 @@ class GuiLayoutMixin:
                 "Zmień parametry przed uruchomieniem symulacji. Po kliknięciu "
                 "'Uruchom' wykresy pojawią się w zakładce Wykresy."
             ),
+            style="HeaderSubtitle.TLabel",
         ).pack(anchor="w", pady=(3, 0))
 
         panes = ttk.PanedWindow(root, orient="horizontal")
@@ -88,15 +193,25 @@ class GuiLayoutMixin:
         bottom.pack(fill="x", pady=(12, 0))
 
         ttk.Button(bottom, text="Przywróć domyślne", command=self.reset_defaults).pack(side="left")
-        ttk.Button(bottom, text="Uruchom symulację", command=self.start_simulation).pack(
-            side="right"
-        )
+        ttk.Button(
+            bottom,
+            text="Uruchom symulację",
+            command=self.start_simulation,
+            style="Primary.TButton",
+        ).pack(side="right")
 
         self.status_var = tk.StringVar(value="Gotowe.")
-        ttk.Label(root, textvariable=self.status_var).pack(anchor="w", pady=(8, 0))
+        self.status_label = ttk.Label(
+            root, textvariable=self.status_var, style="Status.TLabel"
+        )
+        self.status_label.pack(anchor="w", pady=(8, 0))
         self.progress_var = tk.DoubleVar(value=0.0)
         self.progress = ttk.Progressbar(
-            root, variable=self.progress_var, maximum=100, mode="determinate"
+            root,
+            variable=self.progress_var,
+            maximum=100,
+            mode="determinate",
+            style="Status.Horizontal.TProgressbar",
         )
         self.progress.pack(fill="x", pady=(4, 0))
         self.summary_var = tk.StringVar(value="")
@@ -114,7 +229,9 @@ class GuiLayoutMixin:
 
     def _build_quick_start_section(self, parent: ttk.Frame) -> None:
         """Zbuduj sekcję szybkiego uruchomienia dla początkującego użytkownika."""
-        self.sim_frame = ttk.LabelFrame(parent, text="Szybki start", padding=10)
+        self.sim_frame = ttk.LabelFrame(
+            parent, text="Szybki start", padding=10, style="QuickStart.TLabelframe"
+        )
         self.sim_frame.pack(fill="x", pady=(0, 10))
 
         self.T_var = tk.StringVar(value="12.0")
@@ -146,13 +263,20 @@ class GuiLayoutMixin:
         save_checkbox.grid(row=2, column=0, columnspan=2, sticky="w", pady=(8, 3))
         Tooltip(save_checkbox, PARAMETER_DESCRIPTIONS["save_results"])
 
-        ttk.Button(self.sim_frame, text="Uruchom symulację", command=self.start_simulation).grid(
-            row=3, column=0, columnspan=2, sticky="ew", pady=(8, 6)
-        )
+        ttk.Button(
+            self.sim_frame,
+            text="Uruchom symulację",
+            command=self.start_simulation,
+            style="Primary.TButton",
+        ).grid(row=3, column=0, columnspan=2, sticky="ew", pady=(8, 6))
 
         self.scenario_details_var = tk.StringVar(value="")
         details_label = ttk.Label(
-            self.sim_frame, textvariable=self.scenario_details_var, justify="left", wraplength=500
+            self.sim_frame,
+            textvariable=self.scenario_details_var,
+            justify="left",
+            wraplength=500,
+            style="ScenarioInfo.TLabel",
         )
         details_label.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(8, 0))
         Tooltip(details_label, PARAMETER_DESCRIPTIONS["scenario_details"])
@@ -166,10 +290,13 @@ class GuiLayoutMixin:
             text="Pokaż opcje zaawansowane",
             variable=self.advanced_options_visible_var,
             command=self._toggle_advanced_options,
+            style="Advanced.TCheckbutton",
         )
         toggle.pack(anchor="w", pady=(0, 4))
 
-        self.advanced_options_frame = ttk.LabelFrame(parent, text="Opcje zaawansowane", padding=10)
+        self.advanced_options_frame = ttk.LabelFrame(
+            parent, text="Opcje zaawansowane", padding=10, style="Advanced.TLabelframe"
+        )
         self.advanced_options_frame.pack(fill="x", pady=(0, 10))
 
         self.seed_var = tk.StringVar(value="7")
@@ -200,6 +327,7 @@ class GuiLayoutMixin:
             text="Automatyczny dobór dt",
             variable=self.auto_dt_var,
             command=self._on_auto_dt_toggle,
+            style="Advanced.TCheckbutton",
         )
         auto_dt_checkbox.grid(row=2, column=0, columnspan=2, sticky="w", pady=(0, 3))
         Tooltip(auto_dt_checkbox, PARAMETER_DESCRIPTIONS["auto_dt"])
@@ -246,6 +374,7 @@ class GuiLayoutMixin:
             self.advanced_options_frame,
             text="Parametry modelu i oscylatorów...",
             command=self._open_advanced_settings,
+            style="Advanced.TButton",
         ).grid(row=8, column=0, columnspan=2, sticky="ew", pady=(8, 0))
         self.advanced_options_frame.columnconfigure(1, weight=1)
         self._toggle_advanced_options()
@@ -604,6 +733,7 @@ class GuiLayoutMixin:
             )
             has_plots = True
         self.tabs.select(1 if has_plots else 0)
+        self.status_label.configure(style="Status.TLabel")
         self.status_var.set(msg)
         self.summary_var.set(summary_text)
         self.progress_var.set(100.0)
@@ -660,6 +790,7 @@ class GuiLayoutMixin:
         self.plot_preset_var.set("Pełne")
         self._refresh_scenario_details()
         self._on_auto_dt_toggle()
+        self.status_label.configure(style="Status.TLabel")
         self.status_var.set("Przywrócono wartości domyślne.")
 
     def _build_brain_params(self) -> BrainParams:

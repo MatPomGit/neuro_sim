@@ -52,6 +52,7 @@ class GuiRunnerMixin:
             messagebox.showinfo("Informacja", "Symulacja już trwa.")
             return
         self._running = True
+        self.status_label.configure(style="Status.TLabel")
         self.status_var.set("Symulacja w toku...")
         self.progress_var.set(0)
         self.summary_var.set("")
@@ -182,6 +183,7 @@ class GuiRunnerMixin:
                 self._apply_run_result(payload)
             elif kind == "error":
                 self._running = False
+                self.status_label.configure(style="Warning.Status.TLabel")
                 self.status_var.set("Błąd konfiguracji.")
                 messagebox.showerror("Błąd", payload)
             elif kind == "warning":
