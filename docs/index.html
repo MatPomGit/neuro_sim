@@ -52,7 +52,7 @@
     h3 { font-size: 14px; margin: 20px 0 8px; color: #2a2f35; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-    input[type="number"], select {
+    input[type="number"], input[type="text"], select {
       width: 100%;
       border: 1px solid var(--line);
       border-radius: 9px;
@@ -98,7 +98,7 @@
 <body>
 <header>
   <h1>Symulator mezoskopowy procesów poznawczych mózgu</h1>
-  <p class="lead">Wersja statyczna dla GitHub Pages. Obliczenia wykonuje Python uruchamiany w przeglądarce przez Pyodide. Interfejs odzwierciedla GUI wersji desktopowej: parametry modelu, oscylatory Wilsona-Cowana, wybór wykresów i eksport CSV.</p>
+  <p class="lead">Wersja statyczna dla GitHub Pages. Obliczenia wykonuje Python uruchamiany w przeglądarce przez Pyodide. Interfejs odzwierciedla bieżące możliwości GUI wersji desktopowej: automatyczny dobór dt, scenariusze, tryb batch z analizą wrażliwości, odczyt behawioralny, wykresy aktywności/EEG/regionów oraz eksport CSV.</p>
 </header>
 
 <main>
@@ -108,13 +108,17 @@
       <div class="row"><label for="T">czas T [s]</label><input id="T" type="number" value="45" step="1" min="1"></div>
       <div class="row"><label for="seed">seed</label><input id="seed" type="number" value="7" step="1"></div>
       <div class="row"><label for="dt">dt</label><input id="dt" type="number" value="0.01" step="0.001" min="0.001"></div>
+      <div class="row"><label for="command">komenda</label><select id="command"><option value="run">run</option><option value="batch">batch</option></select></div>
       <div class="row"><label for="noise">noise</label><input id="noise" type="number" value="0.015" step="0.001" min="0"></div>
       <div class="row"><label for="gw_threshold">gw_threshold</label><input id="gw_threshold" type="number" value="0.62" step="0.01"></div>
       <div class="row"><label for="gw_gain">gw_gain</label><input id="gw_gain" type="number" value="10.0" step="0.1"></div>
       <div class="row"><label for="learning_rate_semantic">learning semantic</label><input id="learning_rate_semantic" type="number" value="0.004" step="0.001" min="0"></div>
       <div class="row"><label for="learning_rate_value">learning value</label><input id="learning_rate_value" type="number" value="0.02" step="0.001" min="0"></div>
       <div class="row"><label for="decay_semantic">decay semantic</label><input id="decay_semantic" type="number" value="0.001" step="0.0005" min="0"></div>
+      <div class="row"><label for="decision_threshold">decision threshold</label><input id="decision_threshold" type="number" value="0.62" step="0.01" min="0" max="1"></div>
+      <div class="row"><label for="confidence_gain">confidence gain</label><input id="confidence_gain" type="number" value="1.8" step="0.1" min="0"></div>
     </div>
+    <label class="check"><input id="auto_dt" type="checkbox" checked> automatyczny dobór dt</label>
 
     <details open>
       <summary>Oscylatory Wilsona-Cowana</summary>
@@ -156,11 +160,21 @@
 
     <h3>Scenariusz</h3>
     <div class="row"><label for="scenario">scenariusz</label><select id="scenario"><option value="reward-learning">reward-learning</option><option value="baseline">baseline</option><option value="task-switching">task-switching</option><option value="threat-only">threat-only</option><option value="sensory-overload">sensory-overload</option><option value="stress-recovery">stress-recovery</option></select></div>
-    <label class="check"><input id="save_results" type="checkbox" checked disabled> zapisz wyniki po symulacji (desktop only)</label>
+    <div id="scenarioDetails" class="status">Wybierz scenariusz, aby zobaczyć opis.</div>
+
+    <details>
+      <summary>Batch i analiza wrażliwości</summary>
+      <div class="row"><label for="batch_seeds">batch seeds</label><input id="batch_seeds" type="text" value="7,11,19"></div>
+      <div class="row"><label for="batch_scenarios">batch scenariusze</label><input id="batch_scenarios" type="text" value="reward-learning"></div>
+      <div class="row"><label for="sensitivity_params">sensitivity parametry</label><input id="sensitivity_params" type="text" value="noise,gw_threshold"></div>
+      <div class="row"><label for="sensitivity_delta">sensitivity delta</label><input id="sensitivity_delta" type="number" value="0.1" step="0.01" min="0"></div>
+    </details>
+    <label class="check"><input id="save_results" type="checkbox" checked disabled> zapisz wyniki po symulacji (tylko desktop; w web użyj CSV)</label>
 
     <h3>Wykresy</h3>
     <label class="check"><input id="plot_activity" type="checkbox" checked> aktywacje modułów poznawczych</label>
     <label class="check"><input id="plot_diagnostics" type="checkbox" checked> zmienne diagnostyczne</label>
+    <label class="check"><input id="plot_behavior" type="checkbox" checked> przebiegi decyzyjne + markery decyzji</label>
     <label class="check"><input id="plot_eeg" type="checkbox" checked> sygnały EEG E-I</label>
     <label class="check"><input id="plot_bands" type="checkbox" checked> moc pasm theta/alpha/beta/gamma</label>
     <label class="check"><input id="plot_simulated_brain_activity" type="checkbox" checked> symulowana aktywność mózgu (mapa cieplna)</label>
@@ -185,6 +199,7 @@
     <div class="tabs">
       <button class="tab active" data-target="activityPlot">Aktywacje</button>
       <button class="tab" data-target="diagPlot">Diagnostyka</button>
+      <button class="tab" data-target="behaviorPlot">Behavior</button>
       <button class="tab" data-target="eegPlot">EEG</button>
       <button class="tab" data-target="bandPlot">Pasma</button>
       <button class="tab" data-target="brainHeatPlot">Mapa</button>
@@ -197,6 +212,7 @@
     </div>
     <div id="activityPlot" class="plot"></div>
     <div id="diagPlot" class="plot" style="display:none"></div>
+    <div id="behaviorPlot" class="plot" style="display:none"></div>
     <div id="eegPlot" class="plot" style="display:none"></div>
     <div id="bandPlot" class="plot" style="display:none"></div>
     <div id="brainHeatPlot" class="plot" style="display:none"></div>
@@ -304,6 +320,7 @@ def simulate_json(config_json):
     E_hist = np.zeros((steps, len(NAMES)), dtype=float)
     I_hist = np.zeros((steps, len(NAMES)), dtype=float)
     D = {"prediction_error": np.zeros(steps), "dopamine_delta": np.zeros(steps), "noradrenaline": np.zeros(steps), "acetylcholine": np.zeros(steps), "gw_ignition": np.zeros(steps)}
+    B = {"decision_score": np.zeros(steps), "confidence": np.zeros(steps), "decision_event": np.zeros(steps), "latency": np.zeros(steps)}
 
     x = np.zeros(len(NAMES), dtype=float)
     x[IDX["DMN"]] = 0.45
@@ -369,6 +386,12 @@ def simulate_json(config_json):
         D["noradrenaline"][k] = noradrenaline
         D["acetylcholine"][k] = acetylcholine
         D["gw_ignition"][k] = gw_ignition
+        decision_score = 0.34 * x[IDX["EXEC"]] + 0.22 * x[IDX["VAL"]] + 0.22 * x[IDX["MOT"]] + 0.22 * x[IDX["GW"]]
+        confidence = min(1.0, max(0.0, 0.5 + cfg["confidence_gain"] * (decision_score - cfg["decision_threshold"])))
+        B["decision_score"][k] = decision_score
+        B["confidence"][k] = confidence
+        B["decision_event"][k] = 1.0 if decision_score >= cfg["decision_threshold"] else 0.0
+        B["elapsed_time"][k] = (k + 1) * dt
 
     band_power = {}
     for band in ["theta", "alpha", "beta", "gamma"]:
@@ -386,6 +409,13 @@ def simulate_json(config_json):
         "activity": X[sl].round(6).tolist(),
         "eeg": EEG[sl].round(6).tolist(),
         "diagnostics": {k: v[sl].round(6).tolist() for k, v in D.items()},
+        "behavior": {k: v[sl].round(6).tolist() for k, v in B.items()},
+        "metrics": {
+            "prediction_error_mean": float(np.mean(D["prediction_error"])),
+            "gw_ignition_mean": float(np.mean(D["gw_ignition"])),
+            "confidence_mean": float(np.mean(B["confidence"])),
+            "decision_events": int(np.sum(B["decision_event"])),
+        },
         "band_power": {k: v[sl].round(6).tolist() for k, v in band_power.items()},
         "stride": stride,
         "steps": steps,
@@ -398,6 +428,57 @@ let pyodide = null;
 let lastResult = null;
 let cfgLast = null;
 const $ = (id) => document.getElementById(id);
+
+const SCENARIOS = {
+  "baseline": {
+    description: "Spokojny przebieg kontrolny: visual 1.0-5.0 s, auditory 5.5-9.0 s, task_cue 1.0-11.5 s, interoceptive baseline=0.15.",
+    what_changes: "Wyniki: stabilne, niskie fluktuacje aktywacji i neutralny profil stresu/nagrody.",
+    duration_hint: 12.0,
+    phases: [{name: "adaptation", start: 0.0, end: 12.0}],
+    events: [],
+    channels: {visual: [[1.0, 5.0, 0.6]], auditory: [[5.5, 9.0, 0.55]], task: [[1.0, 11.5, 0.45]], threat: [], reward: []}
+  },
+  "task-switching": {
+    description: "Symuluje przełączanie uwagi między blokiem wzrokowym i słuchowym pod ciągłą presją zadaniową.",
+    what_changes: "Wyniki: naprzemienne piki VIS/AUD i wzrost obciążenia ATT/EXEC przy przełączeniach.",
+    duration_hint: 45.0,
+    phases: [{name: "visual-block", start: 2.0, end: 10.0}, {name: "auditory-block", start: 10.0, end: 18.0}],
+    events: [],
+    channels: {visual: [[2.0, 10.0, 0.85], [18.0, 24.0, 0.85]], auditory: [[10.0, 18.0, 0.8], [24.0, 34.0, 0.8]], task: [[1.0, 35.0, 0.7]], threat: [], reward: [[34.0, 38.0, 0.8]]}
+  },
+  "threat-only": {
+    description: "Scenariusz ekspozycji na zagrożenie z podbiciem sygnału interoceptywnego i długim oknem napięcia.",
+    what_changes: "Wyniki: wyraźny wzrost SAL/INT, skok kortyzolu i noradrenaliny oraz spadek stabilności poznawczej.",
+    duration_hint: 45.0,
+    phases: [],
+    events: [{type: "threat_onset", time: 12.0}, {type: "threat_offset", time: 32.0}],
+    channels: {visual: [], auditory: [], task: [[1.0, 35.0, 0.5]], threat: [[12.0, 32.0, 0.95]], reward: []}
+  },
+  "reward-learning": {
+    description: "Trening skojarzeń: bodźce sensoryczne poprzedzają sekwencje nagród, wspierając uczenie wartościowania.",
+    what_changes: "Wyniki: narastanie odpowiedzi VAL/SEM oraz wyraźne piki po impulsach nagrody.",
+    duration_hint: 45.0,
+    phases: [],
+    events: [{type: "reward", time: 26.0}, {type: "reward", time: 34.0}],
+    channels: {visual: [[2.0, 18.0, 0.9]], auditory: [[8.0, 24.0, 0.75]], task: [[1.0, 35.0, 0.65]], threat: [], reward: [[26.0, 30.0, 1.0], [34.0, 38.0, 1.0]]}
+  },
+  "sensory-overload": {
+    description: "Przeciążenie sensoryczne: równoczesne, silne bodźce wzrokowe i słuchowe z okresowym nasileniem.",
+    what_changes: "Wyniki: wysoka amplituda VIS/AUD, rosnące obciążenie ATT i większa zmienność GW.",
+    duration_hint: 45.0,
+    phases: [{name: "ramp-up", start: 0.0, end: 12.0}, {name: "overload", start: 12.0, end: 30.0}, {name: "recovery", start: 30.0, end: 45.0}],
+    events: [],
+    channels: {visual: [[2.0, 30.0, 0.95]], auditory: [[4.0, 30.0, 0.9]], task: [[1.0, 35.0, 0.75]], threat: [], reward: []}
+  },
+  "stress-recovery": {
+    description: "Epizod stresu z późniejszym wygaszaniem pobudzenia i powrotem do stanu zadaniowego.",
+    what_changes: "Wyniki: początkowy skok stresu (SAL, kortyzol), a następnie normalizacja i odbudowa EXEC/ATT.",
+    duration_hint: 45.0,
+    phases: [],
+    events: [{type: "stress_peak", time: 15.0}, {type: "recovery_start", time: 24.0}],
+    channels: {visual: [], auditory: [], task: [[1.0, 38.0, 0.6]], threat: [[8.0, 24.0, 0.85]], reward: [[30.0, 36.0, 0.55]]}
+  }
+};
 const REGION_TO_MODULE_WEIGHTS = {
   DLPFC_L: [["EXEC", 0.6], ["VSWM", 0.4]], DLPFC_R: [["EXEC", 0.6], ["VSWM", 0.4]],
   OFC_L: [["VAL", 1.0]], OFC_R: [["VAL", 1.0]], ACC: [["SAL", 0.45], ["EXEC", 0.35], ["GW", 0.2]],
@@ -413,7 +494,7 @@ const REGION_TO_MODULE_WEIGHTS = {
   Cerebellum_L: [["MOT", 0.85], ["ATT", 0.15]], Cerebellum_R: [["MOT", 0.85], ["ATT", 0.15]],
   Brainstem: [["INT", 0.55], ["SAL", 0.25], ["GW", 0.2]],
 };
-const numericIds = ["T","seed","dt","noise","gw_threshold","gw_gain","learning_rate_semantic","learning_rate_value","decay_semantic","w_ee","w_ei","w_ie","w_ii","baseline_e","baseline_i","cognitive_drive_gain","coupling_gain","oscillator_noise","phase_drive_gain","visual_start","visual_end","visual_intensity","auditory_start","auditory_end","auditory_intensity","task_start","task_end","task_intensity","threat_start","threat_end","threat_intensity","reward_start","reward_end","reward_intensity"];
+const numericIds = ["T","seed","dt","noise","gw_threshold","gw_gain","learning_rate_semantic","learning_rate_value","decay_semantic","decision_threshold","confidence_gain","sensitivity_delta","w_ee","w_ei","w_ie","w_ii","baseline_e","baseline_i","cognitive_drive_gain","coupling_gain","oscillator_noise","phase_drive_gain","visual_start","visual_end","visual_intensity","auditory_start","auditory_end","auditory_intensity","task_start","task_end","task_intensity","threat_start","threat_end","threat_intensity","reward_start","reward_end","reward_intensity"];
 
 async function applyGuiDefaults() {
   try {
@@ -439,9 +520,15 @@ let defaults = null;
 function captureDefaults() {
   defaults = {};
   for (const id of numericIds) defaults[id] = $(id).value;
+  defaults.auto_dt = $("auto_dt").checked;
+  defaults.command = $("command").value;
+  defaults.batch_seeds = $("batch_seeds").value;
+  defaults.batch_scenarios = $("batch_scenarios").value;
+  defaults.sensitivity_params = $("sensitivity_params").value;
   defaults.enable_oscillators = $("enable_oscillators").checked;
   defaults.plot_activity = $("plot_activity").checked;
   defaults.plot_diagnostics = $("plot_diagnostics").checked;
+  defaults.plot_behavior = $("plot_behavior").checked;
   defaults.plot_eeg = $("plot_eeg").checked;
   defaults.plot_bands = $("plot_bands").checked;
   defaults.scenario = $("scenario").value;
@@ -449,18 +536,60 @@ function captureDefaults() {
 }
 
 function setStatus(text) { $("status").textContent = text; }
-function getConfig() {
+function parseList(raw) { return raw.split(",").map(part => part.trim()).filter(Boolean); }
+function autoDtForDuration(durationS) {
+  const TARGET_SIMULATION_STEPS = 2400.0;
+  const rawDt = durationS / TARGET_SIMULATION_STEPS;
+  return Math.max(0.001, Math.min(0.01, rawDt));
+}
+function applyAutoDt() {
+  if (!$("auto_dt").checked) return;
+  const durationS = Number($("T").value);
+  if (Number.isFinite(durationS) && durationS > 0) $("dt").value = autoDtForDuration(durationS).toFixed(4);
+}
+function getConfig(overrides = {}) {
+  applyAutoDt();
   const cfg = {};
   for (const id of numericIds) cfg[id] = Number($(id).value);
+  Object.assign(cfg, overrides);
   cfg.enable_oscillators = $("enable_oscillators").checked;
   cfg.max_points = 2000;
-  cfg.scenario = $("scenario").value;
+  cfg.scenario = overrides.scenario || $("scenario").value;
   return cfg;
+}
+function metricsSummary(metrics, prefix = "Metryki") {
+  return `${prefix}: mean(prediction_error)=${metrics.prediction_error_mean.toFixed(4)}, mean(gw_ignition)=${metrics.gw_ignition_mean.toFixed(4)}, mean(confidence)=${metrics.confidence_mean.toFixed(4)}, mean(decision_events)=${metrics.decision_events.toFixed(2)}`;
+}
+function updateScenarioDetails() {
+  const scenario = SCENARIOS[$("scenario").value];
+  if (!scenario) return;
+  const phases = scenario.phases.length ? scenario.phases.map(p => `${p.name} (${p.start}-${p.end} s)`).join(", ") : "brak";
+  const events = scenario.events.length ? scenario.events.map(e => `${e.type}@${e.time}s`).join(", ") : "brak";
+  const active = Object.entries(scenario.channels).filter(([, pulses]) => pulses.length).map(([name]) => name).join(", ") || "brak";
+  $("scenarioDetails").textContent = `Opis: ${scenario.description} Przewidywane wyniki: ${scenario.what_changes} Sugerowany czas: ${scenario.duration_hint.toFixed(1)} s. Fazy: ${phases}. Zdarzenia: ${events}. Kanały aktywne: ${active}.`;
+}
+function applyScenarioDefaults() {
+  const scenario = SCENARIOS[$("scenario").value];
+  if (!scenario) return;
+  $("T").value = scenario.duration_hint.toString();
+  const fill = (prefix, pulses) => {
+    const first = pulses[0] || [0, 0, 0];
+    $(`${prefix}_start`).value = first[0];
+    $(`${prefix}_end`).value = first[1];
+    $(`${prefix}_intensity`).value = first[2];
+  };
+  fill("visual", scenario.channels.visual);
+  fill("auditory", scenario.channels.auditory);
+  fill("task", scenario.channels.task);
+  fill("threat", scenario.channels.threat);
+  fill("reward", scenario.channels.reward);
+  applyAutoDt();
 }
 function selectedPlots() {
   return {
     activity: $("plot_activity").checked,
     diagnostics: $("plot_diagnostics").checked,
+    behavior: $("plot_behavior").checked,
     eeg: $("plot_eeg").checked,
     bands: $("plot_bands").checked,
     simulated_brain_activity: $("plot_simulated_brain_activity").checked,
@@ -506,6 +635,7 @@ function drawResults(res) {
     return { x: time, y: res.activity.map(row => row[j]), mode: "lines", name };
   });
   const diagTraces = Object.entries(res.diagnostics).map(([name, arr]) => ({ x: time, y: arr, mode: "lines", name }));
+  const behaviorTraces = Object.entries(res.behavior || {}).map(([name, arr]) => ({ x: time, y: arr, mode: name === "decision_event" ? "markers" : "lines", name }));
   const eegSelected = ["HIP", "EPIS", "VIS", "AUD", "EXEC", "ATT", "SEM", "GW"];
   const eegTraces = eegSelected.map(name => {
     const j = names.indexOf(name);
@@ -562,6 +692,8 @@ function drawResults(res) {
   else Plotly.purge("activityPlot");
   if (plots.diagnostics) Plotly.newPlot("diagPlot", diagTraces, makeLayout("Zmienne diagnostyczne i neuromodulacyjne", "wartość"), {responsive: true});
   else Plotly.purge("diagPlot");
+  if (plots.behavior) Plotly.newPlot("behaviorPlot", behaviorTraces, makeLayout("Przebiegi decyzyjne i markery decyzji", "wartość"), {responsive: true});
+  else Plotly.purge("behaviorPlot");
   if (plots.eeg) Plotly.newPlot("eegPlot", eegTraces, makeLayout("Sygnały EEG aproksymowane jako E-I", "E-I"), {responsive: true});
   else Plotly.purge("eegPlot");
   if (plots.bands) Plotly.newPlot("bandPlot", bandTraces, makeLayout("Moc pasm oscylacyjnych", "moc"), {responsive: true});
@@ -598,11 +730,12 @@ function drawResults(res) {
 function exportCsv() {
   if (!lastResult) return;
   const names = lastResult.names;
-  const header = ["time", ...names.map(n => "act_" + n), ...names.map(n => "eeg_" + n), ...Object.keys(lastResult.diagnostics).map(n => "diag_" + n), ...Object.keys(lastResult.band_power).map(n => "band_" + n)];
+  const header = ["time", ...names.map(n => "act_" + n), ...names.map(n => "eeg_" + n), ...Object.keys(lastResult.diagnostics).map(n => "diag_" + n), ...Object.keys(lastResult.behavior || {}).map(n => "behavior_" + n), ...Object.keys(lastResult.band_power).map(n => "band_" + n)];
   const rows = [header.join(",")];
   for (let i = 0; i < lastResult.time.length; i++) {
     const row = [lastResult.time[i], ...lastResult.activity[i], ...lastResult.eeg[i]];
     for (const arr of Object.values(lastResult.diagnostics)) row.push(arr[i]);
+    for (const arr of Object.values(lastResult.behavior || {})) row.push(arr[i]);
     for (const arr of Object.values(lastResult.band_power)) row.push(arr[i]);
     rows.push(row.join(","));
   }
@@ -616,20 +749,70 @@ function exportCsv() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+async function runSingle(overrides = {}) {
+  const cfg = getConfig(overrides);
+  cfgLast = cfg;
+  pyodide.globals.set("CONFIG_JSON", JSON.stringify(cfg));
+  const resultJson = await pyodide.runPythonAsync("simulate_json(CONFIG_JSON)");
+  return JSON.parse(resultJson);
+}
+async function runBatch() {
+  const seeds = parseList($("batch_seeds").value).map(Number);
+  const scenarios = parseList($("batch_scenarios").value).length ? parseList($("batch_scenarios").value) : [$("scenario").value];
+  const sensParams = parseList($("sensitivity_params").value);
+  const delta = Number($("sensitivity_delta").value);
+  const allMetrics = [];
+  let completed = 0;
+  const baseTotal = seeds.length * scenarios.length;
+  const total = baseTotal + (sensParams.length ? baseTotal * sensParams.length * 2 : 0);
+  let last = null;
+  for (const scenario of scenarios) {
+    for (const seed of seeds) {
+      last = await runSingle({scenario, seed});
+      await new Promise(resolve => setTimeout(resolve, 0));
+      allMetrics.push(last.metrics);
+      completed += 1;
+      setStatus(`Batch: ${completed}/${total} przebiegów...`);
+      for (const param of sensParams) {
+        const base = Number($(param)?.value);
+        if (!Number.isFinite(base)) continue;
+        for (const sign of [-1, 1]) {
+          const overrides = {scenario, seed};
+          overrides[param] = base * (1.0 + sign * delta);
+          const result = await runSingle(overrides);
+          await new Promise(resolve => setTimeout(resolve, 0));
+          allMetrics.push(result.metrics);
+          completed += 1;
+          setStatus(`Batch: ${completed}/${total} przebiegów...`);
+        }
+      }
+    }
+  }
+  if (!last) {
+    setStatus("Batch: Nie wykonano żadnych przebiegów. Sprawdź konfigurację.");
+    return lastResult;
+  }
+  const mean = key => allMetrics.reduce((acc, row) => acc + row[key], 0) / allMetrics.length;
+  last.batch_metrics = {
+    prediction_error_mean: mean("prediction_error_mean"),
+    gw_ignition_mean: mean("gw_ignition_mean"),
+    confidence_mean: mean("confidence_mean"),
+    decision_events: mean("decision_events"),
+    runs: allMetrics.length,
+  };
+  return last;
+}
 $("runBtn").addEventListener("click", async () => {
   if (!pyodide) return;
   $("runBtn").disabled = true;
   $("csvBtn").disabled = true;
-  setStatus("Symulacja trwa...");
+  setStatus($("command").value === "batch" ? "Batch w toku..." : "Symulacja trwa...");
   try {
-    const cfg = getConfig();
-    cfgLast = cfg;
-    pyodide.globals.set("CONFIG_JSON", JSON.stringify(cfg));
-    const resultJson = await pyodide.runPythonAsync("simulate_json(CONFIG_JSON)");
-    lastResult = JSON.parse(resultJson);
+    lastResult = $("command").value === "batch" ? await runBatch() : await runSingle();
     drawResults(lastResult);
     $("csvBtn").disabled = false;
-    setStatus(`Gotowe. Kroki: ${lastResult.steps}, rysowany co ${lastResult.stride}.`);
+    const summary = lastResult.batch_metrics ? metricsSummary(lastResult.batch_metrics, `Batch (${lastResult.batch_metrics.runs} przebiegów)`) : metricsSummary(lastResult.metrics);
+    setStatus(`Gotowe. Kroki: ${lastResult.steps}, rysowany co ${lastResult.stride}. ${summary}`);
   } catch (err) {
     console.error(err);
     setStatus("Błąd symulacji: " + err.message);
@@ -641,23 +824,36 @@ $("csvBtn").addEventListener("click", exportCsv);
 $("resetBtn").addEventListener("click", () => {
   if (!defaults) captureDefaults();
   for (const id of numericIds) $(id).value = defaults[id];
+  $("auto_dt").checked = defaults.auto_dt;
+  $("command").value = defaults.command;
+  $("batch_seeds").value = defaults.batch_seeds;
+  $("batch_scenarios").value = defaults.batch_scenarios;
+  $("sensitivity_params").value = defaults.sensitivity_params;
   $("enable_oscillators").checked = defaults.enable_oscillators;
   $("plot_activity").checked = defaults.plot_activity;
   $("plot_diagnostics").checked = defaults.plot_diagnostics;
+  $("plot_behavior").checked = defaults.plot_behavior;
   $("plot_eeg").checked = defaults.plot_eeg;
   $("plot_bands").checked = defaults.plot_bands;
   $("scenario").value = defaults.scenario;
   for (const id of ["plot_simulated_brain_activity","plot_brain_region_projections","plot_region_activity_2d","plot_weight_trajectories","plot_weight_deltas","plot_scenario_channels","plot_scenario_timeline"]) $(id).checked = defaults[id];
+  updateScenarioDetails();
 });
 document.querySelectorAll(".tab").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    ["activityPlot", "diagPlot", "eegPlot", "bandPlot", "brainHeatPlot", "brainProjPlot", "region2dPlot", "weightsPlot", "deltasPlot", "scenarioChannelsPlot", "scenarioTimelinePlot"].forEach(id => $(id).style.display = id === btn.dataset.target ? "block" : "none");
+    ["activityPlot", "diagPlot", "behaviorPlot", "eegPlot", "bandPlot", "brainHeatPlot", "brainProjPlot", "region2dPlot", "weightsPlot", "deltasPlot", "scenarioChannelsPlot", "scenarioTimelinePlot"].forEach(id => $(id).style.display = id === btn.dataset.target ? "block" : "none");
     setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
   });
 });
-applyGuiDefaults().finally(() => { captureDefaults(); initPyodide(); });
+$("auto_dt").addEventListener("change", applyAutoDt);
+$("T").addEventListener("input", applyAutoDt);
+$("scenario").addEventListener("change", () => {
+  updateScenarioDetails();
+  applyScenarioDefaults();
+});
+applyGuiDefaults().finally(() => { updateScenarioDetails(); applyAutoDt(); captureDefaults(); initPyodide(); });
 </script>
 </body>
 </html>
