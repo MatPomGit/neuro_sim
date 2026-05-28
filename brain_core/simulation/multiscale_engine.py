@@ -58,7 +58,9 @@ class TimeScaleModule(Protocol):
         state (SimulationState): Stan symulacji.
         dt (float): Krok czasowy.
     """
-    def update(self, state: SimulationState, dt: float) -> None: ...
+    def update(self, state: SimulationState, dt: float) -> None:
+        """Aktualizuje moduł na podstawie stanu symulacji i kroku czasowego."""
+        ...
 
 
 
@@ -111,7 +113,12 @@ class TimeScaleTask:
 class MultiScaleEngine:
     """Uruchamia współsymulację modułów o różnych krokach czasowych."""
 
-    def __init__(self, base_dt: float, tasks: list[TimeScaleTask], io_contract: MultiScaleIOContract | None = None):
+    def __init__(
+        self,
+        base_dt: float,
+        tasks: list[TimeScaleTask],
+        io_contract: MultiScaleIOContract | None = None,
+    ) -> None:
         """Inicjalizuje silnik i opcjonalnie waliduje kontrakt I/O."""
         if base_dt <= 0:
             raise ValueError("base_dt musi być > 0")
