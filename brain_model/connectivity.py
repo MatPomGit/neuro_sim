@@ -11,7 +11,7 @@ _CONNECTOME = load_connectome(_ATLAS)
 validate_atlas_connectome_consistency(_ATLAS, _CONNECTOME)
 
 
-def build_connectivity(names: Sequence[str]) -> NDArray:
+def build_connectivity(names: Sequence[str]) -> NDArray[np.float64]:
     """
     W[target, source] opisuje wpływ aktywności regionu source na region target.
     """
