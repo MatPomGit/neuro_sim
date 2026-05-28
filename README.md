@@ -277,3 +277,11 @@ analysis:
 ```
 
 Dozwolone wartości `analysis.sets` są walidowane przez `brain_core/simulation/config_schema.py`.
+
+
+## Kontrole statyczne dla deweloperów
+
+Instrukcja uruchamiania kontroli `mypy` oraz `ruff/pydocstyle` (tryb legacy i gating PR) znajduje się w:
+
+- `docs/developer_quality_checks.md`
+
