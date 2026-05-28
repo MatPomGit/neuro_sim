@@ -20,7 +20,9 @@ class DynamicsFn(Protocol):
     Returns:
         np.ndarray: Pochodna stanu.
     """
-    def __call__(self, t: float, y: np.ndarray) -> np.ndarray: ...
+    def __call__(self, t: float, y: np.ndarray) -> np.ndarray:
+        """Zwraca pochodną stanu dla podanego czasu i wektora stanu."""
+        ...
 
 
 
@@ -35,7 +37,9 @@ class NoiseFn(Protocol):
     Returns:
         np.ndarray: Składowa dyfuzyjna.
     """
-    def __call__(self, t: float, y: np.ndarray) -> np.ndarray: ...
+    def __call__(self, t: float, y: np.ndarray) -> np.ndarray:
+        """Zwraca składową dyfuzyjną dla podanego czasu i wektora stanu."""
+        ...
 
 
 
@@ -52,7 +56,9 @@ class BaseIntegrator(Protocol):
     Returns:
         np.ndarray: Nowy stan po kroku integracji.
     """
-    def step(self, t: float, y: np.ndarray, dt: float, f: DynamicsFn) -> np.ndarray: ...
+    def step(self, t: float, y: np.ndarray, dt: float, f: DynamicsFn) -> np.ndarray:
+        """Wykonuje pojedynczy krok integracji czasu."""
+        ...
 
 
 
