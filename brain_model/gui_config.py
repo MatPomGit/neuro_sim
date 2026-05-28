@@ -81,8 +81,11 @@ class GuiConfigMixin:
             "saved_date": date.today().isoformat(),
             "config": self._collect_config(),
         }
-        Path(target).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-        self.status_var.set(f"Zapisano konfigurację: {target}")
+        try:
+            Path(target).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            self.status_var.set(f"Zapisano konfigurację: {target}")
+        except Exception as exc:
+            messagebox.showerror("Błąd", f"Nie udało się zapisać konfiguracji: {exc}")
 
     def _load_existing_config(self) -> None:
         """Wczytaj konfigurację GUI z pliku JSON."""
