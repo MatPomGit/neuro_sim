@@ -341,7 +341,10 @@ class GuiLayoutMixin:
 
         for row, key in enumerate(self.plot_vars, start=1):
             checkbox = ttk.Checkbutton(
-                self.plots_frame, text=labels[key], variable=self.plot_vars[key]
+                self.plots_frame,
+                text=labels[key],
+                variable=self.plot_vars[key],
+                command=self._sync_plot_preset_from_vars,
             )
             checkbox.grid(row=row, column=0, sticky="w", pady=2)
             Tooltip(checkbox, plot_tooltips[key])
