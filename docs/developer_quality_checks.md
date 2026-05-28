@@ -29,7 +29,7 @@ Interpretacja:
 Używaj w CI dla plików modyfikowanych w PR.
 
 ```bash
-CHANGED_PY_FILES="$(git diff --name-only --diff-filter=ACMRT origin/main...HEAD | rg '\\.py$' || true)"
+CHANGED_PY_FILES="$(git diff --name-only --diff-filter=ACMRT origin/main...HEAD | grep '\.py$' || true)"
 if [ -n "$CHANGED_PY_FILES" ]; then
   python -m mypy $CHANGED_PY_FILES
   python -m ruff check $CHANGED_PY_FILES --select D
