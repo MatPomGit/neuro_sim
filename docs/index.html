@@ -391,7 +391,7 @@ def simulate_json(config_json):
         B["decision_score"][k] = decision_score
         B["confidence"][k] = confidence
         B["decision_event"][k] = 1.0 if decision_score >= cfg["decision_threshold"] else 0.0
-        B["latency"][k] = (k + 1) * dt
+        B["elapsed_time"][k] = (k + 1) * dt
 
     band_power = {}
     for band in ["theta", "alpha", "beta", "gamma"]:
