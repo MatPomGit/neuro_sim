@@ -538,7 +538,8 @@ function captureDefaults() {
 function setStatus(text) { $("status").textContent = text; }
 function parseList(raw) { return raw.split(",").map(part => part.trim()).filter(Boolean); }
 function autoDtForDuration(durationS) {
-  const rawDt = durationS / 2400.0;
+  const TARGET_SIMULATION_STEPS = 2400.0;
+  const rawDt = durationS / TARGET_SIMULATION_STEPS;
   return Math.max(0.001, Math.min(0.01, rawDt));
 }
 function applyAutoDt() {
