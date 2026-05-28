@@ -11,7 +11,9 @@ from .state import SimulationState
 class SimulationModule(Protocol):
     """Interfejs modułu wykonywanego przez harmonogram."""
 
-    def update(self, state: SimulationState, dt: float) -> None: ...
+    def update(self, state: SimulationState, dt: float) -> None:
+        """Aktualizuje moduł w ramach pojedynczego kroku harmonogramu."""
+        ...
 
 
 @dataclass(slots=True)

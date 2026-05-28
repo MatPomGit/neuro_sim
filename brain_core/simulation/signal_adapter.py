@@ -36,7 +36,8 @@ class CouplingSignalAdapter:
 
     MAX_FIRING_RATE_HZ = 100.0
 
-    def __init__(self, mapping: SNNPopulationMapping, sync_dt: float):
+    def __init__(self, mapping: SNNPopulationMapping, sync_dt: float) -> None:
+        """Inicjalizuje adapter z jawnym mapowaniem regionów i krokiem synchronizacji."""
         if sync_dt <= 0:
             raise ValueError("sync_dt musi być > 0")
         self.mapping = mapping
@@ -73,6 +74,7 @@ class CouplingSignalAdapter:
         return regional_activity
 
     def _validate_nm_vector(self, signal: np.ndarray, name: str) -> None:
+        """Waliduje kształt i skończoność wektora sygnału neural-mass."""
         signal_arr = np.asarray(signal)
         expected_shape = (len(self.mapping.neural_mass_region_names),)
         if signal_arr.shape != expected_shape:
