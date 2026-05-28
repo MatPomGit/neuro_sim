@@ -18,7 +18,7 @@ Każda funkcja/metoda musi zawierać docstring opisujący:
 - **zwracaną wartość** (`Returns`),
 - **wyjątki** (`Raises`) — jeśli funkcja może je zgłosić.
 
-Jeśli funkcja nic nie zwraca, w `Returns` należy użyć `None` i krótko opisać efekt.
+Jeśli funkcja nic nie zwraca (zwraca None), sekcja Returns nie jest wymagana, chyba że opisuje istotny efekt uboczny.
 
 ### 2.2 Każda klasa
 Każda klasa musi zawierać docstring z:
