@@ -37,9 +37,9 @@ desc = read_param_desc(ROOT/'brain_model'/'gui.py')
 
 payload = {
     'simulation': {'T': 45.0, 'seed': 7},
-    'brain': {k: brain[k] for k in ['dt','noise','gw_threshold','gw_gain','learning_rate_semantic','learning_rate_value','decay_semantic','enable_oscillators'] if k in brain},
+    'brain': {k: brain[k] for k in ['dt','noise','gw_threshold','gw_gain','learning_rate_semantic','learning_rate_value','decay_semantic','enable_oscillators','decision_threshold','confidence_gain'] if k in brain},
     'osc': {k: osc[k] for k in ['w_ee','w_ei','w_ie','w_ii','baseline_e','baseline_i','cognitive_drive_gain','coupling_gain','oscillator_noise','phase_drive_gain'] if k in osc},
-    'descriptions': {k: desc[k] for k in ['T','seed','dt','noise','gw_threshold','gw_gain','learning_rate_semantic','learning_rate_value','decay_semantic','enable_oscillators','w_ee','w_ei','w_ie','w_ii','baseline_e','baseline_i','cognitive_drive_gain','coupling_gain','oscillator_noise','phase_drive_gain'] if k in desc}
+    'descriptions': {k: desc[k] for k in ['T','seed','dt','noise','gw_threshold','gw_gain','learning_rate_semantic','learning_rate_value','decay_semantic','enable_oscillators','decision_threshold','confidence_gain','w_ee','w_ei','w_ie','w_ii','baseline_e','baseline_i','cognitive_drive_gain','coupling_gain','oscillator_noise','phase_drive_gain'] if k in desc}
 }
 
 out = ROOT/'docs'/'gui_defaults.json'

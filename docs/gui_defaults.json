@@ -11,7 +11,9 @@
     "learning_rate_semantic": 0.004,
     "learning_rate_value": 0.02,
     "decay_semantic": 0.001,
-    "enable_oscillators": true
+    "enable_oscillators": true,
+    "decision_threshold": 0.62,
+    "confidence_gain": 1.8
   },
   "osc": {
     "w_ee": 10.5,
@@ -36,6 +38,8 @@
     "learning_rate_value": "Tempo uczenia wartościowania. Typowo 0.0-0.08; większa wartość szybciej zmienia VAL po błędzie predykcji nagrody.",
     "decay_semantic": "Zanik śladu semantycznego. Typowo 0.0-0.01; większa wartość szybciej wygasza SEM i ogranicza długotrwałe utrzymanie reprezentacji.",
     "enable_oscillators": "Włącza oscylatory Wilsona-Cowana. Typowo włączone; wyłączenie zeruje sygnały EEG i moc pasmową, ale zostawia dynamikę poznawczą.",
+    "decision_threshold": "Próg decyzji behawioralnej. Typowo 0.45-0.8; niższy daje szybsze i częstsze decyzje, wyższy wymaga silniejszego pobudzenia EXEC/VAL/MOT/GW.",
+    "confidence_gain": "Wzmocnienie przeliczenia wyniku decyzji na pewność. Typowo 0.5-3.0; większa wartość szybciej nasyca confidence do wartości bliskich 0 lub 1.",
     "w_ee": "Samowzmacnianie populacji pobudzającej. Typowo 8-14; większa wartość wzmacnia amplitudę i może ułatwiać oscylacje.",
     "w_ei": "Hamowanie populacji pobudzającej przez I. Typowo 7-12; większa wartość mocniej tłumi E i może zmniejszać amplitudę EEG.",
     "w_ie": "Pobudzanie populacji hamującej przez E. Typowo 8-13; większa wartość wzmacnia sprzężenie E-I i wpływa na rytmiczność.",
