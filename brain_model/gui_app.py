@@ -1,0 +1,53 @@
+"""Główna klasa okna GUI oraz punkt startowy aplikacji."""
+
+from __future__ import annotations
+
+import os
+import queue
+import threading
+import tkinter as tk
+from dataclasses import fields
+
+from .gui_config import GuiConfigMixin
+from .gui_forms import RULE_FIELDS, ParameterForm
+from .gui_layout import GuiLayoutMixin
+from .gui_runner import GuiRunnerMixin
+from .oscillators import WilsonCowanParams
+from .params import BrainParams
+
+
+class BrainModelGUI(GuiConfigMixin, GuiRunnerMixin, GuiLayoutMixin, tk.Tk):
+    """Główne okno konfiguracji i uruchamiania symulacji modelu poznawczego."""
+
+    def __init__(self) -> None:
+        """Utwórz stan aplikacji, formularze i elementy okna głównego."""
+        super().__init__()
+        self.title("konfiguracja symulacji Cognitive Brain Model")
+        self.geometry("1180x780")
+        self.minsize(940, 660)
+
+        self.brain_defaults = BrainParams()
+        self.osc_defaults = WilsonCowanParams()
+
+        visible_brain_fields = [f.name for f in fields(BrainParams) if f.name not in RULE_FIELDS]
+        self.brain_form = ParameterForm(
+            self, "hidden", BrainParams, self.brain_defaults, include_fields=visible_brain_fields
+        )
+        self.osc_form = ParameterForm(self, "hidden", WilsonCowanParams, self.osc_defaults)
+        self._build_layout()
+        self._build_menu()
+        self._worker_thread: threading.Thread | None = None
+        self._result_queue: queue.Queue[tuple[str, object]] = queue.Queue()
+        self._running = False
+
+
+def run_gui() -> None:
+    """Uruchom aplikację GUI z katalogu głównego projektu."""
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    os.chdir("..")
+    app = BrainModelGUI()
+    app.mainloop()
+
+
+if __name__ == "__main__":
+    run_gui()
