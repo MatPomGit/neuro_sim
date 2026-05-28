@@ -1,1 +1,1 @@
-"""Analysis helpers for simulated neural data."""
+"""Pomocnicze funkcje analizy dla symulowanych danych neuronalnych."""

@@ -9,14 +9,31 @@ import numpy as np
 
 @dataclass(frozen=True)
 class PhaseLockingMetricResult:
-    """Wynik metryk fazowych."""
+    """
+    Wynik metryk fazowych.
 
+    Attributes:
+        series (dict[str, np.ndarray]): Słownik z seriami metryk fazowych.
+        summary (dict[str, float]): Słownik z podsumowującymi statystykami.
+    """
     series: dict[str, np.ndarray]
     summary: dict[str, float]
 
 
 def compute_phase_locking(signal_a: np.ndarray, signal_b: np.ndarray) -> PhaseLockingMetricResult:
-    """Liczy PLV dla dwóch sygnałów oraz zwraca serię różnic faz."""
+    """
+    Liczy PLV dla dwóch sygnałów oraz zwraca serię różnic faz.
+
+    Args:
+        signal_a (np.ndarray): Pierwszy sygnał (1D).
+        signal_b (np.ndarray): Drugi sygnał (1D).
+
+    Returns:
+        PhaseLockingMetricResult: Wynik z serią różnic faz i wartością PLV.
+
+    Raises:
+        ValueError: Jeśli sygnały są puste, niejednowymiarowe lub mają różne kształty.
+    """
     a = np.asarray(signal_a, dtype=float)
     b = np.asarray(signal_b, dtype=float)
     if a.ndim != 1 or b.ndim != 1:

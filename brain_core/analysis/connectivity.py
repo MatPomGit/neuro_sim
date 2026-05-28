@@ -9,14 +9,27 @@ import numpy as np
 
 @dataclass(frozen=True)
 class ConnectivityMetricResult:
-    """Wynik metryk konektywności."""
+    """
+    Wynik metryk konektywności.
 
+    Attributes:
+        series (dict[str, np.ndarray]): Słownik z macierzami metryk.
+        summary (dict[str, float]): Słownik z podsumowującymi statystykami.
+    """
     series: dict[str, np.ndarray]
     summary: dict[str, float]
 
 
 def _pairwise_pli_proxy(signals: np.ndarray) -> np.ndarray:
-    """Wyznacza uproszczony PLI-proxy z faz FFT dla par kanałów."""
+    """
+    Wyznacza uproszczony PLI-proxy z faz FFT dla par kanałów.
+
+    Args:
+        signals (np.ndarray): Macierz sygnałów [n_samples, n_channels].
+
+    Returns:
+        np.ndarray: Macierz PLI-proxy [n_channels, n_channels].
+    """
     phase = np.angle(np.fft.fft(signals, axis=0))
     n_channels = signals.shape[1]
     pli = np.eye(n_channels)
@@ -30,7 +43,18 @@ def _pairwise_pli_proxy(signals: np.ndarray) -> np.ndarray:
 
 
 def compute_connectivity(signals: np.ndarray) -> ConnectivityMetricResult:
-    """Liczy macierze sieciowe per region i per parę regionów."""
+    """
+    Liczy macierze sieciowe per region i per parę regionów.
+
+    Args:
+        signals (np.ndarray): Macierz sygnałów [n_samples, n_channels].
+
+    Returns:
+        ConnectivityMetricResult: Wynik z macierzami i podsumowaniem metryk.
+
+    Raises:
+        ValueError: Jeśli wejście ma niepoprawny kształt lub za mało próbek.
+    """
     x = np.asarray(signals, dtype=float)
     if x.ndim != 2:
         raise ValueError("signals must be [n_samples, n_channels]")

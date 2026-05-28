@@ -18,14 +18,30 @@ BAND_LIMITS = {
 
 @dataclass(frozen=True)
 class SpectralMetricResult:
-    """Wynik metryk spektralnych z szeregiem i statystykami zbiorczymi."""
+    """
+    Wynik metryk spektralnych z szeregiem i statystykami zbiorczymi.
 
+    Attributes:
+        series (dict[str, np.ndarray]): Słownik z seriami spektralnymi.
+        summary (dict[str, float]): Słownik z podsumowaniem energii w pasmach.
+    """
     series: dict[str, np.ndarray]
     summary: dict[str, float]
 
 
 def _validate_signal(signal: np.ndarray) -> np.ndarray:
-    """Waliduje i normalizuje wejście do postaci sygnału 1D."""
+    """
+    Waliduje i normalizuje wejście do postaci sygnału 1D.
+
+    Args:
+        signal (np.ndarray): Sygnał wejściowy.
+
+    Returns:
+        np.ndarray: Sygnał 1D.
+
+    Raises:
+        ValueError: Jeśli sygnał nie jest 1D lub jest pusty.
+    """
     x = np.asarray(signal, dtype=float)
     if x.ndim != 1:
         raise ValueError("signal must be 1D")
@@ -39,7 +55,17 @@ def compute_band_powers(
     fs: float,
     bands: dict[str, tuple[float, float]] | None = None,
 ) -> SpectralMetricResult:
-    """Liczy energię pasm i zwraca pełne series + podsumowanie."""
+    """
+    Liczy energię pasm i zwraca pełne series + podsumowanie.
+
+    Args:
+        signal (np.ndarray): Sygnał wejściowy (1D).
+        fs (float): Częstotliwość próbkowania.
+        bands (dict[str, tuple[float, float]] | None): Zakresy pasm.
+
+    Returns:
+        SpectralMetricResult: Wynik z seriami i podsumowaniem energii w pasmach.
+    """
     x = _validate_signal(signal)
     n = x.shape[0]
     freqs = np.fft.rfftfreq(n, d=1.0 / fs)

@@ -10,6 +10,18 @@ COGNITIVE_MODULE_TO_REGIONS = {
 
 
 def regions_for_module(module_name: str) -> tuple[str, ...]:
+    """
+    Zwraca krotkę regionów odpowiadających modułowi kognitywnemu.
+
+    Args:
+        module_name (str): Nazwa modułu kognitywnego.
+
+    Returns:
+        tuple[str, ...]: Krotka nazw regionów.
+
+    Raises:
+        ValueError: Jeśli nieznany moduł.
+    """
     try:
         return COGNITIVE_MODULE_TO_REGIONS[module_name]
     except KeyError as exc:

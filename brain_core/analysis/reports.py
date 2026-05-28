@@ -18,12 +18,28 @@ from .spectral import compute_band_powers
 
 @dataclass
 class AnalysisReport:
+    """
+    Klasa reprezentująca raport z analizy sygnałów i porównania z benchmarkiem.
+
+    Attributes:
+        payload (dict): Słownik z metrykami i porównaniami.
+    """
     payload: dict
 
     def to_json(self) -> str:
+        """
+        Zwraca raport w formacie JSON.
+        Returns:
+            str: Raport jako tekst JSON.
+        """
         return json.dumps(self.payload, ensure_ascii=False, indent=2)
 
     def to_markdown(self) -> str:
+        """
+        Zwraca raport w formacie Markdown.
+        Returns:
+            str: Raport jako tekst Markdown.
+        """
         metrics = self.payload.get("metrics", {})
         compare = self.payload.get("comparison", {})
         lines = ["# Raport analizy", "", "## Metryki"]
@@ -36,6 +52,11 @@ class AnalysisReport:
         return "\n".join(lines)
 
     def to_csv_rows(self) -> list[dict[str, str]]:
+        """
+        Zwraca raport jako listę wierszy do CSV.
+        Returns:
+            list[dict[str, str]]: Lista słowników z sekcją, metryką i wartością.
+        """
         rows: list[dict[str, str]] = []
         for section in ("metrics", "comparison"):
             for key, value in self.payload.get(section, {}).items():
@@ -44,6 +65,17 @@ class AnalysisReport:
 
 
 def write_report_files(report: AnalysisReport, output_dir: Path, stem: str = "analysis_report") -> dict[str, str]:
+    """
+    Zapisuje raport do plików JSON, CSV i Markdown.
+
+    Args:
+        report (AnalysisReport): Raport do zapisania.
+        output_dir (Path): Katalog wyjściowy.
+        stem (str): Nazwa bazowa plików.
+
+    Returns:
+        dict[str, str]: Słownik ze ścieżkami do plików.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     json_path = output_dir / f"{stem}.json"
     csv_path = output_dir / f"{stem}.csv"
@@ -66,6 +98,23 @@ def build_analysis_report(
     fs: float = 100.0,
     analysis_set: list[str] | None = None,
 ) -> AnalysisReport:
+    """
+    Buduje raport analizy sygnałów EEG, fMRI i zachowania oraz porównania z benchmarkiem.
+
+    Args:
+        eeg (np.ndarray): Sygnały EEG.
+        fmri (np.ndarray): Sygnały fMRI.
+        behavior (np.ndarray): Dane behawioralne.
+        benchmark (dict[str, np.ndarray] | None): Słownik z benchmarkami.
+        fs (float): Częstotliwość próbkowania.
+        analysis_set (list[str] | None): Lista analiz do wykonania.
+
+    Returns:
+        AnalysisReport: Raport z metrykami i porównaniami.
+
+    Raises:
+        ValueError: Jeśli sygnały wejściowe są puste.
+    """
     eeg = np.asarray(eeg, dtype=float)
     fmri = np.asarray(fmri, dtype=float)
     behavior = np.asarray(behavior, dtype=float)

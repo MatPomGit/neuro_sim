@@ -904,6 +904,10 @@ class BrainModelGUI(tk.Tk):
 
 
 def run_gui():
+    import os
+    # Ustaw katalog roboczy na główny katalog projektu (jeden poziom wyżej względem tego pliku)
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    os.chdir("..")
     app = BrainModelGUI()
     app.mainloop()
 

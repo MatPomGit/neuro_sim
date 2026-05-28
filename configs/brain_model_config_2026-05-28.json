@@ -1,0 +1,56 @@
+{
+  "format": "brain-model-gui-config-v1",
+  "app_version": "0.3.0",
+  "saved_date": "2026-05-28",
+  "config": {
+    "T": "12.0",
+    "dt": "0.0050",
+    "auto_dt": true,
+    "seed": "7",
+    "command": "run",
+    "batch_seeds": "7,11,19",
+    "batch_scenarios": "reward-learning",
+    "sensitivity_params": "noise,gw_threshold",
+    "sensitivity_delta": "0.1",
+    "scenario": "baseline",
+    "save_results": true,
+    "brain_params": {
+      "dt": "0.005",
+      "noise": "0.015",
+      "gw_threshold": "0.62",
+      "gw_gain": "10.0",
+      "learning_rate_semantic": "0.004",
+      "learning_rate_value": "0.02",
+      "decay_semantic": "0.001",
+      "enable_oscillators": true,
+      "decision_threshold": "0.62",
+      "confidence_gain": "1.8"
+    },
+    "oscillator_params": {
+      "w_ee": "10.5",
+      "w_ei": "9.5",
+      "w_ie": "10.0",
+      "w_ii": "1.0",
+      "baseline_e": "-2.4",
+      "baseline_i": "-3.0",
+      "cognitive_drive_gain": "2.8",
+      "coupling_gain": "0.35",
+      "oscillator_noise": "0.01",
+      "phase_drive_gain": "0.1"
+    },
+    "plots": {
+      "activity": true,
+      "simulated_brain_activity": true,
+      "brain_region_projections": true,
+      "region_activity_2d": true,
+      "diagnostics": true,
+      "behavior": true,
+      "eeg": true,
+      "band_power": true,
+      "weight_trajectories": true,
+      "weight_deltas": true,
+      "scenario_channels": true,
+      "scenario_timeline": true
+    }
+  }
+}

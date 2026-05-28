@@ -9,14 +9,30 @@ import numpy as np
 
 @dataclass(frozen=True)
 class InformationFlowMetricResult:
-    """Wynik metryk kierunkowości przepływu."""
+    """
+    Wynik metryk kierunkowości przepływu.
 
+    Attributes:
+        series (dict[str, np.ndarray]): Słownik z macierzami metryk.
+        summary (dict[str, float]): Słownik z podsumowującymi statystykami.
+    """
     series: dict[str, np.ndarray]
     summary: dict[str, float]
 
 
 def compute_information_flow(signals: np.ndarray) -> InformationFlowMetricResult:
-    """Wyznacza uproszczoną kierunkowość opartą o korelacje opóźnione o 1 próbkę."""
+    """
+    Wyznacza uproszczoną kierunkowość opartą o korelacje opóźnione o 1 próbkę.
+
+    Args:
+        signals (np.ndarray): Macierz sygnałów [n_samples, n_channels].
+
+    Returns:
+        InformationFlowMetricResult: Wynik z macierzami i podsumowaniem metryk.
+
+    Raises:
+        ValueError: Jeśli wejście ma niepoprawny kształt lub za mało próbek.
+    """
     x = np.asarray(signals, dtype=float)
     if x.ndim != 2:
         raise ValueError("signals must be [n_samples, n_channels]")
