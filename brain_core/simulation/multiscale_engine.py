@@ -8,10 +8,19 @@ from typing import Protocol
 from .state import SimulationState
 
 
+
 @dataclass(frozen=True, slots=True)
 class MultiScaleIOContract:
-    """Formalny kontrakt I/O współsymulacji neural-mass <-> SNN."""
+    """
+    Formalny kontrakt I/O współsymulacji neural-mass <-> SNN.
 
+    Atrybuty:
+        base_dt (float): Bazowy krok czasowy.
+        snn_sync_dt (float): Krok synchronizacji SNN.
+        rate_unit (str): Jednostka częstości.
+        activity_unit (str): Jednostka aktywności.
+        mapped_populations (tuple[str, ...]): Mapowane populacje.
+    """
     base_dt: float
     snn_sync_dt: float
     rate_unit: str
@@ -19,7 +28,12 @@ class MultiScaleIOContract:
     mapped_populations: tuple[str, ...]
 
     def validate(self) -> None:
-        """Waliduje spójność kontraktu czasowego, jednostkowego i mapowania."""
+        """
+        Waliduje spójność kontraktu czasowego, jednostkowego i mapowania.
+
+        Raises:
+            ValueError: Jeśli którykolwiek z warunków nie jest spełniony.
+        """
         if self.base_dt <= 0:
             raise ValueError("base_dt kontraktu musi być > 0")
         if self.snn_sync_dt <= 0:
@@ -35,23 +49,49 @@ class MultiScaleIOContract:
             raise ValueError("mapped_populations nie może być puste")
 
 
-class TimeScaleModule(Protocol):
-    """Interfejs modułu aktualizowanego z własnym krokiem czasowym."""
 
+class TimeScaleModule(Protocol):
+    """
+    Interfejs modułu aktualizowanego z własnym krokiem czasowym.
+
+    Args:
+        state (SimulationState): Stan symulacji.
+        dt (float): Krok czasowy.
+    """
     def update(self, state: SimulationState, dt: float) -> None: ...
+
 
 
 @dataclass(slots=True)
 class TimeScaleTask:
-    """Definicja zadania współsymulacji uruchamianego w danej skali czasu."""
+    """
+    Definicja zadania współsymulacji uruchamianego w danej skali czasu.
 
+    Atrybuty:
+        name (str): Nazwa zadania.
+        module (TimeScaleModule): Moduł do aktualizacji.
+        dt (float): Krok czasowy zadania.
+        _accumulator (float): Akumulator czasu.
+    """
     name: str
     module: TimeScaleModule
     dt: float
     _accumulator: float = 0.0
 
     def tick(self, state: SimulationState, base_dt: float) -> int:
-        """Wykonuje zadanie tyle razy, ile wynika z akumulowanego czasu."""
+        """
+        Wykonuje zadanie tyle razy, ile wynika z akumulowanego czasu.
+
+        Args:
+            state (SimulationState): Stan symulacji.
+            base_dt (float): Bazowy krok czasowy.
+
+        Returns:
+            int: Liczba wykonanych kroków.
+
+        Raises:
+            ValueError: Jeśli parametry wejściowe są niepoprawne.
+        """
         if state is None:
             raise ValueError("state nie może być None")
         if base_dt <= 0:
