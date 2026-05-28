@@ -14,9 +14,15 @@
 
 - **Partia A (`brain_core`)**: 49 plików.
 - **Partia B (`brain_model`)**: 19 plików.
-- **Partia C (konfiguracja i I/O)**: 9 plików.
+- **Partia C (konfiguracja i I/O)**: 9 pozycji zadaniowych, w tym 5 plików poza partiami A/B.
 - **Partia D (narzędzia i skrypty)**: 2 pliki.
 - **Partia E (testy)**: 11 plików.
+
+Uwaga: partie A–E obejmują łącznie **86 unikalnych** plików Python. Prosta suma
+liczebności partii daje 90, ponieważ Partia C celowo powtarza 4 pliki
+ujęte już w Partiach A/B (`brain_core/simulation/config_loader.py`,
+`brain_core/simulation/config_schema.py`, `brain_model/io.py`,
+`brain_model/validation.py`) jako przekrojowy zakres konfiguracji i I/O.
 
 ## Plan iteracji tygodniowych
 
@@ -40,7 +46,10 @@
 - `brain_core/populations`, `brain_core/simulation`, `brain_core/synapses` — **Marta**, termin: **2026-06-17**.
 - `brain_model/model.py`, `brain_model/modules.py`, `brain_model/behavior.py`, `brain_model/gui.py` — **Tomasz**, termin: **2026-06-24**.
 - `brain_model/scenarios/*`, `brain_model/report.py`, `brain_model/plotting.py` — **Ewa**, termin: **2026-07-01**.
-- `brain_core/simulation/config_loader.py`, `brain_core/simulation/config_schema.py`, `brain_model/io.py`, `brain_model/validation.py`, `analysis/reports.py`, `main.py`, `main_gui.py`, `run_gui.py`, `brain_model.py` — **Kamil**, termin: **2026-07-08**.
+- `brain_core/simulation/config_loader.py`, `brain_core/simulation/config_schema.py`,
+  `brain_model/io.py`, `brain_model/validation.py`,
+  `analysis/reports.py` (katalog najwyższego poziomu; nie `brain_core/analysis/reports.py`),
+  `main.py`, `main_gui.py`, `run_gui.py`, `brain_model.py` — **Kamil**, termin: **2026-07-08**.
 - `scripts/sync_web_defaults.py`, `brain_viewer/mapping.py` — **Olga**, termin: **2026-07-08**.
 - `tests/*.py` — **Rafał**, termin: **2026-07-22**.
 

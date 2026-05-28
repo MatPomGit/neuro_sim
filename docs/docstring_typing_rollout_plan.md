@@ -63,7 +63,7 @@ Wdrożyć uzupełnienia docstringów i adnotacji typów sekwencyjnie, małymi pa
 - `brain_core/simulation/config_schema.py`
 - `brain_model/io.py`
 - `brain_model/validation.py`
-- `analysis/reports.py`
+- `analysis/reports.py` (katalog najwyższego poziomu; nie `brain_core/analysis/reports.py`)
 - Pliki wejściowe/launcherowe, jeśli zawierają funkcje Python wymagające uzupełnień:
   - `main.py`, `main_gui.py`, `run_gui.py`, `brain_model.py`
 
