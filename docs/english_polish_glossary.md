@@ -28,6 +28,17 @@ Ten dokument definiuje mapowanie nazw technicznych używanych w kodzie (angielsk
 | run | uruchom | Komenda akcji |
 | batch | seria uruchomień | Komenda akcji |
 | save_results | zapisz wyniki | Opcja wyjścia |
+| quick_start | szybki start | Główna sekcja konfiguracji GUI |
+| advanced_options | opcje zaawansowane | Sekcja technicznych parametrów uruchomienia GUI |
+| results_and_plots | wyniki i wykresy | Panel wyboru wyników i wykresów GUI |
+| plot_preset | preset wykresów | Szybki wybór zakresu generowanych wykresów |
+| auto_dt | automatyczny dobór dt | Opcja wyznaczania kroku czasowego |
+| dt | krok czasowy dt | Parametr numeryczny symulacji |
+| command | tryb uruchomienia | Wybór pojedynczej symulacji albo serii |
+| batch_seeds | ziarna serii | Lista ziaren losowości dla serii uruchomień |
+| batch_scenarios | scenariusze serii | Lista scenariuszy dla serii uruchomień |
+| sensitivity_params | parametry wrażliwości | Lista parametrów analizy wrażliwości |
+| sensitivity_delta | delta wrażliwości | Wielkość zmiany w analizie wrażliwości |
 | prediction_error | błąd predykcji | Metryka diagnostyczna |
 | confidence | pewność | Metryka diagnostyczna |
 | decision_events | zdarzenia decyzyjne | Metryka diagnostyczna |
