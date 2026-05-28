@@ -30,7 +30,9 @@ Każda klasa musi zawierać docstring z:
 Każda publiczna funkcja (oraz metoda publiczna) musi mieć pełne type hinty:
 - wszystkie parametry,
 - typ zwracany,
-- typy generyczne doprecyzowane (np. `list[str]`, nie samo `list`).
+- typy generyczne doprecyzowane (np. list[str], nie samo list).
+
+W przypadku stosowania adnotacji typów, nie należy powielać informacji o typach wewnątrz docstringa (np. w sekcji Args czy Returns).
 
 ## 3. Przypadki specjalne
 
