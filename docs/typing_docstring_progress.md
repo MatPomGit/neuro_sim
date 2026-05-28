@@ -102,3 +102,4 @@ Po zakończeniu każdej iteracji należy uzupełnić sekcję poniżej:
 - [x] brain_core/networks — docstringi i type hinty uzupełnione (2026-05-28)
 - [x] brain_core/physiology — docstringi i type hinty uzupełnione (2026-05-28)
 - [x] brain_core/populations — docstringi i type hinty uzupełnione (2026-05-28)
+- [x] brain_core/simulation — docstringi i type hinty uzupełnione (2026-05-28)

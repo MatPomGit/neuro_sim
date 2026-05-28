@@ -1,4 +1,6 @@
-"""Narzędzia warstwy symulacji `brain_core`.
+
+"""
+Narzędzia warstwy symulacji `brain_core`.
 
 Moduł eksportuje publiczne klasy i protokoły używane do:
 - zarządzania stanem symulacji,
