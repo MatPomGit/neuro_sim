@@ -408,6 +408,8 @@ class GuiLayoutMixin:
         try:
             root_dir = Path(__file__).resolve().parents[1]
             entrypoint = root_dir / "main_gui.py"
+            if not entrypoint.exists():
+                raise FileNotFoundError(f"Nie znaleziono pliku startowego: {entrypoint}")
             subprocess.Popen([sys.executable, str(entrypoint)], cwd=str(root_dir))
             self.status_var.set("Uruchomiono nową instancję programu.")
         except Exception as exc:
