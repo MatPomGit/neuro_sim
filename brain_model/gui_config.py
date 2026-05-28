@@ -95,7 +95,10 @@ class GuiConfigMixin:
         )
         if not source:
             return
-        payload = json.loads(Path(source).read_text(encoding="utf-8"))
-        config = payload.get("config", payload)
-        self._apply_config(config)
-        self.status_var.set(f"Wczytano konfigurację: {source}")
+        try:
+            payload = json.loads(Path(source).read_text(encoding="utf-8"))
+            config = payload.get("config", payload)
+            self._apply_config(config)
+            self.status_var.set(f"Wczytano konfigurację: {source}")
+        except Exception as exc:
+            messagebox.showerror("Błąd", f"Nie udało się wczytać konfiguracji: {exc}")
