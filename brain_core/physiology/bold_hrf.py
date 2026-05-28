@@ -1,12 +1,37 @@
-"""Minimal BOLD model via HRF convolution."""
+
+"""
+Minimalistyczny model BOLD oparty o splot z funkcją HRF.
+"""
 
 from __future__ import annotations
 
 import numpy as np
 
 
-def canonical_hrf(length: int, dt: float, peak_latency: float = 5.0, undershoot_latency: float = 12.0, ratio: float = 0.35) -> np.ndarray:
-    """Build a simple bi-gamma-like HRF from two alpha functions."""
+
+def canonical_hrf(
+    length: int,
+    dt: float,
+    peak_latency: float = 5.0,
+    undershoot_latency: float = 12.0,
+    ratio: float = 0.35
+) -> np.ndarray:
+    """
+    Buduje prostą funkcję HRF (bi-gamma) z dwóch funkcji alfa.
+
+    Args:
+        length (int): Długość sygnału (liczba próbek).
+        dt (float): Rozdzielczość czasowa (s).
+        peak_latency (float): Opóźnienie piku (s).
+        undershoot_latency (float): Opóźnienie podbicia (s).
+        ratio (float): Stosunek amplitudy podbicia do piku.
+
+    Returns:
+        np.ndarray: Wektor HRF o zadanej długości.
+
+    Raises:
+        ValueError: Jeśli parametry są niepoprawne.
+    """
     if length <= 0:
         raise ValueError("length must be > 0")
     if dt <= 0:
@@ -24,8 +49,24 @@ def canonical_hrf(length: int, dt: float, peak_latency: float = 5.0, undershoot_
     return hrf / norm
 
 
-def convolve_with_hrf(neural_drive: np.ndarray, hrf: np.ndarray) -> np.ndarray:
-    """Convolve per-region neural drive with HRF along time axis."""
+
+def convolve_with_hrf(
+    neural_drive: np.ndarray,
+    hrf: np.ndarray
+) -> np.ndarray:
+    """
+    Splot napędu neuronalnego z HRF wzdłuż osi czasu (po regionach).
+
+    Args:
+        neural_drive (np.ndarray): Sygnał wejściowy [n_próbek] lub [n_próbek, n_regionów].
+        hrf (np.ndarray): Wektor HRF.
+
+    Returns:
+        np.ndarray: Sygnał BOLD po splocie.
+
+    Raises:
+        ValueError: Jeśli wejście ma niepoprawny kształt.
+    """
     drive = np.asarray(neural_drive, dtype=float)
     kernel = np.asarray(hrf, dtype=float)
     if drive.ndim == 1:

@@ -195,7 +195,7 @@ class BrainModelGUI(tk.Tk):
 
     def __init__(self):
         super().__init__()
-        self.title("Cognitive Brain Model - konfiguracja symulacji")
+        self.title("konfiguracja symulacji Cognitive Brain Model")
         self.geometry("1180x780")
         self.minsize(940, 660)
 

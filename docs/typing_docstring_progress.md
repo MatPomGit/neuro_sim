@@ -98,3 +98,7 @@ Po zakończeniu każdej iteracji należy uzupełnić sekcję poniżej:
 - Wynik: _do uzupełnienia po 2026-07-22_.
 
 - [x] brain_core/cognition — docstringi i type hinty uzupełnione (2026-05-28)
+- [x] brain_core/experiments — docstringi i type hinty uzupełnione (2026-05-28)
+- [x] brain_core/networks — docstringi i type hinty uzupełnione (2026-05-28)
+- [x] brain_core/physiology — docstringi i type hinty uzupełnione (2026-05-28)
+- [x] brain_core/populations — docstringi i type hinty uzupełnione (2026-05-28)

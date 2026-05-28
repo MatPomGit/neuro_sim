@@ -20,7 +20,6 @@ SVG_VIEW_FILES = {
     "lateral": SVG_ASSETS_DIR / "brain_lateral_inline_regions.svg",
 }
 
-
 MODULE_DESCRIPTIONS = {
     "VIS": "Przetwarzanie wzrokowe.",
     "AUD": "Przetwarzanie słuchowe.",

@@ -5,45 +5,86 @@ from dataclasses import dataclass
 import numpy as np
 
 
+
 @dataclass(frozen=True, slots=True)
 class NeuralMassToSNNInput:
-    """Kontrakt wejściowy: neural-mass -> SNN."""
+    """
+    Kontrakt wejściowy: neural-mass → SNN.
 
+    Atrybuty:
+        excitatory_drive_hz (np.ndarray): Pobudzenie ekscytujące [Hz].
+        inhibitory_drive_hz (np.ndarray): Pobudzenie hamujące [Hz].
+        sync_dt (float): Krok synchronizacji [s].
+    """
     excitatory_drive_hz: np.ndarray
     inhibitory_drive_hz: np.ndarray
     sync_dt: float
 
 
+
 @dataclass(frozen=True, slots=True)
 class SNNToNeuralMassOutput:
-    """Kontrakt wyjściowy: SNN -> neural-mass."""
+    """
+    Kontrakt wyjściowy: SNN → neural-mass.
 
+    Atrybuty:
+        firing_rate_hz (np.ndarray): Częstość wyładowań [Hz].
+        mean_membrane_potential_mv (np.ndarray): Średni potencjał błonowy [mV].
+        sync_dt (float): Krok synchronizacji [s].
+    """
     firing_rate_hz: np.ndarray
     mean_membrane_potential_mv: np.ndarray
     sync_dt: float
 
 
-class Brian2SpikingPopulationAdapter:
-    """Startowy adapter SNN.
 
-    Implementacja jest celowo lekka: kontrakt danych i deterministyczny backend
-    fallback, aby można było uruchamiać współsymulację bez opcjonalnej zależności.
+class Brian2SpikingPopulationAdapter:
+    """
+    Startowy adapter populacji SNN (brian2).
+
+    Implementacja celowo uproszczona: kontrakt danych i deterministyczny backend
+    fallback, aby umożliwić współsymulację bez opcjonalnej zależności.
+
+    Atrybuty:
+        region_names (list[str]): Nazwy regionów.
+        dt (float): Krok symulacji [s].
+        _firing_rate_hz (np.ndarray): Częstość wyładowań [Hz].
+        _membrane_mv (np.ndarray): Potencjał błonowy [mV].
     """
 
     backend_name = "brian2"
 
-    def __init__(self, region_names: list[str], dt: float = 0.001):
+    def __init__(self, region_names: list[str], dt: float = 0.001) -> None:
+        """
+        Inicjalizuje adapter SNN.
+
+        Args:
+            region_names (list[str]): Nazwy regionów.
+            dt (float): Krok symulacji [s].
+
+        Raises:
+            ValueError: Jeśli region_names jest puste lub dt <= 0.
+        """
         if not region_names:
             raise ValueError("region_names nie może być puste")
         if dt <= 0:
             raise ValueError("dt musi być > 0")
 
-        self.region_names = region_names
-        self.dt = float(dt)
-        self._firing_rate_hz = np.zeros(len(region_names), dtype=float)
-        self._membrane_mv = np.full(len(region_names), -65.0, dtype=float)
+        self.region_names: list[str] = region_names
+        self.dt: float = float(dt)
+        self._firing_rate_hz: np.ndarray = np.zeros(len(region_names), dtype=float)
+        self._membrane_mv: np.ndarray = np.full(len(region_names), -65.0, dtype=float)
 
     def step(self, signal: NeuralMassToSNNInput) -> SNNToNeuralMassOutput:
+        """
+        Wykonuje krok symulacji SNN na podstawie sygnału wejściowego.
+
+        Args:
+            signal (NeuralMassToSNNInput): Wejście z modelu neural-mass.
+
+        Returns:
+            SNNToNeuralMassOutput: Wyjście do modelu neural-mass.
+        """
         self._validate_input(signal)
 
         # Deterministyczny backend startowy: szybka aproksymacja transferu NM -> SNN.

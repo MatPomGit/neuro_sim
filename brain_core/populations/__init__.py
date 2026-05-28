@@ -1,4 +1,7 @@
-"""Population-level neuronal models."""
+
+"""
+Modele neuronalne na poziomie populacji.
+"""
 
 from .spiking_population import Brian2SpikingPopulationAdapter, NeuralMassToSNNInput, SNNToNeuralMassOutput
 from .wilson_cowan import RegionWilsonCowanModel, RegionWilsonCowanParams

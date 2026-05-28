@@ -5,8 +5,24 @@ from dataclasses import dataclass
 import numpy as np
 
 
+
 @dataclass(slots=True)
 class RegionWilsonCowanParams:
+    """
+    Parametry modelu Wilsona-Cowana dla pojedynczego regionu.
+
+    Atrybuty:
+        tau_E (float): Stała czasowa populacji E.
+        tau_I (float): Stała czasowa populacji I.
+        w_EE (float): Waga E→E.
+        w_EI (float): Waga E→I.
+        w_IE (float): Waga I→E.
+        w_II (float): Waga I→I.
+        gain_E (float): Wzmocnienie E.
+        gain_I (float): Wzmocnienie I.
+        threshold_E (float): Próg E.
+        threshold_I (float): Próg I.
+    """
     tau_E: float = 0.02
     tau_I: float = 0.01
     w_EE: float = 12.0
@@ -19,21 +35,40 @@ class RegionWilsonCowanParams:
     threshold_I: float = 0.0
 
 
+
 class RegionWilsonCowanModel:
-    """Wilson-Cowan model with separate E/I state per region."""
+    """
+    Model Wilsona-Cowana z oddzielnym stanem E/I dla każdego regionu.
+
+    Atrybuty:
+        region_names (list[str]): Nazwy regionów.
+        params (dict[str, RegionWilsonCowanParams]): Parametry regionów.
+        E (np.ndarray): Stan populacji ekscytującej.
+        I (np.ndarray): Stan populacji hamującej.
+    """
 
     def __init__(self, region_names: list[str], params: dict[str, RegionWilsonCowanParams]):
+        """
+        Inicjalizuje model Wilsona-Cowana.
+
+        Args:
+            region_names (list[str]): Nazwy regionów.
+            params (dict[str, RegionWilsonCowanParams]): Parametry regionów.
+
+        Raises:
+            ValueError: Jeśli brakuje parametrów lub region_names jest puste.
+        """
         if not region_names:
             raise ValueError("region_names nie może być puste")
         missing = [r for r in region_names if r not in params]
         if missing:
             raise ValueError(f"Brak parametrów dla regionów: {missing}")
 
-        self.region_names = region_names
-        self.params = params
+        self.region_names: list[str] = region_names
+        self.params: dict[str, RegionWilsonCowanParams] = params
         n = len(region_names)
-        self.E = np.zeros(n, dtype=float)
-        self.I = np.zeros(n, dtype=float)
+        self.E: np.ndarray = np.zeros(n, dtype=float)
+        self.I: np.ndarray = np.zeros(n, dtype=float)
 
     @property
     def _tau_E(self) -> np.ndarray:
@@ -75,13 +110,34 @@ class RegionWilsonCowanModel:
     def _threshold_I(self) -> np.ndarray:
         return np.array([self.params[r].threshold_I for r in self.region_names], dtype=float)
 
+
     @staticmethod
     def _sigmoid(x: np.ndarray, gain: np.ndarray, threshold: np.ndarray) -> np.ndarray:
+        """
+        Funkcja sigmoidalna dla aktywacji populacji.
+
+        Args:
+            x (np.ndarray): Wartości wejściowe.
+            gain (np.ndarray): Wzmocnienie.
+            threshold (np.ndarray): Próg.
+
+        Returns:
+            np.ndarray: Wynik funkcji sigmoidalnej.
+        """
         return 1.0 / (1.0 + np.exp(-gain * (x - threshold)))
+
 
     @staticmethod
     def neuromodulation_vector(neuromodulators: dict[str, np.ndarray]) -> np.ndarray:
-        """Return vector [DA, NA, ACh, 5HT, GABA, Glu, CORT, ADR] per region."""
+        """
+        Zwraca wektor [DA, NA, ACh, 5HT, GABA, Glu, CORT, ADR] dla każdego regionu.
+
+        Args:
+            neuromodulators (dict[str, np.ndarray]): Słownik neuromodulatorów.
+
+        Returns:
+            np.ndarray: Macierz [n_regionów, 8].
+        """
         return np.column_stack(
             [
                 neuromodulators["dopamine"],
@@ -95,13 +151,31 @@ class RegionWilsonCowanModel:
             ]
         )
 
+
     def step(
         self,
         dt: float,
         external_e: np.ndarray,
         external_i: np.ndarray,
         neuromodulators: dict[str, np.ndarray] | None = None,
+        rng: np.random.Generator | None = None
     ) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Wykonuje krok symulacji modelu Wilsona-Cowana.
+
+        Args:
+            dt (float): Krok czasowy [s].
+            external_e (np.ndarray): Zewnętrzne pobudzenie E.
+            external_i (np.ndarray): Zewnętrzne pobudzenie I.
+            neuromodulators (dict[str, np.ndarray] | None): Neuromodulatory.
+            rng (np.random.Generator | None): Generator losowy do szumu.
+
+        Returns:
+            tuple[np.ndarray, np.ndarray]: Nowe stany (E, I).
+
+        Raises:
+            ValueError: Jeśli parametry wejściowe są niepoprawne.
+        """
         if dt <= 0:
             raise ValueError("dt musi być > 0")
         if external_e.shape != self.E.shape or external_i.shape != self.I.shape:

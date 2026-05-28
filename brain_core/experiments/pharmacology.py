@@ -7,6 +7,19 @@ from brain_core.synapses.state import NeuromodulationState
 
 @dataclass(frozen=True, slots=True)
 class PharmacologyIntervention:
+    """
+    Klasa reprezentująca interwencję farmakologiczną (przesunięcia neuromodulatorów).
+
+    Attributes:
+        dopamine_shift (float): Przesunięcie dopaminy.
+        noradrenaline_shift (float): Przesunięcie noradrenaliny.
+        acetylcholine_shift (float): Przesunięcie acetylocholiny.
+        serotonin_shift (float): Przesunięcie serotoniny.
+        gaba_shift (float): Przesunięcie GABA.
+        glutamate_shift (float): Przesunięcie glutaminianu.
+        cortisol_shift (float): Przesunięcie kortyzolu.
+        adrenaline_shift (float): Przesunięcie adrenaliny.
+    """
     dopamine_shift: float = 0.0
     noradrenaline_shift: float = 0.0
     acetylcholine_shift: float = 0.0
@@ -17,6 +30,15 @@ class PharmacologyIntervention:
     adrenaline_shift: float = 0.0
 
     def apply(self, state: NeuromodulationState) -> NeuromodulationState:
+        """
+        Zastosuj interwencję do stanu neuromodulacji.
+
+        Args:
+            state (NeuromodulationState): Stan wejściowy.
+
+        Returns:
+            NeuromodulationState: Stan po interwencji.
+        """
         def c(x: float) -> float:
             return min(1.0, max(0.0, x))
 
@@ -33,6 +55,12 @@ class PharmacologyIntervention:
 
 
 def comparison_scenarios() -> dict[str, PharmacologyIntervention]:
+    """
+    Zwraca przykładowe scenariusze interwencji farmakologicznych.
+
+    Returns:
+        dict[str, PharmacologyIntervention]: Słownik nazw do interwencji.
+    """
     return {
         "baseline": PharmacologyIntervention(),
         "high_ach": PharmacologyIntervention(acetylcholine_shift=0.35),

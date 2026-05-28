@@ -14,8 +14,17 @@ MutationStage = Literal["pre", "runtime"]
 
 @dataclass(frozen=True, slots=True)
 class PathologyMutation:
-    """Mutacja patologiczna aplikowana do stanu symulacji."""
+    """
+    Mutacja patologiczna aplikowana do stanu symulacji.
 
+    Attributes:
+        kind (PathologyKind): Typ mutacji.
+        target (str): Cel mutacji (region lub połączenie).
+        scope (Literal["region", "edge"]): Zakres mutacji.
+        magnitude (float): Siła mutacji.
+        stage (MutationStage): Etap aplikacji mutacji.
+        source (str | None): Źródło (dla edge-level).
+    """
     kind: PathologyKind
     target: str
     scope: Literal["region", "edge"]
@@ -24,12 +33,28 @@ class PathologyMutation:
     source: str | None = None
 
     def apply(self, state: SimulationState) -> None:
+        """
+        Aplikuje mutację do stanu symulacji.
+
+        Args:
+            state (SimulationState): Stan symulacji.
+        """
         if self.scope == "region":
             self._apply_region(state)
             return
         self._apply_edge(state)
 
     def _apply_region(self, state: SimulationState) -> None:
+        """
+        Aplikuje mutację do regionu.
+
+        Args:
+            state (SimulationState): Stan symulacji.
+
+        Raises:
+            KeyError: Jeśli region nie istnieje.
+            ValueError: Jeśli typ mutacji nie jest wspierany dla regionu.
+        """
         if self.target not in state.regions:
             raise KeyError(f"Nie znaleziono regionu: {self.target}")
 
@@ -50,6 +75,16 @@ class PathologyMutation:
         state.metrics[f"pathology:{self.kind}:{self.target}"] = float(np.mean(signal))
 
     def _apply_edge(self, state: SimulationState) -> None:
+        """
+        Aplikuje mutację do połączenia (edge).
+
+        Args:
+            state (SimulationState): Stan symulacji.
+
+        Raises:
+            ValueError: Jeśli brakuje źródła lub typ nie jest wspierany.
+            KeyError: Jeśli połączenie nie istnieje.
+        """
         if not self.source:
             raise ValueError("Mutacja edge-level wymaga pola 'source'")
         key = f"{self.source}->{self.target}"
@@ -70,17 +105,41 @@ class PathologyMutation:
 
 
 class PathologyController:
-    """API do mutacji modelu przed i w trakcie symulacji."""
+    """
+    API do mutacji modelu przed i w trakcie symulacji.
+
+    Attributes:
+        pre_simulation (list[PathologyMutation]): Mutacje przed symulacją.
+        runtime (list[PathologyMutation]): Mutacje w trakcie symulacji.
+    """
 
     def __init__(self, mutations: list[PathologyMutation]):
+        """
+        Inicjalizuje kontroler mutacji.
+
+        Args:
+            mutations (list[PathologyMutation]): Lista mutacji.
+        """
         self.pre_simulation = [m for m in mutations if m.stage == "pre"]
         self.runtime = [m for m in mutations if m.stage == "runtime"]
 
     def apply_pre_simulation(self, state: SimulationState) -> None:
+        """
+        Aplikuje mutacje przed symulacją.
+
+        Args:
+            state (SimulationState): Stan symulacji.
+        """
         for mutation in self.pre_simulation:
             mutation.apply(state)
 
     def apply_runtime(self, state: SimulationState) -> None:
+        """
+        Aplikuje mutacje w trakcie symulacji.
+
+        Args:
+            state (SimulationState): Stan symulacji.
+        """
         for mutation in self.runtime:
             mutation.apply(state)
 
@@ -101,6 +160,12 @@ REFERENCE_PATHOLOGY_SCENARIOS: dict[str, list[PathologyMutation]] = {
 
 
 def pathology_scenarios() -> dict[str, list[PathologyMutation]]:
+    """
+    Zwraca słownik dostępnych scenariuszy patologii.
+
+    Returns:
+        dict[str, list[PathologyMutation]]: Słownik scenariuszy.
+    """
     return {name: list(mutations) for name, mutations in REFERENCE_PATHOLOGY_SCENARIOS.items()}
 
 
@@ -108,6 +173,19 @@ def build_pathology_controller(
     entries: list[dict[str, Any]] | None,
     scenario_name: str | None = None
 ) -> PathologyController:
+    """
+    Buduje kontroler patologii na podstawie wpisów lub nazwy scenariusza.
+
+    Args:
+        entries (list[dict[str, Any]] | None): Lista słowników mutacji.
+        scenario_name (str | None): Nazwa scenariusza.
+
+    Returns:
+        PathologyController: Kontroler mutacji.
+
+    Raises:
+        ValueError: Jeśli nieznany scenariusz.
+    """
     mutations: list[PathologyMutation] = []
     if scenario_name:
         scenarios = pathology_scenarios()

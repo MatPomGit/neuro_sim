@@ -1,3 +1,5 @@
+"""Moduł eksperymentów: farmakologia, patologie, protokoły eksperymentalne."""
+
 from .lesions import PathologyController, PathologyMutation, pathology_scenarios, build_pathology_controller
 from .pharmacology import PharmacologyIntervention, comparison_scenarios
 

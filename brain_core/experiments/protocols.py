@@ -6,11 +6,17 @@ from typing import Any, Protocol
 
 
 class ProtocolPhase(str, Enum):
+    """
+    Faza protokołu eksperymentalnego.
+    """
     TRAIN = "train"
     TEST = "test"
 
 
 class ErrorType(str, Enum):
+    """
+    Typ błędu w zadaniu eksperymentalnym.
+    """
     NONE = "none"
     COMMISSION = "commission"
     OMISSION = "omission"
@@ -19,6 +25,14 @@ class ErrorType(str, Enum):
 
 @dataclass(frozen=True, slots=True)
 class ProtocolStep:
+    """
+    Pojedynczy krok protokołu eksperymentalnego.
+
+    Attributes:
+        phase (ProtocolPhase): Faza protokołu.
+        duration_s (float): Czas trwania kroku.
+        label (str): Etykieta kroku.
+    """
     phase: ProtocolPhase
     duration_s: float
     label: str = ""
@@ -26,6 +40,16 @@ class ProtocolStep:
 
 @dataclass(frozen=True, slots=True)
 class TrialStimulus:
+    """
+    Bodziec prezentowany w pojedynczym trialu.
+
+    Attributes:
+        trial_id (int): Identyfikator trialu.
+        onset_s (float): Czas rozpoczęcia.
+        duration_s (float): Czas trwania.
+        payload (dict[str, Any]): Dane bodźca.
+        condition (str): Warunek eksperymentalny.
+    """
     trial_id: int
     onset_s: float
     duration_s: float
@@ -35,6 +59,16 @@ class TrialStimulus:
 
 @dataclass(frozen=True, slots=True)
 class TrialResult:
+    """
+    Wynik pojedynczego trialu eksperymentalnego.
+
+    Attributes:
+        trial_id (int): Identyfikator trialu.
+        reaction_time_s (float | None): Czas reakcji.
+        correct (bool): Czy odpowiedź była poprawna.
+        error_type (ErrorType): Typ błędu.
+        condition (str): Warunek eksperymentalny.
+    """
     trial_id: int
     reaction_time_s: float | None
     correct: bool
@@ -43,34 +77,80 @@ class TrialResult:
 
 
 class CognitiveTask(Protocol):
+    """
+    Protokół zadania kognitywnego.
+    """
     name: str
 
-    def generate_stimuli(self, seed: int, duration_s: float) -> list[TrialStimulus]: ...
+    def generate_stimuli(self, seed: int, duration_s: float) -> list[TrialStimulus]:
+        """
+        Generuje listę bodźców dla zadania.
+        """
+        ...
 
-    def expected_response(self, stimulus: TrialStimulus) -> Any: ...
+    def expected_response(self, stimulus: TrialStimulus) -> Any:
+        """
+        Zwraca oczekiwaną odpowiedź na bodziec.
+        """
+        ...
 
-    def score_trial(self, stimulus: TrialStimulus, observed_response: Any, reaction_time_s: float | None) -> TrialResult: ...
+    def score_trial(self, stimulus: TrialStimulus, observed_response: Any, reaction_time_s: float | None) -> TrialResult:
+        """
+        Ocenia wynik trialu.
+        """
+        ...
 
 
 @dataclass(frozen=True, slots=True)
 class ExperimentProtocol:
+    """
+    Protokół eksperymentu składający się z kroków.
+
+    Attributes:
+        name (str): Nazwa protokołu.
+        steps (tuple[ProtocolStep, ...]): Kroki protokołu.
+    """
     name: str
     steps: tuple[ProtocolStep, ...]
 
     def total_duration(self, phase: ProtocolPhase | None = None) -> float:
+        """
+        Zwraca łączny czas trwania protokołu lub wybranej fazy.
+
+        Args:
+            phase (ProtocolPhase | None): Faza do zsumowania lub None dla całości.
+
+        Returns:
+            float: Łączny czas trwania.
+        """
         if phase is None:
             return sum(step.duration_s for step in self.steps)
         return sum(step.duration_s for step in self.steps if step.phase == phase)
 
 
 def _lcg(seed: int) -> int:
+    """
+    Prosty generator liczb pseudolosowych (LCG).
+
+    Args:
+        seed (int): Ziarno.
+
+    Returns:
+        int: Nowa wartość ziarna.
+    """
     return (1664525 * seed + 1013904223) % (2**32)
 
 
 class StroopTask:
+    """
+    Zadanie Stroopa — generuje bodźce i ocenia odpowiedzi.
+    """
     name = "stroop"
 
     def generate_stimuli(self, seed: int, duration_s: float) -> list[TrialStimulus]:
+        """
+        Generuje bodźce do zadania Stroopa.
+        """
         colors = ("red", "green", "blue", "yellow")
         t = 0.5
         trial_id = 0
@@ -88,9 +168,15 @@ class StroopTask:
         return trials
 
     def expected_response(self, stimulus: TrialStimulus) -> str:
+        """
+        Zwraca oczekiwany kolor (ink) dla bodźca.
+        """
         return str(stimulus.payload["ink"])
 
     def score_trial(self, stimulus: TrialStimulus, observed_response: Any, reaction_time_s: float | None) -> TrialResult:
+        """
+        Ocenia wynik trialu w zadaniu Stroopa.
+        """
         expected = self.expected_response(stimulus)
         if observed_response is None:
             return TrialResult(stimulus.trial_id, reaction_time_s, False, ErrorType.OMISSION, stimulus.condition)
@@ -100,9 +186,15 @@ class StroopTask:
 
 
 class GoNoGoTask:
+    """
+    Zadanie Go/NoGo — generuje bodźce i ocenia odpowiedzi.
+    """
     name = "go_nogo"
 
     def generate_stimuli(self, seed: int, duration_s: float) -> list[TrialStimulus]:
+        """
+        Generuje bodźce do zadania Go/NoGo.
+        """
         t = 0.2
         trial_id = 0
         state = seed
@@ -117,6 +209,9 @@ class GoNoGoTask:
         return trials
 
     def expected_response(self, stimulus: TrialStimulus) -> str | None:
+        """
+        Zwraca oczekiwaną odpowiedź dla bodźca Go/NoGo.
+        """
         return "press" if stimulus.condition == "go" else None
 
     def score_trial(self, stimulus: TrialStimulus, observed_response: Any, reaction_time_s: float | None) -> TrialResult:

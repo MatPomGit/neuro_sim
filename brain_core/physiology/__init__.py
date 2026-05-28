@@ -1,1 +1,4 @@
-"""Physiology-level observation models (EEG, BOLD)."""
+
+"""
+Modele obserwacyjne na poziomie fizjologii (EEG, BOLD).
+"""
