@@ -7,10 +7,23 @@ from pathlib import Path
 from typing import Any
 
 
+
 @dataclass
 class ExperimentConfig:
-    """Ujednolicony obiekt konfiguracji eksperymentu po walidacji."""
+    """
+    Ujednolicony obiekt konfiguracji eksperymentu po walidacji.
 
+    Atrybuty:
+        model (dict[str, Any]): Konfiguracja modelu.
+        integrator (dict[str, Any]): Konfiguracja integratora.
+        timestep (float): Krok czasowy symulacji.
+        seed (int): Ziarno generatora losowego.
+        task (dict[str, Any]): Konfiguracja zadania.
+        pathology (dict[str, Any]): Konfiguracja patologii.
+        output (dict[str, Any]): Ustawienia wyjścia.
+        snn (dict[str, Any]): Konfiguracja SNN.
+        analysis (dict[str, Any]): Konfiguracja analiz.
+    """
     model: dict[str, Any] = field(default_factory=dict)
     integrator: dict[str, Any] = field(default_factory=lambda: {"method": "euler"})
     timestep: float = 0.005
@@ -22,12 +35,27 @@ class ExperimentConfig:
     analysis: dict[str, Any] = field(default_factory=lambda: {"sets": ["spectral", "phase_locking", "connectivity", "information_flow"]})
 
 
+
 class ConfigValidationError(ValueError):
-    """Błąd walidacji konfiguracji eksperymentu."""
+    """
+    Błąd walidacji konfiguracji eksperymentu.
+    """
+
 
 
 def validate_config(raw: dict[str, Any]) -> ExperimentConfig:
-    """Waliduje surową konfigurację i zwraca obiekt `ExperimentConfig`."""
+    """
+    Waliduje surową konfigurację i zwraca obiekt `ExperimentConfig`.
+
+    Args:
+        raw (dict[str, Any]): Surowa konfiguracja.
+
+    Returns:
+        ExperimentConfig: Zweryfikowany obiekt konfiguracji.
+
+    Raises:
+        ConfigValidationError: Jeśli konfiguracja jest niepoprawna.
+    """
     if not isinstance(raw, dict):
         raise ConfigValidationError("Konfiguracja musi być obiektem mapującym (dict).")
 
