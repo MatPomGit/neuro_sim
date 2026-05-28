@@ -47,10 +47,9 @@ ujęte już w Partiach A/B (`brain_core/simulation/config_loader.py`,
 - `brain_model/model.py`, `brain_model/modules.py`, `brain_model/behavior.py`, `brain_model/gui.py` — **Tomasz**, termin: **2026-06-24**.
 - `brain_model/scenarios/*`, `brain_model/report.py`, `brain_model/plotting.py` — **Ewa**, termin: **2026-07-01**.
 - `brain_core/simulation/config_loader.py`, `brain_core/simulation/config_schema.py`,
-  `brain_model/io.py`, `brain_model/validation.py`, `analysis/reports.py`
-  (katalog najwyższego poziomu; nie `brain_core/analysis/reports.py`),
-  `main.py`, `main_gui.py`, `run_gui.py`, `brain_model.py` — **Kamil**,
-  termin: **2026-07-08**.
+  `brain_model/io.py`, `brain_model/validation.py`,
+  `analysis/reports.py` (katalog najwyższego poziomu; nie `brain_core/analysis/reports.py`),
+  `main.py`, `main_gui.py`, `run_gui.py`, `brain_model.py` — **Kamil**, termin: **2026-07-08**.
 - `scripts/sync_web_defaults.py`, `brain_viewer/mapping.py` — **Olga**, termin: **2026-07-08**.
 - `tests/*.py` — **Rafał**, termin: **2026-07-22**.
 
