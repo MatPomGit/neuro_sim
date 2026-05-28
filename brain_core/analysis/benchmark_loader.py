@@ -3,16 +3,28 @@
 from __future__ import annotations
 
 from pathlib import Path
+import functools
 
 import numpy as np
 
 
 class BenchmarkValidationError(ValueError):
-    pass
     """Wyjątek zgłaszany przy błędach walidacji benchmarków referencyjnych."""
 
 
 def _load_csv_matrix(path: Path) -> np.ndarray:
+    """
+    Ładuje macierz danych z pliku CSV i waliduje jej strukturę.
+
+    Args:
+        path (Path): Ścieżka do pliku CSV.
+
+    Returns:
+        np.ndarray: Macierz danych z pliku.
+
+    Raises:
+        BenchmarkValidationError: Jeśli plik nie istnieje, jest pusty lub ma niepoprawną strukturę.
+    """
     if not path.exists():
         raise BenchmarkValidationError(f"Plik benchmarku nie istnieje: {path}")
     data = np.genfromtxt(path, delimiter=",", names=True)
@@ -27,34 +39,10 @@ def _load_csv_matrix(path: Path) -> np.ndarray:
     if matrix.ndim != 2:
         raise BenchmarkValidationError(f"Niepoprawny kształt danych: {path}")
     return matrix
-    """
-    Ładuje macierz danych z pliku CSV i waliduje jej strukturę.
-
-    Args:
-        path (Path): Ścieżka do pliku CSV.
-
-    Returns:
-        np.ndarray: Macierz danych z pliku.
-
-    Raises:
-        BenchmarkValidationError: Jeśli plik nie istnieje, jest pusty lub ma niepoprawną strukturę.
-    """
-
-
-import functools
 
 
 @functools.lru_cache(maxsize=4)
 def load_reference_benchmarks(base_dir: str | Path = "data/validation") -> dict[str, np.ndarray]:
-    root = Path(base_dir)
-    eeg = _load_csv_matrix(root / "eeg_target.csv")
-    fmri = _load_csv_matrix(root / "fmri_target.csv")
-    behavior = _load_csv_matrix(root / "behavior_target.csv")
-
-    if eeg.shape[0] < 2 or fmri.shape[0] < 2 or behavior.shape[0] < 2:
-        raise BenchmarkValidationError("Benchmarki muszą mieć co najmniej 2 wiersze.")
-
-    return {"eeg": eeg, "fmri": fmri, "behavior": behavior}
     """
     Ładuje benchmarki referencyjne EEG, fMRI i zachowania z plików CSV.
 
@@ -67,3 +55,12 @@ def load_reference_benchmarks(base_dir: str | Path = "data/validation") -> dict[
     Raises:
         BenchmarkValidationError: Jeśli benchmarki są niepoprawne lub niekompletne.
     """
+    root = Path(base_dir)
+    eeg = _load_csv_matrix(root / "eeg_target.csv")
+    fmri = _load_csv_matrix(root / "fmri_target.csv")
+    behavior = _load_csv_matrix(root / "behavior_target.csv")
+
+    if eeg.shape[0] < 2 or fmri.shape[0] < 2 or behavior.shape[0] < 2:
+        raise BenchmarkValidationError("Benchmarki muszą mieć co najmniej 2 wiersze.")
+
+    return {"eeg": eeg, "fmri": fmri, "behavior": behavior}

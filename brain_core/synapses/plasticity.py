@@ -7,6 +7,8 @@ import numpy as np
 
 @dataclass(frozen=True, slots=True)
 class NeuralMassPlasticityConfig:
+    """Parametry reguły plastyczności synaptycznej w skali neural-mass."""
+
     eta: float = 0.01
     decay_lambda: float = 0.001
     homeostatic_rate: float = 0.005
@@ -19,10 +21,13 @@ class NeuralMassPlasticityConfig:
 
 @dataclass(slots=True)
 class PlasticityTracker:
+    """Rejestruje historię wag i metryk aktualizacji plastyczności."""
+
     weight_history: list[np.ndarray] = field(default_factory=list)
     metrics_history: list[dict[str, float]] = field(default_factory=list)
 
     def record(self, weights: np.ndarray, dW_fast: np.ndarray, dW_slow: np.ndarray) -> None:
+        """Zapisuje kopię wag oraz normy szybkiej i wolnej aktualizacji."""
         self.weight_history.append(weights.copy())
         self.metrics_history.append(
             {
@@ -42,7 +47,7 @@ def update_weights_two_timescales(
     dt: float,
     config: NeuralMassPlasticityConfig,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Update synaptic weights using neural-mass rule and two time scales.
+    """Aktualizuje wagi synaptyczne regułą neural-mass w dwóch skalach czasu.
 
     dW_ij/dt = eta * pre_j * post_i * neuromod - lambda * W_ij
     """

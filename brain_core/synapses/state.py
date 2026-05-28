@@ -13,6 +13,8 @@ from .serotonin import serotonin_effect
 
 @dataclass(slots=True)
 class NeuromodulationState:
+    """Poziomy neuromodulatorów przypisane do pojedynczego regionu."""
+
     dopamine: float = 0.5
     noradrenaline: float = 0.5
     acetylcholine: float = 0.5
@@ -25,10 +27,13 @@ class NeuromodulationState:
 
 @dataclass(slots=True)
 class NeuromodulationConfig:
+    """Konfiguracja tempa aktualizacji stanu neuromodulacji."""
+
     update_rate: float = 0.15
 
 
 def create_region_state(region_names: list[str], default_level: float = 0.5) -> dict[str, NeuromodulationState]:
+    """Tworzy początkowy stan neuromodulacji dla listy regionów."""
     return {
         region: NeuromodulationState(
             dopamine=default_level,
@@ -57,6 +62,7 @@ def update_region_state(
     arousal_signal: float,
     config: NeuromodulationConfig | None = None,
 ) -> NeuromodulationState:
+    """Aktualizuje stan neuromodulacji regionu na podstawie sygnałów wejściowych."""
     cfg = config or NeuromodulationConfig()
     target_dopamine = dopamine_effect(reward_prediction_error, current.dopamine)
     target_noradrenaline = noradrenaline_effect(prediction_error, threat_signal, current.noradrenaline)
