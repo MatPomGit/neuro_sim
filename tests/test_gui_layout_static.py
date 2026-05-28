@@ -117,3 +117,22 @@ def test_batch_and_sensitivity_options_use_consecutive_advanced_rows() -> None:
     assert labels_to_rows["scenariusze serii"] == 5
     assert labels_to_rows["parametry wrażliwości"] == 6
     assert labels_to_rows["delta wrażliwości"] == 7
+
+
+def test_configure_styles_defines_guiding_gui_styles() -> None:
+    """Sprawdź, że GUI definiuje i stosuje kluczowe style prowadzące uwagę."""
+    tree = ast.parse(GUI_LAYOUT_PATH.read_text(encoding="utf-8"))
+    source = GUI_LAYOUT_PATH.read_text(encoding="utf-8")
+    configure_node = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "configure_styles"
+    )
+
+    assert configure_node.returns is not None
+    assert "Primary.TButton" in source
+    assert "QuickStart.TLabelframe" in source
+    assert "ScenarioInfo.TLabel" in source
+    assert "Status.Horizontal.TProgressbar" in source
+    assert "Advanced.TButton" in source
+    assert "Warning.Status.TLabel" in source

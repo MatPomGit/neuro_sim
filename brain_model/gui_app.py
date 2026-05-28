@@ -10,7 +10,7 @@ from dataclasses import fields
 
 from .gui_config import GuiConfigMixin
 from .gui_forms import RULE_FIELDS, ParameterForm
-from .gui_layout import GuiLayoutMixin
+from .gui_layout import GuiLayoutMixin, configure_styles
 from .gui_runner import GuiRunnerMixin
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
@@ -25,6 +25,7 @@ class BrainModelGUI(GuiConfigMixin, GuiRunnerMixin, GuiLayoutMixin, tk.Tk):
         self.title("konfiguracja symulacji Cognitive Brain Model")
         self.geometry("1180x780")
         self.minsize(940, 660)
+        configure_styles(self)
 
         self.brain_defaults = BrainParams()
         self.osc_defaults = WilsonCowanParams()
