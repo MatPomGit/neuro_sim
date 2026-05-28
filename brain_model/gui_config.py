@@ -52,6 +52,7 @@ class GuiConfigMixin:
             self.brain_form.vars["dt"].set(str(self.dt_var.get()))
         self.scenario_var.set(str(config.get("scenario", self.scenario_var.get())))
         self.save_results_var.set(bool(config.get("save_results", self.save_results_var.get())))
+        self._refresh_scenario_details()
         self._on_auto_dt_toggle()
 
         for name, value in config.get("brain_params", {}).items():
@@ -63,6 +64,7 @@ class GuiConfigMixin:
         for name, value in config.get("plots", {}).items():
             if name in self.plot_vars:
                 self.plot_vars[name].set(bool(value))
+        self._sync_plot_preset_from_vars()
 
     def _save_current_config(self) -> None:
         """Zapisz bieżącą konfigurację GUI do pliku JSON."""
@@ -82,7 +84,9 @@ class GuiConfigMixin:
             "config": self._collect_config(),
         }
         try:
-            Path(target).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            Path(target).write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
             self.status_var.set(f"Zapisano konfigurację: {target}")
         except Exception as exc:
             messagebox.showerror("Błąd", f"Nie udało się zapisać konfiguracji: {exc}")

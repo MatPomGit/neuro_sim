@@ -80,35 +80,123 @@ class GuiLayoutMixin:
         panes.add(left, weight=1)
         panes.add(right, weight=1)
 
-        self.sim_frame = ttk.LabelFrame(left, text="Symulacja", padding=10)
+        self._build_quick_start_section(left)
+        self._build_advanced_options_section(right)
+        self._build_results_and_plots_section(right)
+
+        bottom = ttk.Frame(root)
+        bottom.pack(fill="x", pady=(12, 0))
+
+        ttk.Button(bottom, text="Przywróć domyślne", command=self.reset_defaults).pack(side="left")
+        ttk.Button(bottom, text="Uruchom symulację", command=self.start_simulation).pack(
+            side="right"
+        )
+
+        self.status_var = tk.StringVar(value="Gotowe.")
+        ttk.Label(root, textvariable=self.status_var).pack(anchor="w", pady=(8, 0))
+        self.progress_var = tk.DoubleVar(value=0.0)
+        self.progress = ttk.Progressbar(
+            root, variable=self.progress_var, maximum=100, mode="determinate"
+        )
+        self.progress.pack(fill="x", pady=(4, 0))
+        self.summary_var = tk.StringVar(value="")
+        ttk.Label(root, textvariable=self.summary_var, justify="left").pack(anchor="w", pady=(4, 0))
+
+        self.scenario_combo.bind(
+            "<<ComboboxSelected>>", lambda _e: self._refresh_scenario_details()
+        )
+        self._refresh_scenario_details()
+        self.T_var.trace_add("write", lambda *_: self._on_auto_dt_toggle())
+        self._on_auto_dt_toggle()
+
+        self.plot_panel = PlotWindow(plots_tab)
+        self.plot_panel.pack(fill="both", expand=True)
+
+    def _build_quick_start_section(self, parent: ttk.Frame) -> None:
+        """Zbuduj sekcję szybkiego uruchomienia dla początkującego użytkownika."""
+        self.sim_frame = ttk.LabelFrame(parent, text="Szybki start", padding=10)
         self.sim_frame.pack(fill="x", pady=(0, 10))
 
         self.T_var = tk.StringVar(value="12.0")
+        self.scenario_var = tk.StringVar(value="baseline")
+        self.save_results_var = tk.BooleanVar(value=True)
+
+        scenario_label = ttk.Label(self.sim_frame, text="scenariusz")
+        scenario_label.grid(row=0, column=0, sticky="w", padx=(0, 8), pady=3)
+        Tooltip(scenario_label, PARAMETER_DESCRIPTIONS["scenario"])
+        self.scenario_combo = ttk.Combobox(
+            self.sim_frame,
+            textvariable=self.scenario_var,
+            values=list_scenarios(),
+            state="readonly",
+            width=18,
+        )
+        self.scenario_combo.grid(row=0, column=1, sticky="ew", pady=3)
+
+        t_label = ttk.Label(self.sim_frame, text="czas symulacji [s]")
+        t_label.grid(row=1, column=0, sticky="w", padx=(0, 8), pady=3)
+        Tooltip(t_label, PARAMETER_DESCRIPTIONS["T"])
+        ttk.Entry(self.sim_frame, textvariable=self.T_var, width=14).grid(
+            row=1, column=1, sticky="ew", pady=3
+        )
+
+        save_checkbox = ttk.Checkbutton(
+            self.sim_frame, text="Zapisz wyniki po symulacji", variable=self.save_results_var
+        )
+        save_checkbox.grid(row=2, column=0, columnspan=2, sticky="w", pady=(8, 3))
+        Tooltip(save_checkbox, PARAMETER_DESCRIPTIONS["save_results"])
+
+        ttk.Button(self.sim_frame, text="Uruchom symulację", command=self.start_simulation).grid(
+            row=3, column=0, columnspan=2, sticky="ew", pady=(8, 6)
+        )
+
+        self.scenario_details_var = tk.StringVar(value="")
+        details_label = ttk.Label(
+            self.sim_frame, textvariable=self.scenario_details_var, justify="left", wraplength=500
+        )
+        details_label.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+        Tooltip(details_label, PARAMETER_DESCRIPTIONS["scenario_details"])
+        self.sim_frame.columnconfigure(1, weight=1)
+
+    def _build_advanced_options_section(self, parent: ttk.Frame) -> None:
+        """Zbuduj zwijaną sekcję technicznych opcji uruchomienia symulacji."""
+        self.advanced_options_visible_var = tk.BooleanVar(value=False)
+        toggle = ttk.Checkbutton(
+            parent,
+            text="Pokaż opcje zaawansowane",
+            variable=self.advanced_options_visible_var,
+            command=self._toggle_advanced_options,
+        )
+        toggle.pack(anchor="w", pady=(0, 4))
+
+        self.advanced_options_frame = ttk.LabelFrame(parent, text="Opcje zaawansowane", padding=10)
+        self.advanced_options_frame.pack(fill="x", pady=(0, 10))
+
         self.seed_var = tk.StringVar(value="7")
+        self.dt_var = tk.StringVar(value=str(self.brain_defaults.dt))
+        self.auto_dt_var = tk.BooleanVar(value=True)
         self.command_var = tk.StringVar(value="run")
         self.batch_seeds_var = tk.StringVar(value="7,11,19")
         self.batch_scenarios_var = tk.StringVar(value="reward-learning")
         self.sensitivity_var = tk.StringVar(value="noise,gw_threshold")
         self.sensitivity_delta_var = tk.StringVar(value="0.1")
 
-        t_label = ttk.Label(self.sim_frame, text="czas symulacji T [s]")
-        t_label.grid(row=0, column=0, sticky="w", padx=(0, 8), pady=3)
-        Tooltip(t_label, PARAMETER_DESCRIPTIONS["T"])
-        ttk.Entry(self.sim_frame, textvariable=self.T_var, width=14).grid(
-            row=0, column=1, sticky="ew", pady=3
+        self._add_labeled_entry(
+            self.advanced_options_frame,
+            0,
+            "ziarno losowości",
+            self.seed_var,
+            PARAMETER_DESCRIPTIONS["seed"],
         )
-
-        self.dt_var = tk.StringVar(value=str(self.brain_defaults.dt))
-        dt_label = ttk.Label(self.sim_frame, text="krok czasowy dt [s]")
-        dt_label.grid(row=1, column=0, sticky="w", padx=(0, 8), pady=3)
-        Tooltip(dt_label, PARAMETER_DESCRIPTIONS["dt"])
-        ttk.Entry(self.sim_frame, textvariable=self.dt_var, width=14).grid(
-            row=1, column=1, sticky="ew", pady=3
+        self._add_labeled_entry(
+            self.advanced_options_frame,
+            1,
+            "krok czasowy dt [s]",
+            self.dt_var,
+            PARAMETER_DESCRIPTIONS["dt"],
         )
-
-        self.auto_dt_var = tk.BooleanVar(value=True)
         auto_dt_checkbox = ttk.Checkbutton(
-            self.sim_frame,
+            self.advanced_options_frame,
             text="Automatyczny dobór dt",
             variable=self.auto_dt_var,
             command=self._on_auto_dt_toggle,
@@ -116,85 +204,83 @@ class GuiLayoutMixin:
         auto_dt_checkbox.grid(row=2, column=0, columnspan=2, sticky="w", pady=(0, 3))
         Tooltip(auto_dt_checkbox, PARAMETER_DESCRIPTIONS["auto_dt"])
 
-        seed_label = ttk.Label(self.sim_frame, text="seed")
-        seed_label.grid(row=3, column=0, sticky="w", padx=(0, 8), pady=3)
-        Tooltip(seed_label, PARAMETER_DESCRIPTIONS["seed"])
-        ttk.Entry(self.sim_frame, textvariable=self.seed_var, width=14).grid(
-            row=3, column=1, sticky="ew", pady=3
-        )
-        ttk.Label(self.sim_frame, text="komenda").grid(
-            row=5, column=0, sticky="w", padx=(0, 8), pady=3
-        )
+        command_label = ttk.Label(self.advanced_options_frame, text="tryb uruchomienia")
+        command_label.grid(row=3, column=0, sticky="w", padx=(0, 8), pady=3)
         cmd_combo = ttk.Combobox(
-            self.sim_frame,
+            self.advanced_options_frame,
             textvariable=self.command_var,
             values=["run", "batch"],
             state="readonly",
-            width=16,
+            width=18,
         )
-        cmd_combo.grid(row=5, column=1, sticky="ew", pady=3)
-        ttk.Label(self.sim_frame, text="batch seeds").grid(
-            row=6, column=0, sticky="w", padx=(0, 8), pady=3
+        cmd_combo.grid(row=3, column=1, sticky="ew", pady=3)
+        self._add_labeled_entry(
+            self.advanced_options_frame,
+            4,
+            "ziarna serii",
+            self.batch_seeds_var,
+            None,
         )
-        ttk.Entry(self.sim_frame, textvariable=self.batch_seeds_var, width=14).grid(
-            row=7, column=1, sticky="ew", pady=3
+        self._add_labeled_entry(
+            self.advanced_options_frame,
+            5,
+            "scenariusze serii",
+            self.batch_scenarios_var,
+            None,
         )
-        ttk.Label(self.sim_frame, text="batch scenariusze").grid(
-            row=8, column=0, sticky="w", padx=(0, 8), pady=3
+        self._add_labeled_entry(
+            self.advanced_options_frame,
+            6,
+            "parametry wrażliwości",
+            self.sensitivity_var,
+            None,
         )
-        ttk.Entry(self.sim_frame, textvariable=self.batch_scenarios_var, width=14).grid(
-            row=8, column=1, sticky="ew", pady=3
+        self._add_labeled_entry(
+            self.advanced_options_frame,
+            7,
+            "delta wrażliwości",
+            self.sensitivity_delta_var,
+            None,
         )
-        ttk.Label(self.sim_frame, text="sensitivity parametry").grid(
-            row=9, column=0, sticky="w", padx=(0, 8), pady=3
-        )
-        ttk.Entry(self.sim_frame, textvariable=self.sensitivity_var, width=14).grid(
-            row=9, column=1, sticky="ew", pady=3
-        )
-        ttk.Label(self.sim_frame, text="sensitivity delta").grid(
-            row=10, column=0, sticky="w", padx=(0, 8), pady=3
-        )
-        ttk.Entry(self.sim_frame, textvariable=self.sensitivity_delta_var, width=14).grid(
-            row=10, column=1, sticky="ew", pady=3
-        )
-        self.scenario_var = tk.StringVar(value="baseline")
+        ttk.Button(
+            self.advanced_options_frame,
+            text="Parametry modelu i oscylatorów...",
+            command=self._open_advanced_settings,
+        ).grid(row=8, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+        self.advanced_options_frame.columnconfigure(1, weight=1)
+        self._toggle_advanced_options()
 
-        scenario_label = ttk.Label(self.sim_frame, text="scenariusz")
-        scenario_label.grid(row=4, column=0, sticky="w", padx=(0, 8), pady=3)
-        Tooltip(scenario_label, PARAMETER_DESCRIPTIONS["scenario"])
-        self.scenario_combo = ttk.Combobox(
-            self.sim_frame,
-            textvariable=self.scenario_var,
-            values=list_scenarios(),
-            state="readonly",
-            width=16,
+    def _add_labeled_entry(
+        self,
+        parent: ttk.Frame,
+        row: int,
+        label_text: str,
+        variable: tk.StringVar,
+        tooltip_text: str | None,
+    ) -> None:
+        """Dodaj podpisane pole tekstowe i opcjonalną podpowiedź do formularza."""
+        label = ttk.Label(parent, text=label_text)
+        label.grid(row=row, column=0, sticky="w", padx=(0, 8), pady=3)
+        if tooltip_text is not None:
+            Tooltip(label, tooltip_text)
+        ttk.Entry(parent, textvariable=variable, width=14).grid(
+            row=row, column=1, sticky="ew", pady=3
         )
-        self.scenario_combo.grid(row=4, column=1, sticky="ew", pady=3)
 
-        self.save_results_var = tk.BooleanVar(value=True)
-        save_checkbox = ttk.Checkbutton(
-            self.sim_frame, text="Zapisz wyniki po symulacji", variable=self.save_results_var
-        )
-        save_checkbox.grid(row=6, column=0, columnspan=2, sticky="w", pady=(8, 3))
-        Tooltip(save_checkbox, PARAMETER_DESCRIPTIONS["save_results"])
-        self.sim_frame.columnconfigure(1, weight=1)
+    def _toggle_advanced_options(self) -> None:
+        """Pokaż albo ukryj sekcję opcji zaawansowanych."""
+        if self.advanced_options_visible_var.get():
+            pack_options: dict[str, Any] = {"fill": "x", "pady": (0, 10)}
+            if hasattr(self, "plots_frame"):
+                pack_options["before"] = self.plots_frame
+            self.advanced_options_frame.pack(**pack_options)
+        else:
+            self.advanced_options_frame.pack_forget()
 
-        quick_frame = ttk.LabelFrame(left, text="Scenariusz", padding=10)
-        quick_frame.pack(fill="both", expand=True, pady=(0, 10))
-        self.scenario_details_var = tk.StringVar(value="")
-        details_label = ttk.Label(
-            quick_frame, textvariable=self.scenario_details_var, justify="left", wraplength=460
-        )
-        details_label.pack(anchor="w", fill="x")
-        Tooltip(details_label, PARAMETER_DESCRIPTIONS["scenario_details"])
-
-        settings_btn = ttk.Button(
-            right, text="Parametry zaawansowane...", command=self._open_advanced_settings
-        )
-        settings_btn.pack(anchor="w", pady=(0, 10))
-
-        self.plots_frame = ttk.LabelFrame(right, text="Wykresy", padding=10)
-        self.plots_frame.pack(fill="x")
+    def _build_results_and_plots_section(self, parent: ttk.Frame) -> None:
+        """Zbuduj panel wyników i szczegółowego wyboru wykresów z presetami."""
+        self.plots_frame = ttk.LabelFrame(parent, text="Wyniki i wykresy", padding=10)
+        self.plots_frame.pack(fill="both", expand=True)
 
         self.plot_vars: Dict[str, tk.BooleanVar] = {
             "activity": tk.BooleanVar(value=True),
@@ -210,6 +296,18 @@ class GuiLayoutMixin:
             "scenario_channels": tk.BooleanVar(value=True),
             "scenario_timeline": tk.BooleanVar(value=True),
         }
+        self.plot_preset_var = tk.StringVar(value="Pełne")
+        preset_frame = ttk.Frame(self.plots_frame)
+        preset_frame.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        ttk.Label(preset_frame, text="Preset wykresów:").pack(side="left", padx=(0, 8))
+        for preset_name in ("Podstawowe", "Diagnostyczne", "Pełne"):
+            ttk.Radiobutton(
+                preset_frame,
+                text=preset_name,
+                value=preset_name,
+                variable=self.plot_preset_var,
+                command=self._apply_plot_preset,
+            ).pack(side="left", padx=(0, 8))
 
         labels = {
             "activity": "aktywacje modułów poznawczych",
@@ -241,40 +339,44 @@ class GuiLayoutMixin:
             "scenario_timeline": PARAMETER_DESCRIPTIONS["plot_scenario_timeline"],
         }
 
-        for row, key in enumerate(self.plot_vars):
+        for row, key in enumerate(self.plot_vars, start=1):
             checkbox = ttk.Checkbutton(
                 self.plots_frame, text=labels[key], variable=self.plot_vars[key]
             )
             checkbox.grid(row=row, column=0, sticky="w", pady=2)
             Tooltip(checkbox, plot_tooltips[key])
+        self.plots_frame.columnconfigure(0, weight=1)
 
-        bottom = ttk.Frame(root)
-        bottom.pack(fill="x", pady=(12, 0))
+    def _plot_preset_keys(self, preset_name: str) -> set[str]:
+        """Zwróć zestaw wykresów aktywnych dla wskazanego presetu."""
+        if preset_name == "Podstawowe":
+            return {"activity", "behavior", "scenario_timeline"}
+        if preset_name == "Diagnostyczne":
+            return {
+                "activity",
+                "diagnostics",
+                "behavior",
+                "eeg",
+                "band_power",
+                "scenario_channels",
+                "scenario_timeline",
+            }
+        return set(self.plot_vars)
 
-        ttk.Button(bottom, text="Przywróć domyślne", command=self.reset_defaults).pack(side="left")
-        ttk.Button(bottom, text="Uruchom symulację", command=self.start_simulation).pack(
-            side="right"
-        )
+    def _apply_plot_preset(self) -> None:
+        """Ustaw widoczność wykresów zgodnie z aktualnie wybranym presetem."""
+        active_keys = self._plot_preset_keys(self.plot_preset_var.get())
+        for name, var in self.plot_vars.items():
+            var.set(name in active_keys)
 
-        self.status_var = tk.StringVar(value="Gotowe.")
-        ttk.Label(root, textvariable=self.status_var).pack(anchor="w", pady=(8, 0))
-        self.progress_var = tk.DoubleVar(value=0.0)
-        self.progress = ttk.Progressbar(
-            root, variable=self.progress_var, maximum=100, mode="determinate"
-        )
-        self.progress.pack(fill="x", pady=(4, 0))
-        self.summary_var = tk.StringVar(value="")
-        ttk.Label(root, textvariable=self.summary_var, justify="left").pack(anchor="w", pady=(4, 0))
-
-        self.scenario_combo.bind(
-            "<<ComboboxSelected>>", lambda _e: self._refresh_scenario_details()
-        )
-        self._refresh_scenario_details()
-        self.T_var.trace_add("write", lambda *_: self._on_auto_dt_toggle())
-        self._on_auto_dt_toggle()
-
-        self.plot_panel = PlotWindow(plots_tab)
-        self.plot_panel.pack(fill="both", expand=True)
+    def _sync_plot_preset_from_vars(self) -> None:
+        """Dopasuj nazwę presetu do aktualnych wartości pól wykresów, jeśli to możliwe."""
+        active_keys = {name for name, var in self.plot_vars.items() if var.get()}
+        for preset_name in ("Podstawowe", "Diagnostyczne", "Pełne"):
+            if active_keys == self._plot_preset_keys(preset_name):
+                self.plot_preset_var.set(preset_name)
+                return
+        self.plot_preset_var.set("Niestandardowe")
 
     def _build_menu(self) -> None:
         """Zbuduj główne menu aplikacji."""
@@ -359,32 +461,10 @@ class GuiLayoutMixin:
     def _refresh_scenario_details(self) -> None:
         """Odśwież opis bieżącego scenariusza w panelu konfiguracji."""
         scenario = get_scenario(self.scenario_var.get())
-        phases = (
-            ", ".join(
-                f"{p['name']} ({p['window']['start']}-{p['window']['end']} s)"
-                for p in scenario.phases
-            )
-            if scenario.phases
-            else "brak"
-        )
-        events = (
-            ", ".join(f"{e['type']}@{e['time']}s" for e in scenario.events)
-            if scenario.events
-            else "brak"
-        )
-        channels = (
-            ", ".join(
-                sorted([k for k, v in scenario.channels.items() if v.pulses or v.baseline > 0])
-            )
-            or "brak"
-        )
         self.scenario_details_var.set(
-            f"Opis: {scenario.description}\n"
+            f"Krótki opis: {scenario.description}\n"
             f"Przewidywane wyniki: {scenario.what_changes}\n"
-            f"Sugerowany czas: {scenario.duration_hint:.1f} s\n"
-            f"Fazy: {phases}\n"
-            f"Zdarzenia: {events}\n"
-            f"Kanały aktywne: {channels}"
+            f"Sugerowany czas: {scenario.duration_hint:.1f} s"
         )
 
     @staticmethod
@@ -530,14 +610,18 @@ class GuiLayoutMixin:
         messagebox.showinfo(
             "Instrukcja używania",
             (
-                "1) W zakładce Konfiguracja ustaw czas, seed i scenariusz.\n"
-                "2) Dostosuj parametry BrainParams i oscylatorów.\n"
-                "3) Wybierz wykresy do wygenerowania.\n"
-                "4) Kliknij 'Uruchom symulację'.\n"
-                "5) Jeśli aktywna opcja zapisu, wyniki trafią do outputs/.\n\n"
-                "Menu Plik:\n"
-                "- Nowa instancja: uruchamia kolejne okno programu.\n"
-                "- Zapisz/Wczytaj konfigurację: zapis i odtwarzanie ustawień GUI."
+                "Szybki przepływ dla początkującego:\n"
+                "1) W sekcji 'Szybki start' wybierz scenariusz.\n"
+                "2) Ustaw czas symulacji w sekundach.\n"
+                "3) Kliknij 'Uruchom symulację'.\n"
+                "4) Obejrzyj wyniki w zakładce 'Wykresy'.\n\n"
+                "Opcjonalnie:\n"
+                "- Zostaw włączone 'Zapisz wyniki po symulacji', aby zapisać pliki w outputs/.\n"
+                "- W panelu 'Wyniki i wykresy' wybierz preset: Podstawowe, "
+                "Diagnostyczne lub Pełne.\n"
+                "- Rozwiń 'Opcje zaawansowane' tylko wtedy, gdy chcesz zmienić ziarno, "
+                "dt, tryb serii albo analizę wrażliwości.\n\n"
+                "Menu Plik zapisuje i wczytuje konfigurację bez zmiany jej dotychczasowego formatu."
             ),
         )
 
@@ -570,6 +654,8 @@ class GuiLayoutMixin:
         self.osc_form.reset()
         for var in self.plot_vars.values():
             var.set(True)
+        self.plot_preset_var.set("Pełne")
+        self._refresh_scenario_details()
         self._on_auto_dt_toggle()
         self.status_var.set("Przywrócono wartości domyślne.")
 
