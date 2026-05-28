@@ -8,44 +8,104 @@ from typing import Protocol
 import numpy as np
 
 
-class DynamicsFn(Protocol):
-    """Sygnatura funkcji dynamiki deterministycznej."""
 
+class DynamicsFn(Protocol):
+    """
+    Sygnatura funkcji dynamiki deterministycznej.
+
+    Args:
+        t (float): Czas.
+        y (np.ndarray): Wektor stanu.
+
+    Returns:
+        np.ndarray: Pochodna stanu.
+    """
     def __call__(self, t: float, y: np.ndarray) -> np.ndarray: ...
+
 
 
 class NoiseFn(Protocol):
-    """Sygnatura funkcji składowej dyfuzyjnej dla SDE."""
+    """
+    Sygnatura funkcji składowej dyfuzyjnej dla SDE.
 
+    Args:
+        t (float): Czas.
+        y (np.ndarray): Wektor stanu.
+
+    Returns:
+        np.ndarray: Składowa dyfuzyjna.
+    """
     def __call__(self, t: float, y: np.ndarray) -> np.ndarray: ...
 
 
-class BaseIntegrator(Protocol):
-    """Wspólny interfejs integratorów czasu."""
 
+class BaseIntegrator(Protocol):
+    """
+    Wspólny interfejs integratorów czasu.
+
+    Args:
+        t (float): Czas.
+        y (np.ndarray): Wektor stanu.
+        dt (float): Krok czasowy.
+        f (DynamicsFn): Funkcja dynamiki.
+
+    Returns:
+        np.ndarray: Nowy stan po kroku integracji.
+    """
     def step(self, t: float, y: np.ndarray, dt: float, f: DynamicsFn) -> np.ndarray: ...
+
 
 
 @dataclass(slots=True)
 class EulerMaruyamaIntegrator:
-    """Integrator dla SDE: y' = f(t, y) + g(t, y) * xi."""
+    """
+    Integrator dla SDE: y' = f(t, y) + g(t, y) * xi.
 
+    Atrybuty:
+        noise_fn (NoiseFn): Funkcja szumu.
+        rng (np.random.Generator): Generator losowy.
+    """
     noise_fn: NoiseFn
     rng: np.random.Generator
 
     def step(self, t: float, y: np.ndarray, dt: float, f: DynamicsFn) -> np.ndarray:
-        """Wykonuje pojedynczy krok Eulera-Maruyamy."""
+        """
+        Wykonuje pojedynczy krok Eulera-Maruyamy.
+
+        Args:
+            t (float): Czas.
+            y (np.ndarray): Wektor stanu.
+            dt (float): Krok czasowy.
+            f (DynamicsFn): Funkcja dryfu.
+
+        Returns:
+            np.ndarray: Nowy stan po kroku.
+        """
         drift = f(t, y) * dt
         diffusion = self.noise_fn(t, y) * self.rng.normal(size=y.shape) * np.sqrt(dt)
         return y + drift + diffusion
 
 
+
 @dataclass(slots=True)
 class RK4Integrator:
-    """Klasyczny deterministyczny krok RK4."""
+    """
+    Klasyczny deterministyczny krok RK4.
+    """
 
     def step(self, t: float, y: np.ndarray, dt: float, f: DynamicsFn) -> np.ndarray:
-        """Wykonuje pojedynczy krok Rungego-Kutty 4. rzędu."""
+        """
+        Wykonuje pojedynczy krok Rungego-Kutty 4. rzędu.
+
+        Args:
+            t (float): Czas.
+            y (np.ndarray): Wektor stanu.
+            dt (float): Krok czasowy.
+            f (DynamicsFn): Funkcja dynamiki.
+
+        Returns:
+            np.ndarray: Nowy stan po kroku.
+        """
         k1 = f(t, y)
         k2 = f(t + 0.5 * dt, y + 0.5 * dt * k1)
         k3 = f(t + 0.5 * dt, y + 0.5 * dt * k2)
