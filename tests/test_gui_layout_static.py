@@ -37,13 +37,12 @@ def test_sim_frame_grid_cells_are_unique() -> None:
         if (
             isinstance(stmt, ast.Assign)
             and len(stmt.targets) == 1
-            and isinstance(stmt.targets[0], ast.Name)
             and isinstance(stmt.value, ast.Call)
             and stmt.value.args
             and isinstance(stmt.value.args[0], ast.Attribute)
             and stmt.value.args[0].attr == "sim_frame"
         ):
-            sim_frame_widgets.add(stmt.targets[0].id)
+            sim_frame_widgets.add(ast.unparse(stmt.targets[0]))
 
         for call in [node for node in ast.walk(stmt) if isinstance(node, ast.Call)]:
             if not isinstance(call.func, ast.Attribute) or call.func.attr != "grid":
