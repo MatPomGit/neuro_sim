@@ -44,6 +44,12 @@ class GuiRunnerMixin:
         if T < dt:
             raise ValueError("Czas symulacji T nie może być mniejszy od kroku czasowego dt.")
 
+        self.state.T = self.T_var.get()
+        self.state.seed = self.seed_var.get()
+        self.state.auto_dt = bool(self.auto_dt_var.get())
+        self.state.dt = str(dt)
+        self.state.brain_params = replace(self.state.brain_params, dt=dt)
+
         return T, seed, dt
 
     def start_simulation(self) -> None:
@@ -63,10 +69,10 @@ class GuiRunnerMixin:
     def _run_simulation_worker(self) -> None:
         """Wykonaj symulację lub batch i przekaż wynik do kolejki GUI."""
         try:
+            self._sync_state_from_controls()
             T, seed, dt = self._read_scalar_params()
-            self.brain_form.vars["dt"].set(str(dt))
             brain_params = self._build_brain_params()
-            oscillator_params = self.osc_form.values()
+            oscillator_params = self.state.oscillator_params
 
             if brain_params.dt <= 0:
                 raise ValueError("dt musi być większe od zera.")
@@ -76,7 +82,7 @@ class GuiRunnerMixin:
                 raise ValueError("oscillator_noise nie może być ujemny.")
 
             start = pytime.perf_counter()
-            if self.command_var.get() == "run":
+            if self.state.command == "run":
                 config_doc = {
                     "model": {
                         "noise": brain_params.noise,
@@ -92,7 +98,7 @@ class GuiRunnerMixin:
                     },
                     "timestep": dt,
                     "seed": seed,
-                    "task": {"scenario": self.scenario_var.get(), "duration": T},
+                    "task": {"scenario": self.state.scenario, "duration": T},
                     "output": {"save_results": False, "label": "gui", "output_dir": "outputs"},
                 }
                 config_payload = json.dumps(config_doc)
@@ -117,9 +123,9 @@ class GuiRunnerMixin:
             elapsed = pytime.perf_counter() - start
 
             save_info = None
-            if self.save_results_var.get():
+            if self.state.save_results:
                 try:
-                    out_dir = build_output_dir(self.scenario_var.get(), "gui")
+                    out_dir = build_output_dir(self.state.scenario, "gui")
                     save_info = save_run(
                         out_dir,
                         time,
@@ -229,10 +235,10 @@ class GuiRunnerMixin:
         oscillator_params: WilsonCowanParams,
     ) -> tuple[list[dict[str, float | int]], Any, Any, Any, Any, Any, Any]:
         """Wykonaj serię symulacji dla seedów, scenariuszy i perturbacji."""
-        seeds = [int(s) for s in self._parse_list(self.batch_seeds_var.get())]
-        scenarios = self._parse_list(self.batch_scenarios_var.get()) or [self.scenario_var.get()]
-        sens_params = self._parse_list(self.sensitivity_var.get())
-        delta = float(self.sensitivity_delta_var.get())
+        seeds = [int(s) for s in self._parse_list(self.state.batch_seeds)]
+        scenarios = self._parse_list(self.state.batch_scenarios) or [self.state.scenario]
+        sens_params = self._parse_list(self.state.sensitivity_params)
+        delta = float(self.state.sensitivity_delta)
         base_total = len(seeds) * len(scenarios)
         perturb_total = base_total * len(sens_params) * 2
         total_runs = base_total + perturb_total if sens_params else base_total

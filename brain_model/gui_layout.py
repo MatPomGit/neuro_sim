@@ -193,12 +193,13 @@ class GuiLayoutMixin:
         bottom.pack(fill="x", pady=(12, 0))
 
         ttk.Button(bottom, text="Przywróć domyślne", command=self.reset_defaults).pack(side="left")
+        ttk.Button(bottom, text="Zamknij", command=self.destroy).pack(side="right")
         ttk.Button(
             bottom,
             text="Uruchom symulację",
             command=self.start_simulation,
             style="Primary.TButton",
-        ).pack(side="right")
+        ).pack(side="right", padx=(0, 8))
 
         self.status_var = tk.StringVar(value="Gotowe.")
         self.status_label = ttk.Label(
@@ -234,9 +235,9 @@ class GuiLayoutMixin:
         )
         self.sim_frame.pack(fill="x", pady=(0, 10))
 
-        self.T_var = tk.StringVar(value="12.0")
-        self.scenario_var = tk.StringVar(value="baseline")
-        self.save_results_var = tk.BooleanVar(value=True)
+        self.T_var = tk.StringVar(value=self.state.T)
+        self.scenario_var = tk.StringVar(value=self.state.scenario)
+        self.save_results_var = tk.BooleanVar(value=self.state.save_results)
 
         scenario_label = ttk.Label(self.sim_frame, text="scenariusz")
         scenario_label.grid(row=0, column=0, sticky="w", padx=(0, 8), pady=3)
@@ -299,14 +300,14 @@ class GuiLayoutMixin:
         )
         self.advanced_options_frame.pack(fill="x", pady=(0, 10))
 
-        self.seed_var = tk.StringVar(value="7")
-        self.dt_var = tk.StringVar(value=str(self.brain_defaults.dt))
-        self.auto_dt_var = tk.BooleanVar(value=True)
-        self.command_var = tk.StringVar(value="run")
-        self.batch_seeds_var = tk.StringVar(value="7,11,19")
-        self.batch_scenarios_var = tk.StringVar(value="reward-learning")
-        self.sensitivity_var = tk.StringVar(value="noise,gw_threshold")
-        self.sensitivity_delta_var = tk.StringVar(value="0.1")
+        self.seed_var = tk.StringVar(value=self.state.seed)
+        self.dt_var = tk.StringVar(value=self.state.dt)
+        self.auto_dt_var = tk.BooleanVar(value=self.state.auto_dt)
+        self.command_var = tk.StringVar(value=self.state.command)
+        self.batch_seeds_var = tk.StringVar(value=self.state.batch_seeds)
+        self.batch_scenarios_var = tk.StringVar(value=self.state.batch_scenarios)
+        self.sensitivity_var = tk.StringVar(value=self.state.sensitivity_params)
+        self.sensitivity_delta_var = tk.StringVar(value=self.state.sensitivity_delta)
 
         self._add_labeled_entry(
             self.advanced_options_frame,
@@ -411,19 +412,25 @@ class GuiLayoutMixin:
         self.plots_frame = ttk.LabelFrame(parent, text="Wyniki i wykresy", padding=10)
         self.plots_frame.pack(fill="both", expand=True)
 
+        default_plots = {
+            "activity": True,
+            "simulated_brain_activity": True,
+            "brain_region_projections": True,
+            "region_activity_2d": True,
+            "diagnostics": True,
+            "behavior": True,
+            "eeg": True,
+            "band_power": True,
+            "weight_trajectories": True,
+            "weight_deltas": True,
+            "scenario_channels": True,
+            "scenario_timeline": True,
+        }
+        if not self.state.plots:
+            self.state.plots = dict(default_plots)
         self.plot_vars: Dict[str, tk.BooleanVar] = {
-            "activity": tk.BooleanVar(value=True),
-            "simulated_brain_activity": tk.BooleanVar(value=True),
-            "brain_region_projections": tk.BooleanVar(value=True),
-            "region_activity_2d": tk.BooleanVar(value=True),
-            "diagnostics": tk.BooleanVar(value=True),
-            "behavior": tk.BooleanVar(value=True),
-            "eeg": tk.BooleanVar(value=True),
-            "band_power": tk.BooleanVar(value=True),
-            "weight_trajectories": tk.BooleanVar(value=True),
-            "weight_deltas": tk.BooleanVar(value=True),
-            "scenario_channels": tk.BooleanVar(value=True),
-            "scenario_timeline": tk.BooleanVar(value=True),
+            name: tk.BooleanVar(value=self.state.plots.get(name, value))
+            for name, value in default_plots.items()
         }
         self.plot_preset_var = tk.StringVar(value="Pełne")
         preset_frame = ttk.Frame(self.plots_frame)
@@ -500,6 +507,7 @@ class GuiLayoutMixin:
         active_keys = self._plot_preset_keys(self.plot_preset_var.get())
         for name, var in self.plot_vars.items():
             var.set(name in active_keys)
+        self._sync_state_from_controls()
 
     def _sync_plot_preset_from_vars(self) -> None:
         """Dopasuj nazwę presetu do aktualnych wartości pól wykresów, jeśli to możliwe."""
@@ -570,19 +578,13 @@ class GuiLayoutMixin:
         )
         osc.pack(fill="both", expand=True)
 
-        for name, var in self.brain_form.vars.items():
-            if name in brain.vars:
-                brain.vars[name].set(var.get())
-        for name, var in self.osc_form.vars.items():
-            if name in osc.vars:
-                osc.vars[name].set(var.get())
+        self._sync_state_from_controls()
+        self._sync_advanced_forms_from_state(brain, osc)
 
         def save_and_close() -> None:
             """Zapisz wartości z okna zaawansowanego i zamknij okno."""
-            for name, var in brain.vars.items():
-                self.brain_form.vars[name].set(var.get())
-            for name, var in osc.vars.items():
-                self.osc_form.vars[name].set(var.get())
+            self._sync_state_from_controls()
+            self._sync_state_from_advanced_forms(brain, osc)
             win.destroy()
 
         btns = ttk.Frame(container)
@@ -592,7 +594,8 @@ class GuiLayoutMixin:
 
     def _refresh_scenario_details(self) -> None:
         """Odśwież opis bieżącego scenariusza w panelu konfiguracji."""
-        scenario = get_scenario(self.scenario_var.get())
+        self.state.scenario = self.scenario_var.get()
+        scenario = get_scenario(self.state.scenario)
         self.scenario_details_var.set(
             f"Krótki opis: {scenario.description}\n"
             f"Przewidywane wyniki: {scenario.what_changes}\n"
@@ -614,6 +617,7 @@ class GuiLayoutMixin:
             except ValueError:
                 return
             self.dt_var.set(f"{self._auto_dt_for_duration(T):.4f}")
+            self.state.dt = self.dt_var.get()
 
     def _open_new_instance(self) -> None:
         """Uruchom nowe okno programu jako osobny proces."""
@@ -640,14 +644,15 @@ class GuiLayoutMixin:
             oscillations,
             behavior,
         ) = payload
+        self._sync_state_from_controls()
         self.plot_panel.clear()
         has_plots = False
-        if self.plot_vars["activity"].get():
+        if self.state.plots.get("activity", False):
             self.plot_panel.add_plot(
                 "Aktywacje", draw_activity, time, activity, model.names, model.idx, figsize=(11, 7)
             )
             has_plots = True
-        if self.plot_vars["simulated_brain_activity"].get():
+        if self.state.plots.get("simulated_brain_activity", False):
             self.plot_panel.add_plot(
                 "Aktywność mózgu",
                 draw_simulated_brain_activity,
@@ -658,7 +663,7 @@ class GuiLayoutMixin:
                 figsize=(11, 7),
             )
             has_plots = True
-        if self.plot_vars["brain_region_projections"].get():
+        if self.state.plots.get("brain_region_projections", False):
             self.plot_panel.add_plot(
                 "Rzuty mózgu SVG",
                 draw_brain_region_projections,
@@ -669,7 +674,7 @@ class GuiLayoutMixin:
                 figsize=(11, 8),
             )
             has_plots = True
-        if self.plot_vars["region_activity_2d"].get():
+        if self.state.plots.get("region_activity_2d", False):
             self.plot_panel.add_plot(
                 "Regiony 2D w czasie",
                 draw_region_activity_2d,
@@ -680,15 +685,15 @@ class GuiLayoutMixin:
                 figsize=(11, 8),
             )
             has_plots = True
-        if self.plot_vars["diagnostics"].get():
+        if self.state.plots.get("diagnostics", False):
             self.plot_panel.add_plot(
                 "Diagnostyka", draw_diagnostics, time, diagnostics, figsize=(11, 5)
             )
             has_plots = True
-        if self.plot_vars["behavior"].get():
+        if self.state.plots.get("behavior", False):
             self.plot_panel.add_plot("Behavior", draw_behavior, time, behavior, figsize=(11, 5))
             has_plots = True
-        if self.plot_vars["eeg"].get():
+        if self.state.plots.get("eeg", False):
             self.plot_panel.add_plot(
                 "EEG modułów",
                 draw_eeg_modules,
@@ -699,36 +704,36 @@ class GuiLayoutMixin:
                 figsize=(11, 6),
             )
             has_plots = True
-        if self.plot_vars["band_power"].get():
+        if self.state.plots.get("band_power", False):
             self.plot_panel.add_plot(
                 "Moc pasm", draw_band_power, time, oscillations, figsize=(11, 8)
             )
             has_plots = True
-        if self.plot_vars["weight_trajectories"].get():
+        if self.state.plots.get("weight_trajectories", False):
             self.plot_panel.add_plot(
                 "Trajektorie wag", draw_weight_trajectories, time, diagnostics, figsize=(11, 5)
             )
             has_plots = True
-        if self.plot_vars["weight_deltas"].get():
+        if self.state.plots.get("weight_deltas", False):
             self.plot_panel.add_plot(
                 "Przyrosty wag", draw_weight_deltas, time, diagnostics, figsize=(11, 5)
             )
             has_plots = True
-        if self.plot_vars["scenario_channels"].get():
+        if self.state.plots.get("scenario_channels", False):
             self.plot_panel.add_plot(
                 "Kanały scenariusza",
                 draw_scenario_channels,
                 time,
-                get_scenario(self.scenario_var.get()),
+                get_scenario(self.state.scenario),
                 figsize=(11, 5),
             )
             has_plots = True
-        if self.plot_vars["scenario_timeline"].get():
+        if self.state.plots.get("scenario_timeline", False):
             self.plot_panel.add_plot(
                 "Oś czasu scenariusza",
                 draw_scenario_timeline,
                 time,
-                get_scenario(self.scenario_var.get()),
+                get_scenario(self.state.scenario),
                 figsize=(11, 4),
             )
             has_plots = True
@@ -772,32 +777,37 @@ class GuiLayoutMixin:
 
     def reset_defaults(self) -> None:
         """Przywróć wartości domyślne formularzy i opcji GUI."""
-        self.T_var.set("12.0")
-        self.dt_var.set(str(self.brain_defaults.dt))
-        self.seed_var.set("7")
-        self.command_var.set("run")
-        self.batch_seeds_var.set("7,11,19")
-        self.batch_scenarios_var.set("reward-learning")
-        self.sensitivity_var.set("noise,gw_threshold")
-        self.sensitivity_delta_var.set("0.1")
-        self.scenario_var.set("baseline")
-        self.auto_dt_var.set(True)
-        self.save_results_var.set(True)
-        self.brain_form.reset()
-        self.osc_form.reset()
-        for var in self.plot_vars.values():
-            var.set(True)
+        self.state.T = "12.0"
+        self.state.dt = str(self.brain_defaults.dt)
+        self.state.seed = "7"
+        self.state.command = "run"
+        self.state.batch_seeds = "7,11,19"
+        self.state.batch_scenarios = "reward-learning"
+        self.state.sensitivity_params = "noise,gw_threshold"
+        self.state.sensitivity_delta = "0.1"
+        self.state.scenario = "baseline"
+        self.state.auto_dt = True
+        self.state.save_results = True
+        self.state.brain_params = self.brain_defaults
+        self.state.oscillator_params = self.osc_defaults
+        self.state.plots = {name: True for name in self.plot_vars}
+        self._sync_controls_from_state()
         self.plot_preset_var.set("Pełne")
         self._refresh_scenario_details()
         self._on_auto_dt_toggle()
+        try:
+            self.state.dt = self.dt_var.get()
+            self.state.brain_params = replace(self.state.brain_params, dt=float(self.state.dt))
+        except ValueError:
+            pass
         self.status_label.configure(style="Status.TLabel")
         self.status_var.set("Przywrócono wartości domyślne.")
 
     def _build_brain_params(self) -> BrainParams:
-        """Zbuduj parametry modelu z zachowaniem reguł domyślnych."""
-        scalar_params = self.brain_form.values()
+        """Zbuduj parametry modelu z aktualnego stanu, zachowując reguły domyślne."""
         return replace(
-            scalar_params,
+            self.state.brain_params,
+            dt=float(self.state.dt),
             semantic_rule=self.brain_defaults.semantic_rule,
             value_rule=self.brain_defaults.value_rule,
             connectivity_adaptation=self.brain_defaults.connectivity_adaptation,
