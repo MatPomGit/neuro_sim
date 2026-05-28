@@ -114,7 +114,7 @@ SCENARIOS = {
 }
 
 
-def list_scenarios():
+def list_scenarios() -> list[str]:
     return sorted(SCENARIOS.keys())
 
 

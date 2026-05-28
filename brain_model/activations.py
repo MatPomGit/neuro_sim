@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def sigmoid(z, beta=4.0):
+def sigmoid(z: float | np.ndarray, beta: float = 4.0) -> float | np.ndarray:
     """
     Funkcja aktywacji populacyjnej.
 

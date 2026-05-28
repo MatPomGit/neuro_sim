@@ -1,3 +1,7 @@
+from typing import Sequence
+
+from numpy.typing import NDArray
+
 from brain_core.anatomy.atlases import load_connectome, load_region_atlas, validate_atlas_connectome_consistency
 
 
@@ -6,7 +10,7 @@ _CONNECTOME = load_connectome(_ATLAS)
 validate_atlas_connectome_consistency(_ATLAS, _CONNECTOME)
 
 
-def build_connectivity(names):
+def build_connectivity(names: Sequence[str]) -> NDArray:
     """
     W[target, source] opisuje wpływ aktywności regionu source na region target.
     """
