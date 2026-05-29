@@ -52,6 +52,34 @@ PARAMETER_DESCRIPTIONS = {
     "plot_scenario_timeline": "Oś czasu scenariusza: fazy i zdarzenia.",
 }
 
+PARAMETER_LABELS = {
+    "T": "czas symulacji [s]",
+    "dt": "krok czasowy dt [s]",
+    "seed": "ziarno losowości",
+    "auto_dt": "automatyczny dobór dt",
+    "noise": "szum neuronalny",
+    "gw_threshold": "próg globalnej przestrzeni roboczej",
+    "gw_gain": "wzmocnienie globalnej przestrzeni roboczej",
+    "learning_rate_semantic": "tempo uczenia semantycznego",
+    "learning_rate_value": "tempo uczenia wartościowania",
+    "decay_semantic": "zanik śladu semantycznego",
+    "enable_oscillators": "włącz oscylatory",
+    "decision_threshold": "próg decyzji",
+    "confidence_gain": "wzmocnienie pewności",
+    "w_ee": "samowzmacnianie populacji E",
+    "w_ei": "hamowanie E przez I",
+    "w_ie": "pobudzanie I przez E",
+    "w_ii": "samooddziaływanie populacji I",
+    "baseline_e": "bazowy napęd populacji E",
+    "baseline_i": "bazowy napęd populacji I",
+    "cognitive_drive_gain": "wzmocnienie napędu poznawczego",
+    "coupling_gain": "wzmocnienie sprzężenia oscylatorów",
+    "oscillator_noise": "szum oscylatorów",
+    "phase_drive_gain": "wzmocnienie napędu fazy",
+    "scenario": "scenariusz",
+    "save_results": "zapisz wyniki",
+}
+
 APP_BASE_VERSION = "0.3"
 
 
@@ -136,7 +164,9 @@ class ParameterForm(ttk.LabelFrame):
         self.dataclass_type: type[Any] = dataclass_type
         self.defaults: Any = defaults
         self.vars: Dict[str, tk.Variable] = {}
-        self.include_fields: set[str] | None = set(include_fields) if include_fields is not None else None
+        self.include_fields: set[str] | None = (
+            set(include_fields) if include_fields is not None else None
+        )
 
         form_fields = [
             f
@@ -147,7 +177,7 @@ class ParameterForm(ttk.LabelFrame):
             name = field.name
             value = getattr(defaults, name)
 
-            label = ttk.Label(self, text=name)
+            label = ttk.Label(self, text=PARAMETER_LABELS.get(name, name))
             label.grid(row=row, column=0, sticky="w", padx=(0, 8), pady=3)
             Tooltip(label, PARAMETER_DESCRIPTIONS.get(name, ""))
 
@@ -178,19 +208,26 @@ class ParameterForm(ttk.LabelFrame):
             try:
                 if isinstance(default_value, bool):
                     kwargs[name] = bool(raw)
-                elif isinstance(default_value, int) and not isinstance(default_value, bool):
+                elif isinstance(default_value, int) and not isinstance(
+                    default_value, bool
+                ):
                     kwargs[name] = int(raw)
                 else:
                     kwargs[name] = float(raw)
             except ValueError as exc:
-                raise ValueError(f"Niepoprawna wartość parametru '{name}': {raw}") from exc
+                raise ValueError(
+                    f"Niepoprawna wartość parametru '{name}': {raw}"
+                ) from exc
 
         return self.dataclass_type(**kwargs)
 
     def reset(self) -> None:
         """Przywróć w formularzu wartości domyślne."""
         for field in fields(self.dataclass_type):
-            if self.include_fields is not None and field.name not in self.include_fields:
+            if (
+                self.include_fields is not None
+                and field.name not in self.include_fields
+            ):
                 continue
             name = field.name
             value = getattr(self.defaults, name)

@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 """Schema i walidacja konfiguracji eksperymentu symulacyjnego."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-
 
 
 @dataclass
@@ -24,23 +23,38 @@ class ExperimentConfig:
         snn (dict[str, Any]): Konfiguracja SNN.
         analysis (dict[str, Any]): Konfiguracja analiz.
     """
+
     model: dict[str, Any] = field(default_factory=dict)
     integrator: dict[str, Any] = field(default_factory=lambda: {"method": "euler"})
     timestep: float = 0.005
     seed: int = 7
-    task: dict[str, Any] = field(default_factory=lambda: {"scenario": "reward-learning", "duration": 45.0})
-    pathology: dict[str, Any] = field(default_factory=lambda: {"enabled": False, "mutations": [], "scenario": None})
-    output: dict[str, Any] = field(default_factory=lambda: {"save_results": True, "label": "run", "output_dir": "outputs"})
-    snn: dict[str, Any] = field(default_factory=lambda: {"enabled": False, "circuits": [], "sync_dt": 0.005})
-    analysis: dict[str, Any] = field(default_factory=lambda: {"sets": ["spectral", "phase_locking", "connectivity", "information_flow"]})
-
+    task: dict[str, Any] = field(
+        default_factory=lambda: {"scenario": "reward-learning", "duration": 45.0}
+    )
+    pathology: dict[str, Any] = field(
+        default_factory=lambda: {"enabled": False, "mutations": [], "scenario": None}
+    )
+    output: dict[str, Any] = field(
+        default_factory=lambda: {
+            "save_results": True,
+            "label": "run",
+            "output_dir": "outputs",
+        }
+    )
+    snn: dict[str, Any] = field(
+        default_factory=lambda: {"enabled": False, "circuits": []}
+    )
+    analysis: dict[str, Any] = field(
+        default_factory=lambda: {
+            "sets": ["spectral", "phase_locking", "connectivity", "information_flow"]
+        }
+    )
 
 
 class ConfigValidationError(ValueError):
     """
     Błąd walidacji konfiguracji eksperymentu.
     """
-
 
 
 def validate_config(raw: dict[str, Any]) -> ExperimentConfig:
@@ -59,7 +73,9 @@ def validate_config(raw: dict[str, Any]) -> ExperimentConfig:
     if not isinstance(raw, dict):
         raise ConfigValidationError("Konfiguracja musi być obiektem mapującym (dict).")
 
-    cfg = ExperimentConfig(**{k: v for k, v in raw.items() if k in ExperimentConfig.__dataclass_fields__})
+    cfg = ExperimentConfig(
+        **{k: v for k, v in raw.items() if k in ExperimentConfig.__dataclass_fields__}
+    )
 
     if cfg.timestep <= 0:
         raise ConfigValidationError("timestep musi być > 0")
@@ -81,7 +97,9 @@ def validate_config(raw: dict[str, Any]) -> ExperimentConfig:
             raise ConfigValidationError(f"pathology.mutations[{idx}] musi być obiektem")
         for required_key in ("kind", "scope", "target"):
             if required_key not in mutation:
-                raise ConfigValidationError(f"Brak pola pathology.mutations[{idx}].{required_key}")
+                raise ConfigValidationError(
+                    f"Brak pola pathology.mutations[{idx}].{required_key}"
+                )
 
     _validate_snn_config(cfg)
     _validate_analysis_config(cfg)
@@ -116,6 +134,7 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
     ratio = sync_dt / cfg.timestep
     if abs(round(ratio) - ratio) > 1e-9:
         raise ConfigValidationError("snn.sync_dt musi być wielokrotnością timestep")
+    cfg.snn["sync_dt"] = sync_dt
 
 
 def _validate_analysis_config(cfg: ExperimentConfig) -> None:

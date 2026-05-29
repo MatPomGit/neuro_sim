@@ -19,22 +19,29 @@ def _build_menu(gui: Any) -> None:
     file_menu = tk.Menu(menubar, tearoff=0)
     file_menu.add_command(label="Nowa instancja", command=gui._open_new_instance)
     file_menu.add_separator()
-    file_menu.add_command(label="Zapisz konfigurację...", command=gui._save_current_config)
-    file_menu.add_command(label="Wczytaj konfigurację...", command=gui._load_existing_config)
+    file_menu.add_command(
+        label="Zapisz konfigurację...", command=gui._save_current_config
+    )
+    file_menu.add_command(
+        label="Wczytaj konfigurację...", command=gui._load_existing_config
+    )
     file_menu.add_separator()
     file_menu.add_command(label="Zamknij", command=gui.destroy)
     menubar.add_cascade(label="Plik", menu=file_menu)
 
     edit_menu = tk.Menu(menubar, tearoff=0)
-    edit_menu.add_command(label="Konfiguracja symulacji", command=lambda: gui.tabs.select(0))
-    edit_menu.add_command(label="Konfiguracja wykresów", command=gui._focus_plots_section)
     edit_menu.add_command(
-        label="Parametry globalne (BrainParams)", command=gui._open_advanced_settings
+        label="Konfiguracja symulacji", command=lambda: gui.tabs.select(0)
     )
-    edit_menu.add_command(label="Parametry oscylatorów", command=gui._open_advanced_settings)
+    edit_menu.add_command(
+        label="Konfiguracja wykresów", command=gui._focus_plots_section
+    )
+    edit_menu.add_command(
+        label="Parametry modelu i oscylatorów...", command=gui._open_advanced_settings
+    )
     edit_menu.add_separator()
     edit_menu.add_command(label="Przywróć domyślne", command=gui.reset_defaults)
-    menubar.add_cascade(label="Edycja", menu=edit_menu)
+    menubar.add_cascade(label="Ustawienia", menu=edit_menu)
 
     help_menu = tk.Menu(menubar, tearoff=0)
     help_menu.add_command(label="Instrukcja używania", command=gui._show_usage_help)
