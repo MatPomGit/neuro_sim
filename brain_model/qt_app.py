@@ -282,7 +282,7 @@ def run_gui() -> None:
     apply_qt_styles(app)
     window = BrainModelQtWindow()
     window.show()
-    app.exec()
+    sys.exit(app.exec())
 
 
 BrainModelGUI = BrainModelQtWindow
