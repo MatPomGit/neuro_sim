@@ -16,14 +16,14 @@ PARAMETER_DESCRIPTIONS = {
     "dt": "Krok czasowy symulacji. Typowo 0.001-0.01; mniejszy krok zwiększa dokładność i koszt, większy może wygładzić lub zdestabilizować dynamikę.",
     "auto_dt": "Automatycznie dobiera krok dt do czasu T, aby utrzymać rozsądną liczbę kroków i stabilność symulacji.",
     "noise": "Skala szumu neuronalnego. Typowo 0.0-0.05; większa wartość zwiększa zmienność aktywacji i może maskować słabe efekty bodźców.",
-    "gw_threshold": "Próg zapłonu global workspace. Typowo 0.4-0.8; niższy ułatwia globalną aktywację, wyższy wymaga silniejszej uwagi lub salience.",
-    "gw_gain": "Stromość funkcji zapłonu global workspace. Typowo 5-20; większa wartość daje bardziej skokowe przejście między brakiem i obecnością zapłonu.",
+    "gw_threshold": "Próg zapłonu globalnej przestrzeni roboczej. Typowo 0.4-0.8; niższy ułatwia globalną aktywację, wyższy wymaga silniejszej uwagi lub sieci istotności.",
+    "gw_gain": "Stromość funkcji zapłonu globalnej przestrzeni roboczej. Typowo 5-20; większa wartość daje bardziej skokowe przejście między brakiem i obecnością zapłonu.",
     "learning_rate_semantic": "Tempo uczenia semantycznego. Typowo 0.0-0.02; większa wartość szybciej wzmacnia SEM przez HIP i GW.",
     "learning_rate_value": "Tempo uczenia wartościowania. Typowo 0.0-0.08; większa wartość szybciej zmienia VAL po błędzie predykcji nagrody.",
     "decay_semantic": "Zanik śladu semantycznego. Typowo 0.0-0.01; większa wartość szybciej wygasza SEM i ogranicza długotrwałe utrzymanie reprezentacji.",
     "enable_oscillators": "Włącza oscylatory Wilsona-Cowana. Typowo włączone; wyłączenie zeruje sygnały EEG i moc pasmową, ale zostawia dynamikę poznawczą.",
     "decision_threshold": "Próg decyzji behawioralnej. Typowo 0.45-0.8; niższy daje szybsze i częstsze decyzje, wyższy wymaga silniejszego pobudzenia EXEC/VAL/MOT/GW.",
-    "confidence_gain": "Wzmocnienie przeliczenia wyniku decyzji na pewność. Typowo 0.5-3.0; większa wartość szybciej nasyca confidence do wartości bliskich 0 lub 1.",
+    "confidence_gain": "Wzmocnienie przeliczenia wyniku decyzji na pewność. Typowo 0.5-3.0; większa wartość szybciej nasyca pewność do wartości bliskich 0 lub 1.",
     "w_ee": "Samowzmacnianie populacji pobudzającej. Typowo 8-14; większa wartość wzmacnia amplitudę i może ułatwiać oscylacje.",
     "w_ei": "Hamowanie populacji pobudzającej przez I. Typowo 7-12; większa wartość mocniej tłumi E i może zmniejszać amplitudę EEG.",
     "w_ie": "Pobudzanie populacji hamującej przez E. Typowo 8-13; większa wartość wzmacnia sprzężenie E-I i wpływa na rytmiczność.",
@@ -39,9 +39,9 @@ PARAMETER_DESCRIPTIONS = {
     "plot_activity": "Wykres aktywacji modułów poznawczych w czasie (np. ATT, EXEC, SEM, GW).",
     "plot_simulated_brain_activity": "Mapa cieplna aktywacji modułów mózgu w czasie (symulowana aktywność mózgu).",
     "plot_brain_region_projections": "Cztery rzuty mózgu na bazie szkieletu SVG z aktywacją regionów dla kolejnych kroków czasu.",
-    "plot_region_activity_2d": "Wykres 2D (heatmapa): aktywacja poszczególnych regionów mózgu w funkcji czasu eksperymentu.",
-    "plot_diagnostics": "Wykres zmiennych diagnostycznych i neuromodulacyjnych, m.in. prediction error, gw_ignition i neuroprzekaźników.",
-    "plot_behavior": "Wykres strumienia zachowania: decision score, confidence oraz markery punktów decyzji.",
+    "plot_region_activity_2d": "Wykres 2D (mapa cieplna): aktywacja poszczególnych regionów mózgu w funkcji czasu eksperymentu.",
+    "plot_diagnostics": "Wykres zmiennych diagnostycznych i neuromodulacyjnych, m.in. błędu predykcji, zapłonu globalnej przestrzeni roboczej i neuroprzekaźników.",
+    "plot_behavior": "Wykres strumienia zachowania: wynik decyzji, pewność oraz markery punktów decyzji.",
     "plot_eeg": "Wykres aproksymowanych sygnałów EEG (E-I) dla wybranych modułów modelu.",
     "plot_band_power": "Wykres chwilowej mocy pasm theta/alpha/beta/gamma wyliczanej z banku oscylatorów.",
     "plot_weight_trajectories": "Wykres trajektorii wybranych adaptowanych wag w macierzy W.",
@@ -55,6 +55,8 @@ LAST_UPDATED = "2026-05-25"
 APP_AUTHOR = "dr inż. Mateusz Pomianek"
 
 RULE_FIELDS = ("semantic_rule", "value_rule", "connectivity_adaptation")
+COMMAND_LABELS = {"run": "uruchom", "batch": "seria uruchomień"}
+COMMAND_VALUES = {label: command for command, label in COMMAND_LABELS.items()}
 
 
 class Tooltip:

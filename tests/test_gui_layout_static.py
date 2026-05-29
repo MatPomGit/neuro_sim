@@ -9,6 +9,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 GUI_LAYOUT_PATH = REPO_ROOT / "brain_model" / "gui_layout.py"
 GUI_SECTIONS_PATH = REPO_ROOT / "brain_model" / "gui_sections.py"
 GUI_STYLES_PATH = REPO_ROOT / "brain_model" / "gui_styles.py"
+GUI_MENU_PATH = REPO_ROOT / "brain_model" / "gui_menu.py"
+GUI_RESULTS_PATH = REPO_ROOT / "brain_model" / "gui_results.py"
 
 
 def _constant_int_keyword(call: ast.Call, name: str, default: int | None = None) -> int | None:
@@ -168,3 +170,24 @@ def test_bottom_bar_has_close_button_on_the_right() -> None:
             return
 
     raise AssertionError("Nie znaleziono prawostronnego przycisku 'Zamknij' w dolnym pasku.")
+
+
+def test_user_visible_help_and_behavior_labels_are_polish() -> None:
+    """Sprawdź, że główne etykiety pomocy i zachowania są po polsku."""
+    menu_source = GUI_MENU_PATH.read_text(encoding="utf-8")
+    results_source = GUI_RESULTS_PATH.read_text(encoding="utf-8")
+
+    assert 'label="Pomoc"' in menu_source
+    assert 'label="Help"' not in menu_source
+    assert 'add_plot("Zachowanie"' in results_source
+    assert 'add_plot("Behavior"' not in results_source
+
+
+def test_advanced_command_values_are_displayed_in_polish() -> None:
+    """Sprawdź, że techniczne komendy run/batch mają polskie etykiety w GUI."""
+    forms_source = (REPO_ROOT / "brain_model" / "gui_forms.py").read_text(encoding="utf-8")
+    sections_source = GUI_SECTIONS_PATH.read_text(encoding="utf-8")
+
+    assert 'COMMAND_LABELS = {"run": "uruchom", "batch": "seria uruchomień"}' in forms_source
+    assert "values=list(COMMAND_LABELS.values())" in sections_source
+    assert 'values=["run", "batch"]' not in sections_source
