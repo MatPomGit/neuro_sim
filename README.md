@@ -4,6 +4,23 @@ Mezoskopowy model dynamiki procesów poznawczych w Pythonie.
 
 Model nie symuluje pojedynczych neuronów. Reprezentuje aktywność modułów poznawczych oraz sprzężone oscylatory Wilsona-Cowana dla pasm EEG.
 
+## Aktualny stan i najbliższe prace
+
+Stan projektu na dzień 2026-05-29 jest opisany w `BACKLOG.md`. Backlog rozróżnia statusy `done`, `partial`, `planned` i `blocked`, wskazuje istniejące artefakty implementacyjne dla priorytetów P0–P2 oraz opisuje pozostały zakres dla pozycji częściowo zrealizowanych.
+
+Najbliższe zaplanowane prace obejmują:
+
+1. domknięcie jednolitego schematu konfiguracji eksperymentów i walidacji YAML/JSON,
+2. rozwój osi czasu zdarzeń oraz raportu dydaktycznego,
+3. sformalizowanie profilu `healthy_v1` jako baseline regresyjnego,
+4. potwierdzenie eksperymentów na konektomie z opóźnieniami i stabilizację neural mass,
+5. domknięcie neuromodulacji oraz scenariuszy healthy/disorder/lesion,
+6. ujednolicenie biblioteki tasków i wdrożenie referencyjnego `roving_oddball`,
+7. połączenie analiz EEG/BOLD z raportami interpretacyjnymi,
+8. dopracowanie trybu nauczyciela, dokumentacji i brakujących docstringów/type hints.
+
+Aktualny opis struktury repozytorium znajduje się w `docs/program_structure.md`.
+
 ## Moduły poznawcze
 
 - przetwarzanie wzrokowe i słuchowe,
@@ -45,6 +62,7 @@ Interpretacja:
 
 ```bash
 pip install .
+```
 
 ## Uruchomienie
 
@@ -54,20 +72,19 @@ python main.py
 
 ## Struktura
 
+Repozytorium jest podzielone na warstwę modelu poznawczego (`brain_model/`), warstwę eksperymentów i analiz (`brain_core/`), konfiguracje (`configs/`), dane (`data/`), dokumentację (`docs/`) oraz testy (`tests/`). Szczegółowy i aktualny opis znajduje się w `docs/program_structure.md`.
+
+Najważniejsze katalogi:
+
 ```text
 neuro_sim/
-├── main.py
-├── brain_model/
-│   ├── __init__.py
-│   ├── params.py
-│   ├── activations.py
-│   ├── modules.py
-│   ├── connectivity.py
-│   ├── stimuli.py
-│   ├── oscillators.py
-│   ├── model.py
-│   └── plotting.py
-└── README.md
+├── brain_model/     # model poznawczy, GUI, raporty, IO
+├── brain_core/      # symulacja, anatomia, eksperymenty, analiza
+├── configs/         # konfiguracje YAML/JSON
+├── data/            # atlasy, konektomy, dane walidacyjne
+├── docs/            # dokumentacja, ADR, zasoby statyczne
+├── tests/           # testy jednostkowe i integracyjne
+└── outputs/         # zapisane wyniki przykładowych uruchomień
 ```
 
 
@@ -102,8 +119,8 @@ GUI uruchamia symulację asynchronicznie (w tle), dzięki czemu interfejs nie bl
 Punkty wejścia GUI są zgodne i delegują do jednej implementacji:
 
 - `main_gui.py`
-- `run_gui.py`
 - `brain_model.gui:run_gui`
+- `neuro-sim-gui` po instalacji pakietu
 
 ## Wyniki symulacji
 
@@ -191,7 +208,7 @@ Szczegółowy opis aktualnej architektury repozytorium znajduje się w:
 
 - `docs/program_structure.md`
 
-Dokument zawiera również opis nowej infrastruktury symulacyjnej (`SimulationState`, `SimulationScheduler`, integratory i `RandomSources`) oraz wskazuje, które elementy są już gotowe, a które wymagają pełnej integracji z pętlą symulacji.
+Dokument zawiera opis aktualnej infrastruktury symulacyjnej (`SimulationState`, `SimulationScheduler`, `MultiScaleEngine`, integratory i `RandomSources`), warstw `brain_model`/`brain_core`, danych, konfiguracji, testów oraz najbliższych konsekwencji strukturalnych.
 
 
 ## Pilotaż NM ↔ SNN (Brian2 backend startowy)
