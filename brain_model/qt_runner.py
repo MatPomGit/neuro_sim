@@ -272,6 +272,8 @@ def run_batch(
 ) -> BatchPayload:
     """Wykonaj serię symulacji dla seedów, scenariuszy i perturbacji."""
     seeds = [int(value) for value in parse_list(state.batch_seeds)]
+    if not seeds:
+        raise ValueError("Lista seedów serii (batch_seeds) nie może być pusta.")
     scenarios = parse_list(state.batch_scenarios) or [state.scenario]
     sens_params = parse_list(state.sensitivity_params)
     delta = float(state.sensitivity_delta)
