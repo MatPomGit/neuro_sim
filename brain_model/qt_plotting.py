@@ -47,6 +47,8 @@ class QtPlotPanel(QTabWidget):
 
         container = QWidget()
         layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         canvas = FigureCanvasQTAgg(fig)
         _attach_line_tooltips(fig, axes)
         toolbar = NavigationToolbar2QT(canvas, container)
