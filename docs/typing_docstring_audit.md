@@ -1,8 +1,17 @@
-# Audyt typing i docstringów (wejście do implementacji)
+# Audyt type hints i docstringów
 
-## Lista plików Python (podział na moduły)
+Raport wejściowy do implementacji uzupełniania adnotacji typów i docstringów. Priorytety: **P1** oznacza elementy publiczne albo powiązane z konfiguracją, I/O, raportowaniem, GUI/CLI lub uruchamianiem symulacji; **P2** oznacza elementy wewnętrzne, prywatne helpery, testy oraz lokalne szczegóły implementacji.
 
-### brain_core
+## Podsumowanie statusu
+- Łącznie sprawdzono **95** plików `*.py`.
+- **Wprowadzone / zgodne z audytem:** 73 plików bez wykrytych braków.
+- **Do wprowadzenia:** 22 plików z brakami; w tym 19 plików z priorytetem P1 i 3 plików wyłącznie z priorytetem P2.
+
+## Lista plików `*.py` według modułów
+### `analysis`
+- `analysis/reports.py`
+
+### `brain_core`
 - `brain_core/__init__.py`
 - `brain_core/analysis/__init__.py`
 - `brain_core/analysis/benchmark_loader.py`
@@ -12,6 +21,7 @@
 - `brain_core/analysis/reports.py`
 - `brain_core/analysis/signal_metrics.py`
 - `brain_core/analysis/spectral.py`
+- `brain_core/anatomy/__init__.py`
 - `brain_core/anatomy/atlases.py`
 - `brain_core/anatomy/connectome.py`
 - `brain_core/anatomy/regions.py`
@@ -53,13 +63,19 @@
 - `brain_core/synapses/serotonin.py`
 - `brain_core/synapses/state.py`
 
-### brain_model
+### `brain_model`
 - `brain_model/__init__.py`
 - `brain_model/activations.py`
 - `brain_model/behavior.py`
 - `brain_model/calibration.py`
 - `brain_model/connectivity.py`
 - `brain_model/gui.py`
+- `brain_model/gui_app.py`
+- `brain_model/gui_config.py`
+- `brain_model/gui_forms.py`
+- `brain_model/gui_layout.py`
+- `brain_model/gui_runner.py`
+- `brain_model/gui_state.py`
 - `brain_model/io.py`
 - `brain_model/model.py`
 - `brain_model/modules.py`
@@ -68,14 +84,28 @@
 - `brain_model/plasticity.py`
 - `brain_model/plotting.py`
 - `brain_model/report.py`
+- `brain_model/report_export.py`
 - `brain_model/scenarios/__init__.py`
 - `brain_model/scenarios/library.py`
 - `brain_model/scenarios/types.py`
 - `brain_model/stimuli.py`
 - `brain_model/validation.py`
 
-### tests
+### `brain_viewer`
+- `brain_viewer/mapping.py`
+
+### `root`
+- `brain_model.py`
+- `main.py`
+- `main_gui.py`
+
+### `scripts`
+- `scripts/sync_web_defaults.py`
+
+### `tests`
 - `tests/test_atlas_connectome.py`
+- `tests/test_gui_layout_static.py`
+- `tests/test_gui_state.py`
 - `tests/test_lesions.py`
 - `tests/test_multiscale_engine.py`
 - `tests/test_neuromodulation.py`
@@ -87,249 +117,523 @@
 - `tests/test_task_stimulus_player.py`
 - `tests/test_wilson_cowan_network.py`
 
-### scripts
-- `scripts/sync_web_defaults.py`
+## Status wdrożenia według plików
+### `analysis`
+- `analysis/reports.py` — wprowadzone / brak braków.
 
-### analysis
-- `analysis/reports.py`
+### `brain_core`
+- `brain_core/__init__.py` — wprowadzone / brak braków.
+- `brain_core/analysis/__init__.py` — wprowadzone / brak braków.
+- `brain_core/analysis/benchmark_loader.py` — wprowadzone / brak braków.
+- `brain_core/analysis/connectivity.py` — wprowadzone / brak braków.
+- `brain_core/analysis/information_flow.py` — wprowadzone / brak braków.
+- `brain_core/analysis/phase_locking.py` — wprowadzone / brak braków.
+- `brain_core/analysis/reports.py` — wprowadzone / brak braków.
+- `brain_core/analysis/signal_metrics.py` — wprowadzone / brak braków.
+- `brain_core/analysis/spectral.py` — wprowadzone / brak braków.
+- `brain_core/anatomy/__init__.py` — wprowadzone / brak braków.
+- `brain_core/anatomy/atlases.py` — wprowadzone / brak braków.
+- `brain_core/anatomy/connectome.py` — wprowadzone / brak braków.
+- `brain_core/anatomy/regions.py` — wprowadzone / brak braków.
+- `brain_core/cognition/__init__.py` — wprowadzone / brak braków.
+- `brain_core/cognition/mapping.py` — wprowadzone / brak braków.
+- `brain_core/experiments/__init__.py` — wprowadzone / brak braków.
+- `brain_core/experiments/lesions.py` — do wprowadzenia — P1/P2.
+- `brain_core/experiments/pharmacology.py` — wprowadzone / brak braków.
+- `brain_core/experiments/protocols.py` — do wprowadzenia — P1/P2.
+- `brain_core/networks/__init__.py` — wprowadzone / brak braków.
+- `brain_core/networks/delays.py` — do wprowadzenia — P1/P2.
+- `brain_core/networks/structural_network.py` — do wprowadzenia — P1/P2.
+- `brain_core/physiology/__init__.py` — wprowadzone / brak braków.
+- `brain_core/physiology/bold_hrf.py` — wprowadzone / brak braków.
+- `brain_core/physiology/eeg_forward_model.py` — wprowadzone / brak braków.
+- `brain_core/physiology/neurovascular_coupling.py` — wprowadzone / brak braków.
+- `brain_core/populations/__init__.py` — wprowadzone / brak braków.
+- `brain_core/populations/spiking_population.py` — do wprowadzenia — P1/P2.
+- `brain_core/populations/wilson_cowan.py` — do wprowadzenia — P1/P2.
+- `brain_core/simulation/__init__.py` — wprowadzone / brak braków.
+- `brain_core/simulation/config_loader.py` — wprowadzone / brak braków.
+- `brain_core/simulation/config_schema.py` — wprowadzone / brak braków.
+- `brain_core/simulation/engine.py` — wprowadzone / brak braków.
+- `brain_core/simulation/integrators.py` — wprowadzone / brak braków.
+- `brain_core/simulation/multiscale_engine.py` — do wprowadzenia — P1/P2.
+- `brain_core/simulation/random_sources.py` — do wprowadzenia — P2.
+- `brain_core/simulation/run.py` — wprowadzone / brak braków.
+- `brain_core/simulation/scheduler.py` — do wprowadzenia — P1/P2.
+- `brain_core/simulation/signal_adapter.py` — do wprowadzenia — P1/P2.
+- `brain_core/simulation/state.py` — wprowadzone / brak braków.
+- `brain_core/synapses/__init__.py` — wprowadzone / brak braków.
+- `brain_core/synapses/acetylcholine.py` — wprowadzone / brak braków.
+- `brain_core/synapses/adrenaline.py` — wprowadzone / brak braków.
+- `brain_core/synapses/cortisol.py` — wprowadzone / brak braków.
+- `brain_core/synapses/dopamine.py` — wprowadzone / brak braków.
+- `brain_core/synapses/gaba_glutamate.py` — wprowadzone / brak braków.
+- `brain_core/synapses/noradrenaline.py` — wprowadzone / brak braków.
+- `brain_core/synapses/plasticity.py` — wprowadzone / brak braków.
+- `brain_core/synapses/serotonin.py` — wprowadzone / brak braków.
+- `brain_core/synapses/state.py` — wprowadzone / brak braków.
 
-### brain_viewer
-- `brain_viewer/mapping.py`
+### `brain_model`
+- `brain_model/__init__.py` — wprowadzone / brak braków.
+- `brain_model/activations.py` — wprowadzone / brak braków.
+- `brain_model/behavior.py` — wprowadzone / brak braków.
+- `brain_model/calibration.py` — wprowadzone / brak braków.
+- `brain_model/connectivity.py` — wprowadzone / brak braków.
+- `brain_model/gui.py` — wprowadzone / brak braków.
+- `brain_model/gui_app.py` — do wprowadzenia — P1/P2.
+- `brain_model/gui_config.py` — wprowadzone / brak braków.
+- `brain_model/gui_forms.py` — do wprowadzenia — P1/P2.
+- `brain_model/gui_layout.py` — do wprowadzenia — P1/P2.
+- `brain_model/gui_runner.py` — do wprowadzenia — P2.
+- `brain_model/gui_state.py` — wprowadzone / brak braków.
+- `brain_model/io.py` — wprowadzone / brak braków.
+- `brain_model/model.py` — do wprowadzenia — P1/P2.
+- `brain_model/modules.py` — wprowadzone / brak braków.
+- `brain_model/oscillators.py` — do wprowadzenia — P1/P2.
+- `brain_model/params.py` — wprowadzone / brak braków.
+- `brain_model/plasticity.py` — do wprowadzenia — P1/P2.
+- `brain_model/plotting.py` — do wprowadzenia — P1/P2.
+- `brain_model/report.py` — wprowadzone / brak braków.
+- `brain_model/report_export.py` — wprowadzone / brak braków.
+- `brain_model/scenarios/__init__.py` — wprowadzone / brak braków.
+- `brain_model/scenarios/library.py` — wprowadzone / brak braków.
+- `brain_model/scenarios/types.py` — do wprowadzenia — P1/P2.
+- `brain_model/stimuli.py` — wprowadzone / brak braków.
+- `brain_model/validation.py` — wprowadzone / brak braków.
 
-### root
-- `brain_model.py`
-- `main.py`
-- `main_gui.py`
-- `run_gui.py`
+### `brain_viewer`
+- `brain_viewer/mapping.py` — do wprowadzenia — P1/P2.
 
-## Braki per plik
+### `root`
+- `brain_model.py` — do wprowadzenia — P1/P2.
+- `main.py` — wprowadzone / brak braków.
+- `main_gui.py` — wprowadzone / brak braków.
+
+### `scripts`
+- `scripts/sync_web_defaults.py` — wprowadzone / brak braków.
+
+### `tests`
+- `tests/test_atlas_connectome.py` — wprowadzone / brak braków.
+- `tests/test_gui_layout_static.py` — wprowadzone / brak braków.
+- `tests/test_gui_state.py` — wprowadzone / brak braków.
+- `tests/test_lesions.py` — wprowadzone / brak braków.
+- `tests/test_multiscale_engine.py` — do wprowadzenia — P2.
+- `tests/test_neuromodulation.py` — wprowadzone / brak braków.
+- `tests/test_observation_and_analysis.py` — wprowadzone / brak braków.
+- `tests/test_plasticity_protocols.py` — wprowadzone / brak braków.
+- `tests/test_signal_metrics_modules.py` — wprowadzone / brak braków.
+- `tests/test_spiking_population_adapter.py` — wprowadzone / brak braków.
+- `tests/test_task_protocols_and_engine.py` — wprowadzone / brak braków.
+- `tests/test_task_stimulus_player.py` — wprowadzone / brak braków.
+- `tests/test_wilson_cowan_network.py` — wprowadzone / brak braków.
+
+## Zakres braków według plików
+### `analysis/reports.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/__init__.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/analysis/__init__.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_core/analysis/benchmark_loader.py`
-- [P1] Klasa `BenchmarkValidationError` (10): brak docstringu.
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/analysis/connectivity.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/analysis/information_flow.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/analysis/phase_locking.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_core/analysis/reports.py`
-- [P1] Klasa `AnalysisReport` (20): brak docstringu.
-- [P1] Metoda `AnalysisReport.to_json` (23): brak docstringu.
-- [P1] Metoda `AnalysisReport.to_markdown` (26): brak docstringu.
-- [P1] Metoda `AnalysisReport.to_csv_rows` (38): brak docstringu.
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/analysis/signal_metrics.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/analysis/spectral.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/anatomy/__init__.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/anatomy/atlases.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_core/anatomy/connectome.py`
-- [P1] Klasa `Connectome` (9): brak docstringu.
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_core/anatomy/regions.py`
-- [P1] Klasa `BrainRegion` (7): brak docstringu.
-- [P1] Klasa `RegionAtlas` (13): brak docstringu.
-- [P1] Metoda `RegionAtlas.names` (17): brak docstringu.
-- [P1] Metoda `RegionAtlas.tau_vector` (21): brak docstringu.
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/cognition/__init__.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/cognition/mapping.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/experiments/__init__.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_core/experiments/lesions.py`
-- [P1] Metoda `PathologyMutation.apply` (26): brak docstringu.
-- [P2] Metoda `PathologyMutation._apply_region` (32): brak docstringu.
-- [P2] Metoda `PathologyMutation._apply_edge` (52): brak docstringu.
-- [P2] Metoda `PathologyController.__init__` (75): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `PathologyController.apply_pre_simulation` (79): brak docstringu.
-- [P1] Metoda `PathologyController.apply_runtime` (83): brak docstringu.
-- [P1] Klasa `PathologyController`: potencjalnie brak adnotacji istotnych atrybutów instancji: pre_simulation, runtime.
+- Status: **do wprowadzenia**.
+- **P1** (linia 116): metoda `PathologyController.__init__` — brak type hintów: `return`.
+- **P1** (linia 123): atrybut instancji `PathologyController.pre_simulation` — brak jawnej adnotacji pola.
+- **P1** (linia 124): atrybut instancji `PathologyController.runtime` — brak jawnej adnotacji pola.
 
 ### `brain_core/experiments/pharmacology.py`
-- [P1] Klasa `PharmacologyIntervention` (9): brak docstringu.
-- [P1] Metoda `PharmacologyIntervention.apply` (19): brak docstringu.
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_core/experiments/protocols.py`
-- [P1] Klasa `ProtocolPhase` (8): brak docstringu.
-- [P1] Klasa `ProtocolPhase` (8): brak adnotacji pól klasowych: TEST, TRAIN.
-- [P1] Klasa `ErrorType` (13): brak docstringu.
-- [P1] Klasa `ErrorType` (13): brak adnotacji pól klasowych: COMMISSION, INTERFERENCE, NONE, OMISSION.
-- [P1] Klasa `ProtocolStep` (21): brak docstringu.
-- [P1] Klasa `TrialStimulus` (28): brak docstringu.
-- [P1] Klasa `TrialResult` (37): brak docstringu.
-- [P1] Klasa `CognitiveTask` (45): brak docstringu.
-- [P1] Metoda `CognitiveTask.generate_stimuli` (48): brak docstringu.
-- [P1] Metoda `CognitiveTask.expected_response` (50): brak docstringu.
-- [P1] Metoda `CognitiveTask.score_trial` (52): brak docstringu.
-- [P1] Klasa `ExperimentProtocol` (56): brak docstringu.
-- [P1] Metoda `ExperimentProtocol.total_duration` (60): brak docstringu.
-- [P1] Klasa `StroopTask` (70): brak docstringu.
-- [P1] Klasa `StroopTask` (70): brak adnotacji pól klasowych: name.
-- [P1] Metoda `StroopTask.generate_stimuli` (73): brak docstringu.
-- [P1] Metoda `StroopTask.expected_response` (90): brak docstringu.
-- [P1] Metoda `StroopTask.score_trial` (93): brak docstringu.
-- [P1] Klasa `GoNoGoTask` (102): brak docstringu.
-- [P1] Klasa `GoNoGoTask` (102): brak adnotacji pól klasowych: name.
-- [P1] Metoda `GoNoGoTask.generate_stimuli` (105): brak docstringu.
-- [P1] Metoda `GoNoGoTask.expected_response` (119): brak docstringu.
-- [P1] Metoda `GoNoGoTask.score_trial` (122): brak docstringu.
-- [P1] Klasa `NBackTask` (133): brak docstringu.
-- [P1] Klasa `NBackTask` (133): brak adnotacji pól klasowych: name.
-- [P2] Metoda `NBackTask.__init__` (136): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `NBackTask.generate_stimuli` (141): brak docstringu.
-- [P1] Metoda `NBackTask.expected_response` (160): brak docstringu.
-- [P1] Metoda `NBackTask.score_trial` (163): brak docstringu.
-- [P1] Klasa `NBackTask`: potencjalnie brak adnotacji istotnych atrybutów instancji: n.
+- Status: **do wprowadzenia**.
+- **P1** (linia 148): pole klasowe `StroopTask.name` — brak adnotacji typu.
+- **P1** (linia 192): pole klasowe `GoNoGoTask.name` — brak adnotacji typu.
+- **P1** (linia 217): metoda `GoNoGoTask.score_trial` — brak docstringu metody.
+- **P1** (linia 228): klasa `NBackTask` — brak docstringu klasy.
+- **P1** (linia 229): pole klasowe `NBackTask.name` — brak adnotacji typu.
+- **P1** (linia 231): metoda `NBackTask.__init__` — brak docstringu metody; brak type hintów: `return`.
+- **P1** (linia 234): atrybut instancji `NBackTask.n` — brak jawnej adnotacji pola.
+- **P1** (linia 236): metoda `NBackTask.generate_stimuli` — brak docstringu metody.
+- **P1** (linia 255): metoda `NBackTask.expected_response` — brak docstringu metody.
+- **P1** (linia 258): metoda `NBackTask.score_trial` — brak docstringu metody.
+
+### `brain_core/networks/__init__.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_core/networks/delays.py`
-- [P2] Metoda `DelayBuffer.__init__` (9): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `DelayBuffer.push` (20): brak docstringu.
-- [P1] Metoda `DelayBuffer.delayed_activity_matrix` (26): brak docstringu.
-- [P1] Klasa `DelayBuffer`: potencjalnie brak adnotacji istotnych atrybutów instancji: delays_steps, max_delay.
+- Status: **do wprowadzenia**.
+- **P1** (linia 18): metoda `DelayBuffer.__init__` — brak type hintów: `return`.
 
 ### `brain_core/networks/structural_network.py`
-- [P2] Metoda `StructuralNetwork.__init__` (9): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `StructuralNetwork.coupling` (16): brak docstringu.
-- [P1] Klasa `StructuralNetwork`: potencjalnie brak adnotacji istotnych atrybutów instancji: connectivity, region_names.
+- Status: **do wprowadzenia**.
+- **P1** (linia 15): metoda `StructuralNetwork.__init__` — brak type hintów: `return`.
+- **P1** (linia 29): atrybut instancji `StructuralNetwork.region_names` — brak jawnej adnotacji pola.
+- **P1** (linia 30): atrybut instancji `StructuralNetwork.connectivity` — brak jawnej adnotacji pola.
+
+### `brain_core/physiology/__init__.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/physiology/bold_hrf.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_core/physiology/eeg_forward_model.py`
-- [P2] Metoda `EEGForwardModel.__init__` (21): brak docstringu.
-- [P1] Metoda `EEGForwardModel.n_sensors` (31): brak docstringu.
-- [P1] Metoda `EEGForwardModel.n_sources` (35): brak docstringu.
-- [P2] Metoda `EEGForwardModel._apply_reference` (38): brak docstringu.
-- [P1] Metoda `EEGForwardModel.project` (47): brak docstringu.
-- [P1] Klasa `EEGForwardModel`: potencjalnie brak adnotacji istotnych atrybutów instancji: config, leadfield.
-- [P2] Metoda `EEGInverseSolver.__init__` (69): brak docstringu.
-- [P2] Metoda `EEGInverseSolver._solve` (75): brak docstringu.
-- [P1] Klasa `EEGInverseSolver`: potencjalnie brak adnotacji istotnych atrybutów instancji: leadfield.
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/physiology/neurovascular_coupling.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/populations/__init__.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_core/populations/spiking_population.py`
-- [P1] Klasa `Brian2SpikingPopulationAdapter` (26): brak adnotacji pól klasowych: backend_name.
-- [P2] Metoda `Brian2SpikingPopulationAdapter.__init__` (35): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `Brian2SpikingPopulationAdapter.step` (46): brak docstringu.
-- [P2] Metoda `Brian2SpikingPopulationAdapter._validate_input` (62): brak docstringu.
-- [P1] Klasa `Brian2SpikingPopulationAdapter`: potencjalnie brak adnotacji istotnych atrybutów instancji: dt, region_names.
+- Status: **do wprowadzenia**.
+- **P1** (linia 55): pole klasowe `Brian2SpikingPopulationAdapter.backend_name` — brak adnotacji typu.
+- **P2** (linia 103): metoda `Brian2SpikingPopulationAdapter._validate_input` — brak docstringu metody.
 
 ### `brain_core/populations/wilson_cowan.py`
-- [P1] Klasa `RegionWilsonCowanParams` (9): brak docstringu.
-- [P2] Metoda `RegionWilsonCowanModel.__init__` (25): brak docstringu; brak adnotacji wartości zwracanej.
-- [P2] Metoda `RegionWilsonCowanModel._tau_E` (39): brak docstringu.
-- [P2] Metoda `RegionWilsonCowanModel._tau_I` (43): brak docstringu.
-- [P2] Metoda `RegionWilsonCowanModel._w_EE` (47): brak docstringu.
-- [P2] Metoda `RegionWilsonCowanModel._w_EI` (51): brak docstringu.
-- [P2] Metoda `RegionWilsonCowanModel._w_IE` (55): brak docstringu.
-- [P2] Metoda `RegionWilsonCowanModel._w_II` (59): brak docstringu.
-- [P2] Metoda `RegionWilsonCowanModel._gain_E` (63): brak docstringu.
-- [P2] Metoda `RegionWilsonCowanModel._gain_I` (67): brak docstringu.
-- [P2] Metoda `RegionWilsonCowanModel._threshold_E` (71): brak docstringu.
-- [P2] Metoda `RegionWilsonCowanModel._threshold_I` (75): brak docstringu.
-- [P2] Metoda `RegionWilsonCowanModel._sigmoid` (79): brak docstringu.
-- [P1] Metoda `RegionWilsonCowanModel.step` (98): brak docstringu.
-- [P1] Klasa `RegionWilsonCowanModel`: potencjalnie brak adnotacji istotnych atrybutów instancji: E, I, params, region_names.
+- Status: **do wprowadzenia**.
+- **P1** (linia 50): metoda `RegionWilsonCowanModel.__init__` — brak type hintów: `return`.
+- **P2** (linia 74): metoda `RegionWilsonCowanModel._tau_E` — brak docstringu metody.
+- **P2** (linia 78): metoda `RegionWilsonCowanModel._tau_I` — brak docstringu metody.
+- **P2** (linia 82): metoda `RegionWilsonCowanModel._w_EE` — brak docstringu metody.
+- **P2** (linia 86): metoda `RegionWilsonCowanModel._w_EI` — brak docstringu metody.
+- **P2** (linia 90): metoda `RegionWilsonCowanModel._w_IE` — brak docstringu metody.
+- **P2** (linia 94): metoda `RegionWilsonCowanModel._w_II` — brak docstringu metody.
+- **P2** (linia 98): metoda `RegionWilsonCowanModel._gain_E` — brak docstringu metody.
+- **P2** (linia 102): metoda `RegionWilsonCowanModel._gain_I` — brak docstringu metody.
+- **P2** (linia 106): metoda `RegionWilsonCowanModel._threshold_E` — brak docstringu metody.
+- **P2** (linia 110): metoda `RegionWilsonCowanModel._threshold_I` — brak docstringu metody.
+
+### `brain_core/simulation/__init__.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/simulation/config_loader.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/simulation/config_schema.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/simulation/engine.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_core/simulation/integrators.py`
-- [P2] Metoda `DynamicsFn.__call__` (14): brak docstringu.
-- [P2] Metoda `NoiseFn.__call__` (20): brak docstringu.
-- [P1] Metoda `BaseIntegrator.step` (26): brak docstringu.
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_core/simulation/multiscale_engine.py`
-- [P1] Metoda `TimeScaleModule.update` (41): brak docstringu.
-- [P2] Metoda `MultiScaleEngine.__init__` (74): brak adnotacji wartości zwracanej.
-- [P1] Klasa `MultiScaleEngine`: potencjalnie brak adnotacji istotnych atrybutów instancji: base_dt, io_contract, tasks.
+- Status: **do wprowadzenia**.
+- **P1** (linia 132): atrybut instancji `MultiScaleEngine.base_dt` — brak jawnej adnotacji pola.
+- **P1** (linia 133): atrybut instancji `MultiScaleEngine.tasks` — brak jawnej adnotacji pola.
+- **P1** (linia 134): atrybut instancji `MultiScaleEngine.io_contract` — brak jawnej adnotacji pola.
+
+### `brain_core/simulation/random_sources.py`
+- Status: **do wprowadzenia**.
+- **P2** (linia 32): atrybut instancji `RandomSources._root` — brak jawnej adnotacji pola.
+
+### `brain_core/simulation/run.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_core/simulation/scheduler.py`
-- [P1] Metoda `SimulationModule.update` (14): brak docstringu.
-- [P1] Klasa `TaskStimulusPlayer`: potencjalnie brak adnotacji istotnych atrybutów instancji: stimuli.
+- Status: **do wprowadzenia**.
+- **P1** (linia 45): atrybut instancji `TaskStimulusPlayer.stimuli` — brak jawnej adnotacji pola.
 
 ### `brain_core/simulation/signal_adapter.py`
-- [P1] Klasa `CouplingSignalAdapter` (28): brak adnotacji pól klasowych: MAX_FIRING_RATE_HZ.
-- [P2] Metoda `CouplingSignalAdapter.__init__` (39): brak docstringu; brak adnotacji wartości zwracanej.
-- [P2] Metoda `CouplingSignalAdapter._validate_nm_vector` (75): brak docstringu.
-- [P1] Klasa `CouplingSignalAdapter`: potencjalnie brak adnotacji istotnych atrybutów instancji: mapping, sync_dt.
+- Status: **do wprowadzenia**.
+- **P1** (linia 37): pole klasowe `CouplingSignalAdapter.MAX_FIRING_RATE_HZ` — brak adnotacji typu.
+- **P1** (linia 43): atrybut instancji `CouplingSignalAdapter.mapping` — brak jawnej adnotacji pola.
+- **P1** (linia 44): atrybut instancji `CouplingSignalAdapter.sync_dt` — brak jawnej adnotacji pola.
+- **P2** (linia 45): atrybut instancji `CouplingSignalAdapter._indices` — brak jawnej adnotacji pola.
+
+### `brain_core/simulation/state.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/synapses/__init__.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/synapses/acetylcholine.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/synapses/adrenaline.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/synapses/cortisol.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/synapses/dopamine.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/synapses/gaba_glutamate.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/synapses/noradrenaline.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_core/synapses/plasticity.py`
-- [P1] Klasa `NeuralMassPlasticityConfig` (9): brak docstringu.
-- [P1] Klasa `PlasticityTracker` (21): brak docstringu.
-- [P1] Metoda `PlasticityTracker.record` (25): brak docstringu.
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_core/synapses/serotonin.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_core/synapses/state.py`
-- [P1] Klasa `NeuromodulationState` (15): brak docstringu.
-- [P1] Klasa `NeuromodulationConfig` (27): brak docstringu.
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_model/__init__.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_model/activations.py`
-- [P1] Funkcja `sigmoid` (4): brak adnotacji parametrów: z, beta; brak adnotacji wartości zwracanej.
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_model/behavior.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_model/calibration.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_model/connectivity.py`
-- [P1] Funkcja `build_connectivity` (9): brak adnotacji parametrów: names; brak adnotacji wartości zwracanej.
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_model/gui.py`
-- [P1] Klasa `Tooltip` (98): brak docstringu.
-- [P1] Metoda `Tooltip.__init__` (99): brak docstringu; brak adnotacji parametrów: widget; brak adnotacji wartości zwracanej.
-- [P1] Metoda `Tooltip.show` (106): brak docstringu; brak adnotacji parametrów: event; brak adnotacji wartości zwracanej.
-- [P1] Metoda `Tooltip.hide` (124): brak docstringu; brak adnotacji parametrów: event; brak adnotacji wartości zwracanej.
-- [P1] Klasa `Tooltip`: potencjalnie brak adnotacji istotnych atrybutów instancji: text, tip, widget.
-- [P1] Metoda `ParameterForm.__init__` (133): brak docstringu; brak adnotacji parametrów: parent, dataclass_type, defaults, include_fields; brak adnotacji wartości zwracanej.
-- [P1] Metoda `ParameterForm.values` (162): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `ParameterForm.reset` (184): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Klasa `ParameterForm`: potencjalnie brak adnotacji istotnych atrybutów instancji: dataclass_type, defaults, include_fields.
-- [P1] Metoda `BrainModelGUI.__init__` (196): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._build_layout` (214): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._build_menu` (399): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._focus_plots_section` (427): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._open_advanced_settings` (431): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._refresh_scenario_details` (463): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._auto_dt_for_duration` (473): brak docstringu.
-- [P1] Metoda `BrainModelGUI._on_auto_dt_toggle` (478): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._open_new_instance` (486): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._collect_config` (495): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._apply_config` (513): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._save_current_config` (539): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._load_existing_config` (558): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._show_usage_help` (570): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._show_about` (585): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI.reset_defaults` (596): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._build_brain_params` (615): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._read_scalar_params` (624): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI.start_simulation` (641): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._run_simulation_worker` (653): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._progress_single` (731): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._poll_worker` (734): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._apply_run_result` (754): brak docstringu; brak adnotacji parametrów: payload; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._extract_metrics` (845): brak docstringu; brak adnotacji parametrów: diagnostics, behavior; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._summarize_metrics` (853): brak docstringu; brak adnotacji parametrów: runs; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._parse_list` (868): brak docstringu; brak adnotacji wartości zwracanej.
-- [P1] Metoda `BrainModelGUI._run_batch` (871): brak docstringu; brak adnotacji parametrów: T, base_params, oscillator_params; brak adnotacji wartości zwracanej.
-- [P1] Klasa `BrainModelGUI`: potencjalnie brak adnotacji istotnych atrybutów instancji: T_var, auto_dt_var, batch_scenarios_var, batch_seeds_var, brain_defaults, brain_form, command_var, dt_var, osc_defaults, osc_form, plot_panel, plots_frame, progress, progress_var, save_results_var, scenario_combo, scenario_details_var, scenario_var, seed_var, sensitivity_delta_var, sensitivity_var, sim_frame, status_var, summary_var, tabs.
-- [P1] Funkcja `run_gui` (906): brak adnotacji wartości zwracanej.
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_model/gui_app.py`
+- Status: **do wprowadzenia**.
+- **P1** (linia 29): atrybut instancji `BrainModelGUI.brain_defaults` — brak jawnej adnotacji pola.
+- **P1** (linia 30): atrybut instancji `BrainModelGUI.osc_defaults` — brak jawnej adnotacji pola.
+- **P1** (linia 32): atrybut instancji `BrainModelGUI.state` — brak jawnej adnotacji pola.
+- **P2** (linia 41): atrybut instancji `BrainModelGUI._running` — brak jawnej adnotacji pola.
+
+### `brain_model/gui_config.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_model/gui_forms.py`
+- Status: **do wprowadzenia**.
+- **P1** (linia 65): atrybut instancji `Tooltip.widget` — brak jawnej adnotacji pola.
+- **P1** (linia 66): atrybut instancji `Tooltip.text` — brak jawnej adnotacji pola.
+- **P1** (linia 67): atrybut instancji `Tooltip.tip` — brak jawnej adnotacji pola.
+- **P1** (linia 110): atrybut instancji `ParameterForm.dataclass_type` — brak jawnej adnotacji pola.
+- **P1** (linia 111): atrybut instancji `ParameterForm.defaults` — brak jawnej adnotacji pola.
+- **P1** (linia 113): atrybut instancji `ParameterForm.include_fields` — brak jawnej adnotacji pola.
+
+### `brain_model/gui_layout.py`
+- Status: **do wprowadzenia**.
+- **P1** (linia 151): atrybut instancji `GuiLayoutMixin.tabs` — brak jawnej adnotacji pola.
+- **P1** (linia 204): atrybut instancji `GuiLayoutMixin.status_var` — brak jawnej adnotacji pola.
+- **P1** (linia 205): atrybut instancji `GuiLayoutMixin.status_label` — brak jawnej adnotacji pola.
+- **P1** (linia 209): atrybut instancji `GuiLayoutMixin.progress_var` — brak jawnej adnotacji pola.
+- **P1** (linia 210): atrybut instancji `GuiLayoutMixin.progress` — brak jawnej adnotacji pola.
+- **P1** (linia 218): atrybut instancji `GuiLayoutMixin.summary_var` — brak jawnej adnotacji pola.
+- **P1** (linia 228): atrybut instancji `GuiLayoutMixin.plot_panel` — brak jawnej adnotacji pola.
+- **P1** (linia 233): atrybut instancji `GuiLayoutMixin.sim_frame` — brak jawnej adnotacji pola.
+- **P1** (linia 238): atrybut instancji `GuiLayoutMixin.T_var` — brak jawnej adnotacji pola.
+- **P1** (linia 239): atrybut instancji `GuiLayoutMixin.scenario_var` — brak jawnej adnotacji pola.
+- **P1** (linia 240): atrybut instancji `GuiLayoutMixin.save_results_var` — brak jawnej adnotacji pola.
+- **P1** (linia 245): atrybut instancji `GuiLayoutMixin.scenario_combo` — brak jawnej adnotacji pola.
+- **P1** (linia 274): atrybut instancji `GuiLayoutMixin.scenario_details_var` — brak jawnej adnotacji pola.
+- **P1** (linia 288): atrybut instancji `GuiLayoutMixin.advanced_options_visible_var` — brak jawnej adnotacji pola.
+- **P1** (linia 298): atrybut instancji `GuiLayoutMixin.advanced_options_frame` — brak jawnej adnotacji pola.
+- **P1** (linia 303): atrybut instancji `GuiLayoutMixin.seed_var` — brak jawnej adnotacji pola.
+- **P1** (linia 304): atrybut instancji `GuiLayoutMixin.dt_var` — brak jawnej adnotacji pola.
+- **P1** (linia 305): atrybut instancji `GuiLayoutMixin.auto_dt_var` — brak jawnej adnotacji pola.
+- **P1** (linia 306): atrybut instancji `GuiLayoutMixin.command_var` — brak jawnej adnotacji pola.
+- **P1** (linia 307): atrybut instancji `GuiLayoutMixin.batch_seeds_var` — brak jawnej adnotacji pola.
+- **P1** (linia 308): atrybut instancji `GuiLayoutMixin.batch_scenarios_var` — brak jawnej adnotacji pola.
+- **P1** (linia 309): atrybut instancji `GuiLayoutMixin.sensitivity_var` — brak jawnej adnotacji pola.
+- **P1** (linia 310): atrybut instancji `GuiLayoutMixin.sensitivity_delta_var` — brak jawnej adnotacji pola.
+- **P1** (linia 412): atrybut instancji `GuiLayoutMixin.plots_frame` — brak jawnej adnotacji pola.
+- **P1** (linia 435): atrybut instancji `GuiLayoutMixin.plot_preset_var` — brak jawnej adnotacji pola.
+
+### `brain_model/gui_runner.py`
+- Status: **do wprowadzenia**.
+- **P2** (linia 60): atrybut instancji `GuiRunnerMixin._running` — brak jawnej adnotacji pola.
+- **P2** (linia 65): atrybut instancji `GuiRunnerMixin._worker_thread` — brak jawnej adnotacji pola.
+
+### `brain_model/gui_state.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_model/io.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_model/model.py`
-- [P1] Klasa `CognitiveBrainModel`: potencjalnie brak adnotacji istotnych atrybutów instancji: W, idx, n, names, oscillator_bank, p, rng, scenario, scenario_id, stimulus_fn, tau.
+- Status: **do wprowadzenia**.
+- **P1** (linia 41): atrybut instancji `CognitiveBrainModel.p` — brak jawnej adnotacji pola.
+- **P1** (linia 42): atrybut instancji `CognitiveBrainModel.rng` — brak jawnej adnotacji pola.
+- **P1** (linia 44): atrybut instancji `CognitiveBrainModel.names` — brak jawnej adnotacji pola.
+- **P1** (linia 45): atrybut instancji `CognitiveBrainModel.idx` — brak jawnej adnotacji pola.
+- **P1** (linia 46): atrybut instancji `CognitiveBrainModel.n` — brak jawnej adnotacji pola.
+- **P1** (linia 48): atrybut instancji `CognitiveBrainModel.tau` — brak jawnej adnotacji pola.
+- **P1** (linia 49): atrybut instancji `CognitiveBrainModel.W` — brak jawnej adnotacji pola.
+- **P1** (linia 51): atrybut instancji `CognitiveBrainModel.scenario_id` — brak jawnej adnotacji pola.
+- **P1** (linia 52): atrybut instancji `CognitiveBrainModel.scenario` — brak jawnej adnotacji pola.
+- **P1** (linia 56): atrybut instancji `CognitiveBrainModel.stimulus_fn` — brak jawnej adnotacji pola.
+- **P1** (linia 70): atrybut instancji `CognitiveBrainModel.oscillator_bank` — brak jawnej adnotacji pola.
+
+### `brain_model/modules.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_model/oscillators.py`
-- [P1] Klasa `WilsonCowanOscillatorBank`: potencjalnie brak adnotacji istotnych atrybutów instancji: band_map, connectivity, frequency, idx, module_bands, module_names, n, params, tau_e, tau_i.
+- Status: **do wprowadzenia**.
+- **P1** (linia 93): atrybut instancji `WilsonCowanOscillatorBank.module_names` — brak jawnej adnotacji pola.
+- **P1** (linia 94): atrybut instancji `WilsonCowanOscillatorBank.idx` — brak jawnej adnotacji pola.
+- **P1** (linia 95): atrybut instancji `WilsonCowanOscillatorBank.n` — brak jawnej adnotacji pola.
+- **P1** (linia 96): atrybut instancji `WilsonCowanOscillatorBank.connectivity` — brak jawnej adnotacji pola.
+- **P1** (linia 97): atrybut instancji `WilsonCowanOscillatorBank.band_map` — brak jawnej adnotacji pola.
+- **P1** (linia 98): atrybut instancji `WilsonCowanOscillatorBank.params` — brak jawnej adnotacji pola.
+- **P1** (linia 100): atrybut instancji `WilsonCowanOscillatorBank.module_bands` — brak jawnej adnotacji pola.
+- **P1** (linia 101): atrybut instancji `WilsonCowanOscillatorBank.frequency` — brak jawnej adnotacji pola.
+- **P1** (linia 102): atrybut instancji `WilsonCowanOscillatorBank.tau_e` — brak jawnej adnotacji pola.
+- **P1** (linia 103): atrybut instancji `WilsonCowanOscillatorBank.tau_i` — brak jawnej adnotacji pola.
+
+### `brain_model/params.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_model/plasticity.py`
-- [P1] Klasa `PlasticityRuleConfig` (8): brak docstringu.
-- [P1] Klasa `HebbianRuleConfig` (15): brak docstringu.
-- [P1] Klasa `ConnectivityAdaptationConfig` (23): brak docstringu.
-- [P1] Funkcja `apply_state_learning` (33): brak adnotacji parametrów: dx, x, diagnostics, params, idx; brak adnotacji wartości zwracanej.
-- [P1] Funkcja `update_connectivity` (48): brak adnotacji parametrów: W, x, diagnostics, params, idx; brak adnotacji wartości zwracanej.
-- [P1] Funkcja `build_weight_history_series` (80): brak adnotacji wartości zwracanej.
+- Status: **do wprowadzenia**.
+- **P1** (linia 9): klasa `PlasticityRuleConfig` — brak docstringu klasy.
+- **P1** (linia 16): klasa `HebbianRuleConfig` — brak docstringu klasy.
+- **P1** (linia 24): klasa `ConnectivityAdaptationConfig` — brak docstringu klasy.
 
 ### `brain_model/plotting.py`
-- [P1] Klasa `PlotWindow`: potencjalnie brak adnotacji istotnych atrybutów instancji: notebook, status.
+- Status: **do wprowadzenia**.
+- **P1** (linia 553): atrybut instancji `PlotWindow.notebook` — brak jawnej adnotacji pola.
+- **P1** (linia 556): atrybut instancji `PlotWindow.status` — brak jawnej adnotacji pola.
+- **P2** (linia 563): atrybut instancji `PlotWindow._figures` — brak jawnej adnotacji pola.
+- **P2** (linia 564): atrybut instancji `PlotWindow._canvases` — brak jawnej adnotacji pola.
+
+### `brain_model/report.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_model/report_export.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_model/scenarios/__init__.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_model/scenarios/library.py`
-- [P1] Funkcja `list_scenarios` (117): brak adnotacji wartości zwracanej.
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_model/scenarios/types.py`
-- [P1] Klasa `TimeWindow` (11): brak docstringu.
-- [P1] Metoda `TimeWindow.contains` (15): brak docstringu.
-- [P1] Klasa `Pulse` (20): brak docstringu.
-- [P1] Klasa `ChannelProfile` (26): brak docstringu.
-- [P1] Klasa `StimulusPerturbation` (32): brak docstringu.
-- [P1] Klasa `StimulusScenario` (40): brak docstringu.
-- [P1] Metoda `StimulusScenario.normalized_channels` (55): brak docstringu.
-- [P1] Metoda `StimulusScenario.to_metadata` (58): brak docstringu.
+- Status: **do wprowadzenia**.
+- **P1** (linia 11): klasa `TimeWindow` — brak docstringu klasy.
+- **P1** (linia 15): metoda `TimeWindow.contains` — brak docstringu metody.
+- **P1** (linia 20): klasa `Pulse` — brak docstringu klasy.
+- **P1** (linia 26): klasa `ChannelProfile` — brak docstringu klasy.
+- **P1** (linia 32): klasa `StimulusPerturbation` — brak docstringu klasy.
+- **P1** (linia 40): klasa `StimulusScenario` — brak docstringu klasy.
+- **P1** (linia 55): metoda `StimulusScenario.normalized_channels` — brak docstringu metody.
+- **P1** (linia 58): metoda `StimulusScenario.to_metadata` — brak docstringu metody.
+
+### `brain_model/stimuli.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `brain_model/validation.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `brain_model.py`
-- [P2] Klasa `CognitiveBrainModel`: potencjalnie brak adnotacji istotnych atrybutów instancji: W, idx, n, names, p, rng, tau.
+- Status: **do wprowadzenia**.
+- **P1** (linia 61): atrybut instancji `CognitiveBrainModel.p` — brak jawnej adnotacji pola.
+- **P1** (linia 62): atrybut instancji `CognitiveBrainModel.rng` — brak jawnej adnotacji pola.
+- **P1** (linia 64): atrybut instancji `CognitiveBrainModel.names` — brak jawnej adnotacji pola.
+- **P1** (linia 68): atrybut instancji `CognitiveBrainModel.idx` — brak jawnej adnotacji pola.
+- **P1** (linia 69): atrybut instancji `CognitiveBrainModel.n` — brak jawnej adnotacji pola.
+- **P1** (linia 71): atrybut instancji `CognitiveBrainModel.tau` — brak jawnej adnotacji pola.
+- **P1** (linia 90): atrybut instancji `CognitiveBrainModel.W` — brak jawnej adnotacji pola.
 
 ### `brain_viewer/mapping.py`
-- [P2] Klasa `BrainRegionMapper` (3): brak docstringu.
-- [P2] Metoda `BrainRegionMapper.__init__` (4): brak docstringu; brak adnotacji parametrów: module_names, region_names, mapping_matrix; brak adnotacji wartości zwracanej.
-- [P2] Metoda `BrainRegionMapper.modules_to_regions` (9): brak adnotacji parametrów: module_activity; brak adnotacji wartości zwracanej.
-- [P2] Klasa `BrainRegionMapper`: potencjalnie brak adnotacji istotnych atrybutów instancji: M, module_names, region_names.
+- Status: **do wprowadzenia**.
+- **P1** (linia 4): klasa `BrainRegionMapper` — brak docstringu klasy.
+- **P1** (linia 5): metoda `BrainRegionMapper.__init__` — brak docstringu metody.
+- **P1** (linia 8): atrybut instancji `BrainRegionMapper.module_names` — brak jawnej adnotacji pola.
+- **P1** (linia 9): atrybut instancji `BrainRegionMapper.region_names` — brak jawnej adnotacji pola.
+- **P1** (linia 10): atrybut instancji `BrainRegionMapper.M` — brak jawnej adnotacji pola.
+
+### `main.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `main_gui.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `scripts/sync_web_defaults.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `tests/test_atlas_connectome.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `tests/test_gui_layout_static.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `tests/test_gui_state.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `tests/test_lesions.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
 
 ### `tests/test_multiscale_engine.py`
-- [P2] Klasa `CounterModule`: potencjalnie brak adnotacji istotnych atrybutów instancji: steps.
+- Status: **do wprowadzenia**.
+- **P2** (linia 15): atrybut instancji `CounterModule.steps` — brak jawnej adnotacji pola.
 
-## Legenda priorytetów
-- **P1**: element krytyczny (publiczne API, konfiguracja, I/O, warstwa wejścia/wyjścia).
-- **P2**: element wewnętrzny (helpery, prywatne metody, kod testowy/wewnętrzny).
+### `tests/test_neuromodulation.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `tests/test_observation_and_analysis.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `tests/test_plasticity_protocols.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `tests/test_signal_metrics_modules.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `tests/test_spiking_population_adapter.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `tests/test_task_protocols_and_engine.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `tests/test_task_stimulus_player.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
+
+### `tests/test_wilson_cowan_network.py`
+- Status: **wprowadzone / brak wykrytych braków w zakresie audytu**.
