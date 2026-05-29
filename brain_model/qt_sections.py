@@ -158,7 +158,7 @@ class QtSections:
             self.plot_preset_group.addButton(button)
             self.plot_preset_buttons[preset_name] = button
             preset_row.addWidget(button)
-        custom_button = QRadioButton("Niestandardowe")
+        custom_button = QRadioButton("Niestandardowe", group)
         custom_button.setVisible(False)
         self.plot_preset_group.addButton(custom_button)
         self.plot_preset_buttons["Niestandardowe"] = custom_button
