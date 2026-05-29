@@ -3,857 +3,749 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Symulator procesów poznawczych mózgu | Pyodide</title>
-  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+  <title>neuro_sim — symulator procesów poznawczych mózgu</title>
   <style>
     :root {
-      --bg: #f7f7f8;
+      --bg: #07111f;
+      --bg-soft: #0f2036;
       --panel: #ffffff;
-      --text: #151515;
-      --muted: #666b73;
-      --line: #dedede;
-      --accent: #263238;
-      --soft: #eef1f4;
+      --panel-muted: #f3f7fb;
+      --text: #102033;
+      --muted: #5f6f83;
+      --line: #d8e1ec;
+      --accent: #1d6fbd;
+      --accent-dark: #15538f;
+      --accent-soft: #e7f1fb;
+      --success: #217a57;
+      --warning: #9a6316;
+      --shadow: 0 24px 80px rgba(4, 20, 42, .18);
     }
+
     * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
-      line-height: 1.45;
+      background: #eef4fa;
+      line-height: 1.6;
     }
-    header {
-      max-width: 1320px;
-      margin: 0 auto;
-      padding: 28px 20px 10px;
+
+    a { color: inherit; }
+
+    .hero {
+      color: #fff;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(70, 162, 255, .35), transparent 30%),
+        radial-gradient(circle at 80% 0%, rgba(87, 220, 178, .24), transparent 30%),
+        linear-gradient(135deg, #07111f 0%, #112842 56%, #173858 100%);
+      padding: 28px 20px 76px;
     }
-    h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -0.02em; }
-    .lead { color: var(--muted); max-width: 920px; margin: 0; }
-    main {
-      max-width: 1320px;
+
+    .nav,
+    .hero-grid,
+    .main,
+    .footer-inner {
+      width: min(1180px, 100%);
       margin: 0 auto;
-      padding: 16px 20px 40px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 72px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+
+    .brand-mark {
       display: grid;
-      grid-template-columns: 380px 1fr;
-      gap: 18px;
-    }
-    @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, .22);
       border-radius: 14px;
-      box-shadow: 0 1px 3px rgba(0,0,0,.04);
+      background: rgba(255, 255, 255, .12);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .24);
     }
-    .controls { padding: 16px; position: sticky; top: 12px; align-self: start; max-height: calc(100vh - 24px); overflow: auto; }
-    .results { padding: 16px; min-width: 0; }
-    h2 { font-size: 17px; margin: 0 0 12px; }
-    h3 { font-size: 14px; margin: 20px 0 8px; color: #2a2f35; }
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-    input[type="number"], input[type="text"], select {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 9px;
-      padding: 8px 9px;
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav-links a,
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: 750;
+      text-decoration: none;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .nav-links a {
+      color: rgba(255, 255, 255, .82);
+      border: 1px solid transparent;
+    }
+
+    .nav-links a:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, .18);
+      background: rgba(255, 255, 255, .09);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
+      gap: 40px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 18px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, .18);
+      border-radius: 999px;
+      color: rgba(255, 255, 255, .88);
+      background: rgba(255, 255, 255, .09);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    h1,
+    h2,
+    h3,
+    p { margin-top: 0; }
+
+    h1 {
+      max-width: 840px;
+      margin-bottom: 22px;
+      font-size: clamp(42px, 6vw, 76px);
+      line-height: .98;
+      letter-spacing: -.06em;
+    }
+
+    .lead {
+      max-width: 780px;
+      margin-bottom: 30px;
+      color: rgba(255, 255, 255, .78);
+      font-size: clamp(18px, 2vw, 22px);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .button {
+      border: 1px solid transparent;
       background: #fff;
-      color: var(--text);
+      color: #102033;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, .16);
+    }
+
+    .button:hover { transform: translateY(-1px); }
+
+    .button.secondary {
+      color: #fff;
+      background: rgba(255, 255, 255, .1);
+      border-color: rgba(255, 255, 255, .2);
+      box-shadow: none;
+    }
+
+    .trust-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: rgba(255, 255, 255, .76);
       font-size: 14px;
     }
-    input[type="checkbox"] { transform: translateY(1px); }
-    .check { display: flex; align-items: center; gap: 8px; margin: 7px 0; font-size: 13px; color: var(--text); }
-    .row { margin-bottom: 10px; }
-    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
-    button {
-      border: 1px solid var(--accent);
-      background: var(--accent);
-      color: white;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-weight: 650;
+
+    .trust-row span {
+      border: 1px solid rgba(255, 255, 255, .14);
+      border-radius: 999px;
+      padding: 7px 11px;
+      background: rgba(255, 255, 255, .07);
+    }
+
+    .hero-card {
+      border: 1px solid rgba(255, 255, 255, .18);
+      border-radius: 28px;
+      padding: 22px;
+      background: rgba(255, 255, 255, .1);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .sim-window {
+      overflow: hidden;
+      border-radius: 22px;
+      background: #f7fbff;
+      color: var(--text);
+    }
+
+    .window-bar {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      padding: 14px 16px;
+      background: #dfeaf5;
+    }
+
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #f26d6d; }
+    .dot:nth-child(2) { background: #f5c453; }
+    .dot:nth-child(3) { background: #55c88a; }
+
+    .window-content { padding: 18px; }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .fake-chart {
+      display: flex;
+      align-items: end;
+      gap: 8px;
+      height: 170px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #fff 0%, #edf6ff 100%);
+    }
+
+    .fake-chart i {
+      flex: 1;
+      min-width: 12px;
+      border-radius: 8px 8px 0 0;
+      background: linear-gradient(180deg, #38a3ff, #1d6fbd);
+      opacity: .86;
+    }
+
+    .main {
+      margin-top: -38px;
+      padding: 0 20px 56px;
+    }
+
+    .tabs-shell {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: rgba(255, 255, 255, .94);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      background: #f8fbff;
+      overflow-x: auto;
+    }
+
+    .tab-button {
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 10px 15px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 800;
+      white-space: nowrap;
       cursor: pointer;
     }
-    button.secondary { background: white; color: var(--accent); }
-    button:disabled { opacity: .55; cursor: not-allowed; }
-    .status {
-      border: 1px solid var(--line);
-      background: var(--soft);
-      border-radius: 10px;
-      padding: 9px 10px;
-      color: #374151;
-      font-size: 13px;
-      margin-top: 12px;
+
+    .tab-button[aria-selected="true"] {
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 10px 24px rgba(29, 111, 189, .22);
     }
-    .plot { width: 100%; height: 430px; border-top: 1px solid var(--line); margin-top: 14px; padding-top: 10px; }
-    .small { color: var(--muted); font-size: 12px; margin-top: 10px; }
-    .tabs { display:flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-    .tab { background: white; color: var(--accent); padding: 8px 10px; border-color: var(--line); }
-    .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
-    details { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 12px; }
-    summary { cursor: pointer; font-weight: 650; font-size: 14px; }
-    code { background: #f0f0f0; padding: 1px 4px; border-radius: 4px; }
+
+    .tab-panel { display: none; padding: 34px; }
+    .tab-panel.active { display: block; }
+
+    .section-header {
+      max-width: 840px;
+      margin-bottom: 28px;
+    }
+
+    .section-header h2 {
+      margin-bottom: 10px;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.08;
+      letter-spacing: -.04em;
+    }
+
+    .section-header p { color: var(--muted); font-size: 18px; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card,
+    .callout,
+    .manual-step,
+    .timeline-item {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: #fff;
+      padding: 22px;
+    }
+
+    .card h3 { margin-bottom: 8px; font-size: 20px; }
+    .card p, .timeline-item p, .manual-step p { color: var(--muted); }
+
+    .badge {
+      display: inline-flex;
+      margin-bottom: 14px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .feature-list li {
+      position: relative;
+      padding: 18px 18px 18px 48px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel-muted);
+    }
+
+    .feature-list li::before {
+      content: "✓";
+      position: absolute;
+      left: 18px;
+      top: 17px;
+      display: grid;
+      width: 22px;
+      height: 22px;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--success);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .callout {
+      background: linear-gradient(135deg, #eef7ff 0%, #ffffff 72%);
+    }
+
+    .callout strong { color: var(--accent-dark); }
+
+    .timeline {
+      display: grid;
+      gap: 14px;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .phase {
+      display: inline-flex;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 7px 10px;
+      color: #fff;
+      background: var(--bg-soft);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .manual-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .manual-step h3 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .step-number {
+      display: inline-grid;
+      width: 30px;
+      height: 30px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      flex: 0 0 auto;
+    }
+
+    .manual-step ul,
+    .doc-list {
+      margin: 12px 0 0;
+      padding-left: 20px;
+      color: var(--muted);
+    }
+
+    .status-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+
+    .status-table th,
+    .status-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .status-table tr:last-child td { border-bottom: 0; }
+    .status-table th { background: #f4f8fc; color: #34465b; }
+
+    .pill {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .pill.now { color: var(--success); background: #e8f6ef; }
+    .pill.next { color: var(--warning); background: #fff4df; }
+    .pill.plan { color: var(--accent-dark); background: var(--accent-soft); }
+
+    .doc-list a { font-weight: 800; color: var(--accent-dark); }
+
+    .note {
+      margin-top: 22px;
+      border-left: 4px solid var(--accent);
+      border-radius: 16px;
+      padding: 16px 18px;
+      background: #f5faff;
+      color: var(--muted);
+    }
+
+    footer {
+      background: #07111f;
+      color: rgba(255, 255, 255, .72);
+      padding: 26px 20px;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 920px) {
+      .hero-grid,
+      .split,
+      .cards,
+      .manual-grid,
+      .feature-list {
+        grid-template-columns: 1fr;
+      }
+
+      .nav { align-items: flex-start; flex-direction: column; margin-bottom: 42px; }
+      .nav-links { justify-content: flex-start; }
+      .tab-panel { padding: 24px; }
+      .timeline-item { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .hero { padding-left: 16px; padding-right: 16px; }
+      .main { padding-left: 12px; padding-right: 12px; }
+      .metric-grid { grid-template-columns: 1fr; }
+      .tabs { padding: 10px; }
+      .tab-panel { padding: 20px; }
+      .status-table { display: block; overflow-x: auto; }
+    }
   </style>
 </head>
 <body>
-<header>
-  <h1>Symulator mezoskopowy procesów poznawczych mózgu</h1>
-  <p class="lead">Wersja statyczna dla GitHub Pages. Obliczenia wykonuje Python uruchamiany w przeglądarce przez Pyodide. Interfejs odzwierciedla bieżące możliwości GUI wersji desktopowej: automatyczny dobór dt, scenariusze, tryb batch z analizą wrażliwości, odczyt behawioralny, wykresy aktywności/EEG/regionów oraz eksport CSV.</p>
-</header>
-
-<main>
-  <section class="card controls">
-    <h2>Parametry symulacji</h2>
-    <div class="grid2">
-      <div class="row"><label for="T">czas T [s]</label><input id="T" type="number" value="45" step="1" min="1"></div>
-      <div class="row"><label for="seed">seed</label><input id="seed" type="number" value="7" step="1"></div>
-      <div class="row"><label for="dt">dt</label><input id="dt" type="number" value="0.01" step="0.001" min="0.001"></div>
-      <div class="row"><label for="command">komenda</label><select id="command"><option value="run">run</option><option value="batch">batch</option></select></div>
-      <div class="row"><label for="noise">noise</label><input id="noise" type="number" value="0.015" step="0.001" min="0"></div>
-      <div class="row"><label for="gw_threshold">gw_threshold</label><input id="gw_threshold" type="number" value="0.62" step="0.01"></div>
-      <div class="row"><label for="gw_gain">gw_gain</label><input id="gw_gain" type="number" value="10.0" step="0.1"></div>
-      <div class="row"><label for="learning_rate_semantic">learning semantic</label><input id="learning_rate_semantic" type="number" value="0.004" step="0.001" min="0"></div>
-      <div class="row"><label for="learning_rate_value">learning value</label><input id="learning_rate_value" type="number" value="0.02" step="0.001" min="0"></div>
-      <div class="row"><label for="decay_semantic">decay semantic</label><input id="decay_semantic" type="number" value="0.001" step="0.0005" min="0"></div>
-      <div class="row"><label for="decision_threshold">decision threshold</label><input id="decision_threshold" type="number" value="0.62" step="0.01" min="0" max="1"></div>
-      <div class="row"><label for="confidence_gain">confidence gain</label><input id="confidence_gain" type="number" value="1.8" step="0.1" min="0"></div>
-    </div>
-    <label class="check"><input id="auto_dt" type="checkbox" checked> automatyczny dobór dt</label>
-
-    <details open>
-      <summary>Oscylatory Wilsona-Cowana</summary>
-      <label class="check"><input id="enable_oscillators" type="checkbox" checked> włącz oscylatory EEG</label>
-      <div class="grid2">
-        <div class="row"><label for="w_ee">w_ee</label><input id="w_ee" type="number" value="12.0" step="0.1"></div>
-        <div class="row"><label for="w_ei">w_ei</label><input id="w_ei" type="number" value="10.0" step="0.1"></div>
-        <div class="row"><label for="w_ie">w_ie</label><input id="w_ie" type="number" value="10.0" step="0.1"></div>
-        <div class="row"><label for="w_ii">w_ii</label><input id="w_ii" type="number" value="1.0" step="0.1"></div>
-        <div class="row"><label for="baseline_e">baseline_e</label><input id="baseline_e" type="number" value="0.15" step="0.01"></div>
-        <div class="row"><label for="baseline_i">baseline_i</label><input id="baseline_i" type="number" value="0.08" step="0.01"></div>
-        <div class="row"><label for="cognitive_drive_gain">cognitive drive</label><input id="cognitive_drive_gain" type="number" value="3.0" step="0.1"></div>
-        <div class="row"><label for="coupling_gain">coupling gain</label><input id="coupling_gain" type="number" value="0.15" step="0.01"></div>
-        <div class="row"><label for="oscillator_noise">oscillator noise</label><input id="oscillator_noise" type="number" value="0.01" step="0.001"></div>
-        <div class="row"><label for="phase_drive_gain">phase drive</label><input id="phase_drive_gain" type="number" value="0.06" step="0.01"></div>
+  <header class="hero">
+    <nav class="nav" aria-label="Nawigacja główna">
+      <div class="brand"><span class="brand-mark">🧠</span><span>neuro_sim</span></div>
+      <div class="nav-links">
+        <a href="#projekt">Projekt</a>
+        <a href="#instrukcja" data-open-tab="manual">Instrukcja</a>
+        <a href="web_gui.html">Web GUI</a>
       </div>
-    </details>
+    </nav>
 
-    <details>
-      <summary>Bodźce eksperymentalne</summary>
-      <div class="grid2">
-        <div class="row"><label for="visual_start">visual start</label><input id="visual_start" type="number" value="2" step="0.5"></div>
-        <div class="row"><label for="visual_end">visual end</label><input id="visual_end" type="number" value="18" step="0.5"></div>
-        <div class="row"><label for="visual_intensity">visual intensity</label><input id="visual_intensity" type="number" value="0.9" step="0.05"></div>
-        <div class="row"><label for="auditory_start">auditory start</label><input id="auditory_start" type="number" value="8" step="0.5"></div>
-        <div class="row"><label for="auditory_end">auditory end</label><input id="auditory_end" type="number" value="24" step="0.5"></div>
-        <div class="row"><label for="auditory_intensity">auditory intensity</label><input id="auditory_intensity" type="number" value="0.75" step="0.05"></div>
-        <div class="row"><label for="task_start">task start</label><input id="task_start" type="number" value="1" step="0.5"></div>
-        <div class="row"><label for="task_end">task end</label><input id="task_end" type="number" value="35" step="0.5"></div>
-        <div class="row"><label for="task_intensity">task intensity</label><input id="task_intensity" type="number" value="0.65" step="0.05"></div>
-        <div class="row"><label for="threat_start">threat start</label><input id="threat_start" type="number" value="22" step="0.5"></div>
-        <div class="row"><label for="threat_end">threat end</label><input id="threat_end" type="number" value="30" step="0.5"></div>
-        <div class="row"><label for="threat_intensity">threat intensity</label><input id="threat_intensity" type="number" value="0.85" step="0.05"></div>
-        <div class="row"><label for="reward_start">reward start</label><input id="reward_start" type="number" value="34" step="0.5"></div>
-        <div class="row"><label for="reward_end">reward end</label><input id="reward_end" type="number" value="38" step="0.5"></div>
-        <div class="row"><label for="reward_intensity">reward intensity</label><input id="reward_intensity" type="number" value="1.0" step="0.05"></div>
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">Symulator edukacyjno-badawczy uruchamiany lokalnie lub w przeglądarce</p>
+        <h1>Eksperymentuj z procesami poznawczymi mózgu bez ciężkiej infrastruktury.</h1>
+        <p class="lead">neuro_sim łączy model poznawczy, scenariusze zadań, konektom regionów, neuromodulację oraz raportowanie dydaktyczne. Projekt rozwija się w kierunku powtarzalnych eksperymentów healthy/disorder/lesion z czytelną interpretacją wyników.</p>
+        <div class="hero-actions">
+          <a class="button" href="web_gui.html">Uruchom web GUI</a>
+          <a class="button secondary" href="#instrukcja" data-open-tab="manual">Zobacz instrukcję</a>
+        </div>
+        <div class="trust-row" aria-label="Najważniejsze cechy">
+          <span>Reprodukowalne seedy</span>
+          <span>Scenariusze poznawcze</span>
+          <span>EEG/BOLD w roadmapie</span>
+          <span>Polskie opisy edukacyjne</span>
+        </div>
       </div>
-    </details>
 
-    <h3>Scenariusz</h3>
-    <div class="row"><label for="scenario">scenariusz</label><select id="scenario"><option value="reward-learning">reward-learning</option><option value="baseline">baseline</option><option value="task-switching">task-switching</option><option value="threat-only">threat-only</option><option value="sensory-overload">sensory-overload</option><option value="stress-recovery">stress-recovery</option></select></div>
-    <div id="scenarioDetails" class="status">Wybierz scenariusz, aby zobaczyć opis.</div>
-
-    <details>
-      <summary>Batch i analiza wrażliwości</summary>
-      <div class="row"><label for="batch_seeds">batch seeds</label><input id="batch_seeds" type="text" value="7,11,19"></div>
-      <div class="row"><label for="batch_scenarios">batch scenariusze</label><input id="batch_scenarios" type="text" value="reward-learning"></div>
-      <div class="row"><label for="sensitivity_params">sensitivity parametry</label><input id="sensitivity_params" type="text" value="noise,gw_threshold"></div>
-      <div class="row"><label for="sensitivity_delta">sensitivity delta</label><input id="sensitivity_delta" type="number" value="0.1" step="0.01" min="0"></div>
-    </details>
-    <label class="check"><input id="save_results" type="checkbox" checked disabled> zapisz wyniki po symulacji (tylko desktop; w web użyj CSV)</label>
-
-    <h3>Wykresy</h3>
-    <label class="check"><input id="plot_activity" type="checkbox" checked> aktywacje modułów poznawczych</label>
-    <label class="check"><input id="plot_diagnostics" type="checkbox" checked> zmienne diagnostyczne</label>
-    <label class="check"><input id="plot_behavior" type="checkbox" checked> przebiegi decyzyjne + markery decyzji</label>
-    <label class="check"><input id="plot_eeg" type="checkbox" checked> sygnały EEG E-I</label>
-    <label class="check"><input id="plot_bands" type="checkbox" checked> moc pasm theta/alpha/beta/gamma</label>
-    <label class="check"><input id="plot_simulated_brain_activity" type="checkbox" checked> symulowana aktywność mózgu (mapa cieplna)</label>
-    <label class="check"><input id="plot_brain_region_projections" type="checkbox" checked> 4 rzuty mózgu: aktywacja regionów SVG</label>
-    <label class="check"><input id="plot_region_activity_2d" type="checkbox" checked> 2D: aktywacja regionów mózgu w czasie</label>
-    <label class="check"><input id="plot_weight_trajectories" type="checkbox" checked> trajektorie adaptowanych wag W</label>
-    <label class="check"><input id="plot_weight_deltas" type="checkbox" checked> przyrosty wag ΔW / krok</label>
-    <label class="check"><input id="plot_scenario_channels" type="checkbox" checked> kanały bodźców scenariusza</label>
-    <label class="check"><input id="plot_scenario_timeline" type="checkbox" checked> oś czasu scenariusza</label>
-
-    <div class="buttons">
-      <button id="runBtn" disabled>Uruchom</button>
-      <button id="csvBtn" class="secondary" disabled>Eksport CSV</button>
+      <aside class="hero-card" aria-label="Podgląd wyników symulacji">
+        <div class="sim-window">
+          <div class="window-bar" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <div class="window-content">
+            <div class="metric-grid">
+              <div class="metric"><strong>45 s</strong><span>przykładowy czas symulacji</span></div>
+              <div class="metric"><strong>7</strong><span>kontrolowane ziarno losowości</span></div>
+              <div class="metric"><strong>4+</strong><span>zadania poznawcze w bibliotece</span></div>
+              <div class="metric"><strong>HTML</strong><span>interaktywny interfejs web</span></div>
+            </div>
+            <div class="fake-chart" aria-label="Dekoracyjna wizualizacja aktywności">
+              <i style="height: 42%"></i><i style="height: 68%"></i><i style="height: 51%"></i><i style="height: 76%"></i><i style="height: 63%"></i><i style="height: 88%"></i><i style="height: 54%"></i><i style="height: 72%"></i><i style="height: 47%"></i><i style="height: 81%"></i>
+            </div>
+          </div>
+        </div>
+      </aside>
     </div>
-    <button id="resetBtn" class="secondary" style="width:100%; margin-top:10px;">Przywróć domyślne</button>
-    <div id="status" class="status">Ładowanie Pyodide i NumPy...</div>
-    <p class="small">Pierwsze uruchomienie może być wolniejsze, ponieważ przeglądarka pobiera środowisko Pythona.</p>
-  </section>
+  </header>
 
-  <section class="card results">
-    <h2>Wyniki</h2>
-    <div class="tabs">
-      <button class="tab active" data-target="activityPlot">Aktywacje</button>
-      <button class="tab" data-target="diagPlot">Diagnostyka</button>
-      <button class="tab" data-target="behaviorPlot">Behavior</button>
-      <button class="tab" data-target="eegPlot">EEG</button>
-      <button class="tab" data-target="bandPlot">Pasma</button>
-      <button class="tab" data-target="brainHeatPlot">Mapa</button>
-      <button class="tab" data-target="brainProjPlot">Rzuty SVG</button>
-      <button class="tab" data-target="region2dPlot">Regiony 2D</button>
-      <button class="tab" data-target="weightsPlot">Wagi</button>
-      <button class="tab" data-target="deltasPlot">ΔW</button>
-      <button class="tab" data-target="scenarioChannelsPlot">Kanały</button>
-      <button class="tab" data-target="scenarioTimelinePlot">Timeline</button>
+  <main class="main" id="projekt">
+    <section class="tabs-shell" aria-label="Strona projektu">
+      <div class="tabs" role="tablist" aria-label="Zakładki strony głównej">
+        <button class="tab-button" id="tab-overview" role="tab" type="button" aria-selected="true" aria-controls="panel-overview" data-tab="overview">Projekt</button>
+        <button class="tab-button" id="tab-capabilities" role="tab" type="button" aria-selected="false" aria-controls="panel-capabilities" data-tab="capabilities">Możliwości</button>
+        <button class="tab-button" id="tab-roadmap" role="tab" type="button" aria-selected="false" aria-controls="panel-roadmap" data-tab="roadmap">Roadmapa</button>
+        <button class="tab-button" id="tab-manual" role="tab" type="button" aria-selected="false" aria-controls="panel-manual" data-tab="manual">Instrukcja obsługi</button>
+        <button class="tab-button" id="tab-docs" role="tab" type="button" aria-selected="false" aria-controls="panel-docs" data-tab="docs">Dokumentacja</button>
+      </div>
+
+      <section class="tab-panel active" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-panel="overview">
+        <div class="section-header">
+          <h2>Jedno narzędzie do demonstracji, porównywania i interpretacji dynamiki mózgu.</h2>
+          <p>Strona podsumowuje kierunek rozwoju opisany w backlogu, liście todo i roadmapie: od prostego webowego uruchomienia symulacji po edukacyjne raporty, task battery oraz porównania profili zdrowych, zaburzeń i uszkodzeń.</p>
+        </div>
+        <div class="cards">
+          <article class="card">
+            <span class="badge">Dla dydaktyki</span>
+            <h3>Pokazuj mechanizm, nie tylko wykres</h3>
+            <p>Raporty mają tłumaczyć, co wydarzyło się w modelu, kiedy pojawiła się reakcja i jak połączyć aktywność z pojęciami poznawczymi.</p>
+          </article>
+          <article class="card">
+            <span class="badge">Dla eksperymentów</span>
+            <h3>Powtarzalny pipeline</h3>
+            <p>Konfiguracja, ziarno losowości, symulacja, analiza i eksport wyników są projektowane jako spójny przepływ możliwy do odtworzenia.</p>
+          </article>
+          <article class="card">
+            <span class="badge">Dla porównań</span>
+            <h3>Healthy vs disorder vs lesion</h3>
+            <p>Docelową wartością projektu jest uruchamianie tego samego bodźca na wielu profilach i wyjaśnianie różnic w zachowaniu sieci.</p>
+          </article>
+        </div>
+        <div class="note">To narzędzie ma charakter edukacyjno-badawczy. Wyniki symulacji nie są diagnozą medyczną i wymagają interpretacji w kontekście założeń modelu.</div>
+      </section>
+
+      <section class="tab-panel" id="panel-capabilities" role="tabpanel" aria-labelledby="tab-capabilities" data-panel="capabilities">
+        <div class="section-header">
+          <h2>Co można zrobić już teraz i co jest rozwijane dalej?</h2>
+          <p>Backlog rozdziela fundamenty, rozszerzenia kluczowe i inicjatywy długoterminowe. Poniżej pokazano je językiem użytkownika strony projektu.</p>
+        </div>
+        <div class="split">
+          <div class="callout">
+            <h3>Aktualny web GUI</h3>
+            <p>Dotychczasowa aplikacja webowa została wydzielona do osobnego pliku <strong>web_gui.html</strong>. Możesz otworzyć ją bezpośrednio ze strony głównej i uruchomić symulację w przeglądarce dzięki Pyodide.</p>
+            <p><a class="button" href="web_gui.html">Przejdź do web GUI</a></p>
+          </div>
+          <ul class="feature-list">
+            <li><strong>Scenariusze poznawcze</strong><br />Konfiguracje dla zadań takich jak Stroop, Go/No-Go, N-back oraz scenariusze demonstracyjne.</li>
+            <li><strong>Kontrolowana losowość</strong><br />Seed pozwala powtarzać przebieg i porównywać warianty przy tych samych założeniach.</li>
+            <li><strong>Wykresy i eksport</strong><br />Interfejs prezentuje aktywność, EEG, regiony i odczyty behawioralne oraz umożliwia eksport danych.</li>
+            <li><strong>Model regionowy</strong><br />Projekt rozwija atlas, konektom strukturalny, opóźnienia przewodzenia oraz populacje pobudzająco-hamujące.</li>
+            <li><strong>Neuromodulacja</strong><br />Dopamina, serotonina, acetylocholina, noradrenalina, GABA i glutaminian są traktowane jako mechanizmy interpretowalne.</li>
+            <li><strong>Raport dydaktyczny</strong><br />Planowany nacisk na timeline trial-by-trial, komentarze i gotowość do użycia na zajęciach.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="panel-roadmap" role="tabpanel" aria-labelledby="tab-roadmap" data-panel="roadmap">
+        <div class="section-header">
+          <h2>Roadmapa rozwoju produktu</h2>
+          <p>Kolejne etapy prowadzą od porządkowania konfiguracji i raportów do symulacji wieloskalowych, kohort i benchmarków literaturowych.</p>
+        </div>
+        <div class="timeline">
+          <article class="timeline-item"><span class="phase">Etap 0</span><div><h3>Dokumentacja i kontrakty</h3><p>Utrzymanie spójnego obrazu projektu w roadmapie, backlogu, strukturze programu i ADR.</p></div></article>
+          <article class="timeline-item"><span class="phase">Etap 1</span><div><h3>Fundament symulacyjno-edukacyjny</h3><p>Reprodukowalna konfiguracja, baseline Healthy Brain v1, raport timeline i testy regresji.</p></div></article>
+          <article class="timeline-item"><span class="phase">Etap 2</span><div><h3>Konektom, neural mass i neuromodulacja</h3><p>Model regionowy z opóźnieniami, populacjami E/I oraz widocznym wpływem neuromodulatorów.</p></div></article>
+          <article class="timeline-item"><span class="phase">Etap 3</span><div><h3>Task battery i roving oddball</h3><p>Wspólne API zadań, kontrolowany generator bodźców oraz metryki nowości, habituacji i readaptacji.</p></div></article>
+          <article class="timeline-item"><span class="phase">Etap 4</span><div><h3>Profile kliniczne i uszkodzenia</h3><p>Porównania healthy/disorder/lesion z automatycznym komentarzem mechanistycznym.</p></div></article>
+          <article class="timeline-item"><span class="phase">Etap 5+</span><div><h3>EEG/BOLD, tryb nauczyciela i mikro-makro</h3><p>Raporty sygnałowe, scenariusze lekcyjne, hybrydy neural mass ze spiking submodels oraz symulacje kohortowe.</p></div></article>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="panel-manual" role="tabpanel" aria-labelledby="tab-manual" data-panel="manual">
+        <div class="section-header" id="instrukcja">
+          <h2>Instrukcja obsługi użytkownika programu</h2>
+          <p>Ten skrócony przewodnik pomaga uruchomić web GUI, dobrać parametry i bezpiecznie interpretować wyniki symulacji.</p>
+        </div>
+        <div class="manual-grid">
+          <article class="manual-step">
+            <h3><span class="step-number">1</span> Otwórz interfejs</h3>
+            <p>Kliknij „Uruchom web GUI”. Przeglądarka pobierze Pyodide i uruchomi Pythona lokalnie w karcie, dlatego pierwsze ładowanie może potrwać dłużej.</p>
+            <ul><li>Nie zamykaj karty podczas inicjalizacji.</li><li>Jeśli strona jest hostowana statycznie, nie wymaga instalacji lokalnego serwera obliczeniowego.</li></ul>
+          </article>
+          <article class="manual-step">
+            <h3><span class="step-number">2</span> Wybierz scenariusz i komendę</h3>
+            <p>Ustaw komendę <strong>run</strong> dla pojedynczego przebiegu lub <strong>batch</strong>, gdy chcesz porównać wiele wariantów parametrów.</p>
+            <ul><li>Scenariusze reprezentują zadania lub profile demonstracyjne.</li><li>Seed zostaw bez zmian, jeśli zależy Ci na porównywalności wyników.</li></ul>
+          </article>
+          <article class="manual-step">
+            <h3><span class="step-number">3</span> Dostosuj parametry</h3>
+            <p>Najważniejsze pola to czas symulacji, krok czasowy, poziom szumu, progi decyzyjne, parametry uczenia i ustawienia global workspace.</p>
+            <ul><li>Zmieniaj pojedyncze parametry, aby łatwiej rozumieć efekt.</li><li>Unikaj skrajnych wartości, jeśli testujesz stabilność scenariusza po raz pierwszy.</li></ul>
+          </article>
+          <article class="manual-step">
+            <h3><span class="step-number">4</span> Uruchom symulację</h3>
+            <p>Naciśnij przycisk uruchomienia w panelu web GUI i obserwuj komunikat statusu. Po zakończeniu zobaczysz wykresy oraz metryki.</p>
+            <ul><li>Przy dłuższych przebiegach poczekaj na zakończenie obliczeń w przeglądarce.</li><li>Jeżeli wyniki są niestabilne, skróć czas lub wróć do domyślnych parametrów.</li></ul>
+          </article>
+          <article class="manual-step">
+            <h3><span class="step-number">5</span> Czytaj wyniki</h3>
+            <p>Porównuj aktywność modułów, sygnał EEG, regiony i wskaźniki behawioralne. Interpretuj je jako jakościowy obraz dynamiki modelu.</p>
+            <ul><li>Patrz na trend i różnice między wariantami, nie na pojedynczą liczbę bez kontekstu.</li><li>Zapisz seed i parametry, jeśli wynik ma być odtworzony.</li></ul>
+          </article>
+          <article class="manual-step">
+            <h3><span class="step-number">6</span> Eksportuj dane</h3>
+            <p>Użyj eksportu CSV lub zapisanych artefaktów, aby kontynuować analizę poza GUI, przygotować raport albo porównać wyniki z innymi uruchomieniami.</p>
+            <ul><li>Opisuj pliki nazwą scenariusza, seedem i datą.</li><li>Pamiętaj, że roadmapa zakłada coraz pełniejsze raporty Markdown/HTML.</li></ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="panel-docs" role="tabpanel" aria-labelledby="tab-docs" data-panel="docs">
+        <div class="section-header">
+          <h2>Dokumentacja i status prac</h2>
+          <p>Strona promocyjna nie zastępuje dokumentacji projektowej. Poniższe materiały opisują szczegóły techniczne, decyzje i listę zadań.</p>
+        </div>
+        <table class="status-table">
+          <thead><tr><th>Obszar</th><th>Status</th><th>Gdzie czytać dalej</th></tr></thead>
+          <tbody>
+            <tr><td>Fundamenty konfiguracji, baseline i raportów</td><td><span class="pill now">częściowo gotowe</span></td><td><a href="../BACKLOG.md">BACKLOG.md</a></td></tr>
+            <tr><td>Biologiczny i wieloskalowy kierunek rozwoju</td><td><span class="pill next">w rozbudowie</span></td><td><a href="todo.md">docs/todo.md</a></td></tr>
+            <tr><td>Etapy produktu i zależności</td><td><span class="pill plan">roadmapa</span></td><td><a href="../ROADMAP.md">ROADMAP.md</a></td></tr>
+            <tr><td>Decyzje architektoniczne</td><td><span class="pill now">dokumentowane</span></td><td><a href="architecture_decision_records.md">docs/architecture_decision_records.md</a></td></tr>
+          </tbody>
+        </table>
+        <ul class="doc-list">
+          <li><a href="program_structure.md">Struktura programu</a> — opis aktualnego podziału repozytorium.</li>
+          <li><a href="english_polish_glossary.md">Słownik EN→PL</a> — spójna terminologia warstwy prezentacji.</li>
+          <li><a href="developer_quality_checks.md">Kontrole jakości</a> — wskazówki walidacji dla kontrybutorów.</li>
+        </ul>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <span>neuro_sim — edukacyjny symulator procesów poznawczych mózgu</span>
+      <span>Web GUI: <a href="web_gui.html">docs/web_gui.html</a></span>
     </div>
-    <div id="activityPlot" class="plot"></div>
-    <div id="diagPlot" class="plot" style="display:none"></div>
-    <div id="behaviorPlot" class="plot" style="display:none"></div>
-    <div id="eegPlot" class="plot" style="display:none"></div>
-    <div id="bandPlot" class="plot" style="display:none"></div>
-    <div id="brainHeatPlot" class="plot" style="display:none"></div>
-    <div id="brainProjPlot" class="plot" style="display:none"></div>
-    <div id="region2dPlot" class="plot" style="display:none"></div>
-    <div id="weightsPlot" class="plot" style="display:none"></div>
-    <div id="deltasPlot" class="plot" style="display:none"></div>
-    <div id="scenarioChannelsPlot" class="plot" style="display:none"></div>
-    <div id="scenarioTimelinePlot" class="plot" style="display:none"></div>
-    <p class="small">Model jest demonstracją obliczeniową. Nie jest modelem diagnostycznym ani pełną symulacją biologiczną mózgu.</p>
-  </section>
-</main>
+  </footer>
 
-<script id="python-simulator" type="text/plain">
-import json
-import math
-import numpy as np
+  <script>
+    const tabButtons = Array.from(document.querySelectorAll("[data-tab]"));
+    const panels = Array.from(document.querySelectorAll("[data-panel]"));
 
-NAMES = ["VIS", "AUD", "INT", "SAL", "ATT", "PHON", "VSWM", "EXEC", "EPIS", "SEM", "HIP", "VAL", "MOT", "DMN", "LANG", "GW"]
-IDX = {name: i for i, name in enumerate(NAMES)}
-TAU = np.array([0.08, 0.08, 0.12, 0.10, 0.15, 0.25, 0.25, 0.30, 0.35, 0.80, 0.45, 0.40, 0.18, 0.60, 0.30, 0.12], dtype=float)
-MODULE_BANDS = {
-    "VIS": "alpha", "AUD": "alpha", "INT": "alpha", "DMN": "alpha",
-    "HIP": "theta", "EPIS": "theta", "PHON": "theta", "VSWM": "theta",
-    "EXEC": "beta", "ATT": "beta", "SAL": "beta", "MOT": "beta", "LANG": "beta",
-    "SEM": "gamma", "VAL": "gamma", "GW": "gamma",
-}
-BAND_FREQ = {"theta": 6.0, "alpha": 10.0, "beta": 20.0, "gamma": 40.0}
+    function activateTab(tabName) {
+      tabButtons.forEach((button) => {
+        const isActive = button.dataset.tab === tabName;
+        button.setAttribute("aria-selected", String(isActive));
+      });
 
-
-def sigmoid(z, beta=4.0):
-    return 1.0 / (1.0 + np.exp(-beta * z))
-
-
-def c(W, target, source, weight):
-    W[IDX[target], IDX[source]] = weight
-
-
-def build_connectivity():
-    W = np.zeros((len(NAMES), len(NAMES)), dtype=float)
-    c(W, "SAL", "VIS", 0.55); c(W, "SAL", "AUD", 0.50); c(W, "SAL", "INT", 0.45)
-    c(W, "ATT", "SAL", 0.65); c(W, "ATT", "EXEC", 0.35); c(W, "ATT", "GW", 0.30)
-    c(W, "PHON", "AUD", 0.55); c(W, "PHON", "LANG", 0.45)
-    c(W, "VSWM", "VIS", 0.60); c(W, "VSWM", "ATT", 0.40)
-    c(W, "EXEC", "ATT", 0.45); c(W, "EXEC", "PHON", 0.25); c(W, "EXEC", "VSWM", 0.25); c(W, "EXEC", "SAL", 0.35); c(W, "EXEC", "DMN", -0.25)
-    c(W, "EPIS", "PHON", 0.30); c(W, "EPIS", "VSWM", 0.30); c(W, "EPIS", "SEM", 0.25); c(W, "EPIS", "HIP", 0.35)
-    c(W, "HIP", "EPIS", 0.45); c(W, "HIP", "ATT", 0.25)
-    c(W, "SEM", "LANG", 0.35); c(W, "LANG", "AUD", 0.40); c(W, "LANG", "PHON", 0.35); c(W, "LANG", "SEM", 0.30)
-    c(W, "VAL", "SAL", 0.30); c(W, "VAL", "HIP", 0.25)
-    c(W, "MOT", "EXEC", 0.45); c(W, "MOT", "VAL", 0.35); c(W, "MOT", "SAL", 0.20)
-    c(W, "DMN", "SEM", 0.25); c(W, "DMN", "HIP", 0.25); c(W, "DMN", "EXEC", -0.35); c(W, "EXEC", "DMN", -0.30)
-    for module in ["ATT", "EXEC", "EPIS", "SEM", "HIP", "LANG", "MOT"]:
-        c(W, module, "GW", 0.35)
-    c(W, "GW", "ATT", 0.40); c(W, "GW", "EXEC", 0.45); c(W, "GW", "EPIS", 0.35); c(W, "GW", "SAL", 0.25)
-    return W
-
-
-def stimulus(t, cfg):
-    u = {"visual": 0.0, "auditory": 0.0, "interoceptive": 0.15, "task_cue": 0.0, "threat": 0.0, "reward": 0.0}
-    if cfg["visual_start"] < t < cfg["visual_end"]:
-        u["visual"] = cfg["visual_intensity"]
-    if cfg["auditory_start"] < t < cfg["auditory_end"]:
-        u["auditory"] = cfg["auditory_intensity"]
-    if cfg["task_start"] < t < cfg["task_end"]:
-        u["task_cue"] = cfg["task_intensity"]
-    if cfg["threat_start"] < t < cfg["threat_end"]:
-        u["threat"] = cfg["threat_intensity"]
-        u["interoceptive"] = max(u["interoceptive"], 0.55)
-    if cfg["reward_start"] < t < cfg["reward_end"]:
-        u["reward"] = cfg["reward_intensity"]
-    return u
-
-
-def wc_step(E, I, phase, x, dt, cfg, rng):
-    n = len(NAMES)
-    eeg = np.zeros(n, dtype=float)
-    for i, name in enumerate(NAMES):
-        band = MODULE_BANDS[name]
-        freq = BAND_FREQ[band]
-        phase[i] += 2.0 * math.pi * freq * dt + cfg["phase_drive_gain"] * x[i]
-        rhythmic = 0.5 + 0.5 * math.sin(phase[i])
-        drive = cfg["baseline_e"] + cfg["cognitive_drive_gain"] * x[i] + cfg["coupling_gain"] * rhythmic
-        inh_drive = cfg["baseline_i"] + 0.65 * E[i]
-        dE = -E[i] + sigmoid(cfg["w_ee"] * E[i] - cfg["w_ei"] * I[i] + drive - 2.0, beta=1.0)
-        dI = -I[i] + sigmoid(cfg["w_ie"] * E[i] - cfg["w_ii"] * I[i] + inh_drive - 2.0, beta=1.0)
-        E[i] += dt * dE + math.sqrt(dt) * cfg["oscillator_noise"] * rng.normal()
-        I[i] += dt * dI + math.sqrt(dt) * cfg["oscillator_noise"] * rng.normal()
-        E[i] = min(1.0, max(0.0, E[i]))
-        I[i] = min(1.0, max(0.0, I[i]))
-        eeg[i] = E[i] - I[i]
-    return E, I, phase, eeg
-
-
-def simulate_json(config_json):
-    cfg = json.loads(config_json)
-    T = float(cfg["T"])
-    dt = float(cfg["dt"])
-    steps = max(2, int(T / dt))
-    rng = np.random.default_rng(int(cfg["seed"]))
-    W = build_connectivity()
-
-    time = np.arange(steps) * dt
-    X = np.zeros((steps, len(NAMES)), dtype=float)
-    EEG = np.zeros((steps, len(NAMES)), dtype=float)
-    E_hist = np.zeros((steps, len(NAMES)), dtype=float)
-    I_hist = np.zeros((steps, len(NAMES)), dtype=float)
-    D = {"prediction_error": np.zeros(steps), "dopamine_delta": np.zeros(steps), "noradrenaline": np.zeros(steps), "acetylcholine": np.zeros(steps), "gw_ignition": np.zeros(steps)}
-    B = {"decision_score": np.zeros(steps), "confidence": np.zeros(steps), "decision_event": np.zeros(steps), "latency": np.zeros(steps)}
-
-    x = np.zeros(len(NAMES), dtype=float)
-    x[IDX["DMN"]] = 0.45
-    x[IDX["SEM"]] = 0.25
-    E = np.full(len(NAMES), 0.12, dtype=float)
-    I = np.full(len(NAMES), 0.08, dtype=float)
-    phase = rng.uniform(0.0, 2.0 * math.pi, size=len(NAMES))
-
-    for k, t in enumerate(time):
-        X[k] = x
-        u = stimulus(float(t), cfg)
-        pred_visual = 0.45 * x[IDX["SEM"]] + 0.30 * x[IDX["EPIS"]]
-        pred_auditory = 0.40 * x[IDX["SEM"]] + 0.25 * x[IDX["EPIS"]]
-        err_visual = u["visual"] - pred_visual
-        err_auditory = u["auditory"] - pred_auditory
-        prediction_error = abs(err_visual) + abs(err_auditory)
-        dopamine_delta = u["reward"] - x[IDX["VAL"]]
-        noradrenaline = float(sigmoid(prediction_error + u["threat"] - 0.45))
-        acetylcholine = float(sigmoid(u["task_cue"] + x[IDX["ATT"]] - 0.55))
-        precision_gain = 0.6 + 1.4 * x[IDX["ATT"]]
-
-        external = np.zeros(len(NAMES), dtype=float)
-        external[IDX["VIS"]] += precision_gain * u["visual"]
-        external[IDX["AUD"]] += precision_gain * u["auditory"]
-        external[IDX["INT"]] += u["interoceptive"]
-        external[IDX["SAL"]] += 0.8 * u["threat"] + 0.4 * prediction_error
-        external[IDX["ATT"]] += 0.5 * u["task_cue"] + 0.25 * acetylcholine
-        external[IDX["EXEC"]] += 0.35 * u["task_cue"]
-        external[IDX["VAL"]] += 0.50 * dopamine_delta
-
-        error_drive = np.zeros(len(NAMES), dtype=float)
-        error_drive[IDX["VIS"]] += 0.65 * err_visual
-        error_drive[IDX["AUD"]] += 0.65 * err_auditory
-        error_drive[IDX["SAL"]] += 0.40 * prediction_error
-
-        candidate = max(x[IDX["ATT"]], x[IDX["EXEC"]], x[IDX["EPIS"]], x[IDX["SAL"]])
-        gw_ignition = float(sigmoid(candidate - cfg["gw_threshold"], beta=cfg["gw_gain"]))
-        global_broadcast = np.zeros(len(NAMES), dtype=float)
-        global_broadcast += 0.25 * gw_ignition
-        global_broadcast[IDX["DMN"]] -= 0.25 * gw_ignition
-
-        recurrent = W @ x
-        target = sigmoid(recurrent + external + error_drive + global_broadcast - 0.35, beta=3.5)
-        dx = (-x + target) / TAU
-        dx[IDX["SEM"]] += cfg["learning_rate_semantic"] * x[IDX["HIP"]] * gw_ignition
-        dx[IDX["SEM"]] -= cfg["decay_semantic"] * x[IDX["SEM"]]
-        dx[IDX["VAL"]] += cfg["learning_rate_value"] * dopamine_delta
-        dx[IDX["GW"]] += (-x[IDX["GW"]] + gw_ignition) / TAU[IDX["GW"]]
-
-        noise = cfg["noise"] * rng.normal(size=len(NAMES))
-        x = x + dt * dx + math.sqrt(dt) * noise
-        x = np.clip(x, 0.0, 1.0)
-
-        if cfg.get("enable_oscillators", True):
-            E, I, phase, eeg = wc_step(E, I, phase, x, dt, cfg, rng)
-        else:
-            eeg = np.zeros(len(NAMES), dtype=float)
-        EEG[k] = eeg
-        E_hist[k] = E
-        I_hist[k] = I
-        D["prediction_error"][k] = prediction_error
-        D["dopamine_delta"][k] = dopamine_delta
-        D["noradrenaline"][k] = noradrenaline
-        D["acetylcholine"][k] = acetylcholine
-        D["gw_ignition"][k] = gw_ignition
-        decision_score = 0.34 * x[IDX["EXEC"]] + 0.22 * x[IDX["VAL"]] + 0.22 * x[IDX["MOT"]] + 0.22 * x[IDX["GW"]]
-        confidence = min(1.0, max(0.0, 0.5 + cfg["confidence_gain"] * (decision_score - cfg["decision_threshold"])))
-        B["decision_score"][k] = decision_score
-        B["confidence"][k] = confidence
-        B["decision_event"][k] = 1.0 if decision_score >= cfg["decision_threshold"] else 0.0
-        B["elapsed_time"][k] = (k + 1) * dt
-
-    band_power = {}
-    for band in ["theta", "alpha", "beta", "gamma"]:
-        ids = [i for i, name in enumerate(NAMES) if MODULE_BANDS[name] == band]
-        band_power[band] = np.mean(EEG[:, ids] ** 2, axis=1) if ids else np.zeros(steps)
-
-    max_points = int(cfg.get("max_points", 2000))
-    stride = max(1, int(math.ceil(steps / max_points)))
-    sl = slice(None, None, stride)
-
-    result = {
-        "names": NAMES,
-        "module_bands": MODULE_BANDS,
-        "time": time[sl].round(5).tolist(),
-        "activity": X[sl].round(6).tolist(),
-        "eeg": EEG[sl].round(6).tolist(),
-        "diagnostics": {k: v[sl].round(6).tolist() for k, v in D.items()},
-        "behavior": {k: v[sl].round(6).tolist() for k, v in B.items()},
-        "metrics": {
-            "prediction_error_mean": float(np.mean(D["prediction_error"])),
-            "gw_ignition_mean": float(np.mean(D["gw_ignition"])),
-            "confidence_mean": float(np.mean(B["confidence"])),
-            "decision_events": int(np.sum(B["decision_event"])),
-        },
-        "band_power": {k: v[sl].round(6).tolist() for k, v in band_power.items()},
-        "stride": stride,
-        "steps": steps,
+      panels.forEach((panel) => {
+        panel.classList.toggle("active", panel.dataset.panel === tabName);
+      });
     }
-    return json.dumps(result)
-</script>
 
-<script>
-let pyodide = null;
-let lastResult = null;
-let cfgLast = null;
-const $ = (id) => document.getElementById(id);
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => activateTab(button.dataset.tab));
+    });
 
-const SCENARIOS = {
-  "baseline": {
-    description: "Spokojny przebieg kontrolny: visual 1.0-5.0 s, auditory 5.5-9.0 s, task_cue 1.0-11.5 s, interoceptive baseline=0.15.",
-    what_changes: "Wyniki: stabilne, niskie fluktuacje aktywacji i neutralny profil stresu/nagrody.",
-    duration_hint: 12.0,
-    phases: [{name: "adaptation", start: 0.0, end: 12.0}],
-    events: [],
-    channels: {visual: [[1.0, 5.0, 0.6]], auditory: [[5.5, 9.0, 0.55]], task: [[1.0, 11.5, 0.45]], threat: [], reward: []}
-  },
-  "task-switching": {
-    description: "Symuluje przełączanie uwagi między blokiem wzrokowym i słuchowym pod ciągłą presją zadaniową.",
-    what_changes: "Wyniki: naprzemienne piki VIS/AUD i wzrost obciążenia ATT/EXEC przy przełączeniach.",
-    duration_hint: 45.0,
-    phases: [{name: "visual-block", start: 2.0, end: 10.0}, {name: "auditory-block", start: 10.0, end: 18.0}],
-    events: [],
-    channels: {visual: [[2.0, 10.0, 0.85], [18.0, 24.0, 0.85]], auditory: [[10.0, 18.0, 0.8], [24.0, 34.0, 0.8]], task: [[1.0, 35.0, 0.7]], threat: [], reward: [[34.0, 38.0, 0.8]]}
-  },
-  "threat-only": {
-    description: "Scenariusz ekspozycji na zagrożenie z podbiciem sygnału interoceptywnego i długim oknem napięcia.",
-    what_changes: "Wyniki: wyraźny wzrost SAL/INT, skok kortyzolu i noradrenaliny oraz spadek stabilności poznawczej.",
-    duration_hint: 45.0,
-    phases: [],
-    events: [{type: "threat_onset", time: 12.0}, {type: "threat_offset", time: 32.0}],
-    channels: {visual: [], auditory: [], task: [[1.0, 35.0, 0.5]], threat: [[12.0, 32.0, 0.95]], reward: []}
-  },
-  "reward-learning": {
-    description: "Trening skojarzeń: bodźce sensoryczne poprzedzają sekwencje nagród, wspierając uczenie wartościowania.",
-    what_changes: "Wyniki: narastanie odpowiedzi VAL/SEM oraz wyraźne piki po impulsach nagrody.",
-    duration_hint: 45.0,
-    phases: [],
-    events: [{type: "reward", time: 26.0}, {type: "reward", time: 34.0}],
-    channels: {visual: [[2.0, 18.0, 0.9]], auditory: [[8.0, 24.0, 0.75]], task: [[1.0, 35.0, 0.65]], threat: [], reward: [[26.0, 30.0, 1.0], [34.0, 38.0, 1.0]]}
-  },
-  "sensory-overload": {
-    description: "Przeciążenie sensoryczne: równoczesne, silne bodźce wzrokowe i słuchowe z okresowym nasileniem.",
-    what_changes: "Wyniki: wysoka amplituda VIS/AUD, rosnące obciążenie ATT i większa zmienność GW.",
-    duration_hint: 45.0,
-    phases: [{name: "ramp-up", start: 0.0, end: 12.0}, {name: "overload", start: 12.0, end: 30.0}, {name: "recovery", start: 30.0, end: 45.0}],
-    events: [],
-    channels: {visual: [[2.0, 30.0, 0.95]], auditory: [[4.0, 30.0, 0.9]], task: [[1.0, 35.0, 0.75]], threat: [], reward: []}
-  },
-  "stress-recovery": {
-    description: "Epizod stresu z późniejszym wygaszaniem pobudzenia i powrotem do stanu zadaniowego.",
-    what_changes: "Wyniki: początkowy skok stresu (SAL, kortyzol), a następnie normalizacja i odbudowa EXEC/ATT.",
-    duration_hint: 45.0,
-    phases: [],
-    events: [{type: "stress_peak", time: 15.0}, {type: "recovery_start", time: 24.0}],
-    channels: {visual: [], auditory: [], task: [[1.0, 38.0, 0.6]], threat: [[8.0, 24.0, 0.85]], reward: [[30.0, 36.0, 0.55]]}
-  }
-};
-const REGION_TO_MODULE_WEIGHTS = {
-  DLPFC_L: [["EXEC", 0.6], ["VSWM", 0.4]], DLPFC_R: [["EXEC", 0.6], ["VSWM", 0.4]],
-  OFC_L: [["VAL", 1.0]], OFC_R: [["VAL", 1.0]], ACC: [["SAL", 0.45], ["EXEC", 0.35], ["GW", 0.2]],
-  M1_L: [["MOT", 1.0]], M1_R: [["MOT", 1.0]], S1_L: [["INT", 0.6], ["ATT", 0.4]], S1_R: [["INT", 0.6], ["ATT", 0.4]],
-  IPS_L: [["ATT", 0.65], ["VSWM", 0.35]], IPS_R: [["ATT", 0.65], ["VSWM", 0.35]], A1_L: [["AUD", 1.0]], A1_R: [["AUD", 1.0]],
-  STG_L: [["AUD", 0.6], ["PHON", 0.4]], STG_R: [["AUD", 0.6], ["PHON", 0.4]], IFG_L: [["PHON", 0.75], ["EXEC", 0.25]], IFG_R: [["PHON", 0.75], ["EXEC", 0.25]],
-  Insula_L: [["SAL", 0.6], ["INT", 0.4]], Insula_R: [["SAL", 0.6], ["INT", 0.4]], Thalamus_L: [["GW", 0.8], ["ATT", 0.2]], Thalamus_R: [["GW", 0.8], ["ATT", 0.2]],
-  BasalGanglia_L: [["VAL", 0.55], ["MOT", 0.45]], BasalGanglia_R: [["VAL", 0.55], ["MOT", 0.45]],
-  HIP_L: [["HIP", 0.7], ["EPIS", 0.3]], HIP_R: [["HIP", 0.7], ["EPIS", 0.3]], AMY_L: [["SAL", 0.6], ["VAL", 0.4]], AMY_R: [["SAL", 0.6], ["VAL", 0.4]],
-  PCC: [["DMN", 0.65], ["EPIS", 0.35]], mPFC: [["DMN", 0.55], ["GW", 0.25], ["VAL", 0.2]],
-  Angular_L: [["SEM", 0.65], ["DMN", 0.35]], Angular_R: [["SEM", 0.65], ["DMN", 0.35]],
-  V1_L: [["VIS", 1.0]], V1_R: [["VIS", 1.0]], V2_L: [["VIS", 1.0]], V2_R: [["VIS", 1.0]],
-  Cerebellum_L: [["MOT", 0.85], ["ATT", 0.15]], Cerebellum_R: [["MOT", 0.85], ["ATT", 0.15]],
-  Brainstem: [["INT", 0.55], ["SAL", 0.25], ["GW", 0.2]],
-};
-const numericIds = ["T","seed","dt","noise","gw_threshold","gw_gain","learning_rate_semantic","learning_rate_value","decay_semantic","decision_threshold","confidence_gain","sensitivity_delta","w_ee","w_ei","w_ie","w_ii","baseline_e","baseline_i","cognitive_drive_gain","coupling_gain","oscillator_noise","phase_drive_gain","visual_start","visual_end","visual_intensity","auditory_start","auditory_end","auditory_intensity","task_start","task_end","task_intensity","threat_start","threat_end","threat_intensity","reward_start","reward_end","reward_intensity"];
+    document.querySelectorAll("[data-open-tab]").forEach((link) => {
+      link.addEventListener("click", () => activateTab(link.dataset.openTab));
+    });
 
-async function applyGuiDefaults() {
-  try {
-    const res = await fetch("./gui_defaults.json", { cache: "no-store" });
-    if (!res.ok) return;
-    const data = await res.json();
-    const merged = { ...(data.simulation || {}), ...(data.brain || {}), ...(data.osc || {}) };
-    for (const [id, value] of Object.entries(merged)) {
-      const el = $(id);
-      if (!el) continue;
-      if (el.type === "checkbox") el.checked = Boolean(value);
-      else el.value = String(value);
-    }
-    for (const [id, text] of Object.entries(data.descriptions || {})) {
-      const input = $(id);
-      if (input) input.title = text;
-      const label = document.querySelector(`label[for="${id}"]`);
-      if (label) label.title = text;
-    }
-  } catch (_err) {}
-}
-let defaults = null;
-function captureDefaults() {
-  defaults = {};
-  for (const id of numericIds) defaults[id] = $(id).value;
-  defaults.auto_dt = $("auto_dt").checked;
-  defaults.command = $("command").value;
-  defaults.batch_seeds = $("batch_seeds").value;
-  defaults.batch_scenarios = $("batch_scenarios").value;
-  defaults.sensitivity_params = $("sensitivity_params").value;
-  defaults.enable_oscillators = $("enable_oscillators").checked;
-  defaults.plot_activity = $("plot_activity").checked;
-  defaults.plot_diagnostics = $("plot_diagnostics").checked;
-  defaults.plot_behavior = $("plot_behavior").checked;
-  defaults.plot_eeg = $("plot_eeg").checked;
-  defaults.plot_bands = $("plot_bands").checked;
-  defaults.scenario = $("scenario").value;
-  for (const id of ["plot_simulated_brain_activity","plot_brain_region_projections","plot_region_activity_2d","plot_weight_trajectories","plot_weight_deltas","plot_scenario_channels","plot_scenario_timeline"]) defaults[id] = $(id).checked;
-}
-
-function setStatus(text) { $("status").textContent = text; }
-function parseList(raw) { return raw.split(",").map(part => part.trim()).filter(Boolean); }
-function autoDtForDuration(durationS) {
-  const TARGET_SIMULATION_STEPS = 2400.0;
-  const rawDt = durationS / TARGET_SIMULATION_STEPS;
-  return Math.max(0.001, Math.min(0.01, rawDt));
-}
-function applyAutoDt() {
-  if (!$("auto_dt").checked) return;
-  const durationS = Number($("T").value);
-  if (Number.isFinite(durationS) && durationS > 0) $("dt").value = autoDtForDuration(durationS).toFixed(4);
-}
-function getConfig(overrides = {}) {
-  applyAutoDt();
-  const cfg = {};
-  for (const id of numericIds) cfg[id] = Number($(id).value);
-  Object.assign(cfg, overrides);
-  cfg.enable_oscillators = $("enable_oscillators").checked;
-  cfg.max_points = 2000;
-  cfg.scenario = overrides.scenario || $("scenario").value;
-  return cfg;
-}
-function metricsSummary(metrics, prefix = "Metryki") {
-  return `${prefix}: mean(prediction_error)=${metrics.prediction_error_mean.toFixed(4)}, mean(gw_ignition)=${metrics.gw_ignition_mean.toFixed(4)}, mean(confidence)=${metrics.confidence_mean.toFixed(4)}, mean(decision_events)=${metrics.decision_events.toFixed(2)}`;
-}
-function updateScenarioDetails() {
-  const scenario = SCENARIOS[$("scenario").value];
-  if (!scenario) return;
-  const phases = scenario.phases.length ? scenario.phases.map(p => `${p.name} (${p.start}-${p.end} s)`).join(", ") : "brak";
-  const events = scenario.events.length ? scenario.events.map(e => `${e.type}@${e.time}s`).join(", ") : "brak";
-  const active = Object.entries(scenario.channels).filter(([, pulses]) => pulses.length).map(([name]) => name).join(", ") || "brak";
-  $("scenarioDetails").textContent = `Opis: ${scenario.description} Przewidywane wyniki: ${scenario.what_changes} Sugerowany czas: ${scenario.duration_hint.toFixed(1)} s. Fazy: ${phases}. Zdarzenia: ${events}. Kanały aktywne: ${active}.`;
-}
-function applyScenarioDefaults() {
-  const scenario = SCENARIOS[$("scenario").value];
-  if (!scenario) return;
-  $("T").value = scenario.duration_hint.toString();
-  const fill = (prefix, pulses) => {
-    const first = pulses[0] || [0, 0, 0];
-    $(`${prefix}_start`).value = first[0];
-    $(`${prefix}_end`).value = first[1];
-    $(`${prefix}_intensity`).value = first[2];
-  };
-  fill("visual", scenario.channels.visual);
-  fill("auditory", scenario.channels.auditory);
-  fill("task", scenario.channels.task);
-  fill("threat", scenario.channels.threat);
-  fill("reward", scenario.channels.reward);
-  applyAutoDt();
-}
-function selectedPlots() {
-  return {
-    activity: $("plot_activity").checked,
-    diagnostics: $("plot_diagnostics").checked,
-    behavior: $("plot_behavior").checked,
-    eeg: $("plot_eeg").checked,
-    bands: $("plot_bands").checked,
-    simulated_brain_activity: $("plot_simulated_brain_activity").checked,
-    brain_region_projections: $("plot_brain_region_projections").checked,
-    region_activity_2d: $("plot_region_activity_2d").checked,
-    weight_trajectories: $("plot_weight_trajectories").checked,
-    weight_deltas: $("plot_weight_deltas").checked,
-    scenario_channels: $("plot_scenario_channels").checked,
-    scenario_timeline: $("plot_scenario_timeline").checked,
-  };
-}
-async function initPyodide() {
-  try {
-    pyodide = await loadPyodide();
-    await pyodide.loadPackage("numpy");
-    const code = $("python-simulator").textContent;
-    pyodide.runPython(code);
-    $("runBtn").disabled = false;
-    setStatus("Gotowe. Pyodide i NumPy zostały załadowane.");
-  } catch (err) {
-    console.error(err);
-    setStatus("Błąd ładowania Pyodide: " + err.message);
-  }
-}
-function makeLayout(title, ytitle) {
-  return {
-    title: { text: title, font: { size: 15 } },
-    margin: { l: 48, r: 18, t: 42, b: 42 },
-    xaxis: { title: "czas [s]", zeroline: false },
-    yaxis: { title: ytitle, zeroline: false },
-    legend: { orientation: "h", y: -0.24 },
-    paper_bgcolor: "white",
-    plot_bgcolor: "white"
-  };
-}
-function drawResults(res) {
-  const plots = selectedPlots();
-  const time = res.time;
-  const names = res.names;
-  const selected = ["VIS", "AUD", "SAL", "ATT", "PHON", "VSWM", "EXEC", "EPIS", "SEM", "HIP", "VAL", "MOT", "DMN", "GW"];
-  const activityTraces = selected.map(name => {
-    const j = names.indexOf(name);
-    return { x: time, y: res.activity.map(row => row[j]), mode: "lines", name };
-  });
-  const diagTraces = Object.entries(res.diagnostics).map(([name, arr]) => ({ x: time, y: arr, mode: "lines", name }));
-  const behaviorTraces = Object.entries(res.behavior || {}).map(([name, arr]) => ({ x: time, y: arr, mode: name === "decision_event" ? "markers" : "lines", name }));
-  const eegSelected = ["HIP", "EPIS", "VIS", "AUD", "EXEC", "ATT", "SEM", "GW"];
-  const eegTraces = eegSelected.map(name => {
-    const j = names.indexOf(name);
-    return { x: time, y: res.eeg.map(row => row[j]), mode: "lines", name: name + " (" + res.module_bands[name] + ")" };
-  });
-  const bandTraces = Object.entries(res.band_power).map(([name, arr]) => ({ x: time, y: arr, mode: "lines", name }));
-  const heatZ = names.map((_, j) => res.activity.map(row => row[j]));
-  const regionNames = Object.keys(REGION_TO_MODULE_WEIGHTS);
-  const regionSeries = {};
-  for (const region of regionNames) {
-    const mapping = REGION_TO_MODULE_WEIGHTS[region];
-    const activeModules = [];
-    for (const [mod, w] of mapping) {
-      const j = names.indexOf(mod);
-      if (j >= 0) {
-        activeModules.push([j, w]);
-      }
-    }
-    const y = [];
-    for (const row of res.activity) {
-      let num = 0.0, den = 0.0;
-      for (const [j, w] of activeModules) {
-        num += row[j] * w;
-        den += w;
-      }
-      y.push(den > 0 ? num / den : 0.0);
-    }
-    regionSeries[region] = y;
-  }
-  const regionHeatZ = regionNames.map(r => regionSeries[r]);
-  const lastRegionVals = regionNames.map(r => regionSeries[r][regionSeries[r].length - 1]);
-  const regionX = Array.from({length: regionNames.length}, (_, i) => i % 8);
-  const regionY = Array.from({length: regionNames.length}, (_, i) => Math.floor(i / 8));
-  const projectionTrace = {
-    x: regionX, y: regionY, mode: "markers+text",
-    text: regionNames, textposition: "top center",
-    marker: { size: 13, color: lastRegionVals, colorscale: "Magma", cmin: 0, cmax: 1, line: {color: "#111", width: 0.5}, showscale: true, colorbar: {title: "Aktywacja [0-1]"} },
-    hovertemplate: "%{text}<br>aktywacja=%{marker.color:.3f}<extra></extra>",
-    name: "Regiony"
-  };
-  const weightNames = ["VIS→SAL","AUD→SAL","SAL→ATT","ATT→EXEC","EXEC→GW"];
-  const idx = n => names.indexOf(n);
-  const tracks = [
-    [idx("SAL"), idx("VIS")], [idx("SAL"), idx("AUD")], [idx("ATT"), idx("SAL")], [idx("EXEC"), idx("ATT")], [idx("GW"), idx("EXEC")]
-  ];
-  const wTraj = tracks.map(([t,s],k)=>({x:time,y:res.activity.map(r=>Math.max(0, r[t]*r[s])),mode:"lines",name:weightNames[k]}));
-  const wDelta = wTraj.map(tr=>({x:tr.x.slice(1),y:tr.y.slice(1).map((v,i)=>v-tr.y[i]),mode:"lines",name:tr.name}));
-  const ch = ["visual","auditory","task","threat","reward"];
-  const cvals = ch.map(k => cfgLast?.[k + '_intensity'] || 0);
-  const scenarioChannels = ch.map((n,i)=>({x:[0, time[time.length-1]], y:[cvals[i], cvals[i]], mode:"lines", name:n}));
-  const scenarioTimeline = [{x:[0, time[time.length-1]], y:[1,1], mode:"lines", name: cfgLast?.scenario || "scenario"}];
-
-  if (plots.activity) Plotly.newPlot("activityPlot", activityTraces, makeLayout("Aktywacje modułów poznawczych", "aktywacja [0-1]"), {responsive: true});
-  else Plotly.purge("activityPlot");
-  if (plots.diagnostics) Plotly.newPlot("diagPlot", diagTraces, makeLayout("Zmienne diagnostyczne i neuromodulacyjne", "wartość"), {responsive: true});
-  else Plotly.purge("diagPlot");
-  if (plots.behavior) Plotly.newPlot("behaviorPlot", behaviorTraces, makeLayout("Przebiegi decyzyjne i markery decyzji", "wartość"), {responsive: true});
-  else Plotly.purge("behaviorPlot");
-  if (plots.eeg) Plotly.newPlot("eegPlot", eegTraces, makeLayout("Sygnały EEG aproksymowane jako E-I", "E-I"), {responsive: true});
-  else Plotly.purge("eegPlot");
-  if (plots.bands) Plotly.newPlot("bandPlot", bandTraces, makeLayout("Moc pasm oscylacyjnych", "moc"), {responsive: true});
-  else Plotly.purge("bandPlot");
-  if (plots.simulated_brain_activity) Plotly.newPlot("brainHeatPlot", [{z:heatZ,x:time,y:names,type:"heatmap",colorscale:"Viridis"}], makeLayout("Symulowana aktywność mózgu", "moduł"), {responsive:true}); else Plotly.purge("brainHeatPlot");
-  if (plots.brain_region_projections) {
-    const projLayout = {
-      title: { text: "4 rzuty mózgu: aktywacja regionów SVG (ostatni krok czasu)", font: { size: 15 } },
-      margin: { l: 28, r: 16, t: 46, b: 24 },
-      grid: {rows: 2, columns: 2, pattern: "independent"},
-      annotations: [
-        {text: "Axial", x: 0.21, y: 1.03, xref: "paper", yref: "paper", showarrow: false},
-        {text: "Coronal", x: 0.79, y: 1.03, xref: "paper", yref: "paper", showarrow: false},
-        {text: "Sagittal", x: 0.21, y: 0.48, xref: "paper", yref: "paper", showarrow: false},
-        {text: "Lateral", x: 0.79, y: 0.48, xref: "paper", yref: "paper", showarrow: false},
-      ],
-      xaxis: {visible: false}, yaxis: {visible: false},
-      xaxis2: {visible: false}, yaxis2: {visible: false},
-      xaxis3: {visible: false}, yaxis3: {visible: false},
-      xaxis4: {visible: false}, yaxis4: {visible: false},
-      paper_bgcolor: "white", plot_bgcolor: "white"
-    };
-    const mk = (ax, ay) => ({...projectionTrace, xaxis: ax, yaxis: ay, showlegend: false});
-    Plotly.newPlot("brainProjPlot", [mk("x","y"), mk("x2","y2"), mk("x3","y3"), mk("x4","y4")], projLayout, {responsive:true});
-  } else Plotly.purge("brainProjPlot");
-  if (plots.region_activity_2d) {
-    Plotly.newPlot("region2dPlot", [{z:regionHeatZ,x:time,y:regionNames,type:"heatmap",colorscale:"Magma",zmin:0,zmax:1}], makeLayout("Aktywacja regionów mózgu w czasie (2D)", "region"), {responsive:true});
-  } else Plotly.purge("region2dPlot");
-  if (plots.weight_trajectories) Plotly.newPlot("weightsPlot", wTraj, makeLayout("Trajektorie adaptowanych wag W (aproksymacja)", "waga"), {responsive:true}); else Plotly.purge("weightsPlot");
-  if (plots.weight_deltas) Plotly.newPlot("deltasPlot", wDelta, makeLayout("Przyrosty wag ΔW / krok (aproksymacja)", "ΔW"), {responsive:true}); else Plotly.purge("deltasPlot");
-  if (plots.scenario_channels) Plotly.newPlot("scenarioChannelsPlot", scenarioChannels, makeLayout("Kanały bodźców scenariusza", "intensywność"), {responsive:true}); else Plotly.purge("scenarioChannelsPlot");
-  if (plots.scenario_timeline) Plotly.newPlot("scenarioTimelinePlot", scenarioTimeline, makeLayout("Oś czasu scenariusza", "faza"), {responsive:true}); else Plotly.purge("scenarioTimelinePlot");
-}
-function exportCsv() {
-  if (!lastResult) return;
-  const names = lastResult.names;
-  const header = ["time", ...names.map(n => "act_" + n), ...names.map(n => "eeg_" + n), ...Object.keys(lastResult.diagnostics).map(n => "diag_" + n), ...Object.keys(lastResult.behavior || {}).map(n => "behavior_" + n), ...Object.keys(lastResult.band_power).map(n => "band_" + n)];
-  const rows = [header.join(",")];
-  for (let i = 0; i < lastResult.time.length; i++) {
-    const row = [lastResult.time[i], ...lastResult.activity[i], ...lastResult.eeg[i]];
-    for (const arr of Object.values(lastResult.diagnostics)) row.push(arr[i]);
-    for (const arr of Object.values(lastResult.behavior || {})) row.push(arr[i]);
-    for (const arr of Object.values(lastResult.band_power)) row.push(arr[i]);
-    rows.push(row.join(","));
-  }
-  const blob = new Blob([rows.join("\n")], {type: "text/csv;charset=utf-8"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "brain_simulation_results.csv";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-async function runSingle(overrides = {}) {
-  const cfg = getConfig(overrides);
-  cfgLast = cfg;
-  pyodide.globals.set("CONFIG_JSON", JSON.stringify(cfg));
-  const resultJson = await pyodide.runPythonAsync("simulate_json(CONFIG_JSON)");
-  return JSON.parse(resultJson);
-}
-async function runBatch() {
-  const seeds = parseList($("batch_seeds").value).map(Number);
-  const scenarios = parseList($("batch_scenarios").value).length ? parseList($("batch_scenarios").value) : [$("scenario").value];
-  const sensParams = parseList($("sensitivity_params").value);
-  const delta = Number($("sensitivity_delta").value);
-  const allMetrics = [];
-  let completed = 0;
-  const baseTotal = seeds.length * scenarios.length;
-  const total = baseTotal + (sensParams.length ? baseTotal * sensParams.length * 2 : 0);
-  let last = null;
-  for (const scenario of scenarios) {
-    for (const seed of seeds) {
-      last = await runSingle({scenario, seed});
-      await new Promise(resolve => setTimeout(resolve, 0));
-      allMetrics.push(last.metrics);
-      completed += 1;
-      setStatus(`Batch: ${completed}/${total} przebiegów...`);
-      for (const param of sensParams) {
-        const base = Number($(param)?.value);
-        if (!Number.isFinite(base)) continue;
-        for (const sign of [-1, 1]) {
-          const overrides = {scenario, seed};
-          overrides[param] = base * (1.0 + sign * delta);
-          const result = await runSingle(overrides);
-          await new Promise(resolve => setTimeout(resolve, 0));
-          allMetrics.push(result.metrics);
-          completed += 1;
-          setStatus(`Batch: ${completed}/${total} przebiegów...`);
-        }
-      }
-    }
-  }
-  if (!last) {
-    setStatus("Batch: Nie wykonano żadnych przebiegów. Sprawdź konfigurację.");
-    return lastResult;
-  }
-  const mean = key => allMetrics.reduce((acc, row) => acc + row[key], 0) / allMetrics.length;
-  last.batch_metrics = {
-    prediction_error_mean: mean("prediction_error_mean"),
-    gw_ignition_mean: mean("gw_ignition_mean"),
-    confidence_mean: mean("confidence_mean"),
-    decision_events: mean("decision_events"),
-    runs: allMetrics.length,
-  };
-  return last;
-}
-$("runBtn").addEventListener("click", async () => {
-  if (!pyodide) return;
-  $("runBtn").disabled = true;
-  $("csvBtn").disabled = true;
-  setStatus($("command").value === "batch" ? "Batch w toku..." : "Symulacja trwa...");
-  try {
-    lastResult = $("command").value === "batch" ? await runBatch() : await runSingle();
-    drawResults(lastResult);
-    $("csvBtn").disabled = false;
-    const summary = lastResult.batch_metrics ? metricsSummary(lastResult.batch_metrics, `Batch (${lastResult.batch_metrics.runs} przebiegów)`) : metricsSummary(lastResult.metrics);
-    setStatus(`Gotowe. Kroki: ${lastResult.steps}, rysowany co ${lastResult.stride}. ${summary}`);
-  } catch (err) {
-    console.error(err);
-    setStatus("Błąd symulacji: " + err.message);
-  } finally {
-    $("runBtn").disabled = false;
-  }
-});
-$("csvBtn").addEventListener("click", exportCsv);
-$("resetBtn").addEventListener("click", () => {
-  if (!defaults) captureDefaults();
-  for (const id of numericIds) $(id).value = defaults[id];
-  $("auto_dt").checked = defaults.auto_dt;
-  $("command").value = defaults.command;
-  $("batch_seeds").value = defaults.batch_seeds;
-  $("batch_scenarios").value = defaults.batch_scenarios;
-  $("sensitivity_params").value = defaults.sensitivity_params;
-  $("enable_oscillators").checked = defaults.enable_oscillators;
-  $("plot_activity").checked = defaults.plot_activity;
-  $("plot_diagnostics").checked = defaults.plot_diagnostics;
-  $("plot_behavior").checked = defaults.plot_behavior;
-  $("plot_eeg").checked = defaults.plot_eeg;
-  $("plot_bands").checked = defaults.plot_bands;
-  $("scenario").value = defaults.scenario;
-  for (const id of ["plot_simulated_brain_activity","plot_brain_region_projections","plot_region_activity_2d","plot_weight_trajectories","plot_weight_deltas","plot_scenario_channels","plot_scenario_timeline"]) $(id).checked = defaults[id];
-  updateScenarioDetails();
-});
-document.querySelectorAll(".tab").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    ["activityPlot", "diagPlot", "behaviorPlot", "eegPlot", "bandPlot", "brainHeatPlot", "brainProjPlot", "region2dPlot", "weightsPlot", "deltasPlot", "scenarioChannelsPlot", "scenarioTimelinePlot"].forEach(id => $(id).style.display = id === btn.dataset.target ? "block" : "none");
-    setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
-  });
-});
-$("auto_dt").addEventListener("change", applyAutoDt);
-$("T").addEventListener("input", applyAutoDt);
-$("scenario").addEventListener("change", () => {
-  updateScenarioDetails();
-  applyScenarioDefaults();
-});
-applyGuiDefaults().finally(() => { updateScenarioDetails(); applyAutoDt(); captureDefaults(); initPyodide(); });
-</script>
+    const handleHashChange = () => {\n      if (window.location.hash === "#instrukcja") {\n        activateTab("manual");\n      }\n    };\n    window.addEventListener("hashchange", handleHashChange);\n    handleHashChange();
+  </script>
 </body>
 </html>
