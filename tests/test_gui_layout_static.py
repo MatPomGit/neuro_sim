@@ -260,3 +260,17 @@ def test_parameter_forms_use_polish_labels() -> None:
     assert '"gw_threshold": "próg globalnej przestrzeni roboczej"' in forms_source
     assert '"cognitive_drive_gain": "wzmocnienie napędu poznawczego"' in forms_source
     assert "PARAMETER_LABELS.get(field.name, field.name)" in qt_source
+
+
+def test_qt_plot_checkboxes_are_hidden_behind_customization_panel() -> None:
+    """Sprawdź, że Qt pokazuje presety i zwija szczegółowe wybory wykresów."""
+    source = QT_SECTIONS_PATH.read_text(encoding="utf-8")
+
+    assert "QToolButton" in source
+    assert 'setText("Dostosuj wykresy")' in source
+    assert "setCheckable(True)" in source
+    assert "toggle_plot_details" in source
+    assert "self.plot_details_group.setVisible(checked)" in source
+    assert 'QRadioButton("Niestandardowe"' in source
+    assert "custom_button.setVisible(False)" in source
+    assert "Aktywny zestaw: Niestandardowe" in source
