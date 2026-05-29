@@ -362,7 +362,56 @@ features_scaled = scaler.fit_transform(features)
 
 ---
 
-## 9) Wydajność przetwarzania danych
+## 9) Zgodność z BIDS dla danych mózgowych i EEG (MUST)
+
+Każda zmiana dotycząca organizacji, nazewnictwa, metadanych, walidacji,
+konwersji, preprocessingu, eksportu lub dokumentowania danych obrazowych mózgu
+albo EEG musi stosować wymagania opisane w:
+
+- `docs/bids_brain_imaging_requirements.md` — dla danych MRI, fMRI, DWI, map
+  pola, perfuzji, spektroskopii MR, atlasów, masek, segmentacji i pochodnych
+  neuroobrazowych;
+- `docs/bids_eeg_requirements.md` — dla surowych i pochodnych danych EEG,
+  EOG, ECG, EMG, GSR, PPG, RESP, TRIG, markerów zdarzeń, kanałów, elektrod,
+  układów współrzędnych i danych behawioralnych powiązanych z EEG.
+
+Wymagania praktyczne:
+
+- przed zmianą struktury katalogów, nazw plików, metadanych lub eksportu danych
+  sprawdź właściwy dokument BIDS i zastosuj opisane tam reguły;
+- surowe dane BIDS traktuj jako niemodyfikowalne: nie nadpisuj ich wynikami
+  preprocessingu, analiz ani eksportu;
+- dane pochodne zapisuj w `derivatives/<pipeline-name>/` wraz z
+  `dataset_description.json`, informacją o pipeline oraz metadanymi potrzebnymi
+  do interpretacji wyniku;
+- stosuj standardowe encje, sufiksy i katalogi BIDS zamiast własnych nazw, jeśli
+  istnieje odpowiednik w BIDS;
+- pliki tabelaryczne zapisuj jako TSV z wartościami brakującymi `n/a`,
+  separatorem tabulatorowym, nagłówkami w `snake_case` i słownikiem JSON, gdy
+  znaczenie kolumn nie jest oczywiste;
+- metadane JSON muszą pochodzić z danych źródłowych, protokołu akwizycji lub
+  jawnie udokumentowanego pipeline; nie wypełniaj braków arbitralnymi wartościami
+  domyślnymi;
+- dla danych EEG zachowuj powiązane pliki i markery (`*_eeg.json`,
+  `*_channels.tsv`, `*_events.tsv`, `electrodes.tsv`, `coordsystem.json`,
+  `.vhdr`, `.vmrk`, `.eeg`, `.set`, `.fdt`, `.edf`, `.bdf`) zgodnie z
+  `docs/bids_eeg_requirements.md`;
+- każda zmiana filtracji, interpolacji kanałów, ICA, odrzucania artefaktów,
+  segmentacji, masek, atlasów lub transformacji przestrzennych musi zapisywać
+  parametry, metodę, wersję pipeline i uzasadnienie wystarczające do reprodukcji;
+- dane osobowe i metadane identyfikujące uczestników muszą być usunięte,
+  zanonimizowane lub pseudonimizowane zgodnie z wymaganiami BIDS i polityką
+  bezpieczeństwa projektu;
+- po większej zmianie struktury danych, nazw plików lub metadanych uruchom
+  BIDS Validator, jeżeli środowisko na to pozwala; błędy napraw albo opisz jako
+  jawne odstępstwo z uzasadnieniem;
+- jeżeli wymagania BIDS kolidują z innymi założeniami implementacji, wybierz
+  rozwiązanie zachowujące integralność danych, replikowalność i możliwość
+  automatycznej walidacji.
+
+---
+
+## 10) Wydajność przetwarzania danych
 
 Kod powinien unikać niepotrzebnych kopii danych oraz pętli Pythona tam, gdzie dostępne są operacje wektorowe.
 
@@ -401,7 +450,7 @@ df["rt_s"] = df["reaction_time_ms"] / 1000
 
 ---
 
-## 10) Replikowalność eksperymentów
+## 11) Replikowalność eksperymentów
 
 Każdy eksperyment musi być możliwy do odtworzenia na podstawie zapisanych artefaktów.
 
@@ -439,7 +488,7 @@ results/
 
 ---
 
-## 11) Kontrola losowości
+## 12) Kontrola losowości
 
 Każde użycie losowości musi być jawne i kontrolowane. Wartość ziarna powinna pochodzić z konfiguracji.
 
@@ -490,7 +539,7 @@ Pełna deterministyczność na GPU może obniżyć wydajność i nie zawsze jest
 
 ---
 
-## 12) Logowanie
+## 13) Logowanie
 
 Nie używaj `print()` jako podstawowego mechanizmu raportowania przebiegu eksperymentu. Do logów stosuj moduł `logging` albo dedykowane narzędzie eksperymentalne.
 
@@ -536,7 +585,7 @@ Logi powinny zawierać informacje o:
 
 ---
 
-## 13) Monitorowanie eksperymentów
+## 14) Monitorowanie eksperymentów
 
 Dla większych projektów należy stosować narzędzia do monitorowania eksperymentów, np.:
 
@@ -581,7 +630,7 @@ Jeżeli projekt nie używa dedykowanego narzędzia, zapisuj co najmniej `metrics
 
 ---
 
-## 14) Dokumentowanie środowiska
+## 15) Dokumentowanie środowiska
 
 Repozytorium powinno zawierać jednoznaczny sposób odtworzenia środowiska.
 
@@ -619,7 +668,7 @@ def collect_environment_info() -> dict[str, str]:
 
 ---
 
-## 15) Testowanie kodu naukowego
+## 16) Testowanie kodu naukowego
 
 Kod naukowy wymaga testów szczególnie tam, gdzie łatwo o błędy numeryczne lub metodologiczne.
 
@@ -660,7 +709,7 @@ Testy powinny być małe, szybkie i możliwe do uruchomienia lokalnie.
 
 ---
 
-## 16) Notebooki
+## 17) Notebooki
 
 Notebooki są dopuszczalne, ale nie powinny zastępować modularnego kodu w `src/`.
 
@@ -683,7 +732,7 @@ Przykładowe nazwy:
 
 ---
 
-## 17) Obsługa błędów
+## 18) Obsługa błędów
 
 Błędy powinny być obsługiwane jawnie. Nie stosuj pustych bloków `except`.
 
@@ -709,7 +758,7 @@ Komunikaty błędów powinny zawierać kontekst pozwalający zdiagnozować probl
 
 ---
 
-## 18) Stos desktopowego GUI (MUST)
+## 19) Stos desktopowego GUI (MUST)
 
 1. **PySide6/Qt jako docelowa biblioteka GUI**
    - Nowe elementy desktopowego GUI buduj w oparciu o `PySide6` i wzorce Qt używane w modułach `brain_model/qt_*`.
@@ -727,7 +776,7 @@ Komunikaty błędów powinny zawierać kontekst pozwalający zdiagnozować probl
 
 ---
 
-## 19) Polityka językowa (MUST)
+## 20) Polityka językowa (MUST)
 
 1. **Interfejs i opisy dla użytkownika w języku polskim**
    - Wszystkie treści prezentowane użytkownikowi końcowemu, w tym GUI, CLI, raporty, logi użytkowe, opisy scenariuszy i dokumentacja użytkowa, twórz po polsku.
@@ -748,7 +797,7 @@ Komunikaty błędów powinny zawierać kontekst pozwalający zdiagnozować probl
 
 ---
 
-## 20) Minimalny szablon funkcji
+## 21) Minimalny szablon funkcji
 
 Każda funkcja dodawana do kodu naukowego powinna być zbliżona do poniższego wzorca:
 
@@ -782,7 +831,7 @@ def function_name(input_value: InputType, parameter: float) -> OutputType:
 
 ---
 
-## 21) Minimalny szablon eksperymentu
+## 22) Minimalny szablon eksperymentu
 
 Skrypt eksperymentalny powinien mieć wyraźny punkt wejścia:
 
@@ -823,7 +872,7 @@ if __name__ == "__main__":
 
 ---
 
-## 22) Checklist przed zakończeniem zadania
+## 23) Checklist przed zakończeniem zadania
 
 Agent AI ma obowiązek sprawdzić:
 
@@ -832,6 +881,7 @@ Agent AI ma obowiązek sprawdzić:
 - [ ] Czy nie wprowadzono zmian ubocznych poza zakresem?
 - [ ] Czy zmiany strukturalne zostały opisane w ADR?
 - [ ] Czy konfiguracja/schemat pozostają spójne i walidowalne?
+- [ ] Czy zmiany dotyczące danych mózgowych lub EEG są zgodne z właściwymi wymaganiami BIDS?
 - [ ] Czy testy/weryfikacja potwierdzają działanie?
 - [ ] Czy opis PR jasno tłumaczy: **co**, **dlaczego**, **jak sprawdzono**?
 - [ ] Czy nowe funkcje, klasy i metody mają type hints oraz docstringi?
@@ -842,7 +892,7 @@ Agent AI ma obowiązek sprawdzić:
 
 ---
 
-## 23) Preferowany styl pracy agenta
+## 24) Preferowany styl pracy agenta
 
 1. Najpierw zrozum wymaganie, potem koduj.
 2. Najpierw lokalna poprawka, potem ewentualna generalizacja.
@@ -853,13 +903,14 @@ Agent AI ma obowiązek sprawdzić:
 
 ---
 
-## 24) Checklist przed uruchomieniem eksperymentu
+## 25) Checklist przed uruchomieniem eksperymentu
 
 Przed uruchomieniem eksperymentu sprawdź:
 
 - [ ] Czy konfiguracja eksperymentu jest zapisana w pliku?
 - [ ] Czy ustawiono ziarno losowości?
 - [ ] Czy dane wejściowe są wersjonowane lub jednoznacznie opisane?
+- [ ] Czy dane mózgowe lub EEG spełniają wymagania BIDS właściwe dla modalności?
 - [ ] Czy dane treningowe, walidacyjne i testowe są rozdzielone poprawnie?
 - [ ] Czy preprocessing jest dopasowywany tylko na danych treningowych?
 - [ ] Czy zapisują się logi?
@@ -871,7 +922,7 @@ Przed uruchomieniem eksperymentu sprawdź:
 
 ---
 
-## 25) Checklist przed commitem
+## 26) Checklist przed commitem
 
 Przed commitem sprawdź:
 
@@ -881,13 +932,14 @@ Przed commitem sprawdź:
 - [ ] brak sekretów i tokenów API;
 - [ ] brak dużych plików wynikowych;
 - [ ] brak lokalnych ścieżek bezpośrednio w kodzie;
+- [ ] przy zmianach danych mózgowych lub EEG: sprawdzona zgodność z `docs/bids_brain_imaging_requirements.md` albo `docs/bids_eeg_requirements.md`;
 - [ ] docstringi i type hints w nowych funkcjach;
 - [ ] aktualna dokumentacja;
 - [ ] jasny opis zmian w commicie.
 
 ---
 
-## 26) Reguła rozstrzygania konfliktów zasad
+## 27) Reguła rozstrzygania konfliktów zasad
 
 Jeżeli występuje konflikt między wytycznymi, obowiązuje następująca hierarchia:
 
@@ -901,7 +953,7 @@ Agent ma zawsze wybrać opcję bezpieczniejszą, bardziej przewidywalną i lepie
 
 ---
 
-## 27) Zasada nadrzędna kodu naukowego
+## 28) Zasada nadrzędna kodu naukowego
 
 Kod naukowy powinien umożliwiać odpowiedź na pytanie:
 
