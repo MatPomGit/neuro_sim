@@ -90,17 +90,17 @@ class WilsonCowanOscillatorBank:
 
     def __init__(self, module_names: list[str], connectivity: np.ndarray, band_map: dict[str, str] | None = None, params: WilsonCowanParams | None = None) -> None:
         """Inicjalizuje bank oscylatorów Wilsona-Cowana dla podanych modułów."""
-        self.module_names = list(module_names)
-        self.idx = {name: i for i, name in enumerate(self.module_names)}
-        self.n = len(self.module_names)
-        self.connectivity = np.asarray(connectivity, dtype=float)
-        self.band_map = band_map or DEFAULT_MODULE_BANDS
-        self.params = params or WilsonCowanParams()
+        self.module_names: list[str] = list(module_names)
+        self.idx: dict[str, int] = {name: i for i, name in enumerate(self.module_names)}
+        self.n: int = len(self.module_names)
+        self.connectivity: np.ndarray = np.asarray(connectivity, dtype=float)
+        self.band_map: dict[str, str] = band_map or DEFAULT_MODULE_BANDS
+        self.params: WilsonCowanParams = params or WilsonCowanParams()
 
-        self.module_bands = [self.band_map.get(name, "beta") for name in self.module_names]
-        self.frequency = np.array([BAND_FREQUENCIES[b] for b in self.module_bands], dtype=float)
-        self.tau_e = np.array([BAND_TIME_CONSTANTS[b][0] for b in self.module_bands], dtype=float)
-        self.tau_i = np.array([BAND_TIME_CONSTANTS[b][1] for b in self.module_bands], dtype=float)
+        self.module_bands: list[str] = [self.band_map.get(name, "beta") for name in self.module_names]
+        self.frequency: np.ndarray = np.array([BAND_FREQUENCIES[b] for b in self.module_bands], dtype=float)
+        self.tau_e: np.ndarray = np.array([BAND_TIME_CONSTANTS[b][0] for b in self.module_bands], dtype=float)
+        self.tau_i: np.ndarray = np.array([BAND_TIME_CONSTANTS[b][1] for b in self.module_bands], dtype=float)
 
     def initial_state(self, rng: Any=None) -> Any:
         """Opis funkcji initial_state."""

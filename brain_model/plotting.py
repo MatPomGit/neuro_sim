@@ -546,22 +546,22 @@ def plot_band_power(time: Any, oscillations: Any) -> Any:
 class PlotWindow(ttk.Frame):
     """Tk frame that embeds all selected matplotlib plots."""
 
-    def __init__(self, parent: Any) -> Any:
+    def __init__(self, parent: Any) -> None:
         """Opis funkcji __init__."""
         super().__init__(parent)
 
-        self.notebook = ttk.Notebook(self)
+        self.notebook: ttk.Notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True)
 
-        self.status = ttk.Label(
+        self.status: ttk.Label = ttk.Label(
             self,
             text="Pasek narzędzi Matplotlib: ikony lupy i przesuwania służą do przybliżania oraz nawigacji po wykresie.",
             anchor="w",
         )
         self.status.pack(fill="x", padx=8, pady=(0, 6))
 
-        self._figures = []
-        self._canvases = []
+        self._figures: list[Figure] = []
+        self._canvases: list[FigureCanvasTkAgg] = []
 
     def clear(self) -> None:
         """Usuwa wszystkie zakładki z wykresami oraz czyści listy figur i płócien."""

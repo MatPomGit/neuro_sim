@@ -12,7 +12,7 @@ class StructuralNetwork:
         connectivity (np.ndarray): Macierz połączeń [n_regions, n_regions].
     """
 
-    def __init__(self, region_names: list[str], connectivity: np.ndarray):
+    def __init__(self, region_names: list[str], connectivity: np.ndarray) -> None:
         """
         Inicjalizuje sieć strukturalną.
 
@@ -26,8 +26,8 @@ class StructuralNetwork:
         n = len(region_names)
         if connectivity.shape != (n, n):
             raise ValueError("connectivity musi mieć rozmiar [n_regions, n_regions]")
-        self.region_names = region_names
-        self.connectivity = connectivity.astype(float)
+        self.region_names: list[str] = region_names
+        self.connectivity: np.ndarray = connectivity.astype(float)
 
     def coupling(self, delayed_activity: np.ndarray) -> np.ndarray:
         """

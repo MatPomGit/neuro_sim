@@ -57,12 +57,12 @@ class GuiRunnerMixin:
         if self._running:
             messagebox.showinfo("Informacja", "Symulacja już trwa.")
             return
-        self._running = True
+        self._running: bool = True
         self.status_label.configure(style="Status.TLabel")
         self.status_var.set("Symulacja w toku...")
         self.progress_var.set(0)
         self.summary_var.set("")
-        self._worker_thread = threading.Thread(target=self._run_simulation_worker, daemon=True)
+        self._worker_thread: threading.Thread | None = threading.Thread(target=self._run_simulation_worker, daemon=True)
         self._worker_thread.start()
         self.after(100, self._poll_worker)
 

@@ -34,15 +34,15 @@ class CouplingSignalAdapter:
     - mapowanie regionów opiera się wyłącznie o jawny słownik nazw.
     """
 
-    MAX_FIRING_RATE_HZ = 100.0
+    MAX_FIRING_RATE_HZ: float = 100.0
 
     def __init__(self, mapping: SNNPopulationMapping, sync_dt: float) -> None:
         """Inicjalizuje adapter z jawnym mapowaniem regionów i krokiem synchronizacji."""
         if sync_dt <= 0:
             raise ValueError("sync_dt musi być > 0")
-        self.mapping = mapping
-        self.sync_dt = float(sync_dt)
-        self._indices = mapping.indices_in_neural_mass()
+        self.mapping: SNNPopulationMapping = mapping
+        self.sync_dt: float = float(sync_dt)
+        self._indices: np.ndarray = mapping.indices_in_neural_mass()
 
     def rate_to_spike_drive(self, excitatory_rate_hz: np.ndarray, inhibitory_rate_hz: np.ndarray) -> NeuralMassToSNNInput:
         """Konwersja aktywności regionalnej do pobudzenia SNN (Hz)."""

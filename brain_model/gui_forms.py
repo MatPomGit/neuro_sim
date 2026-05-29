@@ -62,9 +62,9 @@ class Tooltip:
 
     def __init__(self, widget: tk.Widget, text: str) -> None:
         """Zarejestruj obsługę pokazania i ukrycia podpowiedzi."""
-        self.widget = widget
-        self.text = text
-        self.tip = None
+        self.widget: tk.Widget = widget
+        self.text: str = text
+        self.tip: tk.Toplevel | None = None
         widget.bind("<Enter>", self.show)
         widget.bind("<Leave>", self.hide)
 
@@ -107,10 +107,10 @@ class ParameterForm(ttk.LabelFrame):
     ) -> None:
         """Utwórz kontrolki edycji dla widocznych pól dataclass."""
         super().__init__(parent, text=title, padding=10)
-        self.dataclass_type = dataclass_type
-        self.defaults = defaults
+        self.dataclass_type: type[Any] = dataclass_type
+        self.defaults: Any = defaults
         self.vars: Dict[str, tk.Variable] = {}
-        self.include_fields = set(include_fields) if include_fields else None
+        self.include_fields: set[str] | None = set(include_fields) if include_fields is not None else None
 
         form_fields = [
             f

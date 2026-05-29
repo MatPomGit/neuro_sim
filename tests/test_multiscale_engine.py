@@ -10,9 +10,9 @@ from typing import Any
 
 class CounterModule:
     """Opis klasy CounterModule."""
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         """Opis funkcji __init__."""
-        self.steps = 0
+        self.steps: int = 0
 
     def update(self, state: SimulationState, dt: float) -> None:
         """Opis funkcji update."""

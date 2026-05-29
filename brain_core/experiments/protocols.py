@@ -145,7 +145,7 @@ class StroopTask:
     """
     Zadanie Stroopa — generuje bodźce i ocenia odpowiedzi.
     """
-    name = "stroop"
+    name: str = "stroop"
 
     def generate_stimuli(self, seed: int, duration_s: float) -> list[TrialStimulus]:
         """
@@ -189,7 +189,7 @@ class GoNoGoTask:
     """
     Zadanie Go/NoGo — generuje bodźce i ocenia odpowiedzi.
     """
-    name = "go_nogo"
+    name: str = "go_nogo"
 
     def generate_stimuli(self, seed: int, duration_s: float) -> list[TrialStimulus]:
         """
@@ -215,6 +215,7 @@ class GoNoGoTask:
         return "press" if stimulus.condition == "go" else None
 
     def score_trial(self, stimulus: TrialStimulus, observed_response: Any, reaction_time_s: float | None) -> TrialResult:
+        """Ocenia poprawność odpowiedzi i typ błędu w zadaniu Go/NoGo."""
         expected = self.expected_response(stimulus)
         if expected is None:
             correct = observed_response is None
@@ -226,14 +227,18 @@ class GoNoGoTask:
 
 
 class NBackTask:
-    name = "n_back"
+    """Zadanie n-back — generuje sekwencję symboli i ocenia trafienia celu."""
 
-    def __init__(self, n: int = 2):
+    name: str = "n_back"
+
+    def __init__(self, n: int = 2) -> None:
+        """Inicjalizuje zadanie z odległością porównania n."""
         if n < 1:
             raise ValueError("n must be at least 1 for NBackTask")
-        self.n = n
+        self.n: int = n
 
     def generate_stimuli(self, seed: int, duration_s: float) -> list[TrialStimulus]:
+        """Generuje deterministyczną sekwencję bodźców n-back."""
         symbols = tuple("ABCDEFGH")
         t = 0.3
         trial_id = 0
@@ -253,9 +258,11 @@ class NBackTask:
         return trials
 
     def expected_response(self, stimulus: TrialStimulus) -> str | None:
+        """Zwraca oczekiwaną odpowiedź dla bodźca n-back."""
         return "match" if stimulus.condition == "target" else None
 
     def score_trial(self, stimulus: TrialStimulus, observed_response: Any, reaction_time_s: float | None) -> TrialResult:
+        """Ocenia odpowiedź użytkownika względem statusu celu n-back."""
         expected = self.expected_response(stimulus)
         if expected is None:
             correct = observed_response is None
@@ -267,6 +274,7 @@ class NBackTask:
 
 
 def get_task(task_name: str, **kwargs: Any) -> CognitiveTask:
+    """Zwraca instancję zadania poznawczego na podstawie nazwy technicznej."""
     name = task_name.lower()
     if name == "stroop":
         return StroopTask()
@@ -278,6 +286,7 @@ def get_task(task_name: str, **kwargs: Any) -> CognitiveTask:
 
 
 def default_train_test_protocol() -> ExperimentProtocol:
+    """Buduje domyślny protokół z fazami treningu i testu."""
     return ExperimentProtocol(
         name="default_train_test",
         steps=(

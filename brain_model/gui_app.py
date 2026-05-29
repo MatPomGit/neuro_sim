@@ -26,9 +26,10 @@ class BrainModelGUI(GuiConfigMixin, GuiRunnerMixin, GuiLayoutMixin, tk.Tk):
         self.minsize(940, 660)
         configure_styles(self)
 
-        self.brain_defaults = BrainParams()
-        self.osc_defaults = WilsonCowanParams()
+        self.brain_defaults: BrainParams = BrainParams()
+        self.osc_defaults: WilsonCowanParams = WilsonCowanParams()
 
+        self.state: GuiState
         self.state = GuiState(
             dt=str(self.brain_defaults.dt),
             brain_params=self.brain_defaults,
@@ -38,7 +39,7 @@ class BrainModelGUI(GuiConfigMixin, GuiRunnerMixin, GuiLayoutMixin, tk.Tk):
         self._build_menu()
         self._worker_thread: threading.Thread | None = None
         self._result_queue: queue.Queue[tuple[str, object]] = queue.Queue()
-        self._running = False
+        self._running: bool = False
 
 
 def run_gui() -> None:

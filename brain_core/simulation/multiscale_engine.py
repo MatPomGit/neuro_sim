@@ -129,9 +129,9 @@ class MultiScaleEngine:
         if len(task_names) != len(set(task_names)):
             raise ValueError("Zadania (tasks) muszą mieć unikalne nazwy")
 
-        self.base_dt = float(base_dt)
-        self.tasks = tasks
-        self.io_contract = io_contract
+        self.base_dt: float = float(base_dt)
+        self.tasks: list[TimeScaleTask] = tasks
+        self.io_contract: MultiScaleIOContract | None = io_contract
         if self.io_contract is not None:
             self.io_contract.validate()
             if abs(self.io_contract.base_dt - self.base_dt) > 1e-12:

@@ -38,18 +38,19 @@ class CognitiveBrainModel:
 
     def __init__(self, params: BrainParams | None = None, stimulus: Any = None, seed: int = 7, oscillator_params: Any = None, oscillator_band_map: dict[str, str] | None = None) -> None:
         """Inicjalizuje mezoskopowy model dynamiki poznawczej z określonymi parametrami."""
-        self.p = params or BrainParams()
-        self.rng = np.random.default_rng(seed)
+        self.p: BrainParams = params or BrainParams()
+        self.rng: np.random.Generator = np.random.default_rng(seed)
 
-        self.names = MODULES
-        self.idx = {name: i for i, name in enumerate(self.names)}
-        self.n = len(self.names)
+        self.names: list[str] = MODULES
+        self.idx: dict[str, int] = {name: i for i, name in enumerate(self.names)}
+        self.n: int = len(self.names)
 
-        self.tau = np.array(TAU)
-        self.W = build_connectivity(self.names)
+        self.tau: np.ndarray = np.array(TAU)
+        self.W: np.ndarray = build_connectivity(self.names)
 
-        self.scenario_id = None
-        self.scenario = None
+        self.scenario_id: str | None = None
+        self.scenario: Any | None = None
+        self.stimulus_fn: Any | None = None
         if stimulus is None:
             self.scenario_id = "reward-learning"
             self.scenario = get_scenario(self.scenario_id)
@@ -67,7 +68,7 @@ class CognitiveBrainModel:
         else:
             raise TypeError("stimulus must be None, scenario id (str), or callable")
 
-        self.oscillator_bank = WilsonCowanOscillatorBank(
+        self.oscillator_bank: WilsonCowanOscillatorBank = WilsonCowanOscillatorBank(
             module_names=self.names,
             connectivity=self.W,
             band_map=oscillator_band_map,
