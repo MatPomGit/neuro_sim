@@ -8,6 +8,8 @@ from dataclasses import fields, replace
 from pathlib import Path
 from typing import Any
 
+from PySide6.QtCore import QThread
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -165,6 +167,7 @@ class BrainModelQtWindow(QMainWindow):
             brain_params=self.brain_defaults,
             oscillator_params=self.osc_defaults,
         )
+        self.worker_thread: QThread | None = None
         self.worker: SimulationWorker | None = None
         self.sections = QtSections(
             self.state,
@@ -335,8 +338,8 @@ class BrainModelQtWindow(QMainWindow):
         self.status_label.style().polish(self.status_label)
 
     def start_simulation(self) -> None:
-        """Uruchom symulację w workerze QThread i zablokuj ponowne uruchomienie."""
-        if self.worker is not None and self.worker.isRunning():
+        """Uruchom worker QObject w QThread i zablokuj ponowne uruchomienie."""
+        if self._simulation_in_progress():
             QMessageBox.information(self, "Informacja", "Symulacja już trwa.")
             return
         self.sections.sync_state_from_controls()
@@ -346,13 +349,21 @@ class BrainModelQtWindow(QMainWindow):
         self.progress.setValue(0)
         import copy
 
+        self.worker_thread = QThread(self)
         self.worker = SimulationWorker(copy.deepcopy(self.state))
-        self.worker.progress_changed.connect(self.on_progress_changed)
-        self.worker.warning_reported.connect(self.show_warning)
-        self.worker.error_reported.connect(self.on_simulation_error)
-        self.worker.result_ready.connect(self.on_simulation_result)
-        self.worker.finished.connect(self.on_worker_finished)
-        self.worker.start()
+        self.worker.moveToThread(self.worker_thread)
+        self.worker_thread.started.connect(self.worker.run)
+        self.worker.progress.connect(self.on_progress_changed)
+        self.worker.warning.connect(self.show_warning)
+        self.worker.error.connect(self.on_simulation_error)
+        self.worker.done.connect(self.on_simulation_result)
+        self.worker.done.connect(self.worker.deleteLater)
+        self.worker.done.connect(self.worker_thread.quit)
+        self.worker.error.connect(self.worker.deleteLater)
+        self.worker.error.connect(self.worker_thread.quit)
+        self.worker_thread.finished.connect(self.on_worker_finished)
+        self.worker_thread.finished.connect(self.worker_thread.deleteLater)
+        self.worker_thread.start()
 
     def on_progress_changed(self, value: float) -> None:
         """Zaktualizuj pasek postępu na podstawie sygnału workera."""
@@ -382,10 +393,25 @@ class BrainModelQtWindow(QMainWindow):
         QMessageBox.critical(self, "Błąd", message)
 
     def on_worker_finished(self) -> None:
-        """Odłącz zakończony worker Qt od okna głównego."""
-        if self.worker is not None:
-            self.worker.deleteLater()
-            self.worker = None
+        """Odłącz zakończony worker Qt i jego wątek od okna głównego."""
+        self.worker = None
+        self.worker_thread = None
+
+    def _simulation_in_progress(self) -> bool:
+        """Sprawdź, czy wątek symulacji nadal wykonuje obliczenia."""
+        return self.worker_thread is not None and self.worker_thread.isRunning()
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """Zablokuj zamknięcie okna do czasu zakończenia aktywnej symulacji."""
+        if self._simulation_in_progress():
+            QMessageBox.warning(
+                self,
+                "Symulacja w toku",
+                "Zamknięcie okna będzie możliwe po zakończeniu obliczeń.",
+            )
+            event.ignore()
+            return
+        super().closeEvent(event)
 
     def show_warning(self, message: str) -> None:
         """Wyświetl ostrzeżenie użytkowe bez zamykania aplikacji."""
