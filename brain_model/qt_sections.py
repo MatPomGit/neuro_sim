@@ -297,7 +297,12 @@ class QtSections:
     def plot_preset_keys(self, preset_name: str) -> set[str]:
         """Zwróć zestaw wykresów aktywnych dla wskazanego presetu."""
         if preset_name == "Podstawowe":
-            return {"activity", "behavior", "scenario_timeline"}
+            return {
+                "activity",
+                "behavior",
+                "simulated_brain_activity",
+                "scenario_timeline",
+            }
         if preset_name == "Diagnostyczne":
             return {
                 "activity",
@@ -316,8 +321,8 @@ class QtSections:
         """Zwróć krótki polski opis aktywnego zestawu wykresów."""
         descriptions = {
             "Podstawowe": (
-                "Aktywny zestaw: Podstawowe — pokazuje aktywacje, zachowanie "
-                "i oś czasu scenariusza."
+                "Aktywny zestaw: Podstawowe — Najważniejsze wykresy do pierwszej "
+                "interpretacji wyniku."
             ),
             "Diagnostyczne": (
                 "Aktywny zestaw: Diagnostyczne — dodaje sygnały diagnostyczne, "
