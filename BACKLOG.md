@@ -39,7 +39,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 12. **Tryb nauczyciela P2** — dopisać widoki edukacyjne, pytania kontrolne i
     polskie etykiety pojęć zgodne z `docs/english_polish_glossary.md`.
 13. **Jakość i dokumentacja przekrojowa** — utrzymać standard docstringów/type hints,
-    aktualizować `docs/program_structure.md`, aktualizować ADR przy zmianach
+    aktualizować `docs/program_structure.md` oraz ADR przy zmianach
     strukturalnych i dopisać instrukcje uruchamiania dla scenariuszy.
 
 ## P0 — Fundamenty (najwyższy priorytet)
