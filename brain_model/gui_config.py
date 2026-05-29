@@ -23,14 +23,18 @@ class GuiConfigMixin:
         self.state.dt = self.dt_var.get()
         self.state.auto_dt = bool(self.auto_dt_var.get())
         self.state.seed = self.seed_var.get()
-        self.state.command = COMMAND_VALUES.get(self.command_var.get(), self.command_var.get())
+        self.state.command = COMMAND_VALUES.get(
+            self.command_var.get(), self.command_var.get()
+        )
         self.state.batch_seeds = self.batch_seeds_var.get()
         self.state.batch_scenarios = self.batch_scenarios_var.get()
         self.state.sensitivity_params = self.sensitivity_var.get()
         self.state.sensitivity_delta = self.sensitivity_delta_var.get()
         self.state.scenario = self.scenario_var.get()
         self.state.save_results = bool(self.save_results_var.get())
-        self.state.plots = {name: bool(var.get()) for name, var in self.plot_vars.items()}
+        self.state.plots = {
+            name: bool(var.get()) for name, var in self.plot_vars.items()
+        }
 
     def _sync_controls_from_state(self) -> None:
         """Przepisz stan GUI do widocznych kontrolek głównego okna."""
@@ -66,13 +70,7 @@ class GuiConfigMixin:
             current_dt = float(self.state.dt)
         except ValueError:
             current_dt = self.state.brain_params.dt
-        self.state.brain_params = replace(
-            edited_brain_params,
-            dt=current_dt,
-            semantic_rule=self.brain_defaults.semantic_rule,
-            value_rule=self.brain_defaults.value_rule,
-            connectivity_adaptation=self.brain_defaults.connectivity_adaptation,
-        )
+        self.state.brain_params = replace(edited_brain_params, dt=current_dt)
         self.state.oscillator_params = osc_form.values()
 
     def _collect_config(self) -> dict[str, Any]:
@@ -91,10 +89,14 @@ class GuiConfigMixin:
             "scenario": self.state.scenario,
             "save_results": self.state.save_results,
             "brain_params": {
-                **self._editable_dataclass_values(self.state.brain_params, exclude=RULE_FIELDS),
+                **self._editable_dataclass_values(
+                    self.state.brain_params, exclude=RULE_FIELDS
+                ),
                 "dt": self.state.dt,
             },
-            "oscillator_params": self._editable_dataclass_values(self.state.oscillator_params),
+            "oscillator_params": self._editable_dataclass_values(
+                self.state.oscillator_params
+            ),
             "plots": dict(self.state.plots),
         }
 
@@ -116,7 +118,9 @@ class GuiConfigMixin:
             config.get("sensitivity_delta", self.state.sensitivity_delta)
         )
         self.state.scenario = str(config.get("scenario", self.state.scenario))
-        self.state.save_results = bool(config.get("save_results", self.state.save_results))
+        self.state.save_results = bool(
+            config.get("save_results", self.state.save_results)
+        )
         self.state.brain_params = self._dataclass_with_updates(
             self.state.brain_params, config.get("brain_params", {})
         )
@@ -134,7 +138,9 @@ class GuiConfigMixin:
         self._refresh_scenario_details()
         self._on_auto_dt_toggle()
         try:
-            self.state.brain_params = replace(self.state.brain_params, dt=float(self.dt_var.get()))
+            self.state.brain_params = replace(
+                self.state.brain_params, dt=float(self.dt_var.get())
+            )
             self.state.dt = self.dt_var.get()
         except ValueError:
             pass
@@ -149,7 +155,9 @@ class GuiConfigMixin:
             if field.name not in exclude
         }
 
-    def _dataclass_with_updates(self, instance: TDataclass, values: dict[str, Any]) -> TDataclass:
+    def _dataclass_with_updates(
+        self, instance: TDataclass, values: dict[str, Any]
+    ) -> TDataclass:
         """Zbuduj kopię dataclass z wartościami przekonwertowanymi jak w formularzu GUI."""
         updates: dict[str, Any] = {}
         for field in fields(instance):
@@ -164,14 +172,18 @@ class GuiConfigMixin:
                         if isinstance(raw, bool)
                         else str(raw).lower() in ("true", "1", "yes", "on")
                     )
-                elif isinstance(default_value, int) and not isinstance(default_value, bool):
+                elif isinstance(default_value, int) and not isinstance(
+                    default_value, bool
+                ):
                     updates[field.name] = int(raw)
                 elif isinstance(default_value, float):
                     updates[field.name] = float(raw)
                 else:
                     updates[field.name] = raw
             except (TypeError, ValueError) as exc:
-                raise ValueError(f"Niepoprawna wartość parametru '{field.name}': {raw}") from exc
+                raise ValueError(
+                    f"Niepoprawna wartość parametru '{field.name}': {raw}"
+                ) from exc
         return replace(instance, **updates)
 
     def _save_current_config(self) -> None:

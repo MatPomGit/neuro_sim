@@ -115,6 +115,15 @@ class QtDataclassParameterDialog(QDialog):
             else:
                 control.setText(str(value))
 
+    def accept(self) -> None:
+        """Zatwierdź okno dopiero po poprawnej walidacji pól formularza."""
+        try:
+            self.values()
+        except ValueError as exc:
+            QMessageBox.critical(self, "Niepoprawne parametry", str(exc))
+            return
+        super().accept()
+
     def values(self) -> Any:
         """Zwróć instancję dataclass z wartościami wpisanymi w formularzu."""
         updates: dict[str, Any] = {}
@@ -280,13 +289,7 @@ class BrainModelQtWindow(QMainWindow):
         except ValueError as exc:
             QMessageBox.critical(self, "Niepoprawne parametry", str(exc))
             return
-        self.state.brain_params = replace(
-            edited_params,
-            dt=current_dt,
-            semantic_rule=self.brain_defaults.semantic_rule,
-            value_rule=self.brain_defaults.value_rule,
-            connectivity_adaptation=self.brain_defaults.connectivity_adaptation,
-        )
+        self.state.brain_params = replace(edited_params, dt=current_dt)
         self.status_label.setText("Zapisano parametry globalne modelu.")
 
     def open_oscillator_params_dialog(self) -> None:
