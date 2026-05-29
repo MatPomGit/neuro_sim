@@ -170,6 +170,7 @@ class BrainModelQtWindow(QMainWindow):
             self.state,
             {
                 "start_simulation": self.start_simulation,
+                "show_status": self.show_status,
             },
         )
         self._build_menu()
@@ -323,6 +324,13 @@ class BrainModelQtWindow(QMainWindow):
         self.status_label.setText("Przywrócono wartości domyślne.")
         self.progress.setValue(0)
         self.summary_label.setText("")
+        self.status_label.style().unpolish(self.status_label)
+        self.status_label.style().polish(self.status_label)
+
+    def show_status(self, message: str) -> None:
+        """Pokaż neutralny komunikat statusu użytkownika w głównym oknie."""
+        self.status_label.setObjectName("statusLabel")
+        self.status_label.setText(message)
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
 

@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
     QRadioButton,
     QToolButton,
     QVBoxLayout,
@@ -89,6 +90,10 @@ class QtSections:
         self.T_edit.setToolTip(PARAMETER_DESCRIPTIONS["T"])
         self.T_edit.textChanged.connect(lambda _text: self.on_duration_changed())
         layout.addRow("czas symulacji [s]", self.T_edit)
+
+        suggested_duration_button = QPushButton("Użyj sugerowanego czasu")
+        suggested_duration_button.clicked.connect(self.apply_suggested_duration)
+        layout.addRow(suggested_duration_button)
 
         self.save_results_check = QCheckBox("Zapisz wyniki po symulacji")
         self.save_results_check.setChecked(self.state.save_results)
@@ -243,6 +248,24 @@ class QtSections:
         """Odśwież opis aktualnie wybranego scenariusza."""
         scenario = get_scenario(self.scenario_combo.currentText())
         self.scenario_details_label.setText(f"{scenario.name}: {scenario.description}")
+
+    def apply_suggested_duration(self) -> None:
+        """Ustaw czas symulacji zgodnie z podpowiedzią wybranego scenariusza."""
+        current_scenario_id = self.scenario_combo.currentText()
+        scenario = get_scenario(current_scenario_id)
+        if scenario.duration_hint is None:
+            status_callback = self.callbacks.get("show_status")
+            if status_callback is not None:
+                status_callback("Wybrany scenariusz nie ma sugerowanego czasu.")
+            return
+        self.T_edit.setText(str(scenario.duration_hint))
+        if self.auto_dt_check.isChecked():
+            self.on_auto_dt_toggled(True)
+        self.state.T = self.T_edit.text()
+        self.state.dt = self.dt_edit.text()
+        status_callback = self.callbacks.get("show_status")
+        if status_callback is not None:
+            status_callback("Ustawiono sugerowany czas scenariusza.")
 
     def toggle_advanced_options(self, checked: bool) -> None:
         """Pokaż albo ukryj grupę opcji zaawansowanych."""
