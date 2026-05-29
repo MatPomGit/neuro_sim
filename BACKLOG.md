@@ -33,8 +33,14 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 8. **Biblioteka tasków P2** — ujednolicić istniejące protokoły `stroop`, `go_nogo`, `n_back` i API w `brain_core/experiments/protocols.py`; przygotować wspólne szablony raportów per task.
 9. **Roving oddball P2** — wdrożyć dedykowany generator sekwencji, konfiguracje healthy/disorder/lesion, metryki habituacji/novelty/readaptacji i testy reprodukowalności seedów.
 10. **Raporty EEG/BOLD P2** — połączyć metryki z `brain_core/analysis/*` i `brain_core/physiology/*` w raportach z wykresami, interpretacją i porównaniem profili.
-11. **Tryb nauczyciela P2** — dopisać widoki edukacyjne, pytania kontrolne i polskie etykiety pojęć zgodne z `docs/english_polish_glossary.md`.
-12. **Jakość i dokumentacja przekrojowa** — domknąć luki docstringów/type hints, utrzymać aktualny `docs/program_structure.md`, aktualizować ADR przy zmianach strukturalnych i dopisać instrukcje uruchamiania dla scenariuszy.
+11. **Migracja desktopowego GUI na PySide6 P2** — domknąć przejście nowych
+    przepływów desktopowych z `tkinter`/`TkAgg` na PySide6/Qt, zachowując
+    kompatybilny punkt wejścia `brain_model.gui:run_gui` zgodnie z ADR-0016.
+12. **Tryb nauczyciela P2** — dopisać widoki edukacyjne, pytania kontrolne i
+    polskie etykiety pojęć zgodne z `docs/english_polish_glossary.md`.
+13. **Jakość i dokumentacja przekrojowa** — domknąć luki docstringów/type hints,
+    utrzymać aktualny `docs/program_structure.md`, aktualizować ADR przy
+    zmianach strukturalnych i dopisać instrukcje uruchamiania dla scenariuszy.
 
 ## P0 — Fundamenty (najwyższy priorytet)
 
@@ -307,20 +313,36 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 ### 10. Interfejs edukacyjny i „tryb nauczyciela”
 **Status:** `partial`
 
-**Artefakty implementacyjne:** `brain_model/gui.py`, `brain_model/gui_app.py`, `brain_model/gui_layout.py`, `brain_model/gui_forms.py`, `brain_viewer.html`, `brain_viewer/brain_viewer.md`, `docs/index.html`.
+**Artefakty implementacyjne:** `brain_model/gui.py`, `brain_model/gui_app.py`,
+`brain_model/gui_layout.py`, `brain_model/gui_forms.py`, `brain_model/qt_app.py`,
+`brain_model/qt_plotting.py`,
+`docs/adr/0016-migracja-desktop-gui-na-pyside6.md`, `brain_viewer.html`,
+`brain_viewer/brain_viewer.md`, `docs/index.html`.
 
 **Cel:** zwiększenie dydaktyczności i użyteczności na zajęciach.
 
 **Zakres prac:**
+- Domknięcie migracji desktopowego GUI z `tkinter`/`TkAgg` na PySide6/Qt
+  zgodnie z ADR-0016.
+- Zachowanie kompatybilnego punktu wejścia `brain_model.gui:run_gui` dla
+  użytkowników i skryptów.
+- Aktualizacja testów statycznych GUI dla modułów PySide6 oraz backendu
+  Matplotlib Qt.
 - Panele „co obserwujesz teraz?” i „dlaczego to ważne?”.
 - Oznaczenia regionów/neuromodulatorów na osi czasu.
 - Gotowe scenariusze lekcyjne z pytaniami kontrolnymi.
 
 **Deliverables:**
+- Desktopowe GUI PySide6 v1 uruchamiane przez `brain_model.gui:run_gui`.
+- Statyczne testy importów, punktu wejścia i panelu wykresów Qt.
 - Widoki edukacyjne v1.
 - Szablony lekcji laboratoryjnych.
 
 **Pozostały zakres:**
+- Domknąć migrację nowych przepływów desktopowych na PySide6 i nie rozwijać
+  dalej ścieżki `tkinter` bez osobnej decyzji.
+- Uzupełnić statyczne testy GUI o importy PySide6, punkt wejścia
+  `brain_model.gui:run_gui` i backend wykresów Qt.
 - Dodać tryb nauczyciela z pytaniami kontrolnymi i scenariuszami lekcyjnymi.
 - Ujednolicić polskie etykiety pojęć z `docs/english_polish_glossary.md`.
 
