@@ -23,10 +23,11 @@ class QtPlotPanel(QTabWidget):
 
     def clear(self) -> None:
         """Usuń wszystkie aktualnie widoczne zakładki wykresów."""
-        while self.count() > 0:
-            widget = self.widget(0)
-            self.removeTab(0)
-            widget.deleteLater()
+        for i in range(self.count()):
+            widget = self.widget(i)
+            if widget is not None:
+                widget.deleteLater()
+        super().clear()
         self._figures.clear()
         self._canvases.clear()
 
