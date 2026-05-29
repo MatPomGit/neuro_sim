@@ -110,7 +110,7 @@ class ParameterForm(ttk.LabelFrame):
         self.dataclass_type: type[Any] = dataclass_type
         self.defaults: Any = defaults
         self.vars: Dict[str, tk.Variable] = {}
-        self.include_fields: set[str] | None = set(include_fields) if include_fields else None
+        self.include_fields: set[str] | None = set(include_fields) if include_fields is not None else None
 
         form_fields = [
             f
