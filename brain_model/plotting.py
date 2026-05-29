@@ -3,14 +3,11 @@ from __future__ import annotations
 import re
 from functools import lru_cache
 from pathlib import Path
-from tkinter import ttk
+from typing import Any
 
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from matplotlib.figure import Figure
 
 from .stimuli import build_stimulus_fn
-from typing import Any
 
 SVG_ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets" / "svg"
 SVG_VIEW_FILES = {
@@ -541,56 +538,3 @@ def plot_eeg_modules(time: Any, oscillations: Any, names: Any, idx: Any) -> Any:
 def plot_band_power(time: Any, oscillations: Any) -> Any:
     """Opis funkcji plot_band_power."""
     _show_standalone(draw_band_power, time, oscillations, figsize=(14, 8))
-
-
-class PlotWindow(ttk.Frame):
-    """Tk frame that embeds all selected matplotlib plots."""
-
-    def __init__(self, parent: Any) -> None:
-        """Opis funkcji __init__."""
-        super().__init__(parent)
-
-        self.notebook: ttk.Notebook = ttk.Notebook(self)
-        self.notebook.pack(fill="both", expand=True)
-
-        self.status: ttk.Label = ttk.Label(
-            self,
-            text="Pasek narzędzi Matplotlib: ikony lupy i przesuwania służą do przybliżania oraz nawigacji po wykresie.",
-            anchor="w",
-        )
-        self.status.pack(fill="x", padx=8, pady=(0, 6))
-
-        self._figures: list[Figure] = []
-        self._canvases: list[FigureCanvasTkAgg] = []
-
-    def clear(self) -> None:
-        """Usuwa wszystkie zakładki z wykresami oraz czyści listy figur i płócien."""
-        for tab_id in self.notebook.tabs():
-            self.notebook.forget(tab_id)
-        self._figures.clear()
-        self._canvases.clear()
-
-    def add_plot(self, tab_title: Any, draw_func: Any, *args: Any, figsize: Any=(10, 6)) -> Any:
-        """Opis funkcji add_plot."""
-        frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text=tab_title)
-
-        fig = Figure(figsize=figsize, dpi=100)
-        ax = fig.add_subplot(111)
-        axes = draw_func(ax, *args) or [ax]
-        fig.tight_layout()
-
-        canvas = FigureCanvasTkAgg(fig, master=frame)
-        _attach_line_tooltips(fig, axes)
-        toolbar = NavigationToolbar2Tk(canvas, frame, pack_toolbar=False)
-        toolbar.update()
-        toolbar.pack(side="top", fill="x")
-        canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
-        canvas.draw()
-
-        self._figures.append(fig)
-        self._canvases.append(canvas)
-
-    def fit_tabs_to_count(self) -> None:
-        """Dopasowuje szerokość zakładek do ich liczby (obecnie pusta implementacja)."""
-        return
