@@ -18,6 +18,24 @@ Ten dokument definiuje mapowanie nazw technicznych używanych w kodzie (angielsk
 | simulation_time | czas symulacji | Parametry uruchomienia |
 | seed | ziarno losowości | Parametry uruchomienia |
 | noise | szum | Parametry modelu |
+| gw_threshold | próg globalnej przestrzeni roboczej | Parametry modelu |
+| gw_gain | wzmocnienie globalnej przestrzeni roboczej | Parametry modelu |
+| learning_rate_semantic | tempo uczenia semantycznego | Parametry modelu |
+| learning_rate_value | tempo uczenia wartościowania | Parametry modelu |
+| decay_semantic | zanik śladu semantycznego | Parametry modelu |
+| enable_oscillators | włącz oscylatory | Parametry modelu |
+| decision_threshold | próg decyzji | Parametry modelu |
+| confidence_gain | wzmocnienie pewności | Parametry modelu |
+| w_ee | samowzmacnianie populacji E | Parametry oscylatorów Wilsona-Cowana |
+| w_ei | hamowanie E przez I | Parametry oscylatorów Wilsona-Cowana |
+| w_ie | pobudzanie I przez E | Parametry oscylatorów Wilsona-Cowana |
+| w_ii | samooddziaływanie populacji I | Parametry oscylatorów Wilsona-Cowana |
+| baseline_e | bazowy napęd populacji E | Parametry oscylatorów Wilsona-Cowana |
+| baseline_i | bazowy napęd populacji I | Parametry oscylatorów Wilsona-Cowana |
+| cognitive_drive_gain | wzmocnienie napędu poznawczego | Parametry oscylatorów Wilsona-Cowana |
+| coupling_gain | wzmocnienie sprzężenia oscylatorów | Parametry oscylatorów Wilsona-Cowana |
+| oscillator_noise | szum oscylatorów | Parametry oscylatorów Wilsona-Cowana |
+| phase_drive_gain | wzmocnienie napędu fazy | Parametry oscylatorów Wilsona-Cowana |
 | scenario | scenariusz | Wybór przebiegu eksperymentu |
 | baseline | bazowy | Nazwa scenariusza |
 | reward_learning | uczenie nagrodą | Nazwa scenariusza |

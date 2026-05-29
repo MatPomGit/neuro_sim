@@ -4,31 +4,140 @@ from __future__ import annotations
 
 import os
 import sys
+from dataclasses import fields, replace
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtWidgets import (
     QApplication,
+    QCheckBox,
+    QDialog,
     QFileDialog,
+    QFormLayout,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QMainWindow,
     QMenuBar,
     QMessageBox,
     QProgressBar,
     QPushButton,
+    QScrollArea,
     QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
+from .gui_forms import PARAMETER_DESCRIPTIONS, PARAMETER_LABELS, RULE_FIELDS
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
-from .qt_config import apply_config_to_state, default_config_filename, load_config, save_config
+from .qt_config import (
+    apply_config_to_state,
+    default_config_filename,
+    load_config,
+    save_config,
+)
 from .qt_results import QtPlotPanel, apply_run_result
 from .qt_runner import SimulationWorker
 from .qt_sections import QtSections
 from .qt_state import QtGuiState
 from .qt_styles import apply_qt_styles
+
+
+class QtDataclassParameterDialog(QDialog):
+    """Okno edycji pól dataclass używanych przez parametry modelu Qt."""
+
+    def __init__(
+        self,
+        parent: QWidget,
+        title: str,
+        dataclass_type: type[Any],
+        current_values: Any,
+        include_fields: set[str] | None = None,
+    ) -> None:
+        """Zbuduj przewijalny formularz z polskimi etykietami parametrów."""
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.dataclass_type = dataclass_type
+        self.current_values = current_values
+        self.include_fields = include_fields
+        self.controls: dict[str, QCheckBox | QLineEdit] = {}
+        self.resize(520, 520)
+
+        root = QVBoxLayout(self)
+        hint = QLabel(
+            "Zmień wartości i kliknij „Zapisz”, aby użyć ich w kolejnej symulacji."
+        )
+        hint.setObjectName("hintLabel")
+        hint.setWordWrap(True)
+        root.addWidget(hint)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        form_container = QWidget()
+        form = QFormLayout(form_container)
+        for field in fields(dataclass_type):
+            if include_fields is not None and field.name not in include_fields:
+                continue
+            value = getattr(current_values, field.name)
+            label_text = PARAMETER_LABELS.get(field.name, field.name)
+            if isinstance(value, bool):
+                control = QCheckBox()
+                control.setChecked(value)
+            else:
+                control = QLineEdit(str(value))
+            control.setToolTip(PARAMETER_DESCRIPTIONS.get(field.name, ""))
+            self.controls[field.name] = control
+            form.addRow(label_text, control)
+        scroll.setWidget(form_container)
+        root.addWidget(scroll, 1)
+
+        button_row = QHBoxLayout()
+        reset_button = QPushButton("Cofnij zmiany")
+        reset_button.clicked.connect(self.reset_to_current_values)
+        cancel_button = QPushButton("Anuluj")
+        cancel_button.clicked.connect(self.reject)
+        save_button = QPushButton("Zapisz")
+        save_button.setObjectName("primaryButton")
+        save_button.clicked.connect(self.accept)
+        button_row.addWidget(reset_button)
+        button_row.addStretch(1)
+        button_row.addWidget(cancel_button)
+        button_row.addWidget(save_button)
+        root.addLayout(button_row)
+
+    def reset_to_current_values(self) -> None:
+        """Przywróć wartości formularza do stanu z chwili otwarcia okna."""
+        for field_name, control in self.controls.items():
+            value = getattr(self.current_values, field_name)
+            if isinstance(control, QCheckBox):
+                control.setChecked(bool(value))
+            else:
+                control.setText(str(value))
+
+    def values(self) -> Any:
+        """Zwróć instancję dataclass z wartościami wpisanymi w formularzu."""
+        updates: dict[str, Any] = {}
+        for field in fields(self.dataclass_type):
+            current_value = getattr(self.current_values, field.name)
+            control = self.controls.get(field.name)
+            if control is None:
+                updates[field.name] = current_value
+                continue
+            try:
+                if isinstance(current_value, bool):
+                    updates[field.name] = control.isChecked()
+                elif isinstance(current_value, int) and not isinstance(
+                    current_value, bool
+                ):
+                    updates[field.name] = int(control.text())
+                else:
+                    updates[field.name] = float(control.text())
+            except ValueError as exc:
+                raise ValueError(
+                    f"Niepoprawna wartość parametru '{field.name}': {control.text()}"
+                ) from exc
+        return self.dataclass_type(**updates)
 
 
 class BrainModelQtWindow(QMainWindow):
@@ -68,6 +177,15 @@ class BrainModelQtWindow(QMainWindow):
         file_menu.addSeparator()
         close_action = file_menu.addAction("Zamknij")
         close_action.triggered.connect(self.close)
+
+        settings_menu = menu_bar.addMenu("Ustawienia")
+        brain_params_action = settings_menu.addAction("Parametry globalne modelu...")
+        brain_params_action.triggered.connect(self.open_brain_params_dialog)
+        oscillator_params_action = settings_menu.addAction("Parametry oscylatorów...")
+        oscillator_params_action.triggered.connect(self.open_oscillator_params_dialog)
+        settings_menu.addSeparator()
+        reset_defaults_action = settings_menu.addAction("Przywróć domyślne")
+        reset_defaults_action.triggered.connect(self.reset_defaults)
 
         help_menu = menu_bar.addMenu("Pomoc")
         usage_action = help_menu.addAction("Jak używać")
@@ -139,6 +257,56 @@ class BrainModelQtWindow(QMainWindow):
         self.plot_panel = QtPlotPanel()
         plots_layout.addWidget(self.plot_panel)
 
+    def open_brain_params_dialog(self) -> None:
+        """Otwórz okno ustawień globalnych parametrów modelu poznawczego."""
+        self.sections.sync_state_from_controls()
+        editable_fields = {
+            field.name
+            for field in fields(BrainParams)
+            if field.name not in RULE_FIELDS and field.name != "dt"
+        }
+        dialog = QtDataclassParameterDialog(
+            self,
+            "Parametry globalne modelu",
+            BrainParams,
+            self.state.brain_params,
+            include_fields=editable_fields,
+        )
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        try:
+            edited_params = dialog.values()
+            current_dt = float(self.state.dt)
+        except ValueError as exc:
+            QMessageBox.critical(self, "Niepoprawne parametry", str(exc))
+            return
+        self.state.brain_params = replace(
+            edited_params,
+            dt=current_dt,
+            semantic_rule=self.brain_defaults.semantic_rule,
+            value_rule=self.brain_defaults.value_rule,
+            connectivity_adaptation=self.brain_defaults.connectivity_adaptation,
+        )
+        self.status_label.setText("Zapisano parametry globalne modelu.")
+
+    def open_oscillator_params_dialog(self) -> None:
+        """Otwórz okno ustawień parametrów oscylatorów Wilsona-Cowana."""
+        self.sections.sync_state_from_controls()
+        dialog = QtDataclassParameterDialog(
+            self,
+            "Parametry oscylatorów Wilsona-Cowana",
+            WilsonCowanParams,
+            self.state.oscillator_params,
+        )
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        try:
+            self.state.oscillator_params = dialog.values()
+        except ValueError as exc:
+            QMessageBox.critical(self, "Niepoprawne parametry", str(exc))
+            return
+        self.status_label.setText("Zapisano parametry oscylatorów.")
+
     def reset_defaults(self) -> None:
         """Przywróć wartości domyślne formularza GUI PySide6."""
         self.state = QtGuiState(
@@ -166,6 +334,7 @@ class BrainModelQtWindow(QMainWindow):
         self.summary_label.setText("")
         self.progress.setValue(0)
         import copy
+
         self.worker = SimulationWorker(copy.deepcopy(self.state))
         self.worker.progress_changed.connect(self.on_progress_changed)
         self.worker.warning_reported.connect(self.show_warning)
@@ -225,7 +394,9 @@ class BrainModelQtWindow(QMainWindow):
         try:
             save_config(Path(target), self.state)
         except Exception as exc:
-            QMessageBox.critical(self, "Błąd", f"Nie udało się zapisać konfiguracji: {exc}")
+            QMessageBox.critical(
+                self, "Błąd", f"Nie udało się zapisać konfiguracji: {exc}"
+            )
             return
         self.status_label.setText(f"Zapisano konfigurację: {target}")
 
@@ -244,7 +415,9 @@ class BrainModelQtWindow(QMainWindow):
             apply_config_to_state(self.state, config)
             self.sections.sync_controls_from_state()
         except Exception as exc:
-            QMessageBox.critical(self, "Błąd", f"Nie udało się wczytać konfiguracji: {exc}")
+            QMessageBox.critical(
+                self, "Błąd", f"Nie udało się wczytać konfiguracji: {exc}"
+            )
             return
         self.status_label.setText(f"Wczytano konfigurację: {source}")
 

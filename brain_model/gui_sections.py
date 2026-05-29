@@ -61,13 +61,6 @@ def _build_quick_start_section(gui: Any, parent: ttk.Frame) -> None:
     save_checkbox.grid(row=3, column=0, columnspan=2, sticky="w", pady=(8, 3))
     Tooltip(save_checkbox, PARAMETER_DESCRIPTIONS["save_results"])
 
-    ttk.Button(
-        gui.sim_frame,
-        text="Uruchom symulację",
-        command=gui.start_simulation,
-        style="Primary.TButton",
-    ).grid(row=4, column=0, columnspan=2, sticky="ew", pady=(8, 6))
-
     gui.scenario_details_var = tk.StringVar(value="")
     details_label = ttk.Label(
         gui.sim_frame,
@@ -76,7 +69,7 @@ def _build_quick_start_section(gui: Any, parent: ttk.Frame) -> None:
         wraplength=500,
         style="ScenarioInfo.TLabel",
     )
-    details_label.grid(row=5, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+    details_label.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(8, 0))
     Tooltip(details_label, PARAMETER_DESCRIPTIONS["scenario_details"])
     gui.sim_frame.columnconfigure(1, weight=1)
 
@@ -101,7 +94,9 @@ def _build_advanced_options_section(gui: Any, parent: ttk.Frame) -> None:
     gui.seed_var = tk.StringVar(value=gui.state.seed)
     gui.dt_var = tk.StringVar(value=gui.state.dt)
     gui.auto_dt_var = tk.BooleanVar(value=gui.state.auto_dt)
-    gui.command_var = tk.StringVar(value=COMMAND_LABELS.get(gui.state.command, gui.state.command))
+    gui.command_var = tk.StringVar(
+        value=COMMAND_LABELS.get(gui.state.command, gui.state.command)
+    )
     gui.batch_seeds_var = tk.StringVar(value=gui.state.batch_seeds)
     gui.batch_scenarios_var = tk.StringVar(value=gui.state.batch_scenarios)
     gui.sensitivity_var = tk.StringVar(value=gui.state.sensitivity_params)
@@ -141,15 +136,29 @@ def _build_advanced_options_section(gui: Any, parent: ttk.Frame) -> None:
         width=18,
     )
     cmd_combo.grid(row=3, column=1, sticky="ew", pady=3)
-    gui._add_labeled_entry(gui.advanced_options_frame, 4, "ziarna serii", gui.batch_seeds_var, None)
     gui._add_labeled_entry(
-        gui.advanced_options_frame, 5, "scenariusze serii", gui.batch_scenarios_var, None
+        gui.advanced_options_frame, 4, "ziarna serii", gui.batch_seeds_var, None
     )
     gui._add_labeled_entry(
-        gui.advanced_options_frame, 6, "parametry wrażliwości", gui.sensitivity_var, None
+        gui.advanced_options_frame,
+        5,
+        "scenariusze serii",
+        gui.batch_scenarios_var,
+        None,
     )
     gui._add_labeled_entry(
-        gui.advanced_options_frame, 7, "delta wrażliwości", gui.sensitivity_delta_var, None
+        gui.advanced_options_frame,
+        6,
+        "parametry wrażliwości",
+        gui.sensitivity_var,
+        None,
+    )
+    gui._add_labeled_entry(
+        gui.advanced_options_frame,
+        7,
+        "delta wrażliwości",
+        gui.sensitivity_delta_var,
+        None,
     )
     ttk.Button(
         gui.advanced_options_frame,
@@ -173,7 +182,9 @@ def _add_labeled_entry(
     label.grid(row=row, column=0, sticky="w", padx=(0, 8), pady=3)
     if tooltip_text is not None:
         Tooltip(label, tooltip_text)
-    ttk.Entry(parent, textvariable=variable, width=14).grid(row=row, column=1, sticky="ew", pady=3)
+    ttk.Entry(parent, textvariable=variable, width=14).grid(
+        row=row, column=1, sticky="ew", pady=3
+    )
 
 
 def _toggle_advanced_options(gui: Any) -> None:
@@ -250,8 +261,12 @@ def _build_results_and_plots_section(gui: Any, parent: ttk.Frame) -> None:
 
     plot_tooltips = {
         "activity": PARAMETER_DESCRIPTIONS["plot_activity"],
-        "simulated_brain_activity": PARAMETER_DESCRIPTIONS["plot_simulated_brain_activity"],
-        "brain_region_projections": PARAMETER_DESCRIPTIONS["plot_brain_region_projections"],
+        "simulated_brain_activity": PARAMETER_DESCRIPTIONS[
+            "plot_simulated_brain_activity"
+        ],
+        "brain_region_projections": PARAMETER_DESCRIPTIONS[
+            "plot_brain_region_projections"
+        ],
         "region_activity_2d": PARAMETER_DESCRIPTIONS["plot_region_activity_2d"],
         "diagnostics": PARAMETER_DESCRIPTIONS["plot_diagnostics"],
         "behavior": PARAMETER_DESCRIPTIONS["plot_behavior"],
@@ -334,7 +349,9 @@ def _open_advanced_settings(gui: Any) -> None:
         BrainParams,
         gui.brain_defaults,
         include_fields=[
-            f.name for f in fields(BrainParams) if f.name not in RULE_FIELDS and f.name != "dt"
+            f.name
+            for f in fields(BrainParams)
+            if f.name not in RULE_FIELDS and f.name != "dt"
         ],
     )
     brain.pack(fill="both", expand=True, pady=(0, 10))
@@ -363,7 +380,9 @@ def _open_advanced_settings(gui: Any) -> None:
     btns = ttk.Frame(container)
     btns.pack(fill="x", pady=(10, 0))
     ttk.Button(btns, text="Anuluj", command=win.destroy).pack(side="right")
-    ttk.Button(btns, text="Zapisz", command=save_and_close).pack(side="right", padx=(0, 8))
+    ttk.Button(btns, text="Zapisz", command=save_and_close).pack(
+        side="right", padx=(0, 8)
+    )
 
 
 def _refresh_scenario_details(gui: Any) -> None:

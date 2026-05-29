@@ -12,7 +12,8 @@ def configure_styles(root: tk.Tk) -> None:
         "primary": "#2563eb",
         "primary_active": "#1d4ed8",
         "panel_bg": "#f8fafc",
-        "panel_border": "#dbe4ef",
+        "panel_border": "#94a3b8",
+        "panel_border_dark": "#64748b",
         "scenario_bg": "#eef6ff",
         "warning": "#b45309",
         "advanced_fg": "#64748b",
@@ -28,10 +29,31 @@ def configure_styles(root: tk.Tk) -> None:
 
     root.configure(background=palette["panel_bg"])
     style.configure("TFrame", background=palette["panel_bg"])
+    style.configure(
+        "TNotebook",
+        background=palette["panel_bg"],
+        bordercolor=palette["panel_border"],
+        borderwidth=1,
+    )
+    style.configure(
+        "TNotebook.Tab",
+        background="#e2e8f0",
+        bordercolor=palette["panel_border_dark"],
+        borderwidth=1,
+        padding=(10, 6),
+    )
+    style.map(
+        "TNotebook.Tab",
+        background=[("selected", palette["card_bg"]), ("active", "#f1f5f9")],
+        foreground=[("selected", palette["primary"])],
+    )
     style.configure("Header.TFrame", background=palette["panel_bg"])
     style.configure("Footer.TFrame", background=palette["panel_bg"])
     style.configure(
-        "Workflow.TFrame", background=palette["accent_bg"], relief="solid", borderwidth=1
+        "Workflow.TFrame",
+        background=palette["accent_bg"],
+        relief="solid",
+        borderwidth=1,
     )
     style.configure(
         "HeaderTitle.TLabel",
@@ -94,7 +116,10 @@ def configure_styles(root: tk.Tk) -> None:
     )
     style.map(
         "Primary.TButton",
-        background=[("active", palette["primary_active"]), ("pressed", palette["primary_active"])],
+        background=[
+            ("active", palette["primary_active"]),
+            ("pressed", palette["primary_active"]),
+        ],
         foreground=[("disabled", "#e2e8f0")],
     )
     style.configure(
@@ -120,6 +145,14 @@ def configure_styles(root: tk.Tk) -> None:
         "Advanced.TCheckbutton",
         background=palette["panel_bg"],
         foreground=palette["advanced_fg"],
+        indicatorcolor=palette["card_bg"],
+        indicatorrelief="solid",
+        bordercolor=palette["panel_border_dark"],
+        borderwidth=1,
+    )
+    style.map(
+        "Advanced.TCheckbutton",
+        indicatorcolor=[("selected", palette["primary"]), ("active", "#dbeafe")],
     )
     style.configure(
         "Advanced.TLabelframe",

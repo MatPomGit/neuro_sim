@@ -35,6 +35,44 @@ QPushButton#primaryButton {
     color: #ffffff;
     font-weight: 600;
 }
+QTabWidget::pane {
+    border: 1px solid #94a3b8;
+    border-radius: 6px;
+    top: -1px;
+}
+QTabBar::tab {
+    background: #e2e8f0;
+    border: 1px solid #94a3b8;
+    border-bottom-color: #64748b;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    padding: 7px 12px;
+    margin-right: 2px;
+}
+QTabBar::tab:selected {
+    background: #ffffff;
+    border-bottom-color: #ffffff;
+    color: #1d4ed8;
+}
+QTabBar::tab:!selected {
+    margin-top: 3px;
+}
+QCheckBox::indicator, QRadioButton::indicator {
+    border: 1px solid #64748b;
+    background: #ffffff;
+    width: 14px;
+    height: 14px;
+}
+QCheckBox::indicator {
+    border-radius: 3px;
+}
+QRadioButton::indicator {
+    border-radius: 7px;
+}
+QCheckBox::indicator:checked, QRadioButton::indicator:checked {
+    background: #2563eb;
+    border-color: #1d4ed8;
+}
 QLabel#headerTitle {
     font-size: 20px;
     font-weight: 700;

@@ -13,7 +13,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QPushButton,
     QRadioButton,
     QVBoxLayout,
     QWidget,
@@ -69,7 +68,9 @@ class QtSections:
         """Zbuduj sekcję „Szybki start” z minimalnymi decyzjami użytkownika."""
         group = QGroupBox("Szybki start")
         layout = QFormLayout(group)
-        hint = QLabel("Minimalny zestaw decyzji potrzebny do uruchomienia powtarzalnej symulacji.")
+        hint = QLabel(
+            "Minimalny zestaw decyzji potrzebny do uruchomienia powtarzalnej symulacji."
+        )
         hint.setObjectName("hintLabel")
         layout.addRow(hint)
 
@@ -90,14 +91,11 @@ class QtSections:
         self.save_results_check.setToolTip(PARAMETER_DESCRIPTIONS["save_results"])
         layout.addRow(self.save_results_check)
 
-        start_button = QPushButton("Uruchom symulację")
-        start_button.setObjectName("primaryButton")
-        start_button.clicked.connect(self.callbacks["start_simulation"])
-        layout.addRow(start_button)
-
         self.scenario_details_label = QLabel("")
         self.scenario_details_label.setWordWrap(True)
-        self.scenario_details_label.setToolTip(PARAMETER_DESCRIPTIONS["scenario_details"])
+        self.scenario_details_label.setToolTip(
+            PARAMETER_DESCRIPTIONS["scenario_details"]
+        )
         layout.addRow(self.scenario_details_label)
         self.refresh_scenario_details()
         return group
@@ -198,7 +196,9 @@ class QtSections:
         self.state.sensitivity_delta = self.sensitivity_delta_edit.text()
         self.state.scenario = self.scenario_combo.currentText()
         self.state.save_results = self.save_results_check.isChecked()
-        self.state.plots = {name: check.isChecked() for name, check in self.plot_checks.items()}
+        self.state.plots = {
+            name: check.isChecked() for name, check in self.plot_checks.items()
+        }
 
     def sync_controls_from_state(self) -> None:
         """Przepisz stan GUI do widżetów Qt po wczytaniu konfiguracji."""
