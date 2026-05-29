@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Any, Protocol
 
@@ -9,6 +9,7 @@ class ProtocolPhase(str, Enum):
     """
     Faza protokołu eksperymentalnego.
     """
+
     TRAIN = "train"
     TEST = "test"
 
@@ -17,6 +18,7 @@ class ErrorType(str, Enum):
     """
     Typ błędu w zadaniu eksperymentalnym.
     """
+
     NONE = "none"
     COMMISSION = "commission"
     OMISSION = "omission"
@@ -33,6 +35,7 @@ class ProtocolStep:
         duration_s (float): Czas trwania kroku.
         label (str): Etykieta kroku.
     """
+
     phase: ProtocolPhase
     duration_s: float
     label: str = ""
@@ -49,12 +52,30 @@ class TrialStimulus:
         duration_s (float): Czas trwania.
         payload (dict[str, Any]): Dane bodźca.
         condition (str): Warunek eksperymentalny.
+        regional_input (dict[str, float]): Mapa region→amplituda wejścia.
     """
+
     trial_id: int
     onset_s: float
     duration_s: float
     payload: dict[str, Any]
     condition: str
+    regional_input: dict[str, float] = field(default_factory=dict)
+
+    def with_regional_input(self, regional_input: dict[str, float]) -> "TrialStimulus":
+        """Zwraca kopię bodźca z jawnym wejściem regionalnym.
+
+        Parameters
+        ----------
+        regional_input:
+            Mapa nazw regionów lub proxy regionów na amplitudy wejścia.
+
+        Returns
+        -------
+        TrialStimulus
+            Nowy bodziec z zachowanymi danymi trialu i przypisanym wejściem.
+        """
+        return replace(self, regional_input=dict(regional_input))
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,6 +90,7 @@ class TrialResult:
         error_type (ErrorType): Typ błędu.
         condition (str): Warunek eksperymentalny.
     """
+
     trial_id: int
     reaction_time_s: float | None
     correct: bool
@@ -80,6 +102,7 @@ class CognitiveTask(Protocol):
     """
     Protokół zadania kognitywnego.
     """
+
     name: str
 
     def generate_stimuli(self, seed: int, duration_s: float) -> list[TrialStimulus]:
@@ -94,7 +117,12 @@ class CognitiveTask(Protocol):
         """
         ...
 
-    def score_trial(self, stimulus: TrialStimulus, observed_response: Any, reaction_time_s: float | None) -> TrialResult:
+    def score_trial(
+        self,
+        stimulus: TrialStimulus,
+        observed_response: Any,
+        reaction_time_s: float | None,
+    ) -> TrialResult:
         """
         Ocenia wynik trialu.
         """
@@ -110,6 +138,7 @@ class ExperimentProtocol:
         name (str): Nazwa protokołu.
         steps (tuple[ProtocolStep, ...]): Kroki protokołu.
     """
+
     name: str
     steps: tuple[ProtocolStep, ...]
 
@@ -145,6 +174,7 @@ class StroopTask:
     """
     Zadanie Stroopa — generuje bodźce i ocenia odpowiedzi.
     """
+
     name: str = "stroop"
 
     def generate_stimuli(self, seed: int, duration_s: float) -> list[TrialStimulus]:
@@ -162,7 +192,9 @@ class StroopTask:
             state = _lcg(state)
             ink = colors[state % len(colors)]
             condition = "congruent" if word == ink else "incongruent"
-            trials.append(TrialStimulus(trial_id, t, 1.0, {"word": word, "ink": ink}, condition))
+            trials.append(
+                TrialStimulus(trial_id, t, 1.0, {"word": word, "ink": ink}, condition)
+            )
             t += 2.0
             trial_id += 1
         return trials
@@ -173,22 +205,36 @@ class StroopTask:
         """
         return str(stimulus.payload["ink"])
 
-    def score_trial(self, stimulus: TrialStimulus, observed_response: Any, reaction_time_s: float | None) -> TrialResult:
+    def score_trial(
+        self,
+        stimulus: TrialStimulus,
+        observed_response: Any,
+        reaction_time_s: float | None,
+    ) -> TrialResult:
         """
         Ocenia wynik trialu w zadaniu Stroopa.
         """
         expected = self.expected_response(stimulus)
         if observed_response is None:
-            return TrialResult(stimulus.trial_id, reaction_time_s, False, ErrorType.OMISSION, stimulus.condition)
+            return TrialResult(
+                stimulus.trial_id,
+                reaction_time_s,
+                False,
+                ErrorType.OMISSION,
+                stimulus.condition,
+            )
         correct = str(observed_response) == expected
         err = ErrorType.NONE if correct else ErrorType.INTERFERENCE
-        return TrialResult(stimulus.trial_id, reaction_time_s, correct, err, stimulus.condition)
+        return TrialResult(
+            stimulus.trial_id, reaction_time_s, correct, err, stimulus.condition
+        )
 
 
 class GoNoGoTask:
     """
     Zadanie Go/NoGo — generuje bodźce i ocenia odpowiedzi.
     """
+
     name: str = "go_nogo"
 
     def generate_stimuli(self, seed: int, duration_s: float) -> list[TrialStimulus]:
@@ -203,7 +249,9 @@ class GoNoGoTask:
             state = _lcg(state)
             is_go = (state % 5) != 0
             condition = "go" if is_go else "nogo"
-            trials.append(TrialStimulus(trial_id, t, 0.6, {"cue": condition}, condition))
+            trials.append(
+                TrialStimulus(trial_id, t, 0.6, {"cue": condition}, condition)
+            )
             t += 1.2
             trial_id += 1
         return trials
@@ -214,7 +262,12 @@ class GoNoGoTask:
         """
         return "press" if stimulus.condition == "go" else None
 
-    def score_trial(self, stimulus: TrialStimulus, observed_response: Any, reaction_time_s: float | None) -> TrialResult:
+    def score_trial(
+        self,
+        stimulus: TrialStimulus,
+        observed_response: Any,
+        reaction_time_s: float | None,
+    ) -> TrialResult:
         """Ocenia poprawność odpowiedzi i typ błędu w zadaniu Go/NoGo."""
         expected = self.expected_response(stimulus)
         if expected is None:
@@ -223,7 +276,9 @@ class GoNoGoTask:
         else:
             correct = observed_response == expected
             err = ErrorType.NONE if correct else ErrorType.OMISSION
-        return TrialResult(stimulus.trial_id, reaction_time_s, correct, err, stimulus.condition)
+        return TrialResult(
+            stimulus.trial_id, reaction_time_s, correct, err, stimulus.condition
+        )
 
 
 class NBackTask:
@@ -247,21 +302,41 @@ class NBackTask:
         while t < duration_s:
             state = _lcg(state)
             symbol = symbols[state % len(symbols)]
-            trials.append(TrialStimulus(trial_id, t, 0.8, {"symbol": symbol, "n": self.n}, "target_pending"))
+            trials.append(
+                TrialStimulus(
+                    trial_id, t, 0.8, {"symbol": symbol, "n": self.n}, "target_pending"
+                )
+            )
             t += 1.5
             trial_id += 1
         for idx, stim in enumerate(trials):
-            if idx >= self.n and stim.payload["symbol"] == trials[idx - self.n].payload["symbol"]:
-                trials[idx] = TrialStimulus(stim.trial_id, stim.onset_s, stim.duration_s, stim.payload, "target")
+            if (
+                idx >= self.n
+                and stim.payload["symbol"] == trials[idx - self.n].payload["symbol"]
+            ):
+                trials[idx] = TrialStimulus(
+                    stim.trial_id, stim.onset_s, stim.duration_s, stim.payload, "target"
+                )
             else:
-                trials[idx] = TrialStimulus(stim.trial_id, stim.onset_s, stim.duration_s, stim.payload, "non_target")
+                trials[idx] = TrialStimulus(
+                    stim.trial_id,
+                    stim.onset_s,
+                    stim.duration_s,
+                    stim.payload,
+                    "non_target",
+                )
         return trials
 
     def expected_response(self, stimulus: TrialStimulus) -> str | None:
         """Zwraca oczekiwaną odpowiedź dla bodźca n-back."""
         return "match" if stimulus.condition == "target" else None
 
-    def score_trial(self, stimulus: TrialStimulus, observed_response: Any, reaction_time_s: float | None) -> TrialResult:
+    def score_trial(
+        self,
+        stimulus: TrialStimulus,
+        observed_response: Any,
+        reaction_time_s: float | None,
+    ) -> TrialResult:
         """Ocenia odpowiedź użytkownika względem statusu celu n-back."""
         expected = self.expected_response(stimulus)
         if expected is None:
@@ -270,7 +345,9 @@ class NBackTask:
         else:
             correct = observed_response == expected
             err = ErrorType.NONE if correct else ErrorType.OMISSION
-        return TrialResult(stimulus.trial_id, reaction_time_s, correct, err, stimulus.condition)
+        return TrialResult(
+            stimulus.trial_id, reaction_time_s, correct, err, stimulus.condition
+        )
 
 
 class RovingOddballTask:
@@ -293,11 +370,17 @@ class RovingOddballTask:
         if run_length_min < 1:
             raise ValueError("run_length_min must be at least 1 for RovingOddballTask")
         if run_length_max < run_length_min:
-            raise ValueError("run_length_max must be >= run_length_min for RovingOddballTask")
+            raise ValueError(
+                "run_length_max must be >= run_length_min for RovingOddballTask"
+            )
         if not 0.0 <= deviant_probability <= 1.0:
-            raise ValueError("deviant_probability must be between 0 and 1 for RovingOddballTask")
+            raise ValueError(
+                "deviant_probability must be between 0 and 1 for RovingOddballTask"
+            )
         if inter_stimulus_interval <= 0.0:
-            raise ValueError("inter_stimulus_interval must be > 0 for RovingOddballTask")
+            raise ValueError(
+                "inter_stimulus_interval must be > 0 for RovingOddballTask"
+            )
         if jitter < 0.0:
             raise ValueError("jitter must be >= 0 for RovingOddballTask")
         self.n_runs: int = n_runs
@@ -319,12 +402,16 @@ class RovingOddballTask:
             state = _lcg(state)
             length_span = self.run_length_max - self.run_length_min + 1
             run_length = self.run_length_min + (state % length_span)
-            previous_deviant = run_idx > 0 and trials and trials[-1].condition == "deviant"
+            previous_deviant = (
+                run_idx > 0 and trials and trials[-1].condition == "deviant"
+            )
             for repetition_idx in range(run_length):
                 if onset >= duration_s:
                     return trials
                 habituation_level = round((repetition_idx + 1) / run_length, 6)
-                readaptation_latency = max(0, run_length - repetition_idx - 1) if previous_deviant else 0
+                readaptation_latency = (
+                    max(0, run_length - repetition_idx - 1) if previous_deviant else 0
+                )
                 payload = {
                     "tone_hz": tones[current_tone_idx],
                     "run_index": run_idx,
@@ -334,7 +421,9 @@ class RovingOddballTask:
                     "habituation_level": habituation_level,
                     "readaptation_latency": readaptation_latency,
                 }
-                trials.append(TrialStimulus(trial_id, round(onset, 6), 0.2, payload, "standard"))
+                trials.append(
+                    TrialStimulus(trial_id, round(onset, 6), 0.2, payload, "standard")
+                )
                 trial_id += 1
                 onset = self._next_onset(onset, state)
                 state = _lcg(state)
@@ -347,7 +436,9 @@ class RovingOddballTask:
             if onset >= duration_s:
                 return trials
             state = _lcg(state)
-            deviant_idx = (current_tone_idx + 1 + (state % (len(tones) - 1))) % len(tones)
+            deviant_idx = (current_tone_idx + 1 + (state % (len(tones) - 1))) % len(
+                tones
+            )
             surprise_index = round(1.0 - self.deviant_probability + 0.5, 6)
             payload = {
                 "tone_hz": tones[deviant_idx],
@@ -359,7 +450,9 @@ class RovingOddballTask:
                 "habituation_level": 0.0,
                 "readaptation_latency": run_length,
             }
-            trials.append(TrialStimulus(trial_id, round(onset, 6), 0.2, payload, "deviant"))
+            trials.append(
+                TrialStimulus(trial_id, round(onset, 6), 0.2, payload, "deviant")
+            )
             trial_id += 1
             onset = self._next_onset(onset, state)
             current_tone_idx = deviant_idx
@@ -376,7 +469,12 @@ class RovingOddballTask:
         """Zwraca oczekiwaną detekcję dewiantu albo brak odpowiedzi dla standardu."""
         return "detect" if stimulus.condition == "deviant" else None
 
-    def score_trial(self, stimulus: TrialStimulus, observed_response: Any, reaction_time_s: float | None) -> TrialResult:
+    def score_trial(
+        self,
+        stimulus: TrialStimulus,
+        observed_response: Any,
+        reaction_time_s: float | None,
+    ) -> TrialResult:
         """Ocenia odpowiedź obserwowaną w zadaniu roving oddball."""
         expected = self.expected_response(stimulus)
         if expected is None:
@@ -385,7 +483,9 @@ class RovingOddballTask:
         else:
             correct = observed_response == expected
             err = ErrorType.NONE if correct else ErrorType.OMISSION
-        return TrialResult(stimulus.trial_id, reaction_time_s, correct, err, stimulus.condition)
+        return TrialResult(
+            stimulus.trial_id, reaction_time_s, correct, err, stimulus.condition
+        )
 
 
 def get_task(task_name: str, **kwargs: Any) -> CognitiveTask:
@@ -414,8 +514,14 @@ def default_train_test_protocol() -> ExperimentProtocol:
     return ExperimentProtocol(
         name="default_train_test",
         steps=(
-            ProtocolStep(phase=ProtocolPhase.TRAIN, duration_s=30.0, label="train_baseline"),
-            ProtocolStep(phase=ProtocolPhase.TRAIN, duration_s=30.0, label="train_perturbed"),
-            ProtocolStep(phase=ProtocolPhase.TEST, duration_s=20.0, label="test_recall"),
+            ProtocolStep(
+                phase=ProtocolPhase.TRAIN, duration_s=30.0, label="train_baseline"
+            ),
+            ProtocolStep(
+                phase=ProtocolPhase.TRAIN, duration_s=30.0, label="train_perturbed"
+            ),
+            ProtocolStep(
+                phase=ProtocolPhase.TEST, duration_s=20.0, label="test_recall"
+            ),
         ),
     )
