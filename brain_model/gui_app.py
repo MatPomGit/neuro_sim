@@ -8,9 +8,10 @@ import threading
 import tkinter as tk
 
 from .gui_config import GuiConfigMixin
-from .gui_layout import GuiLayoutMixin, configure_styles
+from .gui_layout import GuiLayoutMixin
 from .gui_runner import GuiRunnerMixin
 from .gui_state import GuiState
+from .gui_styles import configure_styles
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
 

@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 GUI_APP_PATH = ROOT / "brain_model" / "gui_app.py"
 GUI_CONFIG_PATH = ROOT / "brain_model" / "gui_config.py"
 GUI_LAYOUT_PATH = ROOT / "brain_model" / "gui_layout.py"
+GUI_SECTIONS_PATH = ROOT / "brain_model" / "gui_sections.py"
 
 
 def test_gui_state_keeps_editable_domains_outside_widgets() -> None:
@@ -54,7 +55,7 @@ def test_config_and_defaults_use_state_instead_of_hidden_forms() -> None:
 
 def test_advanced_settings_save_reports_invalid_values() -> None:
     """Sprawdź, że zapis parametrów zaawansowanych pokazuje błąd walidacji."""
-    source = GUI_LAYOUT_PATH.read_text(encoding="utf-8")
+    source = GUI_SECTIONS_PATH.read_text(encoding="utf-8")
     tree = ast.parse(source)
     save_and_close = next(
         node

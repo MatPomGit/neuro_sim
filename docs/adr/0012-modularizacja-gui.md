@@ -1,7 +1,8 @@
 # ADR-0012: Modularizacja GUI modelu poznawczego
 
-**Status:** proposed  
+**Status:** accepted
 **Data:** 2026-05-28
+**Aktualizacja:** 2026-05-29
 
 ### Kontekst
 
@@ -15,7 +16,11 @@ Dzielimy GUI na wyspecjalizowane moduły w pakiecie `brain_model`:
 
 - `gui_app.py` zawiera główną klasę okna `BrainModelGUI` i funkcję `run_gui`,
 - `gui_forms.py` zawiera `Tooltip`, `ParameterForm` oraz stałe opisujące pola formularzy,
-- `gui_layout.py` zawiera budowę zakładek, sekcji widoku, menu i aktualizację panelu wykresów,
+- `gui_layout.py` zawiera orkiestrację głównych zakładek, pasek akcji oraz delegację do modułów pomocniczych,
+- `gui_styles.py` zawiera konfigurację stylów ttk dla głównego okna,
+- `gui_sections.py` zawiera sekcje „Szybki start”, „Opcje zaawansowane” oraz „Wyniki i wykresy”,
+- `gui_menu.py` zawiera menu główne, okna pomocy i uruchamianie nowej instancji GUI,
+- `gui_results.py` zawiera przenoszenie wyniku symulacji do `PlotWindow` i dodawanie wybranych wykresów,
 - `gui_config.py` zawiera zbieranie, stosowanie oraz zapis i odczyt konfiguracji JSON,
 - `gui_runner.py` zawiera walidację parametrów skalarnych, uruchamianie symulacji i batchy oraz podsumowania metryk,
 - `gui.py` pozostaje cienką warstwą kompatybilności importującą `BrainModelGUI` i `run_gui` z `gui_app.py`.
@@ -33,13 +38,14 @@ Format JSON pozostaje `brain-model-gui-config-v1`; nie wprowadzamy migracji, pon
 **Negatywne / koszty:**
 
 - więcej plików modułów do utrzymania,
-- metody głównego okna są rozdzielone między mixiny, więc przy zmianach należy pilnować zależności atrybutów inicjalizowanych w `BrainModelGUI`.
+- metody głównego okna są rozdzielone między mixiny i funkcje pomocnicze, więc przy zmianach należy pilnować zależności atrybutów inicjalizowanych w `BrainModelGUI`.
 
 ### Alternatywy rozważane
 
 - Pozostawienie monolitycznego `gui.py`: najmniejszy diff, ale nie rozwiązuje problemu rosnącego pliku i mieszania odpowiedzialności.
 - Wydzielenie samych formularzy: prostsze, lecz nadal pozostawia konfigurację i runner w module widoku.
 - Pełna przebudowa na klasy usługowe bez mixinów: czytelniejsza granica zależności, ale zbyt duży refaktor względem wymaganego minimalnego zakresu zmian.
+- Przeniesienie całej obsługi widoku do jednego `gui_layout.py`: prostsze importy, lecz ponownie zwiększa odpowiedzialność pojedynczego modułu.
 
 ### Powiązane
 
@@ -47,5 +53,9 @@ Format JSON pozostaje `brain-model-gui-config-v1`; nie wprowadzamy migracji, pon
 - `brain_model/gui_app.py`
 - `brain_model/gui_forms.py`
 - `brain_model/gui_layout.py`
+- `brain_model/gui_styles.py`
+- `brain_model/gui_sections.py`
+- `brain_model/gui_menu.py`
+- `brain_model/gui_results.py`
 - `brain_model/gui_config.py`
 - `brain_model/gui_runner.py`
