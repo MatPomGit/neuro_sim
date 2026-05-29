@@ -26,17 +26,24 @@ def _qt_sections_tree() -> ast.Module:
     return ast.parse(QT_SECTIONS_PATH.read_text(encoding="utf-8"))
 
 
+def _find_assignment_value(tree: ast.Module, name: str) -> ast.expr:
+    """Znajdź wartość przypisaną do zmiennej o podanej nazwie (obsługuje Assign i AnnAssign)."""
+    for node in tree.body:
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == name:
+            if node.value is not None:
+                return node.value
+        elif isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == name:
+                    return node.value
+    raise AssertionError(f"Nie znaleziono przypisania dla {name}")
+
+
 def _qt_control_bindings() -> dict[str, list[tuple[str, str, str]]]:
     """Odczytaj stałe mapowanie kontrolek Qt bez tworzenia widżetów."""
     tree = _qt_sections_tree()
-    assignment = next(
-        node
-        for node in tree.body
-        if isinstance(node, ast.AnnAssign)
-        and isinstance(node.target, ast.Name)
-        and node.target.id == "CONTROL_BINDINGS"
-    )
-    if not isinstance(assignment.value, ast.Dict):
+    value_node = _find_assignment_value(tree, "CONTROL_BINDINGS")
+    if not isinstance(value_node, ast.Dict):
         raise AssertionError("CONTROL_BINDINGS nie jest literałem słownika.")
 
     bindings: dict[str, list[tuple[str, str, str]]] = {}
