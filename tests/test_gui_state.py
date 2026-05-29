@@ -1,4 +1,4 @@
-"""Testy stanu GUI niezależnego od niewidocznych formularzy."""
+"""Testy stanu GUI i jawnego mapowania kontrolek PySide6."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import ast
 from dataclasses import fields
 from pathlib import Path
 
-from brain_model.gui_forms import RULE_FIELDS, ParameterForm
+from brain_model.gui_forms import RULE_FIELDS
 from brain_model.gui_state import GuiState
 from brain_model.oscillators import WilsonCowanParams
 from brain_model.params import BrainParams
@@ -16,10 +16,85 @@ from brain_model.plasticity import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-GUI_APP_PATH = ROOT / "brain_model" / "gui_app.py"
-GUI_CONFIG_PATH = ROOT / "brain_model" / "gui_config.py"
-GUI_LAYOUT_PATH = ROOT / "brain_model" / "gui_layout.py"
-GUI_SECTIONS_PATH = ROOT / "brain_model" / "gui_sections.py"
+QT_APP_PATH = ROOT / "brain_model" / "qt_app.py"
+QT_CONFIG_PATH = ROOT / "brain_model" / "qt_config.py"
+QT_SECTIONS_PATH = ROOT / "brain_model" / "qt_sections.py"
+
+
+def _qt_sections_tree() -> ast.Module:
+    """Wczytaj AST modułu sekcji Qt bez importowania PySide6."""
+    return ast.parse(QT_SECTIONS_PATH.read_text(encoding="utf-8"))
+
+
+def _find_assignment_value(tree: ast.Module, name: str) -> ast.expr:
+    """Znajdź wartość przypisaną do zmiennej o podanej nazwie (obsługuje Assign i AnnAssign)."""
+    for node in tree.body:
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == name:
+            if node.value is not None:
+                return node.value
+        elif isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == name:
+                    return node.value
+    raise AssertionError(f"Nie znaleziono przypisania dla {name}")
+
+
+def _qt_control_bindings() -> dict[str, list[tuple[str, str, str]]]:
+    """Odczytaj stałe mapowanie kontrolek Qt bez tworzenia widżetów."""
+    tree = _qt_sections_tree()
+    value_node = _find_assignment_value(tree, "CONTROL_BINDINGS")
+    if not isinstance(value_node, ast.Dict):
+        raise AssertionError("CONTROL_BINDINGS nie jest literałem słownika.")
+
+    bindings: dict[str, list[tuple[str, str, str]]] = {}
+    for key_node, value_node in zip(assignment.value.keys, assignment.value.values):
+        if not isinstance(key_node, ast.Constant) or not isinstance(
+            key_node.value, str
+        ):
+            raise AssertionError("Nazwa grupy mapowania nie jest stałym tekstem.")
+        if not isinstance(value_node, ast.Tuple):
+            raise AssertionError("Grupa mapowania nie jest stałą krotką.")
+        group_bindings: list[tuple[str, str, str]] = []
+        for element in value_node.elts:
+            if not isinstance(element, ast.Call) or len(element.args) != 3:
+                raise AssertionError(
+                    "Mapowanie kontrolki nie jest wywołaniem ControlBinding."
+                )
+            values = []
+            for argument in element.args:
+                if not isinstance(argument, ast.Constant) or not isinstance(
+                    argument.value, str
+                ):
+                    raise AssertionError(
+                        "Argument ControlBinding nie jest stałym tekstem."
+                    )
+                values.append(argument.value)
+            group_bindings.append((values[0], values[1], values[2]))
+        bindings[key_node.value] = group_bindings
+    return bindings
+
+
+def _qt_state_control_omissions() -> set[str]:
+    """Odczytaj pola stanu celowo pomijane przez mapowanie kontrolek Qt."""
+    tree = _qt_sections_tree()
+    assignment = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.Assign)
+        and len(node.targets) == 1
+        and isinstance(node.targets[0], ast.Name)
+        and node.targets[0].id == "GUI_STATE_CONTROL_OMISSIONS"
+    )
+    if not isinstance(assignment.value, ast.Dict):
+        raise AssertionError("GUI_STATE_CONTROL_OMISSIONS nie jest literałem słownika.")
+    omissions = set()
+    for key_node in assignment.value.keys:
+        if not isinstance(key_node, ast.Constant) or not isinstance(
+            key_node.value, str
+        ):
+            raise AssertionError("Pominięte pole stanu nie jest stałym tekstem.")
+        omissions.add(key_node.value)
+    return omissions
 
 
 def test_gui_state_keeps_editable_domains_outside_widgets() -> None:
@@ -35,125 +110,64 @@ def test_gui_state_keeps_editable_domains_outside_widgets() -> None:
     assert state.plots == {}
 
 
-def test_main_window_does_not_create_hidden_parameter_forms() -> None:
-    """Sprawdź statycznie, że główne okno nie używa niewidocznych ParameterForm."""
-    source = GUI_APP_PATH.read_text(encoding="utf-8")
+def test_qt_control_bindings_cover_editable_gui_state_fields() -> None:
+    """Sprawdź, że edytowalne pola `GuiState` mają jawne powiązanie z kontrolką Qt."""
+    bound_state_fields = {
+        binding[0]
+        for binding_group in _qt_control_bindings().values()
+        for binding in binding_group
+    }
+    gui_state_fields = {field.name for field in fields(GuiState)}
+    omitted_state_fields = _qt_state_control_omissions()
 
-    assert "ParameterForm" not in source
-    assert "GuiState" in source
-    assert "self.state = GuiState" in source
+    assert bound_state_fields | omitted_state_fields == gui_state_fields
+    assert bound_state_fields.isdisjoint(omitted_state_fields)
 
 
-def test_config_and_defaults_use_state_instead_of_hidden_forms() -> None:
+def test_qt_control_bindings_use_supported_control_kinds() -> None:
+    """Sprawdź, że mapowanie kontrolek używa tylko obsługiwanych typów odczytu."""
+    supported_kinds = {"line_edit", "check_box", "combo_box"}
+
+    assert {
+        binding[2]
+        for binding_group in _qt_control_bindings().values()
+        for binding in binding_group
+    } <= supported_kinds
+
+
+def test_qt_config_and_defaults_use_state_instead_of_hidden_forms() -> None:
     """Sprawdź statycznie, że konfiguracja i reset bazują na stanie GUI."""
-    config_source = GUI_CONFIG_PATH.read_text(encoding="utf-8")
-    layout_source = GUI_LAYOUT_PATH.read_text(encoding="utf-8")
+    config_source = QT_CONFIG_PATH.read_text(encoding="utf-8")
+    app_source = QT_APP_PATH.read_text(encoding="utf-8")
 
     assert "self.brain_form" not in config_source
     assert "self.osc_form" not in config_source
-    assert "self.brain_form.reset" not in layout_source
-    assert "self.osc_form.reset" not in layout_source
-    assert "self.state.brain_params" in layout_source
-    assert "self.state.oscillator_params" in layout_source
+    assert "self.brain_form" not in app_source
+    assert "self.osc_form" not in app_source
+    assert "self.state.brain_params" in app_source
+    assert "self.state.oscillator_params" in app_source
 
 
-def test_advanced_settings_save_reports_invalid_values() -> None:
-    """Sprawdź, że zapis parametrów zaawansowanych pokazuje błąd walidacji."""
-    source = GUI_SECTIONS_PATH.read_text(encoding="utf-8")
+def test_qt_parameter_dialog_validates_before_accepting() -> None:
+    """Sprawdź, że dialog Qt zatrzymuje okno przy błędzie walidacji formularza."""
+    source = QT_APP_PATH.read_text(encoding="utf-8")
     tree = ast.parse(source)
-    save_and_close = next(
+    accept_method = next(
         node
         for node in ast.walk(tree)
-        if isinstance(node, ast.FunctionDef) and node.name == "save_and_close"
+        if isinstance(node, ast.FunctionDef) and node.name == "accept"
     )
-    value_error_handlers = [
-        handler
-        for node in ast.walk(save_and_close)
-        if isinstance(node, ast.Try)
-        for handler in node.handlers
-        if isinstance(handler.type, ast.Name) and handler.type.id == "ValueError"
-    ]
+    accept_source = ast.unparse(accept_method)
 
-    assert value_error_handlers
-    assert any(
-        isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Attribute)
-        and node.func.attr == "showerror"
-        and ast.unparse(node.func.value) == "messagebox"
-        and "Nie udało się zapisać parametrów zaawansowanych" in ast.unparse(node)
-        for handler in value_error_handlers
-        for node in ast.walk(handler)
-    )
-    assert any(
-        isinstance(stmt, ast.Return)
-        for handler in value_error_handlers
-        for stmt in handler.body
-    )
-
-
-def test_advanced_settings_preserve_current_plasticity_rules() -> None:
-    """Sprawdź, że zapis zaawansowanych pól nie przywraca domyślnych reguł plastyczności."""
-    config_source = GUI_CONFIG_PATH.read_text(encoding="utf-8")
-    sections_source = GUI_SECTIONS_PATH.read_text(encoding="utf-8")
-    layout_source = GUI_LAYOUT_PATH.read_text(encoding="utf-8")
-
-    assert "gui.state.brain_params" in sections_source
-    assert (
-        "gui.brain_defaults"
-        not in sections_source.split("brain = ParameterForm", 1)[1].split(
-            "include_fields", 1
-        )[0]
-    )
-    assert "semantic_rule=self.brain_defaults.semantic_rule" not in config_source
-    assert "value_rule=self.brain_defaults.value_rule" not in config_source
-    assert (
-        "connectivity_adaptation=self.brain_defaults.connectivity_adaptation"
-        not in config_source
-    )
-    assert "semantic_rule=self.brain_defaults.semantic_rule" not in layout_source
-    assert "value_rule=self.brain_defaults.value_rule" not in layout_source
-    assert (
-        "connectivity_adaptation=self.brain_defaults.connectivity_adaptation"
-        not in layout_source
-    )
-
-
-def test_parameter_form_values_copy_excluded_fields_from_current_defaults() -> None:
-    """Sprawdź, że ukryte pola formularza Tk są kopiowane z bieżącego stanu modelu."""
-
-    class FakeVar:
-        """Minimalna zmienna testowa zgodna z metodą get formularza."""
-
-        def __init__(self, value: object) -> None:
-            """Zapamiętaj wartość zwracaną przez get."""
-            self.value = value
-
-        def get(self) -> object:
-            """Zwróć wartość formularza używaną w teście bez uruchamiania Tk."""
-            return self.value
-
-    current_params = BrainParams(
-        semantic_rule=PlasticityRuleConfig(False, 0.111, 0.222),
-        value_rule=PlasticityRuleConfig(False, 0.333, 0.444),
-        connectivity_adaptation=ConnectivityAdaptationConfig(False, 0.555, 0.666),
-    )
-    form = ParameterForm.__new__(ParameterForm)
-    form.dataclass_type = BrainParams
-    form.defaults = current_params
-    form.include_fields = {"noise"}
-    form.vars = {"noise": FakeVar("0.123")}
-
-    params = form.values()
-
-    assert params.noise == 0.123
-    assert params.semantic_rule == current_params.semantic_rule
-    assert params.value_rule == current_params.value_rule
-    assert params.connectivity_adaptation == current_params.connectivity_adaptation
+    assert "self.values()" in accept_source
+    assert "QMessageBox.critical" in accept_source
+    assert "return" in accept_source
+    assert "super().accept()" in accept_source
 
 
 def test_qt_brain_dialog_preserves_current_plasticity_rules() -> None:
     """Sprawdź statycznie, że okno Qt nie nadpisuje ukrytych reguł domyślnymi wartościami."""
-    source = (ROOT / "brain_model" / "qt_app.py").read_text(encoding="utf-8")
+    source = QT_APP_PATH.read_text(encoding="utf-8")
     tree = ast.parse(source)
     method = next(
         node
@@ -171,23 +185,6 @@ def test_qt_brain_dialog_preserves_current_plasticity_rules() -> None:
     )
 
 
-def test_qt_parameter_dialog_validates_before_accepting() -> None:
-    """Sprawdź, że dialog Qt zatrzymuje okno przy błędzie walidacji formularza."""
-    source = (ROOT / "brain_model" / "qt_app.py").read_text(encoding="utf-8")
-    tree = ast.parse(source)
-    accept_method = next(
-        node
-        for node in ast.walk(tree)
-        if isinstance(node, ast.FunctionDef) and node.name == "accept"
-    )
-    accept_source = ast.unparse(accept_method)
-
-    assert "self.values()" in accept_source
-    assert "QMessageBox.critical" in accept_source
-    assert "return" in accept_source
-    assert "super().accept()" in accept_source
-
-
 def test_rule_fields_stay_out_of_saved_brain_config() -> None:
     """Sprawdź założenie listy pól zapisywanych dla BrainParams w konfiguracji GUI."""
     editable_fields = {
@@ -196,3 +193,19 @@ def test_rule_fields_stay_out_of_saved_brain_config() -> None:
 
     assert "dt" in editable_fields
     assert not set(RULE_FIELDS) & editable_fields
+
+
+def test_qt_config_preserves_current_plasticity_rules() -> None:
+    """Sprawdź, że zapis konfiguracji Qt nie przywraca domyślnych reguł plastyczności."""
+    config_source = QT_CONFIG_PATH.read_text(encoding="utf-8")
+    sections_source = QT_SECTIONS_PATH.read_text(encoding="utf-8")
+
+    assert "RULE_FIELDS" in config_source
+    assert "exclude=set(RULE_FIELDS)" in config_source
+    assert "GUI_STATE_CONTROL_OMISSIONS" in sections_source
+    assert "semantic_rule=self.brain_defaults.semantic_rule" not in config_source
+    assert "value_rule=self.brain_defaults.value_rule" not in config_source
+    assert (
+        "connectivity_adaptation=self.brain_defaults.connectivity_adaptation"
+        not in config_source
+    )
