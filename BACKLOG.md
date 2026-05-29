@@ -456,9 +456,9 @@ Zadanie uznaje się za ukończone, gdy:
 **Cel:** utrzymanie standardu dokumentacji i typowania dla wszystkich modułów Python.
 
 **Kontekst (weryfikacja 2026-05-29):**
-- lokalny skan AST repozytorium zwrócił **0** braków docstringów,
-- lokalny skan AST repozytorium zwrócił **0** braków pełnych adnotacji typów,
-- historyczne dokumenty rollout/audit/progress zostały usunięte, ponieważ dublowały
+- Lokalny skan AST repozytorium zwrócił **0** braków docstringów.
+- Lokalny skan AST repozytorium zwrócił **0** braków pełnych adnotacji typów.
+- Historyczne dokumenty rollout/audit/progress zostały usunięte, ponieważ dublowały
   zamknięty zakres i nie zawierały już decyzji potrzebnych do dalszego rozwoju.
 
 **Zakres utrzymaniowy:**
