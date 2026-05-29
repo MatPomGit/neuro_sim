@@ -271,6 +271,6 @@ def test_qt_plot_checkboxes_are_hidden_behind_customization_panel() -> None:
     assert "setCheckable(True)" in source
     assert "toggle_plot_details" in source
     assert "self.plot_details_group.setVisible(checked)" in source
-    assert 'QRadioButton("Niestandardowe")' in source
+    assert 'QRadioButton("Niestandardowe"' in source
     assert "custom_button.setVisible(False)" in source
     assert "Aktywny zestaw: Niestandardowe" in source
