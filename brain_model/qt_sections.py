@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QRadioButton,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -62,6 +63,9 @@ class QtSections:
         self.callbacks = callbacks
         self.plot_checks: dict[str, QCheckBox] = {}
         self.plot_preset_buttons: dict[str, QRadioButton] = {}
+        self.plot_preset_description: QLabel | None = None
+        self.plot_details_toggle: QToolButton | None = None
+        self.plot_details_group: QGroupBox | None = None
         self.advanced_group: QGroupBox | None = None
 
     def build_quick_start_section(self) -> QGroupBox:
@@ -139,7 +143,7 @@ class QtSections:
         return container
 
     def build_results_and_plots_section(self) -> QGroupBox:
-        """Zbuduj sekcję „Wyniki i wykresy” z presetami i listą wykresów."""
+        """Zbuduj sekcję „Wyniki i wykresy” z presetami i zwijanymi szczegółami."""
         group = QGroupBox("Wyniki i wykresy")
         layout = QVBoxLayout(group)
         if not self.state.plots:
@@ -154,18 +158,27 @@ class QtSections:
             self.plot_preset_group.addButton(button)
             self.plot_preset_buttons[preset_name] = button
             preset_row.addWidget(button)
+        custom_button = QRadioButton("Niestandardowe")
+        custom_button.setVisible(False)
+        self.plot_preset_group.addButton(custom_button)
+        self.plot_preset_buttons["Niestandardowe"] = custom_button
         preset_row.addStretch(1)
         layout.addLayout(preset_row)
-        self.plot_preset_buttons["Pełne"].setChecked(True)
 
-        hint = QLabel(
-            "Wybierz widoki do raportowania. Układ dwukolumnowy ogranicza przewijanie listy."
-        )
-        hint.setObjectName("hintLabel")
-        hint.setWordWrap(True)
-        layout.addWidget(hint)
+        self.plot_preset_description = QLabel("")
+        self.plot_preset_description.setObjectName("hintLabel")
+        self.plot_preset_description.setWordWrap(True)
+        layout.addWidget(self.plot_preset_description)
 
-        columns = QHBoxLayout()
+        self.plot_details_toggle = QToolButton()
+        self.plot_details_toggle.setText("Dostosuj wykresy")
+        self.plot_details_toggle.setCheckable(True)
+        self.plot_details_toggle.setChecked(False)
+        self.plot_details_toggle.toggled.connect(self.toggle_plot_details)
+        layout.addWidget(self.plot_details_toggle)
+
+        self.plot_details_group = QGroupBox("Szczegółowe wybory wykresów")
+        details_layout = QHBoxLayout(self.plot_details_group)
         left = QVBoxLayout()
         right = QVBoxLayout()
         for index, (key, label) in enumerate(PLOT_LABELS.items()):
@@ -176,9 +189,11 @@ class QtSections:
             (left if index % 2 == 0 else right).addWidget(checkbox)
         left.addStretch(1)
         right.addStretch(1)
-        columns.addLayout(left)
-        columns.addLayout(right)
-        layout.addLayout(columns)
+        details_layout.addLayout(left)
+        details_layout.addLayout(right)
+        layout.addWidget(self.plot_details_group)
+        self.toggle_plot_details(False)
+        self.sync_plot_preset_from_checks(mark_custom=False)
         return group
 
     def sync_state_from_controls(self) -> None:
@@ -221,7 +236,7 @@ class QtSections:
                 checkbox.blockSignals(True)
                 checkbox.setChecked(value)
                 checkbox.blockSignals(False)
-        self.sync_plot_preset_from_checks()
+        self.sync_plot_preset_from_checks(mark_custom=False)
         self.refresh_scenario_details()
 
     def refresh_scenario_details(self) -> None:
@@ -251,6 +266,11 @@ class QtSections:
 
             self.dt_edit.setText(str(auto_dt_for_duration(duration)))
 
+    def toggle_plot_details(self, checked: bool) -> None:
+        """Pokaż albo ukryj szczegółowe checkboxy wyboru wykresów."""
+        if self.plot_details_group is not None:
+            self.plot_details_group.setVisible(checked)
+
     def plot_preset_keys(self, preset_name: str) -> set[str]:
         """Zwróć zestaw wykresów aktywnych dla wskazanego presetu."""
         if preset_name == "Podstawowe":
@@ -265,27 +285,65 @@ class QtSections:
                 "scenario_channels",
                 "scenario_timeline",
             }
-        return set(self.plot_checks)
+        if preset_name == "Pełne":
+            return set(self.plot_checks)
+        return {name for name, check in self.plot_checks.items() if check.isChecked()}
+
+    def plot_preset_summary(self, preset_name: str) -> str:
+        """Zwróć krótki polski opis aktywnego zestawu wykresów."""
+        descriptions = {
+            "Podstawowe": (
+                "Aktywny zestaw: Podstawowe — pokazuje aktywacje, zachowanie "
+                "i oś czasu scenariusza."
+            ),
+            "Diagnostyczne": (
+                "Aktywny zestaw: Diagnostyczne — dodaje sygnały diagnostyczne, "
+                "EEG, moc pasm i kanały bodźców."
+            ),
+            "Pełne": "Aktywny zestaw: Pełne — zapisuje wszystkie dostępne wykresy.",
+            "Niestandardowe": (
+                "Aktywny zestaw: Niestandardowe — używa ręcznie zaznaczonych wykresów."
+            ),
+        }
+        return descriptions.get(preset_name, descriptions["Niestandardowe"])
+
+    def set_plot_preset_label(self, preset_name: str) -> None:
+        """Ustaw tekst opisu aktualnego presetu bez zmiany checkboxów."""
+        if self.plot_preset_description is not None:
+            self.plot_preset_description.setText(self.plot_preset_summary(preset_name))
 
     def apply_plot_preset(self) -> None:
         """Ustaw widoczność wykresów zgodnie z zaznaczonym presetem."""
         selected = self.plot_preset_group.checkedButton()
         if selected is None or not selected.isChecked():
             return
-        active = self.plot_preset_keys(selected.text())
+        preset_name = selected.text()
+        if preset_name == "Niestandardowe":
+            self.set_plot_preset_label(preset_name)
+            return
+        active = self.plot_preset_keys(preset_name)
         for name, checkbox in self.plot_checks.items():
             checkbox.blockSignals(True)
             checkbox.setChecked(name in active)
             checkbox.blockSignals(False)
+        self.set_plot_preset_label(preset_name)
         self.sync_state_from_controls()
 
-    def sync_plot_preset_from_checks(self) -> None:
-        """Dopasuj preset do aktualnych zaznaczeń, jeśli odpowiada znanemu zestawowi."""
+    def sync_plot_preset_from_checks(
+        self, *_signal_args: object, mark_custom: bool = True
+    ) -> None:
+        """Dopasuj opis presetu po odczycie stanu albo oznacz ręczne wybory jako własne."""
         active = {name for name, check in self.plot_checks.items() if check.isChecked()}
-        for preset_name, button in self.plot_preset_buttons.items():
-            if active == self.plot_preset_keys(preset_name):
-                button.blockSignals(True)
-                button.setChecked(True)
-                button.blockSignals(False)
-                break
+        selected_preset = "Niestandardowe"
+        if not mark_custom:
+            for preset_name in ("Podstawowe", "Diagnostyczne", "Pełne"):
+                if active == self.plot_preset_keys(preset_name):
+                    selected_preset = preset_name
+                    break
+
+        button = self.plot_preset_buttons[selected_preset]
+        button.blockSignals(True)
+        button.setChecked(True)
+        button.blockSignals(False)
+        self.set_plot_preset_label(selected_preset)
         self.sync_state_from_controls()
