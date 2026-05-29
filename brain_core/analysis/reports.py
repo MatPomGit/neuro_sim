@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from pathlib import Path
 import csv
 import json
+from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 
@@ -24,6 +24,7 @@ class AnalysisReport:
     Attributes:
         payload (dict): Słownik z metrykami i porównaniami.
     """
+
     payload: dict
 
     def to_json(self) -> str:
@@ -49,6 +50,17 @@ class AnalysisReport:
         lines.append("## Porównanie z benchmarkiem")
         for name, value in compare.items():
             lines.append(f"- **{name}**: {value}")
+
+        task_activation = self.payload.get("task_activation")
+        if task_activation:
+            lines.extend(["", "## Regiony i funkcje pobudzone przez task"])
+            lines.append(f"- **task**: {task_activation.get('task_name', 'n/a')}")
+            functions = ", ".join(task_activation.get("functions", []))
+            regions = ", ".join(task_activation.get("regions", []))
+            lines.append(f"- **funkcje**: {functions}")
+            lines.append(f"- **regiony**: {regions}")
+            for region, value in task_activation.get("mean_regional_input", {}).items():
+                lines.append(f"- **średnie wejście {region}**: {value}")
         return "\n".join(lines)
 
     def to_csv_rows(self) -> list[dict[str, str]]:
@@ -61,10 +73,36 @@ class AnalysisReport:
         for section in ("metrics", "comparison"):
             for key, value in self.payload.get(section, {}).items():
                 rows.append({"section": section, "metric": key, "value": str(value)})
+        task_activation = self.payload.get("task_activation")
+        if task_activation:
+            rows.append(
+                {
+                    "section": "task_activation",
+                    "metric": "functions",
+                    "value": ", ".join(task_activation.get("functions", [])),
+                }
+            )
+            rows.append(
+                {
+                    "section": "task_activation",
+                    "metric": "regions",
+                    "value": ", ".join(task_activation.get("regions", [])),
+                }
+            )
+            for region, value in task_activation.get("mean_regional_input", {}).items():
+                rows.append(
+                    {
+                        "section": "task_activation",
+                        "metric": f"mean_regional_input_{region}",
+                        "value": str(value),
+                    }
+                )
         return rows
 
 
-def write_report_files(report: AnalysisReport, output_dir: Path, stem: str = "analysis_report") -> dict[str, str]:
+def write_report_files(
+    report: AnalysisReport, output_dir: Path, stem: str = "analysis_report"
+) -> dict[str, str]:
     """
     Zapisuje raport do plików JSON, CSV i Markdown.
 
@@ -125,12 +163,22 @@ def build_analysis_report(
     primary = eeg[:, 0] if eeg.ndim == 2 else eeg
     secondary = eeg[:, 1] if eeg.ndim == 2 and eeg.shape[1] > 1 else primary
 
-    selected = set(analysis_set if analysis_set is not None else ["spectral", "phase_locking", "connectivity", "information_flow"])
+    selected = set(
+        analysis_set
+        if analysis_set is not None
+        else ["spectral", "phase_locking", "connectivity", "information_flow"]
+    )
     bands = compute_band_powers(primary, fs) if "spectral" in selected else None
-    plv = compute_phase_locking(primary, secondary) if "phase_locking" in selected else None
+    plv = (
+        compute_phase_locking(primary, secondary)
+        if "phase_locking" in selected
+        else None
+    )
     net_input = eeg if eeg.ndim == 2 else np.column_stack([primary, secondary])
     conn = compute_connectivity(net_input) if "connectivity" in selected else None
-    flow = compute_information_flow(net_input) if "information_flow" in selected else None
+    flow = (
+        compute_information_flow(net_input) if "information_flow" in selected else None
+    )
     erp_proxy = float(np.max(primary) - np.min(primary))
 
     beh_mean = float(np.mean(behavior))
@@ -142,9 +190,13 @@ def build_analysis_report(
         "erp_proxy_peak_to_peak": erp_proxy,
         "phase_locking_value": float(plv.summary["plv"]) if plv else 0.0,
         "connectivity_mean": float(conn.summary["correlation_mean"]) if conn else 0.0,
-        "connectivity_abs_mean": float(conn.summary["correlation_abs_mean"]) if conn else 0.0,
+        "connectivity_abs_mean": (
+            float(conn.summary["correlation_abs_mean"]) if conn else 0.0
+        ),
         "pli_proxy_mean": float(conn.summary["pli_proxy_mean"]) if conn else 0.0,
-        "region_strength_mean": float(conn.summary["region_strength_mean"]) if conn else 0.0,
+        "region_strength_mean": (
+            float(conn.summary["region_strength_mean"]) if conn else 0.0
+        ),
         "directional_mean": float(flow.summary["directional_mean"]) if flow else 0.0,
         "behavior_mean": beh_mean,
         "behavior_std": beh_std,
@@ -154,10 +206,27 @@ def build_analysis_report(
     comparison: dict[str, float] = {}
     if benchmark:
         if "eeg" in benchmark:
-            comparison.update({f"eeg_{k}": v for k, v in comparative_report(eeg, benchmark["eeg"]).items()})
+            comparison.update(
+                {
+                    f"eeg_{k}": v
+                    for k, v in comparative_report(eeg, benchmark["eeg"]).items()
+                }
+            )
         if "fmri" in benchmark:
-            comparison.update({f"fmri_{k}": v for k, v in comparative_report(fmri, benchmark["fmri"]).items()})
+            comparison.update(
+                {
+                    f"fmri_{k}": v
+                    for k, v in comparative_report(fmri, benchmark["fmri"]).items()
+                }
+            )
         if "behavior" in benchmark:
-            comparison.update({f"behavior_{k}": v for k, v in comparative_report(behavior, benchmark["behavior"]).items()})
+            comparison.update(
+                {
+                    f"behavior_{k}": v
+                    for k, v in comparative_report(
+                        behavior, benchmark["behavior"]
+                    ).items()
+                }
+            )
 
     return AnalysisReport(payload={"metrics": metrics, "comparison": comparison})
