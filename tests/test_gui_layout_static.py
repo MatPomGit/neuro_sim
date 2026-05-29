@@ -5,7 +5,10 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-GUI_LAYOUT_PATH = Path(__file__).resolve().parents[1] / "brain_model" / "gui_layout.py"
+REPO_ROOT = Path(__file__).resolve().parents[1]
+GUI_LAYOUT_PATH = REPO_ROOT / "brain_model" / "gui_layout.py"
+GUI_SECTIONS_PATH = REPO_ROOT / "brain_model" / "gui_sections.py"
+GUI_STYLES_PATH = REPO_ROOT / "brain_model" / "gui_styles.py"
 
 
 def _constant_int_keyword(call: ast.Call, name: str, default: int | None = None) -> int | None:
@@ -28,7 +31,7 @@ def _method_body(tree: ast.Module, method_name: str) -> list[ast.stmt]:
 
 def test_sim_frame_grid_cells_are_unique() -> None:
     """Sprawdź statycznie, że w self.sim_frame nie powtarzają się komórki siatki."""
-    tree = ast.parse(GUI_LAYOUT_PATH.read_text(encoding="utf-8"))
+    tree = ast.parse(GUI_SECTIONS_PATH.read_text(encoding="utf-8"))
     body = _method_body(tree, "_build_quick_start_section")
     sim_frame_widgets: set[str] = set()
     occupied_cells: dict[tuple[int, int], str] = {}
@@ -77,7 +80,7 @@ def test_sim_frame_grid_cells_are_unique() -> None:
 
 def test_labeled_entry_helper_keeps_label_and_field_on_same_row() -> None:
     """Sprawdź, że pomocnik pól podpisanych używa tego samego row dla etykiety i pola."""
-    tree = ast.parse(GUI_LAYOUT_PATH.read_text(encoding="utf-8"))
+    tree = ast.parse(GUI_SECTIONS_PATH.read_text(encoding="utf-8"))
     body = _method_body(tree, "_add_labeled_entry")
     grid_calls = [node for stmt in body for node in ast.walk(stmt) if isinstance(node, ast.Call)]
     row_arguments = [
@@ -93,7 +96,7 @@ def test_labeled_entry_helper_keeps_label_and_field_on_same_row() -> None:
 
 def test_batch_and_sensitivity_options_use_consecutive_advanced_rows() -> None:
     """Sprawdź, że pola serii i wrażliwości zachowują kolejne wiersze w panelu zaawansowanym."""
-    tree = ast.parse(GUI_LAYOUT_PATH.read_text(encoding="utf-8"))
+    tree = ast.parse(GUI_SECTIONS_PATH.read_text(encoding="utf-8"))
     body = _method_body(tree, "_build_advanced_options_section")
     labels_to_rows: dict[str, int] = {}
 
@@ -121,8 +124,8 @@ def test_batch_and_sensitivity_options_use_consecutive_advanced_rows() -> None:
 
 def test_configure_styles_defines_guiding_gui_styles() -> None:
     """Sprawdź, że GUI definiuje i stosuje kluczowe style prowadzące uwagę."""
-    tree = ast.parse(GUI_LAYOUT_PATH.read_text(encoding="utf-8"))
-    source = GUI_LAYOUT_PATH.read_text(encoding="utf-8")
+    tree = ast.parse(GUI_STYLES_PATH.read_text(encoding="utf-8"))
+    source = GUI_STYLES_PATH.read_text(encoding="utf-8")
     configure_node = next(
         node
         for node in tree.body
