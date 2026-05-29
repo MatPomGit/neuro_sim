@@ -399,7 +399,8 @@ class QtSections:
         """
 
         for binding in CONTROL_BINDINGS[group_name]:
-            setattr(self.state, binding.state_field, self._read_bound_control(binding))
+            if hasattr(self, binding.control_name):
+                setattr(self.state, binding.state_field, self._read_bound_control(binding))
 
     def _sync_controls_from_binding_group(self, group_name: str) -> None:
         """Przepisz wartości jednej grupy pól stanu GUI do kontrolek Qt.
@@ -411,7 +412,8 @@ class QtSections:
         """
 
         for binding in CONTROL_BINDINGS[group_name]:
-            self._write_bound_control(binding)
+            if hasattr(self, binding.control_name):
+                self._write_bound_control(binding)
 
     def sync_quick_start_state_from_controls(self) -> None:
         """Zsynchronizuj podstawowe pola szybkiego startu do `GuiState`."""
