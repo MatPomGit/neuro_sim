@@ -7,4 +7,4 @@ dependencies:
   - pip
   - pip:
       - -r requirements.txt
-  - tk
+  - pyside6>=6.6
