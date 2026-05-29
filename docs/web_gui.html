@@ -583,8 +583,7 @@ function applyAutoDt() {
 }
 function getConfig(overrides = {}) {
   applyAutoDt();
-  const cfg = {};
-  for (const id of numericIds) cfg[id] = Number($(id).value);
+  const cfg = {};\n  for (const id of numericIds) {\n    const val = Number($(id).value);\n    if (isNaN(val)) {\n      throw new Error(`Niepoprawna wartość numeryczna dla pola: ${id}`);\n    }\n    cfg[id] = val;\n  }
   Object.assign(cfg, overrides);
   cfg.enable_oscillators = $("enable_oscillators").checked;
   cfg.save_results = $("save_results").checked;
