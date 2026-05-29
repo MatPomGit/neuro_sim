@@ -309,7 +309,7 @@ możliwości wykonania następujących kontroli:
 ruff check .
 black --check .
 pytest
-python -c "from brain_model.gui import run_gui; print(run_gui)"
+PYTHONPATH=. python -c "from brain_model.gui import run_gui; print(run_gui)"
 ```
 
 Dla zmian wpływających na widoczny interfejs należy dodatkowo wykonać ręczną
