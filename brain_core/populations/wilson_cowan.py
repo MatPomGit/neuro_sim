@@ -5,7 +5,6 @@ from dataclasses import dataclass
 import numpy as np
 
 
-
 @dataclass(slots=True)
 class RegionWilsonCowanParams:
     """
@@ -47,6 +46,15 @@ class RegionWilsonCowanModel:
         I (np.ndarray): Stan populacji hamującej.
     """
 
+    @staticmethod
+    def _parameter_vector(
+        region_names: list[str],
+        params: dict[str, RegionWilsonCowanParams],
+        parameter_name: str,
+    ) -> np.ndarray:
+        """Buduje wektor wartości parametru w kolejności regionów."""
+        return np.array([getattr(params[r], parameter_name) for r in region_names], dtype=float)
+
     def __init__(self, region_names: list[str], params: dict[str, RegionWilsonCowanParams]) -> None:
         """
         Inicjalizuje model Wilsona-Cowana.
@@ -69,56 +77,83 @@ class RegionWilsonCowanModel:
         n = len(region_names)
         self.E: np.ndarray = np.zeros(n, dtype=float)
         self.I: np.ndarray = np.zeros(n, dtype=float)
+        self._tau_E_values: np.ndarray = self._parameter_vector(region_names, params, "tau_E")
+        self._tau_I_values: np.ndarray = self._parameter_vector(region_names, params, "tau_I")
+        self._w_EE_values: np.ndarray = self._parameter_vector(region_names, params, "w_EE")
+        self._w_EI_values: np.ndarray = self._parameter_vector(region_names, params, "w_EI")
+        self._w_IE_values: np.ndarray = self._parameter_vector(region_names, params, "w_IE")
+        self._w_II_values: np.ndarray = self._parameter_vector(region_names, params, "w_II")
+        self._gain_E_values: np.ndarray = self._parameter_vector(region_names, params, "gain_E")
+        self._gain_I_values: np.ndarray = self._parameter_vector(region_names, params, "gain_I")
+        self._threshold_E_values: np.ndarray = self._parameter_vector(
+            region_names, params, "threshold_E"
+        )
+        self._threshold_I_values: np.ndarray = self._parameter_vector(
+            region_names, params, "threshold_I"
+        )
+        for values in (
+            self._tau_E_values,
+            self._tau_I_values,
+            self._w_EE_values,
+            self._w_EI_values,
+            self._w_IE_values,
+            self._w_II_values,
+            self._gain_E_values,
+            self._gain_I_values,
+            self._threshold_E_values,
+            self._threshold_I_values,
+        ):
+            values.setflags(write=False)
 
     @property
     def _tau_E(self) -> np.ndarray:
         """Zwraca wektor: stałe czasowe populacji E dla regionów."""
-        return np.array([self.params[r].tau_E for r in self.region_names], dtype=float)
+        return self._tau_E_values
 
     @property
     def _tau_I(self) -> np.ndarray:
         """Zwraca wektor: stałe czasowe populacji I dla regionów."""
-        return np.array([self.params[r].tau_I for r in self.region_names], dtype=float)
+        return self._tau_I_values
 
     @property
     def _w_EE(self) -> np.ndarray:
         """Zwraca wektor: wagi połączeń E→E dla regionów."""
-        return np.array([self.params[r].w_EE for r in self.region_names], dtype=float)
+        return self._w_EE_values
 
     @property
     def _w_EI(self) -> np.ndarray:
         """Zwraca wektor: wagi połączeń E→I dla regionów."""
-        return np.array([self.params[r].w_EI for r in self.region_names], dtype=float)
+        return self._w_EI_values
 
     @property
     def _w_IE(self) -> np.ndarray:
         """Zwraca wektor: wagi połączeń I→E dla regionów."""
-        return np.array([self.params[r].w_IE for r in self.region_names], dtype=float)
+        return self._w_IE_values
 
     @property
     def _w_II(self) -> np.ndarray:
         """Zwraca wektor: wagi połączeń I→I dla regionów."""
-        return np.array([self.params[r].w_II for r in self.region_names], dtype=float)
+        return self._w_II_values
 
     @property
     def _gain_E(self) -> np.ndarray:
         """Zwraca wektor: wzmocnienia populacji E dla regionów."""
-        return np.array([self.params[r].gain_E for r in self.region_names], dtype=float)
+        return self._gain_E_values
 
     @property
     def _gain_I(self) -> np.ndarray:
         """Zwraca wektor: wzmocnienia populacji I dla regionów."""
-        return np.array([self.params[r].gain_I for r in self.region_names], dtype=float)
+        return self._gain_I_values
 
     @property
     def _threshold_E(self) -> np.ndarray:
         """Zwraca wektor: progi populacji E dla regionów."""
-        return np.array([self.params[r].threshold_E for r in self.region_names], dtype=float)
+        return self._threshold_E_values
 
     @property
     def _threshold_I(self) -> np.ndarray:
         """Zwraca wektor: progi populacji I dla regionów."""
-        return np.array([self.params[r].threshold_I for r in self.region_names], dtype=float)
+        return self._threshold_I_values
 
 
     @staticmethod
@@ -207,7 +242,8 @@ class RegionWilsonCowanModel:
             for k, v in neuromodulators.items():
                 if v.shape != expected_shape:
                     raise ValueError(
-                        f"Neuromodulator '{k}' shape {v.shape} does not match expected shape {expected_shape}"
+                        f"Neuromodulator '{k}' shape {v.shape} "
+                        f"does not match expected shape {expected_shape}"
                     )
             nvec = self.neuromodulation_vector(neuromodulators)
             da, na, ach, ser, gaba, glu, cort, adr = [nvec[:, i] for i in range(8)]
