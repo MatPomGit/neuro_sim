@@ -584,7 +584,15 @@ class GuiLayoutMixin:
         def save_and_close() -> None:
             """Zapisz wartości z okna zaawansowanego i zamknij okno."""
             self._sync_state_from_controls()
-            self._sync_state_from_advanced_forms(brain, osc)
+            try:
+                self._sync_state_from_advanced_forms(brain, osc)
+            except ValueError as exc:
+                messagebox.showerror(
+                    "Niepoprawne parametry",
+                    f"Nie udało się zapisać parametrów zaawansowanych.\n\n{exc}",
+                    parent=win,
+                )
+                return
             win.destroy()
 
         btns = ttk.Frame(container)
