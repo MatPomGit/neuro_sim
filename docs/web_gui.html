@@ -745,12 +745,7 @@ async function capturePlotImages() {
   for (const id of plotDivIds) {
     const div = $(id);
     if (!div || !div.data || !div.data.length) continue;
-    const previousDisplay = div.style.display;
-    div.style.display = "block";
-    await Plotly.Plots.resize(div);
-    const image = await Plotly.toImage(div, {format: "png", width: 1000, height: 560, scale: 1.5});
-    images.push({title: plotTitles[id] || id, image});
-    div.style.display = previousDisplay;
+    const previousDisplay = div.style.display;\n    const previousPosition = div.style.position;\n    const previousLeft = div.style.left;\n    \n    div.style.position = "absolute";\n    div.style.left = "-10000px";\n    div.style.display = "block";\n    \n    await Plotly.Plots.resize(div);\n    const image = await Plotly.toImage(div, {format: "png", width: 1000, height: 560, scale: 1.5});\n    images.push({title: plotTitles[id] || id, image});\n    \n    div.style.display = previousDisplay;\n    div.style.position = previousPosition;\n    div.style.left = previousLeft;
   }
   return images;
 }
