@@ -80,6 +80,8 @@ def normalize_task_name(task_name: str) -> str:
     str
         Kanoniczna nazwa zadania używana w mapowaniach.
     """
+    if not isinstance(task_name, str):
+        task_name = str(task_name) if task_name is not None else ""
     normalized = task_name.lower().strip()
     return _TASK_ALIASES.get(normalized, normalized)
 
