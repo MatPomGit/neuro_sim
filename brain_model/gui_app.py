@@ -6,12 +6,11 @@ import os
 import queue
 import threading
 import tkinter as tk
-from dataclasses import fields
 
 from .gui_config import GuiConfigMixin
-from .gui_forms import RULE_FIELDS, ParameterForm
 from .gui_layout import GuiLayoutMixin, configure_styles
 from .gui_runner import GuiRunnerMixin
+from .gui_state import GuiState
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
 
@@ -30,11 +29,11 @@ class BrainModelGUI(GuiConfigMixin, GuiRunnerMixin, GuiLayoutMixin, tk.Tk):
         self.brain_defaults = BrainParams()
         self.osc_defaults = WilsonCowanParams()
 
-        visible_brain_fields = [f.name for f in fields(BrainParams) if f.name not in RULE_FIELDS]
-        self.brain_form = ParameterForm(
-            self, "hidden", BrainParams, self.brain_defaults, include_fields=visible_brain_fields
+        self.state = GuiState(
+            dt=str(self.brain_defaults.dt),
+            brain_params=self.brain_defaults,
+            oscillator_params=self.osc_defaults,
         )
-        self.osc_form = ParameterForm(self, "hidden", WilsonCowanParams, self.osc_defaults)
         self._build_layout()
         self._build_menu()
         self._worker_thread: threading.Thread | None = None

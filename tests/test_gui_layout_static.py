@@ -136,3 +136,32 @@ def test_configure_styles_defines_guiding_gui_styles() -> None:
     assert "Status.Horizontal.TProgressbar" in source
     assert "Advanced.TButton" in source
     assert "Warning.Status.TLabel" in source
+
+
+def test_bottom_bar_has_close_button_on_the_right() -> None:
+    """Sprawdź, że dolny pasek akcji zawiera prawostronny przycisk zamykania okna."""
+    tree = ast.parse(GUI_LAYOUT_PATH.read_text(encoding="utf-8"))
+    body = _method_body(tree, "_build_layout")
+
+    for call in [node for stmt in body for node in ast.walk(stmt) if isinstance(node, ast.Call)]:
+        if not isinstance(call.func, ast.Attribute) or call.func.attr != "pack":
+            continue
+        button_call = call.func.value
+        if not isinstance(button_call, ast.Call):
+            continue
+        if not isinstance(button_call.func, ast.Attribute) or button_call.func.attr != "Button":
+            continue
+        if not button_call.args or ast.unparse(button_call.args[0]) != "bottom":
+            continue
+        button_keywords = {keyword.arg: keyword.value for keyword in button_call.keywords}
+        pack_keywords = {keyword.arg: keyword.value for keyword in call.keywords}
+        if (
+            isinstance(button_keywords.get("text"), ast.Constant)
+            and button_keywords["text"].value == "Zamknij"
+            and ast.unparse(button_keywords.get("command")) == "self.destroy"
+            and isinstance(pack_keywords.get("side"), ast.Constant)
+            and pack_keywords["side"].value == "right"
+        ):
+            return
+
+    raise AssertionError("Nie znaleziono prawostronnego przycisku 'Zamknij' w dolnym pasku.")
