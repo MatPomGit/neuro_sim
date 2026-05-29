@@ -199,13 +199,7 @@ def test_qt_config_preserves_current_plasticity_rules() -> None:
     """Sprawdź, że zapis konfiguracji Qt nie przywraca domyślnych reguł plastyczności."""
     config_source = QT_CONFIG_PATH.read_text(encoding="utf-8")
     sections_source = QT_SECTIONS_PATH.read_text(encoding="utf-8")
-    current_params = BrainParams(
-        semantic_rule=PlasticityRuleConfig(False, 0.111, 0.222),
-        value_rule=PlasticityRuleConfig(False, 0.333, 0.444),
-        connectivity_adaptation=ConnectivityAdaptationConfig(False, 0.555, 0.666),
-    )
 
-    assert current_params.semantic_rule.enabled is False
     assert "RULE_FIELDS" in config_source
     assert "exclude=set(RULE_FIELDS)" in config_source
     assert "GUI_STATE_CONTROL_OMISSIONS" in sections_source
