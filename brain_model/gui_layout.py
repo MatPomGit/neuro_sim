@@ -58,7 +58,7 @@ class LegacyPlotPlaceholder(ttk.Frame):
         **kwargs: object,
     ) -> None:
         """Dodaj zastępczą zakładkę bez osadzania figury w backendzie Tk."""
-        del draw_func, args, figsize, kwargs
+        _ = (draw_func, args, figsize, kwargs)
         self._add_message_tab(
             tab_title,
             "Ten wykres jest renderowany w panelu QtPlotPanel interfejsu PySide6.",
