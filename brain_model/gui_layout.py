@@ -35,16 +35,13 @@ from .plotting import PlotWindow
 class GuiLayoutMixin:
     """Mixin orkiestrujący główne zakładki i delegujący szczegóły układu GUI."""
 
-    _add_labeled_entry = _add_labeled_entry
     _apply_plot_preset = _apply_plot_preset
     _apply_run_result = _apply_run_result
-    _auto_dt_for_duration = staticmethod(_auto_dt_for_duration)
     _build_menu = _build_menu
     _focus_plots_section = _focus_plots_section
     _on_auto_dt_toggle = _on_auto_dt_toggle
     _open_advanced_settings = _open_advanced_settings
     _open_new_instance = _open_new_instance
-    _plot_preset_keys = _plot_preset_keys
     _refresh_scenario_details = _refresh_scenario_details
     _show_about = _show_about
     _show_usage_help = _show_usage_help
