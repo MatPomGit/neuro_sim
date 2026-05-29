@@ -1,9 +1,11 @@
-from __future__ import annotations
-
 """Harmonogram faz symulacji oraz hooki współsymulacyjne."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Protocol
+
+import numpy as np
 
 from .state import SimulationState
 
@@ -48,8 +50,14 @@ class TaskStimulusPlayer:
         """Emituje wszystkie bodźce, których czas onset został osiągnięty."""
         del dt
         emitted = state.metrics.setdefault("trial_events", [])
-        while self.cursor < len(self.stimuli) and self.stimuli[self.cursor].onset_s <= state.time + 1e-9:
+        while (
+            self.cursor < len(self.stimuli)
+            and self.stimuli[self.cursor].onset_s <= state.time + 1e-9
+        ):
             stimulus = self.stimuli[self.cursor]
+            regional_input = stimulus.payload.get("regional_input", {})
+            for region, amplitude in regional_input.items():
+                state.regions[region] = np.array([float(amplitude)], dtype=float)
             emitted.append(
                 {
                     "trial_id": stimulus.trial_id,
@@ -57,6 +65,7 @@ class TaskStimulusPlayer:
                     "duration_s": stimulus.duration_s,
                     "condition": stimulus.condition,
                     "payload": stimulus.payload,
+                    "regional_input": regional_input,
                 }
             )
             self.cursor += 1
@@ -87,7 +96,9 @@ class SimulationScheduler:
         state.advance(dt)
 
     @staticmethod
-    def _run_group(group: list[SimulationModule], state: SimulationState, dt: float) -> None:
+    def _run_group(
+        group: list[SimulationModule], state: SimulationState, dt: float
+    ) -> None:
         """Uruchamia wszystkie moduły w jednej fazie."""
         for module in group:
             module.update(state, dt)

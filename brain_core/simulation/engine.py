@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Główny silnik uruchamiania eksperymentu i budowy artefaktów wynikowych."""
+
+from __future__ import annotations
 
 import time as pytime
 from pathlib import Path
@@ -9,7 +9,12 @@ from typing import Any, Callable
 import numpy as np
 
 from brain_core.analysis.benchmark_loader import load_reference_benchmarks
-from brain_core.analysis.reports import build_analysis_report, write_report_files
+from brain_core.analysis.reports import (
+    AnalysisReport,
+    build_analysis_report,
+    write_report_files,
+)
+from brain_core.cognition.mapping import mapping_for_task
 from brain_core.experiments.protocols import ErrorType, TrialResult, get_task
 from brain_model.io import build_output_dir, save_run
 from brain_model.model import CognitiveBrainModel
@@ -71,12 +76,124 @@ def _align_cols(reference: np.ndarray, target_cols: int) -> np.ndarray:
     return expanded[:, :target_cols]
 
 
-def _simulate_task_trials(config: ExperimentConfig) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _condition_gain(condition: str) -> float:
+    """Zwraca deterministyczne wzmocnienie wejścia regionalnego dla warunku.
+
+    Parameters
+    ----------
+    condition:
+        Nazwa warunku eksperymentalnego.
+
+    Returns
+    -------
+    float
+        Bezwymiarowe wzmocnienie amplitudy wejścia regionalnego.
+    """
+    gains = {
+        "incongruent": 1.35,
+        "nogo": 1.3,
+        "target": 1.25,
+        "deviant": 1.4,
+        "standard": 0.8,
+    }
+    return gains.get(condition, 1.0)
+
+
+def _regional_input_for_stimulus(task_name: str, condition: str) -> dict[str, float]:
+    """Przekłada bodziec zadania na deterministyczne wejście regionalne.
+
+    Parameters
+    ----------
+    task_name:
+        Techniczna nazwa zadania poznawczego.
+    condition:
+        Warunek pojedynczego bodźca.
+
+    Returns
+    -------
+    dict[str, float]
+        Mapa region→amplituda wejścia dla bieżącego bodźca.
+    """
+    mapping = mapping_for_task(task_name)
+    gain = _condition_gain(condition)
+    return {
+        region: round(gain / (idx + 1), 6) for idx, region in enumerate(mapping.regions)
+    }
+
+
+def _build_task_activation_summary(
+    task_name: str,
+    trial_events: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Buduje podsumowanie regionów i funkcji pobudzonych przez task.
+
+    Parameters
+    ----------
+    task_name:
+        Techniczna nazwa zadania poznawczego.
+    trial_events:
+        Lista zdarzeń bodźcowych z wejściami regionalnymi.
+
+    Returns
+    -------
+    dict[str, Any]
+        Sekcja raportu opisująca funkcje, regiony i średnie pobudzenie.
+    """
+    mapping = mapping_for_task(task_name)
+    totals = {region: 0.0 for region in mapping.regions}
+    for event in trial_events:
+        regional_input = event.get("regional_input", {})
+        for region in totals:
+            totals[region] += float(regional_input.get(region, 0.0))
+
+    event_count = max(len(trial_events), 1)
+    mean_regional_input = {
+        region: round(total / event_count, 6) for region, total in totals.items()
+    }
+    return {
+        "task_name": mapping.task_name,
+        "functions": list(mapping.functions),
+        "regions": list(mapping.regions),
+        "module_names": list(mapping.module_names),
+        "mean_regional_input": mean_regional_input,
+    }
+
+
+def _attach_task_activation_section(
+    report: AnalysisReport,
+    task_activation: dict[str, Any],
+) -> AnalysisReport:
+    """Dodaje sekcję task→regiony/funkcje do raportu analizy.
+
+    Parameters
+    ----------
+    report:
+        Raport analizy sygnałów do rozszerzenia.
+    task_activation:
+        Podsumowanie pobudzenia regionów i funkcji przez zadanie.
+
+    Returns
+    -------
+    AnalysisReport
+        Nowy raport z dodatkową sekcją opisową.
+    """
+    payload = dict(report.payload)
+    payload["task_activation"] = task_activation
+    return AnalysisReport(payload=payload)
+
+
+def _simulate_task_trials(
+    config: ExperimentConfig,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Symuluje przebieg triali i zwraca bodźce oraz wyniki punktacji."""
     task_name = str(config.task.get("name", "stroop"))
     task = get_task(task_name, **config.task)
     duration = float(config.task.get("duration", 45.0))
     stimuli = task.generate_stimuli(seed=config.seed, duration_s=duration)
+    for stimulus in stimuli:
+        stimulus.payload["regional_input"] = _regional_input_for_stimulus(
+            task.name, stimulus.condition
+        )
 
     scheduler = SimulationScheduler(stimuli=[TaskStimulusPlayer(stimuli=stimuli)])
     state = SimulationState()
@@ -85,17 +202,36 @@ def _simulate_task_trials(config: ExperimentConfig) -> tuple[list[dict[str, Any]
 
     trial_results: list[dict[str, Any]] = []
     for stimulus in stimuli:
-        observed = _deterministic_observed_response(task.name, stimulus.condition, stimulus.trial_id, config.seed, expected=task.expected_response(stimulus))
-        reaction_time = None if observed is None else round(0.25 + ((stimulus.trial_id + config.seed) % 5) * 0.05, 3)
+        observed = _deterministic_observed_response(
+            task.name,
+            stimulus.condition,
+            stimulus.trial_id,
+            config.seed,
+            expected=task.expected_response(stimulus),
+        )
+        reaction_time = (
+            None
+            if observed is None
+            else round(0.25 + ((stimulus.trial_id + config.seed) % 5) * 0.05, 3)
+        )
         result: TrialResult = task.score_trial(stimulus, observed, reaction_time)
         trial_result = {
             "trial_id": result.trial_id,
             "reaction_time_s": result.reaction_time_s,
             "correct": result.correct,
-            "error_type": result.error_type.value if isinstance(result.error_type, ErrorType) else str(result.error_type),
+            "error_type": (
+                result.error_type.value
+                if isinstance(result.error_type, ErrorType)
+                else str(result.error_type)
+            ),
             "condition": result.condition,
         }
-        for metric_name in ("surprise_index", "habituation_level", "readaptation_latency"):
+        trial_result["regional_input"] = stimulus.payload["regional_input"]
+        for metric_name in (
+            "surprise_index",
+            "habituation_level",
+            "readaptation_latency",
+        ):
             if metric_name in stimulus.payload:
                 trial_result[metric_name] = stimulus.payload[metric_name]
         trial_results.append(trial_result)
@@ -134,18 +270,34 @@ def run_experiment(
     elapsed = pytime.perf_counter() - start
 
     trial_events, trial_results = _simulate_task_trials(config)
+    task_activation = _build_task_activation_summary(
+        str(config.task.get("name", "stroop")), trial_events
+    )
 
     eeg_raw = oscillations.get("eeg", activity[:, :2])
     eeg = eeg_raw[:, None] if getattr(eeg_raw, "ndim", 1) == 1 else eeg_raw
     fmri = activity[:, :2]
-    behavior_series = behavior.get("decision_score", activity[:, 0]) if isinstance(behavior, dict) else activity[:, 0]
-    behavior_matrix = behavior_series[:, None] if getattr(behavior_series, "ndim", 1) == 1 else behavior_series
+    behavior_series = (
+        behavior.get("decision_score", activity[:, 0])
+        if isinstance(behavior, dict)
+        else activity[:, 0]
+    )
+    behavior_matrix = (
+        behavior_series[:, None]
+        if getattr(behavior_series, "ndim", 1) == 1
+        else behavior_series
+    )
 
     benchmark = load_reference_benchmarks()
     benchmark = {
         "eeg": _align_cols(_align_rows(benchmark["eeg"], eeg.shape[0]), eeg.shape[1]),
-        "fmri": _align_cols(_align_rows(benchmark["fmri"], fmri.shape[0]), fmri.shape[1]),
-        "behavior": _align_cols(_align_rows(benchmark["behavior"], behavior_matrix.shape[0]), behavior_matrix.shape[1]),
+        "fmri": _align_cols(
+            _align_rows(benchmark["fmri"], fmri.shape[0]), fmri.shape[1]
+        ),
+        "behavior": _align_cols(
+            _align_rows(benchmark["behavior"], behavior_matrix.shape[0]),
+            behavior_matrix.shape[1],
+        ),
     }
     analysis_report = build_analysis_report(
         eeg=eeg,
@@ -155,11 +307,16 @@ def run_experiment(
         fs=1.0 / config.timestep,
         analysis_set=config.analysis.get("sets"),
     )
+    analysis_report = _attach_task_activation_section(analysis_report, task_activation)
 
     save_info: dict[str, Any] | None = None
     if config.output.get("save_results", False):
-        out_dir = build_output_dir(config.task.get("scenario", "run"), config.output.get("label", "run"))
-        report_files = write_report_files(analysis_report, Path(out_dir), stem="analysis_report")
+        out_dir = build_output_dir(
+            config.task.get("scenario", "run"), config.output.get("label", "run")
+        )
+        report_files = write_report_files(
+            analysis_report, Path(out_dir), stem="analysis_report"
+        )
         save_info = save_run(
             out_dir,
             time,
@@ -184,6 +341,7 @@ def run_experiment(
         "trial_events": trial_events,
         "trial_results": trial_results,
         "analysis_report": analysis_report.payload,
+        "task_activation": task_activation,
         "save_info": save_info,
         "elapsed": elapsed,
     }
