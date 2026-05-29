@@ -13,11 +13,11 @@ from PySide6.QtCore import QThread, Signal
 from brain_core.simulation.config_loader import load_config_from_string
 from brain_core.simulation.engine import run_experiment
 
+from .gui_state import GuiState
 from .io import build_output_dir, save_run
 from .model import CognitiveBrainModel
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
-from .qt_state import QtGuiState
 
 RunPayload = tuple[str, str, Any, Any, Any, Any, Any, Any, Any]
 BatchPayload = tuple[list[dict[str, float | int]], Any, Any, Any, Any, Any, Any]
@@ -31,7 +31,7 @@ class SimulationWorker(QThread):
     error_reported = Signal(str)
     result_ready = Signal(object)
 
-    def __init__(self, state: QtGuiState, parent: Any | None = None) -> None:
+    def __init__(self, state: GuiState, parent: Any | None = None) -> None:
         """Utwórz worker z migawką stanu przekazaną przez główne okno."""
         super().__init__(parent)
         self.state = state
@@ -39,7 +39,9 @@ class SimulationWorker(QThread):
     def run(self) -> None:
         """Uruchom symulację i przekaż wynik lub błąd do wątku GUI."""
         try:
-            payload = run_simulation(self.state, self._emit_progress, self._emit_warning)
+            payload = run_simulation(
+                self.state, self._emit_progress, self._emit_warning
+            )
         except Exception as exc:
             self.error_reported.emit(str(exc))
             return
@@ -55,7 +57,7 @@ class SimulationWorker(QThread):
 
 
 def run_simulation(
-    state: QtGuiState,
+    state: GuiState,
     progress_callback: Any,
     warning_callback: Any,
 ) -> RunPayload:
@@ -67,8 +69,10 @@ def run_simulation(
 
     start = pytime.perf_counter()
     if state.command == "run":
-        model, time, activity, diagnostics, oscillations, behavior = run_single_experiment(
-            state, T, seed, dt, brain_params, oscillator_params, progress_callback
+        model, time, activity, diagnostics, oscillations, behavior = (
+            run_single_experiment(
+                state, T, seed, dt, brain_params, oscillator_params, progress_callback
+            )
         )
         summary_text = summarize_metrics([extract_metrics(diagnostics, behavior)])
     else:
@@ -109,14 +113,16 @@ def run_simulation(
     )
 
 
-def read_scalar_params(state: QtGuiState) -> tuple[float, int, float]:
+def read_scalar_params(state: GuiState) -> tuple[float, int, float]:
     """Odczytaj i zwaliduj czas, seed oraz krok czasowy ze stanu GUI."""
     try:
         T = float(state.T)
         seed = int(state.seed)
         dt = auto_dt_for_duration(T) if state.auto_dt else float(state.dt)
     except ValueError as exc:
-        raise ValueError("Niepoprawny czas symulacji, seed lub krok czasowy dt.") from exc
+        raise ValueError(
+            "Niepoprawny czas symulacji, seed lub krok czasowy dt."
+        ) from exc
     return T, seed, dt
 
 
@@ -141,7 +147,9 @@ def validate_parameters(
     if dt <= 0:
         raise ValueError("Krok czasowy dt musi być większy od zera.")
     if T < dt:
-        raise ValueError("Czas symulacji T nie może być mniejszy od kroku czasowego dt.")
+        raise ValueError(
+            "Czas symulacji T nie może być mniejszy od kroku czasowego dt."
+        )
     if brain_params.noise < 0:
         raise ValueError("noise nie może być ujemny.")
     if oscillator_params.oscillator_noise < 0:
@@ -149,7 +157,7 @@ def validate_parameters(
 
 
 def run_single_experiment(
-    state: QtGuiState,
+    state: GuiState,
     T: float,
     seed: int,
     dt: float,
@@ -189,7 +197,7 @@ def run_single_experiment(
 
 
 def save_results_if_requested(
-    state: QtGuiState,
+    state: GuiState,
     seed: int,
     elapsed: float,
     model: Any,
@@ -244,7 +252,9 @@ def extract_metrics(
 def summarize_metrics(runs: list[dict[str, float | int]]) -> str:
     """Zbuduj tekstowe podsumowanie średnich metryk uruchomień."""
     agg = {
-        "prediction_error_mean": np.mean([run["prediction_error_mean"] for run in runs]),
+        "prediction_error_mean": np.mean(
+            [run["prediction_error_mean"] for run in runs]
+        ),
         "gw_ignition_mean": np.mean([run["gw_ignition_mean"] for run in runs]),
         "confidence_mean": np.mean([run["confidence_mean"] for run in runs]),
         "decision_events": np.mean([run["decision_events"] for run in runs]),
@@ -264,7 +274,7 @@ def parse_list(raw: str) -> list[str]:
 
 
 def run_batch(
-    state: QtGuiState,
+    state: GuiState,
     T: float,
     base_params: BrainParams,
     oscillator_params: WilsonCowanParams,
