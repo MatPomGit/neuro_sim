@@ -165,7 +165,8 @@ class BrainModelQtWindow(QMainWindow):
         self.status_label.setText("Symulacja w toku...")
         self.summary_label.setText("")
         self.progress.setValue(0)
-        self.worker = SimulationWorker(self.state)
+        import copy
+        self.worker = SimulationWorker(copy.deepcopy(self.state))
         self.worker.progress_changed.connect(self.on_progress_changed)
         self.worker.warning_reported.connect(self.show_warning)
         self.worker.error_reported.connect(self.on_simulation_error)
