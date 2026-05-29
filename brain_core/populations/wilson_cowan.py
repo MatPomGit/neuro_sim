@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class RegionWilsonCowanParams:
     """
     Parametry modelu Wilsona-Cowana dla pojedynczego regionu.
