@@ -1,4 +1,7 @@
+# Zależności uruchomieniowe spójne z pakietem i środowiskiem Conda.
 numpy>=1.24
 matplotlib>=3.7
 PyYAML>=6.0
+
+# Desktopowe GUI jest budowane w oparciu o PySide6/Qt.
 PySide6>=6.6

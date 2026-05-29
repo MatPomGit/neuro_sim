@@ -131,3 +131,19 @@ Agent ma zawsze wybrać opcję bezpieczniejszą i lepiej udokumentowaną.
 8. **Wymóg docstringów i type hints (MUST)**
    - Każda nowa funkcja i klasa dodawana przez agenta musi zawierać kompletne adnotacje typów oraz docstring.
    - Dotyczy to także funkcji pomocniczych i metod prywatnych.
+
+---
+
+## 8) Stos desktopowego GUI (MUST)
+
+1. **PySide6/Qt jako docelowa biblioteka GUI**
+   - Nowe elementy desktopowego GUI buduj w oparciu o `PySide6` i wzorce Qt używane w modułach `brain_model/qt_*`.
+   - Nie dodawaj nowych ekranów, widżetów ani przepływów użytkownika opartych na `tkinter`; istniejące moduły `tkinter` traktuj jako kod legacy/kompatybilności, którego nie należy rozwijać bez osobnej decyzji architektonicznej.
+
+2. **Wykresy w GUI**
+   - Osadzanie wykresów w desktopowym GUI realizuj przez backend Matplotlib dla Qt (`matplotlib.backends.backend_qtagg`) oraz komponenty zgodne z `brain_model/qt_plotting.py`.
+   - Nie mieszaj backendów GUI w jednym nowym przepływie użytkownika.
+
+3. **Spójność zależności**
+   - Każdą zmianę zależności wymaganych przez GUI synchronizuj w `pyproject.toml`, `requirements.txt`, `environment.yml` i dokumentacji użytkowej.
+   - `PySide6` jest zależnością uruchomieniową desktopowego GUI, a punktami wejścia pozostają `main_gui.py`, `brain_model.gui:run_gui` oraz skrypt `neuro-sim-gui`.
