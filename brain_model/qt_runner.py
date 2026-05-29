@@ -1,4 +1,4 @@
-"""Worker QThread uruchamiający symulacje dla GUI PySide6."""
+"""Worker QObject uruchamiający symulacje dla GUI PySide6."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from dataclasses import replace
 from typing import Any
 
 import numpy as np
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import QObject, Signal, Slot
 
 from brain_core.simulation.config_loader import load_config_from_string
 from brain_core.simulation.engine import run_experiment
@@ -23,19 +23,20 @@ RunPayload = tuple[str, str, Any, Any, Any, Any, Any, Any, Any]
 BatchPayload = tuple[list[dict[str, float | int]], Any, Any, Any, Any, Any, Any]
 
 
-class SimulationWorker(QThread):
+class SimulationWorker(QObject):
     """Wykonuje symulację poza wątkiem GUI i emituje wyniki przez sygnały Qt."""
 
-    progress_changed = Signal(float)
-    warning_reported = Signal(str)
-    error_reported = Signal(str)
-    result_ready = Signal(object)
+    progress = Signal(float)
+    done = Signal(object)
+    warning = Signal(str)
+    error = Signal(str)
 
     def __init__(self, state: GuiState, parent: Any | None = None) -> None:
-        """Utwórz worker z migawką stanu przekazaną przez główne okno."""
+        """Utwórz worker QObject z migawką stanu przekazaną przez główne okno."""
         super().__init__(parent)
         self.state = state
 
+    @Slot()
     def run(self) -> None:
         """Uruchom symulację i przekaż wynik lub błąd do wątku GUI."""
         try:
@@ -43,17 +44,17 @@ class SimulationWorker(QThread):
                 self.state, self._emit_progress, self._emit_warning
             )
         except Exception as exc:
-            self.error_reported.emit(str(exc))
+            self.error.emit(str(exc))
             return
-        self.result_ready.emit(payload)
+        self.done.emit(payload)
 
     def _emit_progress(self, ratio: float) -> None:
         """Wyemituj postęp przeliczony na zakres procentowy paska Qt."""
-        self.progress_changed.emit(max(0.0, min(100.0, ratio * 100.0)))
+        self.progress.emit(max(0.0, min(100.0, ratio * 100.0)))
 
     def _emit_warning(self, message: str) -> None:
         """Wyemituj ostrzeżenie użytkowe bez przerywania symulacji."""
-        self.warning_reported.emit(message)
+        self.warning.emit(message)
 
 
 def run_simulation(
