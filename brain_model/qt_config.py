@@ -9,13 +9,15 @@ from pathlib import Path
 from typing import Any, TypeVar
 
 from .gui_forms import APP_VERSION, RULE_FIELDS
-from .qt_state import QtGuiState
+from .gui_state import GuiState
 
 TDataclass = TypeVar("TDataclass")
 CONFIG_FORMAT = "brain-model-gui-config-v1"
 
 
-def editable_dataclass_values(instance: Any, exclude: set[str] | None = None) -> dict[str, Any]:
+def editable_dataclass_values(
+    instance: Any, exclude: set[str] | None = None
+) -> dict[str, Any]:
     """Zwróć wartości pól dataclass z opcjonalnym pominięciem pól technicznych."""
     if not is_dataclass(instance):
         raise TypeError("Oczekiwano instancji dataclass.")
@@ -47,7 +49,7 @@ def dataclass_with_updates(instance: TDataclass, updates: Any) -> TDataclass:
     return replace(instance, **converted)
 
 
-def state_to_config(state: QtGuiState) -> dict[str, Any]:
+def state_to_config(state: GuiState) -> dict[str, Any]:
     """Zamień stan GUI PySide6 na słownik kompatybilny z dotychczasowym JSON."""
     return {
         "T": state.T,
@@ -70,7 +72,7 @@ def state_to_config(state: QtGuiState) -> dict[str, Any]:
     }
 
 
-def apply_config_to_state(state: QtGuiState, config: dict[str, Any]) -> QtGuiState:
+def apply_config_to_state(state: GuiState, config: dict[str, Any]) -> GuiState:
     """Zastosuj słownik konfiguracji do istniejącego stanu GUI i zwróć ten stan."""
     state.T = str(config.get("T", state.T))
     state.dt = str(config.get("dt", state.dt))
@@ -79,11 +81,17 @@ def apply_config_to_state(state: QtGuiState, config: dict[str, Any]) -> QtGuiSta
     state.command = str(config.get("command", state.command))
     state.batch_seeds = str(config.get("batch_seeds", state.batch_seeds))
     state.batch_scenarios = str(config.get("batch_scenarios", state.batch_scenarios))
-    state.sensitivity_params = str(config.get("sensitivity_params", state.sensitivity_params))
-    state.sensitivity_delta = str(config.get("sensitivity_delta", state.sensitivity_delta))
+    state.sensitivity_params = str(
+        config.get("sensitivity_params", state.sensitivity_params)
+    )
+    state.sensitivity_delta = str(
+        config.get("sensitivity_delta", state.sensitivity_delta)
+    )
     state.scenario = str(config.get("scenario", state.scenario))
     state.save_results = bool(config.get("save_results", state.save_results))
-    state.brain_params = dataclass_with_updates(state.brain_params, config.get("brain_params", {}))
+    state.brain_params = dataclass_with_updates(
+        state.brain_params, config.get("brain_params", {})
+    )
     state.oscillator_params = dataclass_with_updates(
         state.oscillator_params, config.get("oscillator_params", {})
     )
@@ -93,7 +101,7 @@ def apply_config_to_state(state: QtGuiState, config: dict[str, Any]) -> QtGuiSta
     return state
 
 
-def save_config(path: Path, state: QtGuiState) -> None:
+def save_config(path: Path, state: GuiState) -> None:
     """Zapisz konfigurację GUI do pliku JSON z metadanymi aplikacji."""
     payload = {
         "format": CONFIG_FORMAT,

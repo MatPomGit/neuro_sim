@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .gui_state import GuiState
 from .plotting import (
     draw_activity,
     draw_band_power,
@@ -19,11 +20,12 @@ from .plotting import (
     draw_weight_trajectories,
 )
 from .qt_plotting import QtPlotPanel
-from .qt_state import QtGuiState
 from .scenarios import get_scenario
 
 
-def apply_run_result(plot_panel: QtPlotPanel, state: QtGuiState, payload: tuple[Any, ...]) -> bool:
+def apply_run_result(
+    plot_panel: QtPlotPanel, state: GuiState, payload: tuple[Any, ...]
+) -> bool:
     """Przenieś wynik symulacji do panelu Qt i zwróć informację, czy dodano wykresy."""
     _, _, _, model, time, activity, diagnostics, oscillations, behavior = payload
     plot_panel.clear()
@@ -34,7 +36,7 @@ def apply_run_result(plot_panel: QtPlotPanel, state: QtGuiState, payload: tuple[
 
 def add_selected_plots_to_panel(
     plot_panel: QtPlotPanel,
-    state: QtGuiState,
+    state: GuiState,
     model: Any,
     time: Any,
     activity: Any,
@@ -46,7 +48,13 @@ def add_selected_plots_to_panel(
     has_plots = False
     if state.plots.get("activity", False):
         plot_panel.add_plot(
-            "Aktywacje", draw_activity, time, activity, model.names, model.idx, figsize=(11, 7)
+            "Aktywacje",
+            draw_activity,
+            time,
+            activity,
+            model.names,
+            model.idx,
+            figsize=(11, 7),
         )
         has_plots = True
     if state.plots.get("simulated_brain_activity", False):
@@ -83,10 +91,14 @@ def add_selected_plots_to_panel(
         )
         has_plots = True
     if state.plots.get("diagnostics", False):
-        plot_panel.add_plot("Diagnostyka", draw_diagnostics, time, diagnostics, figsize=(11, 5))
+        plot_panel.add_plot(
+            "Diagnostyka", draw_diagnostics, time, diagnostics, figsize=(11, 5)
+        )
         has_plots = True
     if state.plots.get("behavior", False):
-        plot_panel.add_plot("Zachowanie", draw_behavior, time, behavior, figsize=(11, 5))
+        plot_panel.add_plot(
+            "Zachowanie", draw_behavior, time, behavior, figsize=(11, 5)
+        )
         has_plots = True
     if state.plots.get("eeg", False):
         plot_panel.add_plot(
@@ -100,15 +112,23 @@ def add_selected_plots_to_panel(
         )
         has_plots = True
     if state.plots.get("band_power", False):
-        plot_panel.add_plot("Moc pasm", draw_band_power, time, oscillations, figsize=(11, 8))
+        plot_panel.add_plot(
+            "Moc pasm", draw_band_power, time, oscillations, figsize=(11, 8)
+        )
         has_plots = True
     if state.plots.get("weight_trajectories", False):
         plot_panel.add_plot(
-            "Trajektorie wag", draw_weight_trajectories, time, diagnostics, figsize=(11, 5)
+            "Trajektorie wag",
+            draw_weight_trajectories,
+            time,
+            diagnostics,
+            figsize=(11, 5),
         )
         has_plots = True
     if state.plots.get("weight_deltas", False):
-        plot_panel.add_plot("Przyrosty wag", draw_weight_deltas, time, diagnostics, figsize=(11, 5))
+        plot_panel.add_plot(
+            "Przyrosty wag", draw_weight_deltas, time, diagnostics, figsize=(11, 5)
+        )
         has_plots = True
     if state.plots.get("scenario_channels", False):
         plot_panel.add_plot(

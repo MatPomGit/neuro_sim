@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
 )
 
 from .gui_forms import PARAMETER_DESCRIPTIONS, PARAMETER_LABELS, RULE_FIELDS
+from .gui_state import GuiState
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
 from .qt_config import (
@@ -40,7 +41,6 @@ from .qt_config import (
 from .qt_results import QtPlotPanel, apply_run_result
 from .qt_runner import SimulationWorker
 from .qt_sections import QtSections
-from .qt_state import QtGuiState
 from .qt_styles import apply_qt_styles
 
 
@@ -160,7 +160,7 @@ class BrainModelQtWindow(QMainWindow):
         self.setMinimumSize(940, 660)
         self.brain_defaults = BrainParams()
         self.osc_defaults = WilsonCowanParams()
-        self.state = QtGuiState(
+        self.state = GuiState(
             dt=str(self.brain_defaults.dt),
             brain_params=self.brain_defaults,
             oscillator_params=self.osc_defaults,
@@ -313,7 +313,7 @@ class BrainModelQtWindow(QMainWindow):
 
     def reset_defaults(self) -> None:
         """Przywróć wartości domyślne formularza GUI PySide6."""
-        self.state = QtGuiState(
+        self.state = GuiState(
             dt=str(self.brain_defaults.dt),
             brain_params=self.brain_defaults,
             oscillator_params=self.osc_defaults,
