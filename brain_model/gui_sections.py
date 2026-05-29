@@ -156,7 +156,6 @@ def _build_advanced_options_section(gui: Any, parent: ttk.Frame) -> None:
 
 
 def _add_labeled_entry(
-    gui: Any,
     parent: ttk.Frame,
     row: int,
     label_text: str,
