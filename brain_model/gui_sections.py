@@ -343,11 +343,12 @@ def _open_advanced_settings(gui: Any) -> None:
     container = ttk.Frame(win, padding=10)
     container.pack(fill="both", expand=True)
 
+    gui._sync_state_from_controls()
     brain = ParameterForm(
         container,
         "Parametry globalne BrainParams",
         BrainParams,
-        gui.brain_defaults,
+        gui.state.brain_params,
         include_fields=[
             f.name
             for f in fields(BrainParams)
@@ -360,7 +361,6 @@ def _open_advanced_settings(gui: Any) -> None:
     )
     osc.pack(fill="both", expand=True)
 
-    gui._sync_state_from_controls()
     gui._sync_advanced_forms_from_state(brain, osc)
 
     def save_and_close() -> None:

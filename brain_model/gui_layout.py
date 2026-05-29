@@ -81,13 +81,16 @@ class LegacyPlotPlaceholder(ttk.Frame):
 class GuiLayoutMixin:
     """Mixin orkiestrujący główne zakładki i delegujący szczegóły układu GUI."""
 
+    _add_labeled_entry = _add_labeled_entry
     _apply_plot_preset = _apply_plot_preset
     _apply_run_result = _apply_run_result
+    _auto_dt_for_duration = _auto_dt_for_duration
     _build_menu = _build_menu
     _focus_plots_section = _focus_plots_section
     _on_auto_dt_toggle = _on_auto_dt_toggle
     _open_advanced_settings = _open_advanced_settings
     _open_new_instance = _open_new_instance
+    _plot_preset_keys = _plot_preset_keys
     _refresh_scenario_details = _refresh_scenario_details
     _show_about = _show_about
     _show_usage_help = _show_usage_help
@@ -137,7 +140,9 @@ class GuiLayoutMixin:
 
         workflow = ttk.Frame(top, padding=(12, 10), style="Workflow.TFrame")
         workflow.grid(row=0, column=1, sticky="ne")
-        ttk.Label(workflow, text="Przepływ pracy", style="WorkflowTitle.TLabel").pack(anchor="w")
+        ttk.Label(workflow, text="Przepływ pracy", style="WorkflowTitle.TLabel").pack(
+            anchor="w"
+        )
         for step in (
             "1. Wybierz scenariusz i czas",
             "2. Uruchom symulację",
@@ -162,7 +167,9 @@ class GuiLayoutMixin:
         bottom = ttk.Frame(root, style="Footer.TFrame")
         bottom.pack(fill="x", pady=(12, 0))
 
-        ttk.Button(bottom, text="Przywróć domyślne", command=self.reset_defaults).pack(side="left")
+        ttk.Button(bottom, text="Przywróć domyślne", command=self.reset_defaults).pack(
+            side="left"
+        )
         ttk.Button(bottom, text="Zamknij", command=self.destroy).pack(side="right")
         ttk.Button(
             bottom,
@@ -228,18 +235,14 @@ class GuiLayoutMixin:
         self._on_auto_dt_toggle()
         try:
             self.state.dt = self.dt_var.get()
-            self.state.brain_params = replace(self.state.brain_params, dt=float(self.state.dt))
+            self.state.brain_params = replace(
+                self.state.brain_params, dt=float(self.state.dt)
+            )
         except ValueError:
             pass
         self.status_label.configure(style="Status.TLabel")
         self.status_var.set("Przywrócono wartości domyślne.")
 
     def _build_brain_params(self) -> BrainParams:
-        """Zbuduj parametry modelu z aktualnego stanu, zachowując reguły domyślne."""
-        return replace(
-            self.state.brain_params,
-            dt=float(self.state.dt),
-            semantic_rule=self.brain_defaults.semantic_rule,
-            value_rule=self.brain_defaults.value_rule,
-            connectivity_adaptation=self.brain_defaults.connectivity_adaptation,
-        )
+        """Zbuduj parametry modelu z aktualnego stanu, zachowując reguły plastyczności."""
+        return replace(self.state.brain_params, dt=float(self.state.dt))
