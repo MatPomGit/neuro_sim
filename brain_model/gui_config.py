@@ -62,9 +62,13 @@ class GuiConfigMixin:
     def _sync_state_from_advanced_forms(self, brain_form: Any, osc_form: Any) -> None:
         """Zapisz wartości zatwierdzonych formularzy zaawansowanych do stanu GUI."""
         edited_brain_params = brain_form.values()
+        try:
+            current_dt = float(self.state.dt)
+        except ValueError:
+            current_dt = self.state.brain_params.dt
         self.state.brain_params = replace(
             edited_brain_params,
-            dt=self.state.brain_params.dt,
+            dt=current_dt,
             semantic_rule=self.brain_defaults.semantic_rule,
             value_rule=self.brain_defaults.value_rule,
             connectivity_adaptation=self.brain_defaults.connectivity_adaptation,
