@@ -4,8 +4,8 @@ Raport wejściowy do implementacji uzupełniania adnotacji typów i docstringów
 
 ## Podsumowanie statusu
 - Łącznie sprawdzono **95** plików `*.py`.
-- **Wprowadzone / zgodne z audytem:** 73 plików bez wykrytych braków.
-- **Do wprowadzenia:** 22 plików z brakami; w tym 19 plików z priorytetem P1 i 3 plików wyłącznie z priorytetem P2.
+- **Wprowadzone / zgodne z audytem:** 73 pliki bez wykrytych braków.
+- **Do wprowadzenia:** 22 pliki z brakami; w tym 19 plików z priorytetem P1 i 3 pliki wyłącznie z priorytetem P2.
 
 ## Lista plików `*.py` według modułów
 ### `analysis`
