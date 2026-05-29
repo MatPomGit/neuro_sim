@@ -382,7 +382,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 - Testy regresji dla profili healthy i disorder.
 
 **Pozostały zakres:**
-- Uzupełnić pokrycie testów regresji dla profili `healthy` i `disorder`.
+- Uzupełnić pokrycie testami regresji dla profili `healthy` i `disorder`.
 - Ujednolicić testy integracyjne pipeline eksperymentów.
 
 ### B. Dane i wersjonowanie parametrów
