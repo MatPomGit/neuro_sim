@@ -19,6 +19,16 @@ Backlog opisuje zarówno prace przyszłe, jak i obszary już częściowo zaimple
 
 Najważniejsze istniejące fundamenty obejmują moduły eksperymentów, uszkodzeń i raportowania, m.in. `brain_core/experiments/protocols.py`, `brain_core/experiments/lesions.py` oraz `brain_core/analysis/reports.py`. Dla pozycji P0–P2 wskazano poniżej konkretne artefakty, aby oddzielić zakres już obecny w repozytorium od pozostałych prac.
 
+Na dzień 2026-05-29 status nie jest prognozą wdrożenia, tylko krótką oceną rzeczywistego stanu repozytorium na podstawie powyższych definicji.
+
+### Mapa artefaktów P0–P2
+
+| Priorytet | Zakres | Status dominujący | Główne istniejące artefakty |
+| --- | --- | --- | --- |
+| P0 | Konfiguracja, timeline i baseline zdrowego mózgu | `partial` | `brain_core/simulation/config_loader.py`, `brain_core/simulation/config_schema.py`, `brain_core/analysis/reports.py`, `brain_model/report_export.py`, `brain_model/model.py` |
+| P1 | Konektom, neural mass, neuromodulacja i scenariusze porównawcze | `partial` | `brain_core/anatomy/connectome.py`, `brain_core/networks/delays.py`, `brain_core/populations/wilson_cowan.py`, `brain_core/experiments/pharmacology.py`, `brain_core/experiments/lesions.py` |
+| P2 | Task battery, roving oddball, EEG/BOLD i tryb nauczyciela | `partial` / `planned` | `brain_core/experiments/protocols.py`, `brain_core/analysis/spectral.py`, `brain_core/physiology/eeg_forward_model.py`, `brain_model/qt_app.py`, `brain_model/qt_plotting.py` |
+
 ### Najbliższe zaplanowane prace
 
 Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualnego stanu repozytorium. Kolejność odzwierciedla zależności: najpierw domknięcie fundamentów P0, potem elementy P1/P2 potrzebne do scenariuszy dydaktycznych i porównawczych.
