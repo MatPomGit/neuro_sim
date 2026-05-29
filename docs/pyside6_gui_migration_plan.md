@@ -307,7 +307,7 @@ możliwości wykonania następujących kontroli:
 
 ```bash
 ruff check .
-black .
+black --check .
 pytest
 python -c "from brain_model.gui import run_gui; print(run_gui)"
 ```
