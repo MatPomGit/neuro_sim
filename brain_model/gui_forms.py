@@ -4,8 +4,10 @@
 
 from __future__ import annotations
 
+import subprocess
 import tkinter as tk
 from dataclasses import fields
+from pathlib import Path
 from tkinter import ttk
 from typing import Any, Dict, Iterable
 
@@ -50,7 +52,26 @@ PARAMETER_DESCRIPTIONS = {
     "plot_scenario_timeline": "Oś czasu scenariusza: fazy i zdarzenia.",
 }
 
-APP_VERSION = "0.3.0"
+APP_BASE_VERSION = "0.3"
+
+
+def build_app_version() -> str:
+    """Zbuduj wersję aplikacji na podstawie liczby commitów w repozytorium."""
+    root_dir = Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        ["git", "rev-list", "--count", "HEAD"],
+        cwd=root_dir,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    commit_count = result.stdout.strip()
+    if result.returncode != 0 or not commit_count.isdecimal():
+        return f"{APP_BASE_VERSION}.0"
+    return f"{APP_BASE_VERSION}.{commit_count}"
+
+
+APP_VERSION = build_app_version()
 LAST_UPDATED = "2026-05-25"
 APP_AUTHOR = "dr inż. Mateusz Pomianek"
 

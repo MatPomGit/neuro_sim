@@ -6,6 +6,7 @@ import tkinter as tk
 from dataclasses import replace
 from tkinter import ttk
 
+from .gui_forms import APP_VERSION
 from .gui_menu import (
     _build_menu,
     _open_new_instance,
@@ -125,6 +126,12 @@ class GuiLayoutMixin:
                 "Dobierz scenariusz, uruchom obliczenia i porównaj aktywność modułów "
                 "oraz oscylatorów Wilsona-Cowana w jednym przepływie pracy."
             ),
+            style="HeaderSubtitle.TLabel",
+        ).pack(anchor="w", pady=(4, 0))
+
+        ttk.Label(
+            header_text,
+            text=f"Wersja aplikacji: {APP_VERSION}",
             style="HeaderSubtitle.TLabel",
         ).pack(anchor="w", pady=(4, 0))
 
