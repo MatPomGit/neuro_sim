@@ -19,7 +19,7 @@ Backlog opisuje zarówno prace przyszłe, jak i obszary już częściowo zaimple
 
 Najważniejsze istniejące fundamenty obejmują moduły eksperymentów, uszkodzeń i raportowania, m.in. `brain_core/experiments/protocols.py`, `brain_core/experiments/lesions.py` oraz `brain_core/analysis/reports.py`. Dla pozycji P0–P2 wskazano poniżej konkretne artefakty, aby oddzielić zakres już obecny w repozytorium od pozostałych prac.
 
-Na dzień 2026-05-29 status nie jest prognozą wdrożenia, tylko krótką oceną rzeczywistego stanu repozytorium: pozycje `partial` mają działające elementy kodu lub dokumentacji, ale nie spełniają jeszcze pełnej akceptacji backlogu, a pozycje `planned` wymagają dopiero dedykowanej implementacji.
+Na dzień 2026-05-29 status nie jest prognozą wdrożenia, tylko krótką oceną rzeczywistego stanu repozytorium na podstawie powyższych definicji.
 
 ### Mapa artefaktów P0–P2
 
