@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 from dataclasses import fields
 from pathlib import Path
 
@@ -49,6 +50,38 @@ def test_config_and_defaults_use_state_instead_of_hidden_forms() -> None:
     assert "self.osc_form.reset" not in layout_source
     assert "self.state.brain_params" in layout_source
     assert "self.state.oscillator_params" in layout_source
+
+
+def test_advanced_settings_save_reports_invalid_values() -> None:
+    """Sprawdź, że zapis parametrów zaawansowanych pokazuje błąd walidacji."""
+    source = GUI_LAYOUT_PATH.read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    save_and_close = next(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.FunctionDef) and node.name == "save_and_close"
+    )
+    value_error_handlers = [
+        handler
+        for node in ast.walk(save_and_close)
+        if isinstance(node, ast.Try)
+        for handler in node.handlers
+        if isinstance(handler.type, ast.Name) and handler.type.id == "ValueError"
+    ]
+
+    assert value_error_handlers
+    assert any(
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "showerror"
+        and ast.unparse(node.func.value) == "messagebox"
+        and "Nie udało się zapisać parametrów zaawansowanych" in ast.unparse(node)
+        for handler in value_error_handlers
+        for node in ast.walk(handler)
+    )
+    assert any(
+        isinstance(stmt, ast.Return) for handler in value_error_handlers for stmt in handler.body
+    )
 
 
 def test_rule_fields_stay_out_of_saved_brain_config() -> None:
