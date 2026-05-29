@@ -58,17 +58,17 @@ class CognitiveBrainModel:
 
     def __init__(self, params: BrainParams = BrainParams(), seed: int = 7) -> None:
         """Inicjalizuje parametry i generator liczb losowych dla modelu."""
-        self.p = params
-        self.rng = np.random.default_rng(seed)
+        self.p: BrainParams = params
+        self.rng: np.random.Generator = np.random.default_rng(seed)
 
-        self.names = [
+        self.names: list[str] = [
             "VIS", "AUD", "INT", "SAL", "ATT", "PHON", "VSWM", "EXEC",
             "EPIS", "SEM", "HIP", "VAL", "MOT", "DMN", "LANG", "GW"
         ]
-        self.idx = {name: i for i, name in enumerate(self.names)}
-        self.n = len(self.names)
+        self.idx: dict[str, int] = {name: i for i, name in enumerate(self.names)}
+        self.n: int = len(self.names)
 
-        self.tau = np.array([
+        self.tau: np.ndarray = np.array([
             0.08,  # VIS
             0.08,  # AUD
             0.12,  # INT
@@ -87,7 +87,7 @@ class CognitiveBrainModel:
             0.12,  # GW
         ])
 
-        self.W = np.zeros((self.n, self.n))
+        self.W: np.ndarray = np.zeros((self.n, self.n))
         self._build_connectivity()
 
     def _c(self, target: Any, source: Any, weight: Any) -> Any:

@@ -15,7 +15,7 @@ class DelayBuffer:
         _cursor (int): Indeks aktualnej pozycji w buforze.
     """
 
-    def __init__(self, n_regions: int, delays_steps: np.ndarray):
+    def __init__(self, n_regions: int, delays_steps: np.ndarray) -> None:
         """
         Inicjalizuje bufor opóźnień.
 

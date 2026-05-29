@@ -113,15 +113,15 @@ class PathologyController:
         runtime (list[PathologyMutation]): Mutacje w trakcie symulacji.
     """
 
-    def __init__(self, mutations: list[PathologyMutation]):
+    def __init__(self, mutations: list[PathologyMutation]) -> None:
         """
         Inicjalizuje kontroler mutacji.
 
         Args:
             mutations (list[PathologyMutation]): Lista mutacji.
         """
-        self.pre_simulation = [m for m in mutations if m.stage == "pre"]
-        self.runtime = [m for m in mutations if m.stage == "runtime"]
+        self.pre_simulation: list[PathologyMutation] = [m for m in mutations if m.stage == "pre"]
+        self.runtime: list[PathologyMutation] = [m for m in mutations if m.stage == "runtime"]
 
     def apply_pre_simulation(self, state: SimulationState) -> None:
         """

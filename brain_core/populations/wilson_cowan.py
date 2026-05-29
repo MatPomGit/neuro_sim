@@ -47,7 +47,7 @@ class RegionWilsonCowanModel:
         I (np.ndarray): Stan populacji hamującej.
     """
 
-    def __init__(self, region_names: list[str], params: dict[str, RegionWilsonCowanParams]):
+    def __init__(self, region_names: list[str], params: dict[str, RegionWilsonCowanParams]) -> None:
         """
         Inicjalizuje model Wilsona-Cowana.
 
@@ -72,42 +72,52 @@ class RegionWilsonCowanModel:
 
     @property
     def _tau_E(self) -> np.ndarray:
+        """Zwraca wektor: stałe czasowe populacji E dla regionów."""
         return np.array([self.params[r].tau_E for r in self.region_names], dtype=float)
 
     @property
     def _tau_I(self) -> np.ndarray:
+        """Zwraca wektor: stałe czasowe populacji I dla regionów."""
         return np.array([self.params[r].tau_I for r in self.region_names], dtype=float)
 
     @property
     def _w_EE(self) -> np.ndarray:
+        """Zwraca wektor: wagi połączeń E→E dla regionów."""
         return np.array([self.params[r].w_EE for r in self.region_names], dtype=float)
 
     @property
     def _w_EI(self) -> np.ndarray:
+        """Zwraca wektor: wagi połączeń E→I dla regionów."""
         return np.array([self.params[r].w_EI for r in self.region_names], dtype=float)
 
     @property
     def _w_IE(self) -> np.ndarray:
+        """Zwraca wektor: wagi połączeń I→E dla regionów."""
         return np.array([self.params[r].w_IE for r in self.region_names], dtype=float)
 
     @property
     def _w_II(self) -> np.ndarray:
+        """Zwraca wektor: wagi połączeń I→I dla regionów."""
         return np.array([self.params[r].w_II for r in self.region_names], dtype=float)
 
     @property
     def _gain_E(self) -> np.ndarray:
+        """Zwraca wektor: wzmocnienia populacji E dla regionów."""
         return np.array([self.params[r].gain_E for r in self.region_names], dtype=float)
 
     @property
     def _gain_I(self) -> np.ndarray:
+        """Zwraca wektor: wzmocnienia populacji I dla regionów."""
         return np.array([self.params[r].gain_I for r in self.region_names], dtype=float)
 
     @property
     def _threshold_E(self) -> np.ndarray:
+        """Zwraca wektor: progi populacji E dla regionów."""
         return np.array([self.params[r].threshold_E for r in self.region_names], dtype=float)
 
     @property
     def _threshold_I(self) -> np.ndarray:
+        """Zwraca wektor: progi populacji I dla regionów."""
         return np.array([self.params[r].threshold_I for r in self.region_names], dtype=float)
 
 

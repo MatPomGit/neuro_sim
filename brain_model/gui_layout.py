@@ -148,7 +148,7 @@ class GuiLayoutMixin:
 
     def _build_layout(self) -> None:
         """Zbuduj zakładki, sekcje konfiguracji oraz panel wykresów."""
-        self.tabs = ttk.Notebook(self)
+        self.tabs: ttk.Notebook = ttk.Notebook(self)
         self.tabs.pack(fill="both", expand=True)
 
         config_tab = ttk.Frame(self.tabs)
@@ -201,13 +201,13 @@ class GuiLayoutMixin:
             style="Primary.TButton",
         ).pack(side="right", padx=(0, 8))
 
-        self.status_var = tk.StringVar(value="Gotowe.")
-        self.status_label = ttk.Label(
+        self.status_var: tk.StringVar = tk.StringVar(value="Gotowe.")
+        self.status_label: ttk.Label = ttk.Label(
             root, textvariable=self.status_var, style="Status.TLabel"
         )
         self.status_label.pack(anchor="w", pady=(8, 0))
-        self.progress_var = tk.DoubleVar(value=0.0)
-        self.progress = ttk.Progressbar(
+        self.progress_var: tk.DoubleVar = tk.DoubleVar(value=0.0)
+        self.progress: ttk.Progressbar = ttk.Progressbar(
             root,
             variable=self.progress_var,
             maximum=100,
@@ -215,7 +215,7 @@ class GuiLayoutMixin:
             style="Status.Horizontal.TProgressbar",
         )
         self.progress.pack(fill="x", pady=(4, 0))
-        self.summary_var = tk.StringVar(value="")
+        self.summary_var: tk.StringVar = tk.StringVar(value="")
         ttk.Label(root, textvariable=self.summary_var, justify="left").pack(anchor="w", pady=(4, 0))
 
         self.scenario_combo.bind(
@@ -225,24 +225,24 @@ class GuiLayoutMixin:
         self.T_var.trace_add("write", lambda *_: self._on_auto_dt_toggle())
         self._on_auto_dt_toggle()
 
-        self.plot_panel = PlotWindow(plots_tab)
+        self.plot_panel: PlotWindow = PlotWindow(plots_tab)
         self.plot_panel.pack(fill="both", expand=True)
 
     def _build_quick_start_section(self, parent: ttk.Frame) -> None:
         """Zbuduj sekcję szybkiego uruchomienia dla początkującego użytkownika."""
-        self.sim_frame = ttk.LabelFrame(
+        self.sim_frame: ttk.LabelFrame = ttk.LabelFrame(
             parent, text="Szybki start", padding=10, style="QuickStart.TLabelframe"
         )
         self.sim_frame.pack(fill="x", pady=(0, 10))
 
-        self.T_var = tk.StringVar(value=self.state.T)
-        self.scenario_var = tk.StringVar(value=self.state.scenario)
-        self.save_results_var = tk.BooleanVar(value=self.state.save_results)
+        self.T_var: tk.StringVar = tk.StringVar(value=self.state.T)
+        self.scenario_var: tk.StringVar = tk.StringVar(value=self.state.scenario)
+        self.save_results_var: tk.BooleanVar = tk.BooleanVar(value=self.state.save_results)
 
         scenario_label = ttk.Label(self.sim_frame, text="scenariusz")
         scenario_label.grid(row=0, column=0, sticky="w", padx=(0, 8), pady=3)
         Tooltip(scenario_label, PARAMETER_DESCRIPTIONS["scenario"])
-        self.scenario_combo = ttk.Combobox(
+        self.scenario_combo: ttk.Combobox = ttk.Combobox(
             self.sim_frame,
             textvariable=self.scenario_var,
             values=list_scenarios(),
@@ -271,7 +271,7 @@ class GuiLayoutMixin:
             style="Primary.TButton",
         ).grid(row=3, column=0, columnspan=2, sticky="ew", pady=(8, 6))
 
-        self.scenario_details_var = tk.StringVar(value="")
+        self.scenario_details_var: tk.StringVar = tk.StringVar(value="")
         details_label = ttk.Label(
             self.sim_frame,
             textvariable=self.scenario_details_var,
@@ -285,7 +285,7 @@ class GuiLayoutMixin:
 
     def _build_advanced_options_section(self, parent: ttk.Frame) -> None:
         """Zbuduj zwijaną sekcję technicznych opcji uruchomienia symulacji."""
-        self.advanced_options_visible_var = tk.BooleanVar(value=False)
+        self.advanced_options_visible_var: tk.BooleanVar = tk.BooleanVar(value=False)
         toggle = ttk.Checkbutton(
             parent,
             text="Pokaż opcje zaawansowane",
@@ -295,19 +295,19 @@ class GuiLayoutMixin:
         )
         toggle.pack(anchor="w", pady=(0, 4))
 
-        self.advanced_options_frame = ttk.LabelFrame(
+        self.advanced_options_frame: ttk.LabelFrame = ttk.LabelFrame(
             parent, text="Opcje zaawansowane", padding=10, style="Advanced.TLabelframe"
         )
         self.advanced_options_frame.pack(fill="x", pady=(0, 10))
 
-        self.seed_var = tk.StringVar(value=self.state.seed)
-        self.dt_var = tk.StringVar(value=self.state.dt)
-        self.auto_dt_var = tk.BooleanVar(value=self.state.auto_dt)
-        self.command_var = tk.StringVar(value=self.state.command)
-        self.batch_seeds_var = tk.StringVar(value=self.state.batch_seeds)
-        self.batch_scenarios_var = tk.StringVar(value=self.state.batch_scenarios)
-        self.sensitivity_var = tk.StringVar(value=self.state.sensitivity_params)
-        self.sensitivity_delta_var = tk.StringVar(value=self.state.sensitivity_delta)
+        self.seed_var: tk.StringVar = tk.StringVar(value=self.state.seed)
+        self.dt_var: tk.StringVar = tk.StringVar(value=self.state.dt)
+        self.auto_dt_var: tk.BooleanVar = tk.BooleanVar(value=self.state.auto_dt)
+        self.command_var: tk.StringVar = tk.StringVar(value=self.state.command)
+        self.batch_seeds_var: tk.StringVar = tk.StringVar(value=self.state.batch_seeds)
+        self.batch_scenarios_var: tk.StringVar = tk.StringVar(value=self.state.batch_scenarios)
+        self.sensitivity_var: tk.StringVar = tk.StringVar(value=self.state.sensitivity_params)
+        self.sensitivity_delta_var: tk.StringVar = tk.StringVar(value=self.state.sensitivity_delta)
 
         self._add_labeled_entry(
             self.advanced_options_frame,
@@ -409,7 +409,7 @@ class GuiLayoutMixin:
 
     def _build_results_and_plots_section(self, parent: ttk.Frame) -> None:
         """Zbuduj panel wyników i szczegółowego wyboru wykresów z presetami."""
-        self.plots_frame = ttk.LabelFrame(parent, text="Wyniki i wykresy", padding=10)
+        self.plots_frame: ttk.LabelFrame = ttk.LabelFrame(parent, text="Wyniki i wykresy", padding=10)
         self.plots_frame.pack(fill="both", expand=True)
 
         default_plots = {
@@ -432,7 +432,7 @@ class GuiLayoutMixin:
             name: tk.BooleanVar(value=self.state.plots.get(name, value))
             for name, value in default_plots.items()
         }
-        self.plot_preset_var = tk.StringVar(value="Pełne")
+        self.plot_preset_var: tk.StringVar = tk.StringVar(value="Pełne")
         preset_frame = ttk.Frame(self.plots_frame)
         preset_frame.grid(row=0, column=0, sticky="ew", pady=(0, 8))
         ttk.Label(preset_frame, text="Preset wykresów:").pack(side="left", padx=(0, 8))

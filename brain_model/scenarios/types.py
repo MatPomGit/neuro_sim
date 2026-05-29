@@ -9,27 +9,36 @@ SCENARIO_SCHEMA_VERSION = "1.0"
 
 @dataclass(frozen=True)
 class TimeWindow:
+    """Przedział czasu aktywności bodźca w sekundach."""
+
     start: float
     end: float
 
     def contains(self, t: float) -> bool:
+        """Sprawdza, czy czas należy do półotwartego przedziału."""
         return self.start <= t < self.end
 
 
 @dataclass(frozen=True)
 class Pulse:
+    """Impuls kanału bodźcowego o zadanej amplitudzie i oknie czasu."""
+
     window: TimeWindow
     amplitude: float
 
 
 @dataclass(frozen=True)
 class ChannelProfile:
+    """Profil kanału bodźcowego z poziomem bazowym i listą impulsów."""
+
     baseline: float = 0.0
     pulses: List[Pulse] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class StimulusPerturbation:
+    """Modyfikacja wartości kanału bodźcowego w określonym oknie czasu."""
+
     channel: str
     window: TimeWindow
     delta: float
@@ -38,6 +47,8 @@ class StimulusPerturbation:
 
 @dataclass(frozen=True)
 class StimulusScenario:
+    """Opis kompletnego scenariusza bodźców, faz i kontekstu zadania."""
+
     # Stała struktura scenariusza: zawsze te same pola.
     id: str
     name: str
@@ -53,9 +64,11 @@ class StimulusScenario:
     context: Dict[str, Any] = field(default_factory=dict)
 
     def normalized_channels(self) -> Dict[str, ChannelProfile]:
+        """Zwraca wszystkie znane kanały, uzupełniając brakujące profilem domyślnym."""
         return {channel: self.channels.get(channel, ChannelProfile()) for channel in CHANNELS}
 
     def to_metadata(self) -> Dict[str, Any]:
+        """Buduje słownik metadanych scenariusza zapisywany w raportach i wynikach."""
         return {
             "scenario_id": self.id,
             "scenario_name": self.name,

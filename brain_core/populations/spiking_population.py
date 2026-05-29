@@ -52,7 +52,7 @@ class Brian2SpikingPopulationAdapter:
         _membrane_mv (np.ndarray): Potencjał błonowy [mV].
     """
 
-    backend_name = "brian2"
+    backend_name: str = "brian2"
 
     def __init__(self, region_names: list[str], dt: float = 0.001) -> None:
         """
@@ -101,6 +101,7 @@ class Brian2SpikingPopulationAdapter:
         )
 
     def _validate_input(self, signal: NeuralMassToSNNInput) -> None:
+        """Waliduje kompletność i kształt kontraktu wejściowego NM->SNN."""
         if signal is None:
             raise ValueError("signal nie może być None")
         expected = (len(self.region_names),)

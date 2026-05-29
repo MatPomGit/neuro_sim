@@ -4,10 +4,12 @@ from .types import ChannelProfile, Pulse, StimulusPerturbation, StimulusScenario
 
 
 def _w(start: float, end: float) -> TimeWindow:
+    """Tworzy okno czasowe scenariusza w sekundach."""
     return TimeWindow(start=start, end=end)
 
 
 def _p(start: float, end: float, amplitude: float) -> Pulse:
+    """Tworzy impuls kanału bodźcowego z oknem czasu i amplitudą."""
     return Pulse(window=_w(start, end), amplitude=amplitude)
 
 
@@ -115,10 +117,12 @@ SCENARIOS = {
 
 
 def list_scenarios() -> list[str]:
+    """Zwraca posortowaną listę identyfikatorów dostępnych scenariuszy."""
     return sorted(SCENARIOS.keys())
 
 
 def get_scenario(scenario_id: str) -> StimulusScenario:
+    """Zwraca scenariusz bodźcowy dla podanego identyfikatora."""
     try:
         return SCENARIOS[scenario_id]
     except KeyError as exc:

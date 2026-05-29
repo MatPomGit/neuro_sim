@@ -40,6 +40,7 @@ class PharmacologyIntervention:
             NeuromodulationState: Stan po interwencji.
         """
         def c(x: float) -> float:
+            """Ogranicza poziom neuromodulatora do zakresu [0, 1]."""
             return min(1.0, max(0.0, x))
 
         return NeuromodulationState(

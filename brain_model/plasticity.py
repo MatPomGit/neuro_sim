@@ -7,6 +7,8 @@ from numpy.typing import NDArray
 
 @dataclass
 class PlasticityRuleConfig:
+    """Konfiguracja prostej reguły plastyczności stanu modułu."""
+
     enabled: bool = False
     learning_rate: float = 0.0
     decay: float = 0.0
@@ -14,6 +16,8 @@ class PlasticityRuleConfig:
 
 @dataclass
 class HebbianRuleConfig:
+    """Konfiguracja hebbowskiej adaptacji wag połączeń."""
+
     enabled: bool = False
     learning_rate: float = 0.0
     anti_hebbian: bool = False
@@ -22,6 +26,8 @@ class HebbianRuleConfig:
 
 @dataclass
 class ConnectivityAdaptationConfig:
+    """Parametry adaptacji wybranych połączeń macierzy konektywności."""
+
     enabled: bool = False
     pairs: Sequence[Tuple[str, str]] = ()
     hebbian: HebbianRuleConfig = field(default_factory=HebbianRuleConfig)
@@ -38,6 +44,7 @@ def apply_state_learning(
     params: Any,
     idx: Mapping[str, int],
 ) -> NDArray[np.float64]:
+    """Aktualizuje pochodne stanu zgodnie z regułami uczenia semantycznego i wartości."""
     # TODO(typing): zastąpić Any docelowym typem konfiguracji modelu, gdy interfejs params zostanie ustabilizowany.
     sem_cfg = params.semantic_rule
     val_cfg = params.value_rule
@@ -60,6 +67,7 @@ def update_connectivity(
     params: Any,
     idx: Mapping[str, int],
 ) -> NDArray[np.float64]:
+    """Modyfikuje wybrane wagi konektywności na podstawie aktywności i diagnostyki."""
     # TODO(typing): zastąpić Any docelowym typem konfiguracji modelu, gdy interfejs params zostanie ustabilizowany.
     cfg = params.connectivity_adaptation
     diagnostics.setdefault("weight_updates", {})
@@ -95,6 +103,7 @@ def update_connectivity(
 def build_weight_history_series(
     weight_history: List[Dict[str, Dict[str, float]]], series_len: int
 ) -> Dict[str, Dict[str, NDArray[np.float64]]]:
+    """Przekształca historię wag w serie czasowe wag i delt dla raportów."""
     if not weight_history:
         return {}
 
