@@ -4,7 +4,10 @@ channels:
   - defaults
 dependencies:
   - python>=3.10,<3.13
-  - pip
-  - pip:
-      - -r requirements.txt
+  # Zależności symulacji, raportów i konfiguracji.
+  - numpy>=1.24
+  - matplotlib>=3.7
+  - pyyaml>=6.0
+  # Desktopowe GUI jest budowane w oparciu o PySide6/Qt.
   - pyside6>=6.6
+  - pip

@@ -9,9 +9,11 @@ description = "Mezoskopowy model dynamiki procesów poznawczych z oscylatorami W
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 dependencies = [
+  # Zależności symulacji, raportów i konfiguracji.
   "numpy>=1.24",
   "matplotlib>=3.7",
   "PyYAML>=6.0",
+  # Desktopowe GUI jest budowane w oparciu o PySide6/Qt.
   "PySide6>=6.6",
 ]
 
@@ -21,7 +23,7 @@ neuro-sim-gui = "brain_model.gui:run_gui"
 neuro-sim-run = "brain_core.simulation.run:main"
 
 [tool.setuptools]
-py-modules = ["main"]
+py-modules = ["main", "main_gui"]
 
 [tool.setuptools.packages.find]
 include = ["brain_model*", "brain_core*"]

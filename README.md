@@ -60,8 +60,16 @@ Interpretacja:
 
 ## Instalacja
 
+Instalacja pakietu pobiera zależności uruchomieniowe, w tym `numpy`, `matplotlib`, `PyYAML` oraz `PySide6` wymagane przez desktopowe GUI:
+
 ```bash
 pip install .
+```
+
+Jeśli instalujesz zależności ręcznie, uwzględnij `PySide6`:
+
+```bash
+pip install numpy matplotlib PyYAML PySide6
 ```
 
 ## Uruchomienie
@@ -136,7 +144,7 @@ time, activity, diagnostics, oscillations = model.simulate(T=45.0)
 
 ## GUI do konfiguracji parametrów
 
-Dodano prosty moduł GUI oparty na `tkinter`. Pozwala zmienić parametry przed rozpoczęciem symulacji:
+Desktopowe GUI używa PySide6 i pozwala przygotować oraz uruchomić symulację bez ręcznej edycji kodu. Interfejs umożliwia zmianę parametrów przed rozpoczęciem symulacji:
 
 - czas symulacji `T`,
 - `seed`,
@@ -150,7 +158,21 @@ Uruchomienie GUI:
 python main_gui.py
 ```
 
-GUI nie wymaga dodatkowych bibliotek poza standardowym `tkinter`, `numpy` i `matplotlib`. W niektórych dystrybucjach Linuksa `tkinter` trzeba doinstalować oddzielnie, np. `sudo apt install python3-tk`.
+Te same punkty wejścia prowadzą do jednej implementacji GUI:
+
+- `main_gui.py`,
+- `brain_model.gui:run_gui`,
+- skrypt `neuro-sim-gui` z `pyproject.toml` po instalacji pakietu.
+
+GUI wymaga zależności `PySide6`, `numpy` i `matplotlib`; standardowa instalacja `pip install .` instaluje je z konfiguracji projektu.
+
+Nowy przepływ pracy w GUI składa się z kilku kroków:
+
+1. **Szybki start** – wybierz podstawowy scenariusz, ustaw `seed` i zaakceptuj sugerowany czas scenariusza, aby szybko uruchomić referencyjną symulację.
+2. **Opcje zaawansowane** – w razie potrzeby dopasuj parametry modelu, oscylatorów Wilsona-Cowana oraz ustawienia eksperymentu przed startem obliczeń.
+3. **Wyniki i wykresy** – po zakończeniu symulacji przejrzyj podsumowanie metryk, zapisane wyniki oraz wykresy aktywności, diagnostyki i pasm EEG.
+4. **Presety wykresów** – użyj gotowych zestawów wykresów, aby szybko przełączać się między widokiem przeglądowym, diagnostycznym i EEG bez ręcznego zaznaczania każdej serii.
+5. **Sugerowany czas scenariusza** – GUI podpowiada czas symulacji dopasowany do wybranego scenariusza, który można zaakceptować albo zmienić ręcznie.
 
 ### Komendy GUI do eksperymentów badawczych
 
