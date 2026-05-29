@@ -87,9 +87,9 @@ def apply_config_to_state(state: QtGuiState, config: dict[str, Any]) -> QtGuiSta
     state.oscillator_params = dataclass_with_updates(
         state.oscillator_params, config.get("oscillator_params", {})
     )
-    state.plots = {
-        str(name): bool(value) for name, value in dict(config.get("plots", state.plots)).items()
-    }
+    plots_config = config.get("plots")
+    if isinstance(plots_config, dict):
+        state.plots = {str(name): bool(value) for name, value in plots_config.items()}
     return state
 
 
