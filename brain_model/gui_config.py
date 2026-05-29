@@ -159,7 +159,7 @@ class GuiConfigMixin:
             raw = values[field.name]
             try:
                 if isinstance(default_value, bool):
-                    updates[field.name] = bool(raw)
+                    updates[field.name] = raw if isinstance(raw, bool) else str(raw).lower() in ("true", "1", "yes", "on")
                 elif isinstance(default_value, int) and not isinstance(default_value, bool):
                     updates[field.name] = int(raw)
                 elif isinstance(default_value, float):
