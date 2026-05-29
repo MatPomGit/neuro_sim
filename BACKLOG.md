@@ -437,6 +437,36 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 - Uzupełnić instrukcje uruchamiania i interpretacji dla każdego scenariusza.
 - Pilnować ADR przy kolejnych zmianach strukturalnych.
 
+### D. GUI: modularizacja, stan i walidacja formularzy
+**Status:** `planned`
+
+**Powiązane ADR:** ADR-0012, ADR-0013.
+
+**Cel:** domknięcie długu technicznego desktopowego GUI po modularizacji oraz
+ujednolicenie jawnego stanu formularzy i walidacji danych wejściowych.
+
+**Zakres prac:**
+- Przejrzeć granice odpowiedzialności modułów `brain_model/gui_app.py`,
+  `brain_model/gui_forms.py`, `brain_model/gui_layout.py`,
+  `brain_model/gui_config.py`, `brain_model/gui_runner.py` oraz
+  `brain_model/gui_state.py` zgodnie z ADR-0012 i ADR-0013.
+- Utrzymać `GuiState` jako źródło zatwierdzonych wartości formularzy oraz
+  ograniczyć wpływ okien dialogowych do jawnych akcji zapisu.
+- Ujednolicić walidację pól skalarnych i parametrów zaawansowanych tak, aby
+  komunikaty błędów były zrozumiałe dla użytkownika i nie wymagały analizy
+  tracebacków.
+- Dopisać testy regresji dla zapisu, odczytu, resetu i anulowania formularzy.
+
+**Akceptacja:**
+- Anulowanie lub zamknięcie formularzy nie wprowadza niejawnych zmian
+  zatwierdzonego stanu GUI.
+- Niepoprawne wartości formularzy dają czytelne, polskie komunikaty błędów
+  wskazujące pole oraz oczekiwany zakres albo format.
+- Punkt wejścia `brain_model.gui:run_gui` pozostaje kompatybilny z istniejącymi
+  importami, skryptami i dokumentacją użytkową.
+- Testy potwierdzają spójność `GuiState`, konfiguracji JSON i uruchamiania
+  symulacji po poprawnych zmianach formularzy.
+
 ---
 
 ## Definition of Ready / Definition of Done
