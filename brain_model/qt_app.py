@@ -180,10 +180,10 @@ class BrainModelQtWindow(QMainWindow):
 
     def on_simulation_result(self, payload: object) -> None:
         """Przenieś wynik symulacji do etykiet statusu i panelu wykresów."""
-        result = payload if isinstance(payload, tuple) else tuple()
-        if not result:
+        if not isinstance(payload, tuple) or len(payload) != 9:
             self.on_simulation_error("Worker zwrócił niepoprawny wynik symulacji.")
             return
+        result = payload
         has_plots = apply_run_result(self.plot_panel, self.state, result)
         self.status_label.setObjectName("statusLabel")
         self.status_label.setText(str(result[0]))
