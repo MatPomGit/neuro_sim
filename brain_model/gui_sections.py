@@ -385,5 +385,5 @@ def _on_auto_dt_toggle(gui: Any) -> None:
             duration_s = float(gui.T_var.get())
         except ValueError:
             return
-        gui.dt_var.set(f"{gui._auto_dt_for_duration(duration_s):.4f}")
+        gui.dt_var.set(f"{_auto_dt_for_duration(duration_s):.4f}")
         gui.state.dt = gui.dt_var.get()
