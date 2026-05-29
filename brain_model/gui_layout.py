@@ -590,6 +590,7 @@ class GuiLayoutMixin:
                 messagebox.showerror(
                     "Niepoprawne parametry",
                     f"Nie udało się zapisać parametrów zaawansowanych.\n\n{exc}",
+                    parent=win,
                 )
                 return
             win.destroy()
