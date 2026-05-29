@@ -62,7 +62,9 @@ class GuiRunnerMixin:
         self.status_var.set("Symulacja w toku...")
         self.progress_var.set(0)
         self.summary_var.set("")
-        self._worker_thread: threading.Thread | None = threading.Thread(target=self._run_simulation_worker, daemon=True)
+        self._worker_thread: threading.Thread | None = threading.Thread(
+            target=self._run_simulation_worker, daemon=True
+        )
         self._worker_thread.start()
         self.after(100, self._poll_worker)
 
@@ -218,10 +220,10 @@ class GuiRunnerMixin:
         }
         return (
             f"Podsumowanie metryk:\n"
-            f"mean(prediction_error)={agg['prediction_error_mean']:.4f}, "
-            f"mean(gw_ignition)={agg['gw_ignition_mean']:.4f}, "
-            f"mean(confidence)={agg['confidence_mean']:.4f}, "
-            f"mean(decision_events)={agg['decision_events']:.2f}"
+            f"średni błąd predykcji={agg['prediction_error_mean']:.4f}, "
+            f"średni zapłon globalnej przestrzeni roboczej={agg['gw_ignition_mean']:.4f}, "
+            f"średnia pewność={agg['confidence_mean']:.4f}, "
+            f"średnie zdarzenia decyzyjne={agg['decision_events']:.2f}"
         )
 
     def _parse_list(self, raw: str) -> list[str]:

@@ -7,7 +7,13 @@ from dataclasses import fields
 from tkinter import messagebox, ttk
 from typing import Any
 
-from .gui_forms import PARAMETER_DESCRIPTIONS, RULE_FIELDS, ParameterForm, Tooltip
+from .gui_forms import (
+    COMMAND_LABELS,
+    PARAMETER_DESCRIPTIONS,
+    RULE_FIELDS,
+    ParameterForm,
+    Tooltip,
+)
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
 from .scenarios import get_scenario, list_scenarios
@@ -95,7 +101,7 @@ def _build_advanced_options_section(gui: Any, parent: ttk.Frame) -> None:
     gui.seed_var = tk.StringVar(value=gui.state.seed)
     gui.dt_var = tk.StringVar(value=gui.state.dt)
     gui.auto_dt_var = tk.BooleanVar(value=gui.state.auto_dt)
-    gui.command_var = tk.StringVar(value=gui.state.command)
+    gui.command_var = tk.StringVar(value=COMMAND_LABELS.get(gui.state.command, gui.state.command))
     gui.batch_seeds_var = tk.StringVar(value=gui.state.batch_seeds)
     gui.batch_scenarios_var = tk.StringVar(value=gui.state.batch_scenarios)
     gui.sensitivity_var = tk.StringVar(value=gui.state.sensitivity_params)
@@ -130,7 +136,7 @@ def _build_advanced_options_section(gui: Any, parent: ttk.Frame) -> None:
     cmd_combo = ttk.Combobox(
         gui.advanced_options_frame,
         textvariable=gui.command_var,
-        values=["run", "batch"],
+        values=list(COMMAND_LABELS.values()),
         state="readonly",
         width=18,
     )

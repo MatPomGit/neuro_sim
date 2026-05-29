@@ -56,7 +56,7 @@ def _show_usage_help(gui: Any) -> None:
             "4) Obejrzyj wyniki w zakładce 'Wykresy'.\n\n"
             "Opcjonalnie:\n"
             "- Zostaw włączone 'Zapisz wyniki po symulacji', aby zapisać pliki w outputs/.\n"
-            "- W panelu 'Wyniki i wykresy' wybierz preset: Podstawowe, "
+            "- W panelu 'Wyniki i wykresy' wybierz zestaw wykresów: Podstawowe, "
             "Diagnostyczne lub Pełne.\n"
             "- Rozwiń 'Opcje zaawansowane' tylko wtedy, gdy chcesz zmienić ziarno, "
             "dt, tryb serii albo analizę wrażliwości.\n\n"

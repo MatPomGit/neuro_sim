@@ -9,7 +9,7 @@ from pathlib import Path
 from tkinter import filedialog, messagebox
 from typing import Any, TypeVar
 
-from .gui_forms import APP_VERSION, RULE_FIELDS
+from .gui_forms import APP_VERSION, COMMAND_LABELS, COMMAND_VALUES, RULE_FIELDS
 
 TDataclass = TypeVar("TDataclass")
 
@@ -23,7 +23,7 @@ class GuiConfigMixin:
         self.state.dt = self.dt_var.get()
         self.state.auto_dt = bool(self.auto_dt_var.get())
         self.state.seed = self.seed_var.get()
-        self.state.command = self.command_var.get()
+        self.state.command = COMMAND_VALUES.get(self.command_var.get(), self.command_var.get())
         self.state.batch_seeds = self.batch_seeds_var.get()
         self.state.batch_scenarios = self.batch_scenarios_var.get()
         self.state.sensitivity_params = self.sensitivity_var.get()
@@ -38,7 +38,7 @@ class GuiConfigMixin:
         self.dt_var.set(self.state.dt)
         self.auto_dt_var.set(self.state.auto_dt)
         self.seed_var.set(self.state.seed)
-        self.command_var.set(self.state.command)
+        self.command_var.set(COMMAND_LABELS.get(self.state.command, self.state.command))
         self.batch_seeds_var.set(self.state.batch_seeds)
         self.batch_scenarios_var.set(self.state.batch_scenarios)
         self.sensitivity_var.set(self.state.sensitivity_params)
@@ -159,7 +159,11 @@ class GuiConfigMixin:
             raw = values[field.name]
             try:
                 if isinstance(default_value, bool):
-                    updates[field.name] = raw if isinstance(raw, bool) else str(raw).lower() in ("true", "1", "yes", "on")
+                    updates[field.name] = (
+                        raw
+                        if isinstance(raw, bool)
+                        else str(raw).lower() in ("true", "1", "yes", "on")
+                    )
                 elif isinstance(default_value, int) and not isinstance(default_value, bool):
                     updates[field.name] = int(raw)
                 elif isinstance(default_value, float):
@@ -177,7 +181,7 @@ class GuiConfigMixin:
             title="Zapisz konfigurację",
             defaultextension=".json",
             initialfile=default_name,
-            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+            filetypes=[("Pliki JSON", "*.json"), ("Wszystkie pliki", "*.*")],
         )
         if not target:
             return
@@ -199,7 +203,7 @@ class GuiConfigMixin:
         """Wczytaj konfigurację GUI z pliku JSON."""
         source = filedialog.askopenfilename(
             title="Wczytaj konfigurację",
-            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+            filetypes=[("Pliki JSON", "*.json"), ("Wszystkie pliki", "*.*")],
         )
         if not source:
             return
