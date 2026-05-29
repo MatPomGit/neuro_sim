@@ -45,6 +45,10 @@ def _deterministic_observed_response(
         if condition == "target":
             return "match" if key != 0 else None
         return "match" if key == 0 else None
+    if task_name == "roving_oddball":
+        if condition == "deviant":
+            return "detect" if key != 0 else None
+        return "detect" if key == 0 else None
     return None
 
 
@@ -84,15 +88,17 @@ def _simulate_task_trials(config: ExperimentConfig) -> tuple[list[dict[str, Any]
         observed = _deterministic_observed_response(task.name, stimulus.condition, stimulus.trial_id, config.seed, expected=task.expected_response(stimulus))
         reaction_time = None if observed is None else round(0.25 + ((stimulus.trial_id + config.seed) % 5) * 0.05, 3)
         result: TrialResult = task.score_trial(stimulus, observed, reaction_time)
-        trial_results.append(
-            {
-                "trial_id": result.trial_id,
-                "reaction_time_s": result.reaction_time_s,
-                "correct": result.correct,
-                "error_type": result.error_type.value if isinstance(result.error_type, ErrorType) else str(result.error_type),
-                "condition": result.condition,
-            }
-        )
+        trial_result = {
+            "trial_id": result.trial_id,
+            "reaction_time_s": result.reaction_time_s,
+            "correct": result.correct,
+            "error_type": result.error_type.value if isinstance(result.error_type, ErrorType) else str(result.error_type),
+            "condition": result.condition,
+        }
+        for metric_name in ("surprise_index", "habituation_level", "readaptation_latency"):
+            if metric_name in stimulus.payload:
+                trial_result[metric_name] = stimulus.payload[metric_name]
+        trial_results.append(trial_result)
 
     return state.metrics.get("trial_events", []), trial_results
 
