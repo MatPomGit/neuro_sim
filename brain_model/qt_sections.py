@@ -253,6 +253,11 @@ class QtSections:
         """Ustaw czas symulacji zgodnie z podpowiedzią wybranego scenariusza."""
         current_scenario_id = self.scenario_combo.currentText()
         scenario = get_scenario(current_scenario_id)
+        if scenario.duration_hint is None:
+            status_callback = self.callbacks.get("show_status")
+            if status_callback is not None:
+                status_callback("Wybrany scenariusz nie ma sugerowanego czasu.")
+            return
         self.T_edit.setText(str(scenario.duration_hint))
         if self.auto_dt_check.isChecked():
             self.on_auto_dt_toggled(True)
