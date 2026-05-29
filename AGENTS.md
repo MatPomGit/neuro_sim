@@ -134,7 +134,7 @@ Agent ma zawsze wybrać opcję bezpieczniejszą i lepiej udokumentowaną.
 
 ---
 
-## 8) Stos desktopowego GUI (MUST)
+## 9) Stos desktopowego GUI (MUST)
 
 1. **PySide6/Qt jako docelowa biblioteka GUI**
    - Nowe elementy desktopowego GUI buduj w oparciu o `PySide6` i wzorce Qt używane w modułach `brain_model/qt_*`.
