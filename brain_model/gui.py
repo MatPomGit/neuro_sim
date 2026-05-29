@@ -1,10 +1,10 @@
-"""Kompatybilny punkt wejścia GUI modelu poznawczego."""
+"""Kompatybilny punkt wejścia GUI modelu poznawczego delegujący do PySide6."""
 
 from __future__ import annotations
 
-from .gui_app import BrainModelGUI, run_gui
+from .qt_app import BrainModelGUI, BrainModelQtWindow, run_gui
 
-__all__ = ["BrainModelGUI", "run_gui"]
+__all__ = ["BrainModelGUI", "BrainModelQtWindow", "run_gui"]
 
 
 if __name__ == "__main__":
