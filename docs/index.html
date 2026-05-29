@@ -745,9 +745,7 @@
       link.addEventListener("click", () => activateTab(link.dataset.openTab));
     });
 
-    if (window.location.hash === "#instrukcja") {
-      activateTab("manual");
-    }
+    const handleHashChange = () => {\n      if (window.location.hash === "#instrukcja") {\n        activateTab("manual");\n      }\n    };\n    window.addEventListener("hashchange", handleHashChange);\n    handleHashChange();
   </script>
 </body>
 </html>
