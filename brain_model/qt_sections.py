@@ -217,7 +217,10 @@ class QtSections:
         self.save_results_check.setChecked(self.state.save_results)
         for name, value in self.state.plots.items():
             if name in self.plot_checks:
-                self.plot_checks[name].setChecked(value)
+                checkbox = self.plot_checks[name]
+                checkbox.blockSignals(True)
+                checkbox.setChecked(value)
+                checkbox.blockSignals(False)
         self.sync_plot_preset_from_checks()
         self.refresh_scenario_details()
 
