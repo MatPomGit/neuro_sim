@@ -87,7 +87,6 @@ neuro_sim/
 └── outputs/         # zapisane wyniki przykładowych uruchomień
 ```
 
-
 ## Konfiguracje i silnik eksperymentów (brain_core)
 
 Od tego etapu uruchamianie eksperymentów jest oparte o wspólny silnik `brain_core.simulation`, niezależny od GUI.
@@ -201,7 +200,6 @@ model = CognitiveBrainModel(
 time, activity, diagnostics, oscillations = model.simulate(T=45.0)
 ```
 
-
 ## Dokumentacja struktury programu
 
 Szczegółowy opis aktualnej architektury repozytorium znajduje się w:
@@ -209,7 +207,6 @@ Szczegółowy opis aktualnej architektury repozytorium znajduje się w:
 - `docs/program_structure.md`
 
 Dokument zawiera opis aktualnej infrastruktury symulacyjnej (`SimulationState`, `SimulationScheduler`, `MultiScaleEngine`, integratory i `RandomSources`), warstw `brain_model`/`brain_core`, danych, konfiguracji, testów oraz najbliższych konsekwencji strukturalnych.
-
 
 ## Pilotaż NM ↔ SNN (Brian2 backend startowy)
 
@@ -260,11 +257,11 @@ Szczegółowe wytyczne dla agentów znajdują się w `AGENTS.md`.
 ## Wymóg dokumentacji kodu
 
 Każda nowa funkcja i klasa **musi** zawierać:
+
 - pełny `type hint` dla argumentów i typu zwracanego,
 - docstring opisujący cel, parametry i wynik działania.
 
 Brak `type hints` lub docstringa jest traktowany jako błąd jakościowy i wymaga poprawy przed mergem.
-
 
 ## Konfigurowalne zestawy analiz i metryki sieciowe
 
@@ -295,10 +292,8 @@ analysis:
 
 Dozwolone wartości `analysis.sets` są walidowane przez `brain_core/simulation/config_schema.py`.
 
-
 ## Kontrole statyczne dla deweloperów
 
 Instrukcja uruchamiania kontroli `mypy` oraz `ruff/pydocstyle` (tryb legacy i gating PR) znajduje się w:
 
 - `docs/developer_quality_checks.md`
-
