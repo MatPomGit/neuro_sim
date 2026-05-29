@@ -185,9 +185,9 @@ def test_user_visible_help_and_behavior_labels_are_polish() -> None:
 
 def test_advanced_command_values_are_displayed_in_polish() -> None:
     """Sprawdź, że techniczne komendy run/batch mają polskie etykiety w GUI."""
-    forms_source = (REPO_ROOT / "brain_model" / "gui_forms.py").read_text(encoding="utf-8")
-    sections_source = GUI_SECTIONS_PATH.read_text(encoding="utf-8")
+    from brain_model.gui_forms import COMMAND_LABELS
+    assert COMMAND_LABELS == {"run": "uruchom", "batch": "seria uruchomień"}
 
-    assert 'COMMAND_LABELS = {"run": "uruchom", "batch": "seria uruchomień"}' in forms_source
+    sections_source = GUI_SECTIONS_PATH.read_text(encoding="utf-8")
     assert "values=list(COMMAND_LABELS.values())" in sections_source
     assert 'values=["run", "batch"]' not in sections_source
