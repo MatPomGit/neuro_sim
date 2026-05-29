@@ -1,3 +1,21 @@
+# Plan rozwoju biologicznego i wieloskalowego
+
+## Status dokumentu na dzień 2026-05-29
+
+Ten dokument zachowuje szerszy, koncepcyjny plan rozwoju biologicznego modelu. Aktualny stan repozytorium i najbliższe zaplanowane prace są utrzymywane w `BACKLOG.md`, a rzeczywista struktura katalogów jest opisana w `docs/program_structure.md`.
+
+Najbliższy zakres operacyjny obejmuje:
+
+1. domknięcie walidowalnej konfiguracji eksperymentów, osi czasu raportów i baseline `healthy_v1`,
+2. stabilizację konektomu z opóźnieniami, neural mass, neuromodulacji oraz scenariuszy healthy/disorder/lesion,
+3. ujednolicenie biblioteki tasków z priorytetem dla referencyjnego `roving_oddball`,
+4. spięcie metryk EEG/BOLD z raportami interpretacyjnymi,
+5. aktualizację dokumentacji, docstringów, type hints i instrukcji uruchamiania scenariuszy.
+
+Poniższe sekcje opisują kierunek docelowy i nie muszą odpowiadać jeden-do-jednego bieżącej strukturze plików.
+
+---
+
 Taką rozbudowę trzeba zaplanować jako przejście od „symulatora procesów poznawczych” do wieloskalowego symulatora mózgu. Pełna symulacja biologiczna całego ludzkiego mózgu w sensie komórka-po-komórce jest obecnie praktycznie niewykonalna na typowej infrastrukturze. Realistyczny cel to architektura hybrydowa: wybrane obszary modelowane szczegółowo, reszta jako modele populacyjne, sieciowe i funkcjonalne. Tak działają współczesne podejścia typu The Virtual Brain, modele neural mass oraz współsymulacje mikro-makro. TVB jest używany do personalizowanych modeli sieci mózgowych, natomiast nowsze prace integrują TVB z symulatorami bardziej szczegółowymi, np. Arbor, aby łączyć poziom komórkowy z makroskopowym. ([EBRAINS][1])
 
 ## 1. Docelowa idea systemu
