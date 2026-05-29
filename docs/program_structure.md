@@ -177,7 +177,7 @@ docs/
 ├── architecture_decision_records.md
 ├── adr/
 ├── developer_quality_checks.md
-├── docstring_typing_*.md
+├── docstring_typing_standard.md
 ├── english_polish_glossary.md
 ├── gui_defaults.json
 ├── index.html
@@ -215,7 +215,7 @@ tests/
 └── test_wilson_cowan_network.py
 ```
 
-Testy obejmują obecnie m.in. konfigurację zadań, konektom, lesion, neuromodulację, metryki sygnałowe, adapter SNN i GUI. Najbliższy zakres rozwoju jakości jest opisany w `BACKLOG.md` oraz dokumentach `docs/typing_docstring_audit.md`, `docs/typing_docstring_progress.md` i `docs/docstring_typing_rollout_plan.md`.
+Testy obejmują obecnie m.in. konfigurację zadań, konektom, lesion, neuromodulację, metryki sygnałowe, adapter SNN i GUI. Bieżące wymagania jakościowe dla docstringów i adnotacji typów są opisane w `docs/docstring_typing_standard.md` oraz `docs/developer_quality_checks.md`, a przyszłe prace jakościowe pozostają śledzone w `BACKLOG.md`.
 
 ## 8. Najbliższe konsekwencje dla struktury repozytorium
 

@@ -38,9 +38,9 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
     kompatybilny punkt wejścia `brain_model.gui:run_gui` zgodnie z ADR-0016.
 12. **Tryb nauczyciela P2** — dopisać widoki edukacyjne, pytania kontrolne i
     polskie etykiety pojęć zgodne z `docs/english_polish_glossary.md`.
-13. **Jakość i dokumentacja przekrojowa** — domknąć luki docstringów/type hints,
-    utrzymać aktualny `docs/program_structure.md`, aktualizować ADR przy
-    zmianach strukturalnych i dopisać instrukcje uruchamiania dla scenariuszy.
+13. **Jakość i dokumentacja przekrojowa** — utrzymać standard docstringów/type hints,
+    aktualizować `docs/program_structure.md` oraz ADR przy zmianach
+    strukturalnych i dopisać instrukcje uruchamiania dla scenariuszy.
 
 ## P0 — Fundamenty (najwyższy priorytet)
 
@@ -450,36 +450,31 @@ Zadanie uznaje się za ukończone, gdy:
 
 ## Zadanie jakościowe (uzupełniające)
 
-### Q1. Uzupełnienie docstringów i type hints w całym repozytorium
-**Status:** `partial`
+### Q1. Utrzymanie standardu docstringów i type hints w całym repozytorium
+**Status:** `done`
 
-**Cel:** domknięcie standardu dokumentacji i typowania dla wszystkich modułów Python.
+**Cel:** utrzymanie standardu dokumentacji i typowania dla wszystkich modułów Python.
 
-**Kontekst (audyt 2026-05-27):**
-- wykryto **162** elementy (funkcje/klasy) bez docstringów,
-- wykryto **50** funkcji bez pełnych adnotacji typów.
+**Kontekst (weryfikacja 2026-05-29):**
+- Lokalny skan AST repozytorium zwrócił **0** braków docstringów.
+- Lokalny skan AST repozytorium zwrócił **0** braków pełnych adnotacji typów.
+- Historyczne dokumenty rollout/audit/progress zostały usunięte, ponieważ dublowały
+  zamknięty zakres i nie zawierały już decyzji potrzebnych do dalszego rozwoju.
 
-**Największe luki:**
-- `brain_model/gui.py` (docstringi + typy),
-- `brain_core/experiments/protocols.py`,
-- `brain_core/populations/wilson_cowan.py`,
-- `brain_model/scenarios/types.py`,
-- `brain_core/experiments/lesions.py`,
-- `brain_core/physiology/eeg_forward_model.py`.
-
-**Zakres prac:**
-- Uzupełnić docstringi dla wszystkich funkcji, klas i metod publicznych/prywatnych.
-- Uzupełnić type hints dla argumentów i typów zwracanych.
+**Zakres utrzymaniowy:**
+- Utrzymać docstringi dla wszystkich funkcji, klas i metod publicznych/prywatnych.
+- Utrzymać type hints dla argumentów i typów zwracanych.
 - Unikać nadmiarowego `Any` tam, gdzie możliwe jest wskazanie typu domenowego.
-- Dodać kontrolę CI (lint/type check) egzekwującą minimalny poziom pokrycia.
+- Rozwijać kontrolę CI (lint/type check), jeśli projekt zacznie egzekwować jakość
+  poza lokalnymi kontrolami opisanymi w `docs/developer_quality_checks.md`.
 
 **Deliverables:**
-- Zamknięty raport audytu „0 braków docstringów / 0 braków type hints”.
-- Aktualizacja wybranych modułów + testy regresji.
+- Aktualny standard w `docs/docstring_typing_standard.md`.
+- Instrukcja kontroli jakości w `docs/developer_quality_checks.md`.
 
 **Akceptacja:**
 - Skan AST repozytorium zwraca brak braków docstringów i type hints.
 
 **Pozostały zakres:**
-- Domknąć brakujące docstringi i adnotacje typów wskazane w audycie.
-- Dodać kontrolę CI egzekwującą minimalny poziom pokrycia.
+- Brak znanych luk docstringów i adnotacji typów na dzień 2026-05-29.
+- Opcjonalnie dodać kontrolę CI egzekwującą minimalny poziom pokrycia.
