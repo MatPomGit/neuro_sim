@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
-
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
-from matplotlib.figure import Figure
-from PySide6.QtWidgets import QScrollArea, QTabWidget, QVBoxLayout, QWidget
+from typing import Any
 
 from .plotting import (
     draw_activity,
@@ -22,46 +18,9 @@ from .plotting import (
     draw_weight_deltas,
     draw_weight_trajectories,
 )
+from .qt_plotting import QtPlotPanel
 from .qt_state import QtGuiState
 from .scenarios import get_scenario
-
-
-class QtPlotPanel(QTabWidget):
-    """Panel zakładek zawierający figury Matplotlib osadzone w Qt."""
-
-    def __init__(self, parent: QWidget | None = None) -> None:
-        """Utwórz pusty panel zakładek z wykresami."""
-        super().__init__(parent)
-        self.setDocumentMode(True)
-
-    def clear(self) -> None:
-        """Usuń wszystkie aktualnie widoczne zakładki wykresów."""
-        while self.count() > 0:
-            widget = self.widget(0)
-            self.removeTab(0)
-            widget.deleteLater()
-
-    def add_plot(
-        self, title: str, draw_func: Callable[..., Any], *args: Any, **kwargs: Any
-    ) -> None:
-        """Dodaj nową zakładkę z figurą wygenerowaną przez funkcję rysującą."""
-        figsize = kwargs.pop("figsize", (11, 6))
-        fig = Figure(figsize=figsize)
-        axis = fig.add_subplot(111)
-        draw_func(axis, *args, **kwargs)
-        fig.tight_layout()
-
-        container = QWidget()
-        layout = QVBoxLayout(container)
-        canvas = FigureCanvasQTAgg(fig)
-        toolbar = NavigationToolbar2QT(canvas, container)
-        layout.addWidget(toolbar)
-        layout.addWidget(canvas)
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(container)
-        self.addTab(scroll, title)
 
 
 def apply_run_result(plot_panel: QtPlotPanel, state: QtGuiState, payload: tuple[Any, ...]) -> bool:

@@ -29,7 +29,52 @@ from .gui_sections import (
     _toggle_advanced_options,
 )
 from .params import BrainParams
-from .plotting import PlotWindow
+
+
+class LegacyPlotPlaceholder(ttk.Frame):
+    """Zastępczy panel wykresów dla niepublicznej ścieżki Tk bez backendu Matplotlib Tk."""
+
+    def __init__(self, parent: ttk.Widget) -> None:
+        """Utwórz panel informujący o dostępności wykresów w interfejsie PySide6."""
+        super().__init__(parent)
+        self.notebook: ttk.Notebook = ttk.Notebook(self)
+        self.notebook.pack(fill="both", expand=True)
+        self._add_message_tab(
+            "Informacja",
+            "Interaktywne wykresy są dostępne w głównym interfejsie PySide6.",
+        )
+
+    def clear(self) -> None:
+        """Usuń zakładki informacyjne dodane po poprzednim uruchomieniu."""
+        for tab_id in self.notebook.tabs():
+            self.notebook.forget(tab_id)
+
+    def add_plot(
+        self,
+        tab_title: str,
+        draw_func: object,
+        *args: object,
+        figsize: tuple[float, float] = (10, 6),
+        **kwargs: object,
+    ) -> None:
+        """Dodaj zastępczą zakładkę bez osadzania figury w backendzie Tk."""
+        del draw_func, args, figsize, kwargs
+        self._add_message_tab(
+            tab_title,
+            "Ten wykres jest renderowany w panelu QtPlotPanel interfejsu PySide6.",
+        )
+
+    def fit_tabs_to_count(self) -> None:
+        """Zachowaj zgodność z dawnym API panelu wykresów Tk."""
+        return
+
+    def _add_message_tab(self, title: str, message: str) -> None:
+        """Dodaj zakładkę z polskim komunikatem tekstowym."""
+        frame = ttk.Frame(self.notebook, padding=12)
+        ttk.Label(frame, text=message, anchor="center", justify="center").pack(
+            fill="both", expand=True
+        )
+        self.notebook.add(frame, text=title)
 
 
 class GuiLayoutMixin:
@@ -151,7 +196,7 @@ class GuiLayoutMixin:
         self.T_var.trace_add("write", lambda *_args: self._on_auto_dt_toggle())
         self._on_auto_dt_toggle()
 
-        self.plot_panel: PlotWindow = PlotWindow(plots_tab)
+        self.plot_panel: LegacyPlotPlaceholder = LegacyPlotPlaceholder(plots_tab)
         self.plot_panel.pack(fill="both", expand=True)
 
     def reset_defaults(self) -> None:
