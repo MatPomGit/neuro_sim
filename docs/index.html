@@ -190,6 +190,20 @@
       background: rgba(255, 255, 255, .07);
     }
 
+    .version-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: rgba(255, 255, 255, .86);
+      background: rgba(255, 255, 255, .08);
+      font-size: 14px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
     .hero-card {
       border: 1px solid rgba(255, 255, 255, .18);
       border-radius: 28px;
@@ -538,6 +552,7 @@
   <header class="hero">
     <nav class="nav" aria-label="Nawigacja główna">
       <div class="brand"><span class="brand-mark">🧠</span><span>neuro_sim</span></div>
+      <span class="version-badge" aria-label="Wersja aplikacji">Wersja 0.3.285</span>
       <div class="nav-links">
         <a href="#projekt">Projekt</a>
         <a href="#instrukcja" data-open-tab="manual">Instrukcja</a>
@@ -549,7 +564,7 @@
       <div>
         <p class="eyebrow">Symulator edukacyjno-badawczy uruchamiany lokalnie lub w przeglądarce</p>
         <h1>Eksperymentuj z procesami poznawczymi mózgu bez ciężkiej infrastruktury.</h1>
-        <p class="lead">neuro_sim łączy model poznawczy, scenariusze zadań, konektom regionów, neuromodulację oraz raportowanie dydaktyczne. Projekt rozwija się w kierunku powtarzalnych eksperymentów healthy/disorder/lesion z czytelną interpretacją wyników.</p>
+        <p class="lead">neuro_sim łączy model poznawczy, scenariusze zadań, konektom regionów, neuromodulację oraz raportowanie dydaktyczne. Strona prowadzi użytkownika od pierwszego uruchomienia po świadome porównywanie przebiegów: pokazuje, które parametry zmieniać, jak czytać wykresy i dlaczego seed oraz wersja aplikacji są ważne dla odtwarzalności.</p>
         <div class="hero-actions">
           <a class="button" href="web_gui.html">Uruchom web GUI</a>
           <a class="button secondary" href="#instrukcja" data-open-tab="manual">Zobacz instrukcję</a>
@@ -559,6 +574,7 @@
           <span>Scenariusze poznawcze</span>
           <span>EEG/BOLD w roadmapie</span>
           <span>Polskie opisy edukacyjne</span>
+          <span>Wersjonowanie przebiegów</span>
         </div>
       </div>
 
@@ -570,7 +586,7 @@
               <div class="metric"><strong>45 s</strong><span>przykładowy czas symulacji</span></div>
               <div class="metric"><strong>7</strong><span>kontrolowane ziarno losowości</span></div>
               <div class="metric"><strong>4+</strong><span>zadania poznawcze w bibliotece</span></div>
-              <div class="metric"><strong>HTML</strong><span>interaktywny interfejs web</span></div>
+              <div class="metric"><strong>0.3.285</strong><span>wersja zależna od liczby commitów</span></div>
             </div>
             <div class="fake-chart" aria-label="Dekoracyjna wizualizacja aktywności">
               <i style="height: 42%"></i><i style="height: 68%"></i><i style="height: 51%"></i><i style="height: 76%"></i><i style="height: 63%"></i><i style="height: 88%"></i><i style="height: 54%"></i><i style="height: 72%"></i><i style="height: 47%"></i><i style="height: 81%"></i>
@@ -595,22 +611,23 @@
         <div class="section-header">
           <h2>Jedno narzędzie do demonstracji, porównywania i interpretacji dynamiki mózgu.</h2>
           <p>Strona podsumowuje kierunek rozwoju opisany w backlogu, liście todo i roadmapie: od prostego webowego uruchomienia symulacji po edukacyjne raporty, task battery oraz porównania profili zdrowych, zaburzeń i uszkodzeń.</p>
+          <p>Najważniejszy cel użytkowy to praca w krótkiej pętli: wybierz scenariusz, ustaw czas i seed, uruchom symulację, obejrzyj aktywność modułów oraz zapisz konfigurację do późniejszego porównania. Dzięki temu narzędzie sprawdza się zarówno jako pokaz na zajęciach, jak i jako piaskownica do testowania hipotez o uwadze, decyzji, uczeniu i neuromodulacji.</p>
         </div>
         <div class="cards">
           <article class="card">
             <span class="badge">Dla dydaktyki</span>
             <h3>Pokazuj mechanizm, nie tylko wykres</h3>
-            <p>Raporty mają tłumaczyć, co wydarzyło się w modelu, kiedy pojawiła się reakcja i jak połączyć aktywność z pojęciami poznawczymi.</p>
+            <p>Raporty i wykresy mają tłumaczyć, co wydarzyło się w modelu, kiedy pojawiła się reakcja i jak połączyć aktywność modułów z pojęciami poznawczymi: uwagą, pamięcią roboczą, kontrolą wykonawczą oraz oceną nagrody.</p>
           </article>
           <article class="card">
             <span class="badge">Dla eksperymentów</span>
             <h3>Powtarzalny pipeline</h3>
-            <p>Konfiguracja, ziarno losowości, symulacja, analiza i eksport wyników są projektowane jako spójny przepływ możliwy do odtworzenia.</p>
+            <p>Konfiguracja, ziarno losowości, wersja aplikacji, symulacja, analiza i eksport wyników są projektowane jako spójny przepływ możliwy do odtworzenia na innym komputerze albo w późniejszej iteracji ćwiczenia.</p>
           </article>
           <article class="card">
             <span class="badge">Dla porównań</span>
             <h3>Healthy vs disorder vs lesion</h3>
-            <p>Docelową wartością projektu jest uruchamianie tego samego bodźca na wielu profilach i wyjaśnianie różnic w zachowaniu sieci.</p>
+            <p>Docelową wartością projektu jest uruchamianie tego samego bodźca na wielu profilach i wyjaśnianie różnic w zachowaniu sieci: czy zmiana wynika z progu decyzji, siły szumu, modulacji dopaminowej, czy z topologii połączeń.</p>
           </article>
         </div>
         <div class="note">To narzędzie ma charakter edukacyjno-badawczy. Wyniki symulacji nie są diagnozą medyczną i wymagają interpretacji w kontekście założeń modelu.</div>
@@ -619,21 +636,22 @@
       <section class="tab-panel" id="panel-capabilities" role="tabpanel" aria-labelledby="tab-capabilities" data-panel="capabilities">
         <div class="section-header">
           <h2>Co można zrobić już teraz i co jest rozwijane dalej?</h2>
-          <p>Backlog rozdziela fundamenty, rozszerzenia kluczowe i inicjatywy długoterminowe. Poniżej pokazano je językiem użytkownika strony projektu.</p>
+          <p>Backlog rozdziela fundamenty, rozszerzenia kluczowe i inicjatywy długoterminowe. Poniżej pokazano je językiem użytkownika strony projektu: co jest dostępne od razu, co pomaga w interpretacji wyników oraz które obszary są rozwijane jako następne.</p>
         </div>
         <div class="split">
           <div class="callout">
             <h3>Aktualny web GUI</h3>
-            <p>Dotychczasowa aplikacja webowa została wydzielona do osobnego pliku <strong>web_gui.html</strong>. Możesz otworzyć ją bezpośrednio ze strony głównej i uruchomić symulację w przeglądarce dzięki Pyodide.</p>
+            <p>Dotychczasowa aplikacja webowa została wydzielona do osobnego pliku <strong>web_gui.html</strong>. Możesz otworzyć ją bezpośrednio ze strony głównej i uruchomić symulację w przeglądarce dzięki Pyodide, bez instalowania lokalnego backendu.</p>
+            <p>Interfejs jest przeznaczony do bezpiecznych eksperymentów edukacyjnych: domyślne parametry dają szybki start, a pola zaawansowane pozwalają stopniowo zwiększać złożoność analizy.</p>
             <p><a class="button" href="web_gui.html">Przejdź do web GUI</a></p>
           </div>
           <ul class="feature-list">
-            <li><strong>Scenariusze poznawcze</strong><br />Konfiguracje dla zadań takich jak Stroop, Go/No-Go, N-back oraz scenariusze demonstracyjne.</li>
-            <li><strong>Kontrolowana losowość</strong><br />Seed pozwala powtarzać przebieg i porównywać warianty przy tych samych założeniach.</li>
-            <li><strong>Wykresy i eksport</strong><br />Interfejs prezentuje aktywność, EEG, regiony i odczyty behawioralne oraz umożliwia eksport danych.</li>
-            <li><strong>Model regionowy</strong><br />Projekt rozwija atlas, konektom strukturalny, opóźnienia przewodzenia oraz populacje pobudzająco-hamujące.</li>
-            <li><strong>Neuromodulacja</strong><br />Dopamina, serotonina, acetylocholina, noradrenalina, GABA i glutaminian są traktowane jako mechanizmy interpretowalne.</li>
-            <li><strong>Raport dydaktyczny</strong><br />Planowany nacisk na timeline trial-by-trial, komentarze i gotowość do użycia na zajęciach.</li>
+            <li><strong>Scenariusze poznawcze</strong><br />Konfiguracje dla zadań takich jak Stroop, Go/No-Go, N-back oraz scenariusze demonstracyjne. Każdy scenariusz zmienia profil bodźców i pozwala obserwować inny aspekt przetwarzania informacji.</li>
+            <li><strong>Kontrolowana losowość</strong><br />Seed pozwala powtarzać przebieg i porównywać warianty przy tych samych założeniach. Zmieniaj go dopiero wtedy, gdy chcesz sprawdzić stabilność wniosków.</li>
+            <li><strong>Wykresy i eksport</strong><br />Interfejs prezentuje aktywność, EEG, regiony i odczyty behawioralne oraz umożliwia eksport danych do dalszej analizy albo raportu z ćwiczenia.</li>
+            <li><strong>Model regionowy</strong><br />Projekt rozwija atlas, konektom strukturalny, opóźnienia przewodzenia oraz populacje pobudzająco-hamujące, aby łączyć dynamikę modułów z interpretacją neurobiologiczną.</li>
+            <li><strong>Neuromodulacja</strong><br />Dopamina, serotonina, acetylocholina, noradrenalina, GABA i glutaminian są traktowane jako mechanizmy interpretowalne, a nie tylko jako abstrakcyjne suwaki parametrów.</li>
+            <li><strong>Raport dydaktyczny</strong><br />Planowany nacisk na timeline trial-by-trial, komentarze, opis ograniczeń i gotowość do użycia na zajęciach, warsztatach lub w pracy własnej studenta.</li>
           </ul>
         </div>
       </section>
@@ -656,40 +674,52 @@
       <section class="tab-panel" id="panel-manual" role="tabpanel" aria-labelledby="tab-manual" data-panel="manual">
         <div class="section-header" id="instrukcja">
           <h2>Instrukcja obsługi użytkownika programu</h2>
-          <p>Ten skrócony przewodnik pomaga uruchomić web GUI, dobrać parametry i bezpiecznie interpretować wyniki symulacji.</p>
+          <p>Ten przewodnik pomaga uruchomić web GUI lub desktopowe GUI, dobrać parametry, wykonać powtarzalny przebieg i bezpiecznie interpretować wyniki symulacji. Zacznij od ustawień domyślnych, a dopiero potem zmieniaj pojedyncze parametry, aby widzieć związek przyczyna–skutek.</p>
         </div>
         <div class="manual-grid">
           <article class="manual-step">
             <h3><span class="step-number">1</span> Otwórz interfejs</h3>
-            <p>Kliknij „Uruchom web GUI”. Przeglądarka pobierze Pyodide i uruchomi Pythona lokalnie w karcie, dlatego pierwsze ładowanie może potrwać dłużej.</p>
-            <ul><li>Nie zamykaj karty podczas inicjalizacji.</li><li>Jeśli strona jest hostowana statycznie, nie wymaga instalacji lokalnego serwera obliczeniowego.</li></ul>
+            <p>Kliknij „Uruchom web GUI”, aby pracować w przeglądarce, albo uruchom desktopowe GUI lokalnie poleceniem <strong>python main_gui.py</strong>. Wersja webowa pobiera Pyodide i uruchamia Pythona w karcie, dlatego pierwsze ładowanie może potrwać dłużej.</p>
+            <ul><li>Nie zamykaj karty podczas inicjalizacji środowiska.</li><li>Jeśli strona jest hostowana statycznie, nie wymaga instalacji lokalnego serwera obliczeniowego.</li><li>W desktopowym GUI upewnij się, że zależności projektu są zainstalowane w aktywnym środowisku Pythona.</li></ul>
           </article>
           <article class="manual-step">
             <h3><span class="step-number">2</span> Wybierz scenariusz i komendę</h3>
-            <p>Ustaw komendę <strong>run</strong> dla pojedynczego przebiegu lub <strong>batch</strong>, gdy chcesz porównać wiele wariantów parametrów.</p>
-            <ul><li>Scenariusze reprezentują zadania lub profile demonstracyjne.</li><li>Seed zostaw bez zmian, jeśli zależy Ci na porównywalności wyników.</li></ul>
+            <p>Ustaw komendę <strong>run</strong> dla pojedynczego przebiegu lub <strong>batch</strong>, gdy chcesz porównać wiele seedów albo scenariuszy. Na start wybierz jeden scenariusz i zostaw domyślny seed, aby łatwo wrócić do tego samego wyniku.</p>
+            <ul><li>Scenariusze reprezentują zadania lub profile demonstracyjne, np. reakcję na konflikt, uczenie nagrody albo obciążenie pamięci roboczej.</li><li>Seed zostaw bez zmian, jeśli zależy Ci na porównywalności wyników.</li><li>Tryb batch traktuj jako narzędzie porównawcze, a nie jako pierwszy krok dla nowych użytkowników.</li></ul>
           </article>
           <article class="manual-step">
             <h3><span class="step-number">3</span> Dostosuj parametry</h3>
-            <p>Najważniejsze pola to czas symulacji, krok czasowy, poziom szumu, progi decyzyjne, parametry uczenia i ustawienia global workspace.</p>
-            <ul><li>Zmieniaj pojedyncze parametry, aby łatwiej rozumieć efekt.</li><li>Unikaj skrajnych wartości, jeśli testujesz stabilność scenariusza po raz pierwszy.</li></ul>
+            <p>Najważniejsze pola to czas symulacji, krok czasowy, poziom szumu, progi decyzyjne, parametry uczenia i ustawienia global workspace. Zmieniaj jedną wartość naraz, zapisz konfigurację i dopiero potem porównuj wykresy.</p>
+            <ul><li>Czas symulacji zwiększaj stopniowo, ponieważ dłuższe przebiegi kosztują więcej czasu obliczeń.</li><li>Automatyczny dobór dt zostaw włączony, jeśli nie testujesz numerycznej stabilności modelu.</li><li>Unikaj skrajnych wartości, jeśli testujesz stabilność scenariusza po raz pierwszy.</li></ul>
           </article>
           <article class="manual-step">
             <h3><span class="step-number">4</span> Uruchom symulację</h3>
-            <p>Naciśnij przycisk uruchomienia w panelu web GUI i obserwuj komunikat statusu. Po zakończeniu zobaczysz wykresy oraz metryki.</p>
-            <ul><li>Przy dłuższych przebiegach poczekaj na zakończenie obliczeń w przeglądarce.</li><li>Jeżeli wyniki są niestabilne, skróć czas lub wróć do domyślnych parametrów.</li></ul>
+            <p>Naciśnij przycisk uruchomienia w panelu web GUI lub desktopowego GUI i obserwuj komunikat statusu. Po zakończeniu zobaczysz wykresy oraz metryki; jeżeli obliczenia trwają, nie odświeżaj strony i nie zamykaj okna.</p>
+            <ul><li>Przy dłuższych przebiegach poczekaj na zakończenie obliczeń w przeglądarce.</li><li>Jeżeli wyniki są niestabilne, skróć czas, zmniejsz szum lub wróć do domyślnych parametrów.</li><li>Przed uruchomieniem większej serii sprawdź pojedynczy przebieg na krótszym czasie.</li></ul>
           </article>
           <article class="manual-step">
             <h3><span class="step-number">5</span> Czytaj wyniki</h3>
-            <p>Porównuj aktywność modułów, sygnał EEG, regiony i wskaźniki behawioralne. Interpretuj je jako jakościowy obraz dynamiki modelu.</p>
-            <ul><li>Patrz na trend i różnice między wariantami, nie na pojedynczą liczbę bez kontekstu.</li><li>Zapisz seed i parametry, jeśli wynik ma być odtworzony.</li></ul>
+            <p>Porównuj aktywność modułów, sygnał EEG, regiony i wskaźniki behawioralne. Interpretuj je jako jakościowy obraz dynamiki modelu, a nie jako diagnozę medyczną ani bezpośredni pomiar z mózgu.</p>
+            <ul><li>Patrz na trend i różnice między wariantami, nie na pojedynczą liczbę bez kontekstu.</li><li>Wysoka aktywność modułu oznacza silniejszy udział danego procesu w założeniach modelu.</li><li>Zapisz seed, wersję aplikacji i parametry, jeśli wynik ma być odtworzony.</li></ul>
           </article>
           <article class="manual-step">
-            <h3><span class="step-number">6</span> Eksportuj dane</h3>
-            <p>Użyj eksportu CSV lub zapisanych artefaktów, aby kontynuować analizę poza GUI, przygotować raport albo porównać wyniki z innymi uruchomieniami.</p>
-            <ul><li>Opisuj pliki nazwą scenariusza, seedem i datą.</li><li>Pamiętaj, że roadmapa zakłada coraz pełniejsze raporty Markdown/HTML.</li></ul>
+            <h3><span class="step-number">6</span> Eksportuj dane i opisz wnioski</h3>
+            <p>Użyj eksportu CSV lub zapisanych artefaktów, aby kontynuować analizę poza GUI, przygotować raport albo porównać wyniki z innymi uruchomieniami. Do notatki dołącz cel eksperymentu, zmienione parametry oraz krótką interpretację obserwowanych różnic.</p>
+            <ul><li>Opisuj pliki nazwą scenariusza, seedem, wersją aplikacji i datą.</li><li>Zapisz konfigurację JSON przed większymi zmianami parametrów.</li><li>Pamiętaj, że roadmapa zakłada coraz pełniejsze raporty Markdown/HTML.</li></ul>
           </article>
         </div>
+
+        <div class="note"><strong>Rekomendowany pierwszy przebieg:</strong> scenariusz baseline, komenda run, domyślny seed, czas 12 s i automatyczny dt. Po zapisaniu wyniku zmień tylko jeden parametr, na przykład poziom szumu albo próg decyzji, i porównaj różnice na wykresach.</div>
+
+        <table class="status-table">
+          <thead><tr><th>Element obsługi</th><th>Jak używać</th><th>Na co uważać</th></tr></thead>
+          <tbody>
+            <tr><td>Konfiguracja JSON</td><td>Zapisuj ustawienia przed seriami eksperymentów i wczytuj je, gdy chcesz wrócić do wcześniejszego wariantu.</td><td>Nie porównuj wyników bez sprawdzenia, czy seed, czas, scenariusz i wersja aplikacji są zgodne.</td></tr>
+            <tr><td>Wykresy aktywności</td><td>Analizuj kolejność wzrostów i spadków modułów poznawczych, a nie tylko maksymalną wartość.</td><td>Pojedynczy pik może wynikać z parametrów bodźca albo szumu, dlatego porównuj go z całą trajektorią.</td></tr>
+            <tr><td>EEG i pasma</td><td>Traktuj je jako przybliżony, dydaktyczny sygnał z oscylatorów, pomocny przy omawianiu rytmów modelu.</td><td>To nie jest kliniczny zapis EEG i nie powinien być używany diagnostycznie.</td></tr>
+            <tr><td>Tryb batch</td><td>Używaj go do porównania kilku seedów lub scenariuszy po sprawdzeniu pojedynczego przebiegu.</td><td>Zbyt duża seria w przeglądarce może działać wolno; zacznij od małej liczby wariantów.</td></tr>
+          </tbody>
+        </table>
       </section>
 
       <section class="tab-panel" id="panel-docs" role="tabpanel" aria-labelledby="tab-docs" data-panel="docs">
@@ -718,6 +748,7 @@
   <footer>
     <div class="footer-inner">
       <span>neuro_sim — edukacyjny symulator procesów poznawczych mózgu</span>
+      <span>Wersja: 0.3.285</span>
       <span>Web GUI: <a href="web_gui.html">docs/web_gui.html</a></span>
     </div>
   </footer>
@@ -745,7 +776,14 @@
       link.addEventListener("click", () => activateTab(link.dataset.openTab));
     });
 
-    const handleHashChange = () => {\n      if (window.location.hash === "#instrukcja") {\n        activateTab("manual");\n      }\n    };\n    window.addEventListener("hashchange", handleHashChange);\n    handleHashChange();
+    const handleHashChange = () => {
+      if (window.location.hash === "#instrukcja") {
+        activateTab("manual");
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    handleHashChange();
   </script>
 </body>
 </html>

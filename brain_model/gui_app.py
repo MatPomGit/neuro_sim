@@ -8,6 +8,7 @@ import threading
 import tkinter as tk
 
 from .gui_config import GuiConfigMixin
+from .gui_forms import APP_VERSION
 from .gui_layout import GuiLayoutMixin
 from .gui_runner import GuiRunnerMixin
 from .gui_state import GuiState
@@ -22,7 +23,7 @@ class BrainModelGUI(GuiConfigMixin, GuiRunnerMixin, GuiLayoutMixin, tk.Tk):
     def __init__(self) -> None:
         """Utwórz stan aplikacji, formularze i elementy okna głównego."""
         super().__init__()
-        self.title("konfiguracja symulacji Cognitive Brain Model")
+        self.title(f"konfiguracja symulacji Cognitive Brain Model — wersja {APP_VERSION}")
         self.geometry("1180x780")
         self.minsize(940, 660)
         configure_styles(self)
