@@ -1,0 +1,23 @@
+model: {}
+integrator:
+  method: euler
+timestep: 0.005
+seed: 21
+task:
+  name: roving_oddball
+  scenario: roving_oddball
+  duration: 30.0
+  n_runs: 6
+  run_length_min: 3
+  run_length_max: 6
+  deviant_probability: 1.0
+  inter_stimulus_interval: 0.8
+  jitter: 0.05
+pathology:
+  enabled: false
+  scenario: null
+  mutations: []
+output:
+  save_results: false
+  label: roving_oddball_healthy
+  output_dir: outputs
