@@ -361,10 +361,12 @@ class QtSections:
             return read_line_edit(control)
         if binding.control_kind == "check_box":
             return read_check_box(control)
-        value = read_combo_box(control)
-        if binding.state_field == "command":
-            return COMMAND_VALUES.get(value, value)
-        return value
+        if binding.control_kind == "combo_box":
+            value = read_combo_box(control)
+            if binding.state_field == "command":
+                return COMMAND_VALUES.get(value, value)
+            return value
+        raise ValueError(f"Nieobsługiwany typ kontrolki: {binding.control_kind}")
 
     def _write_bound_control(self, binding: ControlBinding) -> None:
         """Zapisz wartość pola `GuiState` do kontrolki z jawnego mapowania.
