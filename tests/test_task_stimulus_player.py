@@ -23,7 +23,7 @@ def test_task_stimulus_player_sorts_stimuli_before_playback() -> None:
     assert [event["trial_id"] for event in state.metrics["trial_events"]] == [1]
     assert player.cursor == 1
 
-    # Advance time to cover the second stimulus
+    # Przesuń czas tak, aby objąć drugi bodziec.
     state.time = 2.5
     player.update(state, dt=0.1)
 
@@ -53,8 +53,60 @@ def test_task_stimulus_player_updates_regional_state() -> None:
         "DLPFC": 0.675,
     }
 
-    # Advance time past the stimulus duration to verify regional inputs are reset to 0.0
+    # Przesuń czas poza czas trwania bodźca, aby sprawdzić wyzerowanie wejść.
     state.time = 0.6
     player.update(state, dt=0.1)
     assert state.regions["ACC"].tolist() == [0.0]
     assert state.regions["DLPFC"].tolist() == [0.0]
+
+
+def test_task_stimulus_player_keeps_input_active_for_full_duration() -> None:
+    """Weryfikuje odświeżanie wejścia regionalnego w trakcie trwania bodźca."""
+    stimulus = TrialStimulus(
+        trial_id=1,
+        onset_s=0.0,
+        duration_s=0.5,
+        payload={},
+        condition="incongruent",
+        regional_input={"ACC": 1.0},
+    )
+    player = TaskStimulusPlayer(stimuli=[stimulus])
+    state = SimulationState(time=0.0)
+
+    player.update(state, dt=0.1)
+    state.regions.clear()
+    state.time = 0.4
+    player.update(state, dt=0.1)
+
+    assert state.regions["ACC"].tolist() == [1.0]
+    assert len(state.metrics["trial_events"]) == 1
+
+
+def test_task_stimulus_player_sums_overlapping_active_inputs() -> None:
+    """Weryfikuje sumowanie jednocześnie aktywnych wejść dla tego samego regionu."""
+    stimuli = [
+        TrialStimulus(
+            trial_id=1,
+            onset_s=0.0,
+            duration_s=1.0,
+            payload={},
+            condition="first",
+            regional_input={"ACC": 1.0, "DLPFC": 0.5},
+        ),
+        TrialStimulus(
+            trial_id=2,
+            onset_s=0.2,
+            duration_s=0.4,
+            payload={},
+            condition="second",
+            regional_input={"ACC": 2.0},
+        ),
+    ]
+    player = TaskStimulusPlayer(stimuli=stimuli)
+    state = SimulationState(time=0.3)
+
+    player.update(state, dt=0.1)
+
+    assert state.regions["ACC"].tolist() == [3.0]
+    assert state.regions["DLPFC"].tolist() == [0.5]
+    assert [event["trial_id"] for event in state.metrics["trial_events"]] == [1, 2]
