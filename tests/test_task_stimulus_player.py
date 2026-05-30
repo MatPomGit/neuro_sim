@@ -52,3 +52,9 @@ def test_task_stimulus_player_updates_regional_state() -> None:
         "ACC": 1.35,
         "DLPFC": 0.675,
     }
+
+    # Advance time past the stimulus duration to verify regional inputs are reset to 0.0
+    state.time = 0.6
+    player.update(state, dt=0.1)
+    assert state.regions["ACC"].tolist() == [0.0]
+    assert state.regions["DLPFC"].tolist() == [0.0]
