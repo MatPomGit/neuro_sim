@@ -47,7 +47,7 @@ class TaskStimulusPlayer:
         self.stimuli = sorted(self.stimuli, key=lambda stimulus: stimulus.onset_s)
 
     def update(self, state: SimulationState, dt: float) -> None:
-        """Emituje wszystkie bodźce, których czas onset został osiągnięty."""
+        """Emituje nowe zdarzenia i odświeża aktywne wejścia regionalne."""
         del dt
         emitted = state.metrics.setdefault("trial_events", [])
         while (
@@ -55,12 +55,7 @@ class TaskStimulusPlayer:
             and self.stimuli[self.cursor].onset_s <= state.time + 1e-9
         ):
             stimulus = self.stimuli[self.cursor]
-            regional_input = getattr(stimulus, "regional_input", None)
-            if regional_input is None:
-                regional_input = stimulus.payload.get("regional_input", {})
-            regional_input = dict(regional_input)
-            for region, amplitude in regional_input.items():
-                state.regions[region] = np.array([float(amplitude)], dtype=float)
+            regional_input = self._regional_input_for(stimulus)
             emitted.append(
                 {
                     "trial_id": stimulus.trial_id,
@@ -72,6 +67,76 @@ class TaskStimulusPlayer:
                 }
             )
             self.cursor += 1
+
+        self._apply_active_regional_inputs(state)
+
+    def _apply_active_regional_inputs(self, state: SimulationState) -> None:
+        """Ustawia amplitudy tylko dla bodźców aktywnych w bieżącym czasie.
+
+        Parameters
+        ----------
+        state:
+            Mutowalny stan symulacji z czasem oraz mapą wejść regionalnych.
+        """
+        managed_regions: set[str] = set()
+        active_inputs: dict[str, float] = {}
+        for stimulus in self.stimuli:
+            regional_input = self._regional_input_for(stimulus)
+            managed_regions.update(regional_input)
+            if not self._is_stimulus_active(stimulus, state.time):
+                continue
+            for region, amplitude in regional_input.items():
+                active_inputs[region] = active_inputs.get(region, 0.0) + float(
+                    amplitude
+                )
+
+        for region in managed_regions:
+            state.regions[region] = np.array(
+                [active_inputs.get(region, 0.0)], dtype=float
+            )
+
+    @staticmethod
+    def _is_stimulus_active(stimulus: Any, time_s: float) -> bool:
+        """Sprawdza, czy bodziec obejmuje bieżący czas symulacji.
+
+        Parameters
+        ----------
+        stimulus:
+            Bodziec z polami ``onset_s`` oraz ``duration_s`` wyrażonymi w sekundach.
+        time_s:
+            Bieżący czas symulacji w sekundach.
+
+        Returns
+        -------
+        bool
+            ``True``, gdy czas należy do półotwartego przedziału aktywności
+            ``[onset_s, onset_s + duration_s)``.
+        """
+        return stimulus.onset_s <= time_s + 1e-9 and time_s < (
+            stimulus.onset_s + stimulus.duration_s
+        )
+
+    @staticmethod
+    def _regional_input_for(stimulus: Any) -> dict[str, float]:
+        """Zwraca znormalizowaną mapę wejść regionalnych bodźca.
+
+        Parameters
+        ----------
+        stimulus:
+            Bodziec zawierający jawne ``regional_input`` albo starszy wpis
+            ``payload["regional_input"]``.
+
+        Returns
+        -------
+        dict[str, float]
+            Kopia mapy region→amplituda z wartościami liczbowymi typu ``float``.
+        """
+        regional_input = getattr(stimulus, "regional_input", None)
+        if regional_input is None:
+            regional_input = stimulus.payload.get("regional_input", {})
+        return {
+            region: float(amplitude) for region, amplitude in regional_input.items()
+        }
 
 
 @dataclass(slots=True)
