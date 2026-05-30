@@ -151,6 +151,18 @@ def test_task_functional_mapping_examples() -> Any:
     assert "pamięć robocza" in functions_for_task("n-back")
 
 
+def test_trial_stimulus_stores_regional_input_separately() -> Any:
+    """Sprawdza jawne przechowywanie wejścia regionalnego poza payload."""
+    stimulus = StroopTask().generate_stimuli(seed=7, duration_s=1.0)[0]
+
+    enriched = stimulus.with_regional_input({"ACC": 1.35, "DLPFC": 0.675})
+
+    assert stimulus.regional_input == {}
+    assert "regional_input" not in stimulus.payload
+    assert enriched.regional_input == {"ACC": 1.35, "DLPFC": 0.675}
+    assert enriched.payload == stimulus.payload
+
+
 def test_run_experiment_reports_task_activation() -> Any:
     """Sprawdza raportowanie regionów i funkcji pobudzonych przez zadanie."""
     cfg = ExperimentConfig(

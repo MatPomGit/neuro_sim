@@ -189,11 +189,12 @@ def _simulate_task_trials(
     task_name = str(config.task.get("name", "stroop"))
     task = get_task(task_name, **config.task)
     duration = float(config.task.get("duration", 45.0))
-    stimuli = task.generate_stimuli(seed=config.seed, duration_s=duration)
-    for stimulus in stimuli:
-        stimulus.payload["regional_input"] = _regional_input_for_stimulus(
-            task.name, stimulus.condition
+    stimuli = [
+        stimulus.with_regional_input(
+            _regional_input_for_stimulus(task.name, stimulus.condition)
         )
+        for stimulus in task.generate_stimuli(seed=config.seed, duration_s=duration)
+    ]
 
     scheduler = SimulationScheduler(stimuli=[TaskStimulusPlayer(stimuli=stimuli)])
     state = SimulationState()
@@ -226,7 +227,7 @@ def _simulate_task_trials(
             ),
             "condition": result.condition,
         }
-        trial_result["regional_input"] = stimulus.payload["regional_input"]
+        trial_result["regional_input"] = dict(stimulus.regional_input)
         for metric_name in (
             "surprise_index",
             "habituation_level",

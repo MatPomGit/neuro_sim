@@ -55,7 +55,10 @@ class TaskStimulusPlayer:
             and self.stimuli[self.cursor].onset_s <= state.time + 1e-9
         ):
             stimulus = self.stimuli[self.cursor]
-            regional_input = stimulus.payload.get("regional_input", {})
+            regional_input = getattr(stimulus, "regional_input", None)
+            if regional_input is None:
+                regional_input = stimulus.payload.get("regional_input", {})
+            regional_input = dict(regional_input)
             for region, amplitude in regional_input.items():
                 state.regions[region] = np.array([float(amplitude)], dtype=float)
             emitted.append(
