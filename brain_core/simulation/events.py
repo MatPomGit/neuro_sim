@@ -385,7 +385,7 @@ def _activity_change_events(
 
 def _time_at(time: np.ndarray, sample_index: int) -> float:
     """Zwraca czas dla indeksu próbki z bezpiecznym ograniczeniem zakresu."""
-    if time.size == 0:
+    if time is None or getattr(time, "size", 0) == 0:
         return 0.0
     bounded_index = min(max(sample_index, 0), int(time.size - 1))
     return float(time[bounded_index])
