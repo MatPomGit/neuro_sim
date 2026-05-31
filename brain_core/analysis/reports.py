@@ -290,8 +290,10 @@ def build_clinical_difference_report(
     ValueError
         Gdy aktywność referencyjna lub porównywana jest pusta.
     """
-    reference_activity = np.asarray(reference_result.get("activity"), dtype=float)
-    reference_time = np.asarray(reference_result.get("time"), dtype=float)
+    reference_activity = np.asarray(reference_result.get("activity") or [], dtype=float)
+    if reference_activity.ndim == 1:
+        reference_activity = reference_activity[:, np.newaxis]
+    reference_time = np.asarray(reference_result.get("time") or [], dtype=float)
     reference_model = reference_result.get("model")
     reference_names = list(getattr(reference_model, "names", []))
     if reference_activity.size == 0 or reference_time.size == 0:
