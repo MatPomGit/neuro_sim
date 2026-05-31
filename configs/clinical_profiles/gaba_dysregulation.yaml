@@ -1,0 +1,22 @@
+clinical_profile:
+  id: gaba_dysregulation
+  display_name: Dysregulacja GABA
+  mechanism: Obniżona inhibicja zwiększająca szum i niestabilność kontroli przedczołowej.
+  affected_regions:
+    - PFC
+    - ATT
+  cognitive_functions:
+    - hamowanie reakcji
+    - stabilność uwagi
+  expected_effects:
+    noise: wyższy poziom szumu aktywacji
+model:
+  noise: 0.03
+pathology:
+  enabled: true
+  scenario: reduced_gaba
+  mutations: []
+output:
+  save_results: false
+  label: gaba_dysregulation
+  output_dir: outputs

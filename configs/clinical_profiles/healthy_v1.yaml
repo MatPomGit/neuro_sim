@@ -1,0 +1,20 @@
+clinical_profile:
+  id: healthy_v1
+  display_name: Zdrowy profil bazowy v1
+  mechanism: Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.
+  affected_regions: []
+  cognitive_functions:
+    - kontrola poznawcza
+    - uwaga
+    - pamięć robocza
+  expected_effects: {}
+model:
+  noise: 0.015
+pathology:
+  enabled: false
+  scenario: null
+  mutations: []
+output:
+  save_results: false
+  label: healthy_v1
+  output_dir: outputs

@@ -1,5 +1,8 @@
+from typing import Any
+
 import numpy as np
 
+from brain_core.analysis.benchmark_loader import load_reference_benchmarks
 from brain_core.analysis.signal_metrics import (
     band_powers,
     comparative_report,
@@ -7,9 +10,18 @@ from brain_core.analysis.signal_metrics import (
     phase_locking_value,
 )
 from brain_core.physiology.bold_hrf import canonical_hrf, convolve_with_hrf
-from brain_core.physiology.eeg_forward_model import EEGForwardModel, EEGInverseSolver, ForwardModelConfig
+from brain_core.physiology.eeg_forward_model import (
+    EEGForwardModel,
+    EEGInverseSolver,
+    ForwardModelConfig,
+)
 from brain_core.physiology.neurovascular_coupling import neural_drive_from_activity
-from typing import Any
+from brain_core.simulation.config_loader import load_clinical_profiles
+from brain_core.simulation.config_schema import ExperimentConfig
+from brain_core.simulation.engine import (
+    run_experiment,
+    run_task_across_clinical_profiles,
+)
 
 
 def test_eeg_forward_projection_shapes() -> Any:
@@ -73,11 +85,6 @@ def test_analysis_metrics_outputs() -> Any:
     rep = comparative_report(np.column_stack([s1, s2]), np.column_stack([s1, s2]))
     assert rep["mae"] == 0.0
 
-from brain_core.analysis.benchmark_loader import load_reference_benchmarks
-from brain_core.analysis.reports import build_analysis_report
-from brain_core.simulation.config_schema import ExperimentConfig
-from brain_core.simulation.engine import run_experiment
-
 
 def test_reference_benchmark_loader_shapes() -> Any:
     """Opis funkcji test_reference_benchmark_loader_shapes."""
@@ -90,7 +97,10 @@ def test_reference_benchmark_loader_shapes() -> Any:
 
 def test_report_structure_and_metric_stability() -> Any:
     """Opis funkcji test_report_structure_and_metric_stability."""
-    cfg = ExperimentConfig(output={"save_results": False, "label": "test", "output_dir": "outputs"}, seed=11)
+    cfg = ExperimentConfig(
+        output={"save_results": False, "label": "test", "output_dir": "outputs"},
+        seed=11,
+    )
     run_a = run_experiment(cfg)
     run_b = run_experiment(cfg)
 
@@ -112,3 +122,30 @@ def test_report_structure_and_metric_stability() -> Any:
 
     for key in required:
         assert np.isclose(report_a["metrics"][key], report_b["metrics"][key])
+
+
+def test_run_task_across_clinical_profiles_keeps_seed_and_reports_differences() -> Any:
+    """Porównanie profili klinicznych zachowuje task, seed i sekcję różnic."""
+    cfg = ExperimentConfig(
+        output={"save_results": False, "label": "test", "output_dir": "outputs"},
+        seed=5,
+        task={"name": "stroop", "scenario": "reward-learning", "duration": 0.2},
+    )
+    profiles = load_clinical_profiles(
+        [
+            "configs/clinical_profiles/healthy_v1.yaml",
+            "configs/clinical_profiles/dopamine_deficit.yaml",
+        ]
+    )
+
+    batch = run_task_across_clinical_profiles(cfg, profiles)
+
+    assert batch["seed"] == 5
+    assert batch["task"] == cfg.task
+    assert batch["reference_profile_id"] == "healthy_v1"
+    assert set(batch["runs"]) == {"healthy_v1", "dopamine_deficit"}
+    differences = batch["clinical_difference_report"]["clinical_differences"]
+    assert differences[0]["profile_id"] == "dopamine_deficit"
+    assert {"region", "time_s", "cognitive_function", "mechanism"}.issubset(
+        differences[0]
+    )
