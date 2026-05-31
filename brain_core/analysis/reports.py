@@ -61,6 +61,23 @@ class AnalysisReport:
             lines.append(f"- **regiony**: {regions}")
             for region, value in task_activation.get("mean_regional_input", {}).items():
                 lines.append(f"- **średnie wejście {region}**: {value}")
+
+        clinical_differences = self.payload.get("clinical_differences", [])
+        if clinical_differences:
+            lines.extend(["", "## Raport różnic profili klinicznych"])
+            for item in clinical_differences:
+                lines.append(f"- **profil**: {item.get('profile_id', 'n/a')}")
+                lines.append(f"  - **region**: {item.get('region', 'n/a')}")
+                lines.append(f"  - **czas_s**: {item.get('time_s', 'n/a')}")
+                lines.append(
+                    f"  - **funkcja poznawcza**: "
+                    f"{item.get('cognitive_function', 'n/a')}"
+                )
+                lines.append(f"  - **mechanizm**: {item.get('mechanism', 'n/a')}")
+                lines.append(
+                    f"  - **średnia różnica bezwzględna**: "
+                    f"{item.get('mean_abs_difference', 'n/a')}"
+                )
         return "\n".join(lines)
 
     def to_csv_rows(self) -> list[dict[str, str]]:
@@ -95,6 +112,23 @@ class AnalysisReport:
                         "section": "task_activation",
                         "metric": f"mean_regional_input_{region}",
                         "value": str(value),
+                    }
+                )
+
+        for item in self.payload.get("clinical_differences", []):
+            profile_id = item.get("profile_id", "n/a")
+            for metric in (
+                "region",
+                "time_s",
+                "cognitive_function",
+                "mechanism",
+                "mean_abs_difference",
+            ):
+                rows.append(
+                    {
+                        "section": "clinical_differences",
+                        "metric": f"{profile_id}_{metric}",
+                        "value": str(item.get(metric, "n/a")),
                     }
                 )
         return rows
@@ -230,3 +264,77 @@ def build_analysis_report(
             )
 
     return AnalysisReport(payload={"metrics": metrics, "comparison": comparison})
+
+
+def build_clinical_difference_report(
+    reference_result: dict,
+    profile_results: dict[str, dict],
+) -> AnalysisReport:
+    """Buduje raport różnic między profilem referencyjnym i klinicznymi.
+
+    Parameters
+    ----------
+    reference_result:
+        Wynik uruchomienia referencyjnego, zwykle dla profilu `healthy_v1`.
+    profile_results:
+        Mapa identyfikator profilu→wynik eksperymentu dla porównywanych profili.
+
+    Returns
+    -------
+    AnalysisReport
+        Raport opisujący największą różnicę według regionu, czasu, funkcji
+        poznawczej i mechanizmu profilu klinicznego.
+
+    Raises
+    ------
+    ValueError
+        Gdy aktywność referencyjna lub porównywana jest pusta.
+    """
+    reference_activity = np.asarray(reference_result.get("activity") or [], dtype=float)
+    if reference_activity.ndim == 1:
+        reference_activity = reference_activity[:, np.newaxis]
+    reference_time = np.asarray(reference_result.get("time") or [], dtype=float)
+    reference_model = reference_result.get("model")
+    reference_names = list(getattr(reference_model, "names", []))
+    if reference_activity.size == 0 or reference_time.size == 0:
+        raise ValueError("Wynik referencyjny musi zawierać aktywność i czas.")
+
+    differences: list[dict[str, object]] = []
+    for profile_id, result in profile_results.items():
+        activity = np.asarray(result.get("activity") or [], dtype=float)
+        if activity.ndim == 1:
+            activity = activity[:, np.newaxis]
+        if activity.size == 0:
+            raise ValueError(f"Wynik profilu {profile_id} nie zawiera aktywności.")
+
+        rows = min(reference_activity.shape[0], activity.shape[0])
+        cols = min(reference_activity.shape[1], activity.shape[1])
+        delta = np.abs(activity[:rows, :cols] - reference_activity[:rows, :cols])
+        mean_by_region = np.mean(delta, axis=0)
+        region_idx = int(np.argmax(mean_by_region))
+        time_idx = int(np.argmax(delta[:, region_idx]))
+        profile = result.get("clinical_profile", {})
+        functions = profile.get("cognitive_functions") or result.get(
+            "task_activation", {}
+        ).get("functions", [])
+        region = (
+            reference_names[region_idx]
+            if region_idx < len(reference_names)
+            else f"region_{region_idx}"
+        )
+        differences.append(
+            {
+                "profile_id": profile.get("id", profile_id),
+                "display_name": profile.get("display_name", profile_id),
+                "region": region,
+                "time_s": round(
+                    float(reference_time[min(time_idx, reference_time.size - 1)]), 6
+                ),
+                "cognitive_function": functions[0] if functions else "n/a",
+                "mechanism": profile.get("mechanism", "n/a"),
+                "mean_abs_difference": round(float(mean_by_region[region_idx]), 8),
+                "max_abs_difference": round(float(delta[time_idx, region_idx]), 8),
+            }
+        )
+
+    return AnalysisReport(payload={"clinical_differences": differences})

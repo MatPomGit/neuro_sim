@@ -31,3 +31,40 @@ def test_explicit_snn_sync_dt_still_must_match_timestep() -> None:
                 "snn": {"enabled": True, "circuits": [], "sync_dt": 0.005},
             }
         )
+
+
+def test_clinical_profile_validation_accepts_known_profile() -> None:
+    """Profil kliniczny z katalogu konfiguracji ma przechodzić walidację schematu."""
+    cfg = validate_config(
+        {
+            "task": {"duration": 1.0},
+            "clinical_profile": {
+                "id": "dopamine_deficit",
+                "display_name": "Deficyt dopaminowy",
+                "mechanism": "Obniżona modulacja nagrody.",
+                "affected_regions": ["VAL"],
+                "cognitive_functions": ["uczenie ze wzmocnieniem"],
+                "expected_effects": {"learning_rate_value": "niższe"},
+            },
+        }
+    )
+
+    assert cfg.clinical_profile["id"] == "dopamine_deficit"
+
+
+def test_clinical_profile_validation_rejects_unknown_profile() -> None:
+    """Nieznany identyfikator profilu ma dawać czytelny błąd walidacji."""
+    with pytest.raises(ConfigValidationError, match="Nieznany clinical_profile.id"):
+        validate_config(
+            {
+                "task": {"duration": 1.0},
+                "clinical_profile": {
+                    "id": "unknown_profile",
+                    "display_name": "Nieznany profil",
+                    "mechanism": "Opis mechanizmu.",
+                    "affected_regions": [],
+                    "cognitive_functions": [],
+                    "expected_effects": {},
+                },
+            }
+        )

@@ -1,0 +1,23 @@
+clinical_profile:
+  id: serotonin_imbalance
+  display_name: Zaburzenie równowagi serotoninowej
+  mechanism: Słabsza stabilizacja nastroju i kontroli awersyjnej przez podniesienie progu decyzji.
+  affected_regions:
+    - DMN
+    - SAL
+  cognitive_functions:
+    - regulacja emocji
+    - elastyczność poznawcza
+  expected_effects:
+    decision_threshold: ostrożniejsze przełączanie decyzji
+model:
+  decision_threshold: 0.72
+  confidence_gain: 1.55
+pathology:
+  enabled: true
+  scenario: null
+  mutations: []
+output:
+  save_results: false
+  label: serotonin_imbalance
+  output_dir: outputs

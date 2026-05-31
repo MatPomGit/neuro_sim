@@ -1,0 +1,22 @@
+clinical_profile:
+  id: hippocampal_lesion
+  display_name: Uszkodzenie hipokampa
+  mechanism: Ograniczona integracja epizodyczna i słabsze przewidywanie sensoryczne zależne od pamięci.
+  affected_regions:
+    - EPIS
+    - Hippocampus
+  cognitive_functions:
+    - pamięć epizodyczna
+    - detekcja nowości
+  expected_effects:
+    pathology_scenario: hippocampal_lesion
+model:
+  learning_rate_semantic: 0.003
+pathology:
+  enabled: true
+  scenario: hippocampal_lesion
+  mutations: []
+output:
+  save_results: false
+  label: hippocampal_lesion
+  output_dir: outputs

@@ -1,0 +1,23 @@
+clinical_profile:
+  id: dopamine_deficit
+  display_name: Deficyt dopaminowy
+  mechanism: Obniżona modulacja nagrody i uczenia ze wzmocnieniem przez słabszą plastyczność wartościującą.
+  affected_regions:
+    - VAL
+    - EXEC
+  cognitive_functions:
+    - uczenie ze wzmocnieniem
+    - podejmowanie decyzji
+  expected_effects:
+    learning_rate_value: niższe tempo aktualizacji wartości
+model:
+  learning_rate_value: 0.008
+  decision_threshold: 0.68
+pathology:
+  enabled: true
+  scenario: null
+  mutations: []
+output:
+  save_results: false
+  label: dopamine_deficit
+  output_dir: outputs

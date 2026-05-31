@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import time as pytime
+from copy import deepcopy
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Callable
 
@@ -12,6 +14,7 @@ from brain_core.analysis.benchmark_loader import load_reference_benchmarks
 from brain_core.analysis.reports import (
     AnalysisReport,
     build_analysis_report,
+    build_clinical_difference_report,
     write_report_files,
 )
 from brain_core.cognition.mapping import mapping_for_task
@@ -309,6 +312,7 @@ def run_experiment(
         analysis_set=config.analysis.get("sets"),
     )
     analysis_report = _attach_task_activation_section(analysis_report, task_activation)
+    analysis_report.payload["clinical_profile"] = dict(config.clinical_profile)
 
     save_info: dict[str, Any] | None = None
     if config.output.get("save_results", False):
@@ -343,6 +347,98 @@ def run_experiment(
         "trial_results": trial_results,
         "analysis_report": analysis_report.payload,
         "task_activation": task_activation,
+        "clinical_profile": dict(config.clinical_profile),
         "save_info": save_info,
         "elapsed": elapsed,
+    }
+
+
+def apply_clinical_profile_config(
+    base_config: ExperimentConfig,
+    profile_config: dict[str, Any],
+) -> ExperimentConfig:
+    """Scal bazową konfigurację zadania z pojedynczym profilem klinicznym.
+
+    Parameters
+    ----------
+    base_config:
+        Konfiguracja referencyjna definiująca wspólny task i seed.
+    profile_config:
+        Zweryfikowany fragment konfiguracji profilu klinicznego.
+
+    Returns
+    -------
+    ExperimentConfig
+        Nowa konfiguracja z tym samym zadaniem i seedem, ale z nadpisaniami
+        modelu, patologii i metadanych profilu klinicznego.
+    """
+    profile = deepcopy(profile_config)
+    merged_model = deepcopy(base_config.model)
+    merged_model.update(profile.get("model", {}))
+
+    output = deepcopy(base_config.output)
+    profile_metadata = profile.get("clinical_profile", {})
+    profile_id = profile_metadata.get("id", output.get("label", "clinical_profile"))
+    output.update(profile.get("output", {}))
+    output["label"] = str(profile_id)
+
+    return replace(
+        base_config,
+        model=merged_model,
+        pathology=deepcopy(profile.get("pathology", base_config.pathology)),
+        output=output,
+        clinical_profile=deepcopy(profile_metadata),
+    )
+
+
+def run_task_across_clinical_profiles(
+    base_config: ExperimentConfig,
+    clinical_profiles: list[dict[str, Any]],
+    progress_callback: Callable[[float], None] | None = None,
+) -> dict[str, Any]:
+    """Uruchom ten sam task z tym samym seedem dla wielu profili klinicznych.
+
+    Parameters
+    ----------
+    base_config:
+        Konfiguracja bazowa. Jej `task` oraz `seed` są zachowywane dla każdego
+        profilu, aby różnice wynikały z profilu klinicznego, a nie z losowości.
+    clinical_profiles:
+        Lista fragmentów konfiguracji wczytanych z `configs/clinical_profiles/`.
+    progress_callback:
+        Opcjonalna funkcja raportująca postęp pojedynczego uruchomienia.
+
+    Returns
+    -------
+    dict[str, Any]
+        Wyniki per profil oraz raport różnic względem `healthy_v1`, jeśli jest
+        dostępny, albo względem pierwszego profilu z listy.
+
+    Raises
+    ------
+    ValueError
+        Gdy lista profili klinicznych jest pusta.
+    """
+    if not clinical_profiles:
+        raise ValueError("Lista profili klinicznych nie może być pusta.")
+
+    runs: dict[str, dict[str, Any]] = {}
+    for profile_config in clinical_profiles:
+        profile_id = str(
+            profile_config.get("clinical_profile", {}).get("id", "profile")
+        )
+        profile_run_config = apply_clinical_profile_config(base_config, profile_config)
+        runs[profile_id] = run_experiment(
+            profile_run_config, progress_callback=progress_callback
+        )
+
+    reference_id = "healthy_v1" if "healthy_v1" in runs else next(iter(runs))
+    compared = {key: value for key, value in runs.items() if key != reference_id}
+    difference_report = build_clinical_difference_report(runs[reference_id], compared)
+    return {
+        "seed": base_config.seed,
+        "task": dict(base_config.task),
+        "reference_profile_id": reference_id,
+        "runs": runs,
+        "clinical_difference_report": difference_report.payload,
     }

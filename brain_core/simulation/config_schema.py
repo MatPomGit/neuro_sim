@@ -6,6 +6,24 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+ALLOWED_CLINICAL_PROFILE_IDS = {
+    "healthy_v1",
+    "dopamine_deficit",
+    "gaba_dysregulation",
+    "serotonin_imbalance",
+    "hippocampal_lesion",
+    "dlpfc_weakening",
+}
+
+ALLOWED_CLINICAL_PROFILE_KEYS = {
+    "id",
+    "display_name",
+    "mechanism",
+    "affected_regions",
+    "cognitive_functions",
+    "expected_effects",
+}
+
 
 @dataclass
 class ExperimentConfig:
@@ -22,6 +40,7 @@ class ExperimentConfig:
         output (dict[str, Any]): Ustawienia wyjścia.
         snn (dict[str, Any]): Konfiguracja SNN.
         analysis (dict[str, Any]): Konfiguracja analiz.
+        clinical_profile (dict[str, Any]): Metadane profilu klinicznego.
     """
 
     model: dict[str, Any] = field(default_factory=dict)
@@ -47,6 +66,16 @@ class ExperimentConfig:
     analysis: dict[str, Any] = field(
         default_factory=lambda: {
             "sets": ["spectral", "phase_locking", "connectivity", "information_flow"]
+        }
+    )
+    clinical_profile: dict[str, Any] = field(
+        default_factory=lambda: {
+            "id": "healthy_v1",
+            "display_name": "Zdrowy profil bazowy v1",
+            "mechanism": "Brak jawnie modelowanej patologii klinicznej.",
+            "affected_regions": [],
+            "cognitive_functions": [],
+            "expected_effects": {},
         }
     )
 
@@ -101,10 +130,59 @@ def validate_config(raw: dict[str, Any]) -> ExperimentConfig:
                     f"Brak pola pathology.mutations[{idx}].{required_key}"
                 )
 
+    _validate_clinical_profile_config(cfg)
     _validate_snn_config(cfg)
     _validate_analysis_config(cfg)
     cfg.output["output_dir"] = str(Path(cfg.output.get("output_dir", "outputs")))
     return cfg
+
+
+def _validate_clinical_profile_config(cfg: ExperimentConfig) -> None:
+    """Waliduje metadane profilu klinicznego ładowanego z konfiguracji."""
+    if not isinstance(cfg.clinical_profile, dict):
+        raise ConfigValidationError("clinical_profile musi być obiektem")
+
+    profile_id = cfg.clinical_profile.get("id", "healthy_v1")
+    if profile_id not in ALLOWED_CLINICAL_PROFILE_IDS:
+        allowed = sorted(ALLOWED_CLINICAL_PROFILE_IDS)
+        raise ConfigValidationError(
+            f"Nieznany clinical_profile.id: {profile_id}. Dozwolone: {allowed}"
+        )
+
+    unknown_keys = sorted(
+        key for key in cfg.clinical_profile if key not in ALLOWED_CLINICAL_PROFILE_KEYS
+    )
+    if unknown_keys:
+        raise ConfigValidationError(f"Nieznane pola clinical_profile: {unknown_keys}")
+
+    for text_key in ("display_name", "mechanism"):
+        value = cfg.clinical_profile.get(text_key, "")
+        if not isinstance(value, str) or not value.strip():
+            raise ConfigValidationError(f"clinical_profile.{text_key} musi być tekstem")
+
+    for list_key in ("affected_regions", "cognitive_functions"):
+        value = cfg.clinical_profile.get(list_key, [])
+        if not isinstance(value, list) or not all(
+            isinstance(item, str) and item.strip() for item in value
+        ):
+            raise ConfigValidationError(
+                f"clinical_profile.{list_key} musi być listą tekstów"
+            )
+
+    expected_effects = cfg.clinical_profile.get("expected_effects", {})
+    if not isinstance(expected_effects, dict):
+        raise ConfigValidationError(
+            "clinical_profile.expected_effects musi być obiektem"
+        )
+
+    cfg.clinical_profile["id"] = str(profile_id)
+    cfg.clinical_profile["affected_regions"] = list(
+        cfg.clinical_profile.get("affected_regions", [])
+    )
+    cfg.clinical_profile["cognitive_functions"] = list(
+        cfg.clinical_profile.get("cognitive_functions", [])
+    )
+    cfg.clinical_profile["expected_effects"] = dict(expected_effects)
 
 
 def _validate_snn_config(cfg: ExperimentConfig) -> None:
