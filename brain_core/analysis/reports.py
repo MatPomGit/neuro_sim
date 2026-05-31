@@ -301,7 +301,9 @@ def build_clinical_difference_report(
 
     differences: list[dict[str, object]] = []
     for profile_id, result in profile_results.items():
-        activity = np.asarray(result.get("activity"), dtype=float)
+        activity = np.asarray(result.get("activity") or [], dtype=float)
+        if activity.ndim == 1:
+            activity = activity[:, np.newaxis]
         if activity.size == 0:
             raise ValueError(f"Wynik profilu {profile_id} nie zawiera aktywności.")
 
