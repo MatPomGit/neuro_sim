@@ -143,7 +143,7 @@ class AnalysisReport:
                     "value": (
                         f"{event.get('time_s', 'n/a')}|"
                         f"{event.get('event_type', 'n/a')}|"
-                        f"{event.get('description_pl', 'n/a')}"
+                        f"{str(event.get('description_pl', 'n/a')).replace('|', ' ')}"
                     ),
                 }
             )
