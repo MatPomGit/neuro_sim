@@ -240,6 +240,8 @@ def _pathology_events(
 ) -> list[SimulationEvent]:
     """Opisuje jawne zdarzenia lezji lub patologii z konfiguracji."""
     events: list[SimulationEvent] = []
+    if not isinstance(clinical_profile, dict):
+        clinical_profile = {}
     mutations = pathology.get("mutations", []) if isinstance(pathology, dict) else []
     if isinstance(pathology, dict) and pathology.get("enabled"):
         for mutation in mutations:
