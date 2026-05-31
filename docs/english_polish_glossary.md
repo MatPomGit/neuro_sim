@@ -60,6 +60,13 @@ Ten dokument definiuje mapowanie nazw technicznych używanych w kodzie (angielsk
 | prediction_error | błąd predykcji | Metryka diagnostyczna |
 | confidence | pewność | Metryka diagnostyczna |
 | decision_events | zdarzenia decyzyjne | Metryka diagnostyczna |
+| event_timeline | oś czasu eksperymentu | Raport eksperymentu |
+| stimulus_onset | początek bodźca | Oś czasu eksperymentu |
+| response | odpowiedź | Oś czasu eksperymentu |
+| error | błąd | Oś czasu eksperymentu |
+| neuromodulation_change | zmiana neuromodulacji | Oś czasu eksperymentu |
+| lesion_pathology_event | zdarzenie lezji lub patologii | Oś czasu eksperymentu |
+| significant_region_activity_change | istotna zmiana aktywności regionu | Oś czasu eksperymentu |
 | global_workspace | globalna przestrzeń robocza | Diagnostyka modelu |
 | attention | uwaga | Moduł poznawczy |
 | working_memory | pamięć robocza | Moduł poznawczy |

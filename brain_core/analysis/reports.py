@@ -9,6 +9,8 @@ from pathlib import Path
 
 import numpy as np
 
+from brain_core.simulation.events import EVENT_TERM_EXPLANATIONS, EVENT_TERM_GLOSSARY
+
 from .connectivity import compute_connectivity
 from .information_flow import compute_information_flow
 from .phase_locking import compute_phase_locking
@@ -62,6 +64,24 @@ class AnalysisReport:
             for region, value in task_activation.get("mean_regional_input", {}).items():
                 lines.append(f"- **średnie wejście {region}**: {value}")
 
+        event_timeline = self.payload.get("event_timeline", [])
+        if event_timeline:
+            lines.extend(["", "## Oś czasu eksperymentu"])
+            for event in event_timeline[:30]:
+                lines.append(
+                    f"- **{event.get('time_s', 'n/a')} s** — "
+                    f"{event.get('label_pl', event.get('event_type', 'zdarzenie'))}: "
+                    f"{event.get('description_pl', 'brak opisu')}"
+                )
+            if len(event_timeline) > 30:
+                lines.append(
+                    f"- ... pominięto {len(event_timeline) - 30} dalszych zdarzeń."
+                )
+            lines.extend(["", "### Słownik pojęć osi czasu"])
+            for english_name, polish_name in EVENT_TERM_GLOSSARY.items():
+                explanation = EVENT_TERM_EXPLANATIONS.get(english_name, "brak opisu")
+                lines.append(f"- **{english_name}**: {polish_name} — {explanation}")
+
         clinical_differences = self.payload.get("clinical_differences", [])
         if clinical_differences:
             lines.extend(["", "## Raport różnic profili klinicznych"])
@@ -114,6 +134,29 @@ class AnalysisReport:
                         "value": str(value),
                     }
                 )
+
+        for idx, event in enumerate(self.payload.get("event_timeline", [])):
+            rows.append(
+                {
+                    "section": "event_timeline",
+                    "metric": f"event_{idx}",
+                    "value": (
+                        f"{event.get('time_s', 'n/a')}|"
+                        f"{event.get('event_type', 'n/a')}|"
+                        f"{str(event.get('description_pl', 'n/a')).replace('|', ' ')}"
+                    ),
+                }
+            )
+
+        for english_name, polish_name in EVENT_TERM_GLOSSARY.items():
+            explanation = EVENT_TERM_EXPLANATIONS.get(english_name, "brak opisu")
+            rows.append(
+                {
+                    "section": "event_glossary",
+                    "metric": english_name,
+                    "value": f"{polish_name} — {explanation}",
+                }
+            )
 
         for item in self.payload.get("clinical_differences", []):
             profile_id = item.get("profile_id", "n/a")
@@ -290,10 +333,10 @@ def build_clinical_difference_report(
     ValueError
         Gdy aktywność referencyjna lub porównywana jest pusta.
     """
-    reference_activity = np.asarray(reference_result.get("activity") or [], dtype=float)
+    reference_activity = np.asarray(reference_result.get("activity", []), dtype=float)
     if reference_activity.ndim == 1:
         reference_activity = reference_activity[:, np.newaxis]
-    reference_time = np.asarray(reference_result.get("time") or [], dtype=float)
+    reference_time = np.asarray(reference_result.get("time", []), dtype=float)
     reference_model = reference_result.get("model")
     reference_names = list(getattr(reference_model, "names", []))
     if reference_activity.size == 0 or reference_time.size == 0:
@@ -301,7 +344,7 @@ def build_clinical_difference_report(
 
     differences: list[dict[str, object]] = []
     for profile_id, result in profile_results.items():
-        activity = np.asarray(result.get("activity") or [], dtype=float)
+        activity = np.asarray(result.get("activity", []), dtype=float)
         if activity.ndim == 1:
             activity = activity[:, np.newaxis]
         if activity.size == 0:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import time as pytime
 from copy import deepcopy
 from dataclasses import replace
@@ -25,6 +26,7 @@ from brain_model.oscillators import WilsonCowanParams
 from brain_model.params import BrainParams
 
 from .config_schema import ExperimentConfig
+from .events import build_event_timeline
 from .scheduler import SimulationScheduler, TaskStimulusPlayer
 from .state import SimulationState
 
@@ -312,6 +314,17 @@ def run_experiment(
         analysis_set=config.analysis.get("sets"),
     )
     analysis_report = _attach_task_activation_section(analysis_report, task_activation)
+    event_timeline = build_event_timeline(
+        time=time,
+        activity=activity,
+        diagnostics=diagnostics,
+        trial_events=trial_events,
+        trial_results=trial_results,
+        pathology=config.pathology,
+        clinical_profile=config.clinical_profile,
+        region_names=list(model.names),
+    )
+    analysis_report.payload["event_timeline"] = event_timeline
     analysis_report.payload["clinical_profile"] = dict(config.clinical_profile)
 
     save_info: dict[str, Any] | None = None
@@ -335,6 +348,13 @@ def run_experiment(
             duration_s=elapsed,
         )
         save_info["analysis_report_files"] = report_files
+        if config.output.get("save_event_timeline", True):
+            event_timeline_path = Path(out_dir) / "event_timeline.json"
+            event_timeline_path.write_text(
+                json.dumps(event_timeline, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            save_info["event_timeline"] = str(event_timeline_path)
 
     return {
         "model": model,
@@ -345,6 +365,7 @@ def run_experiment(
         "behavior": behavior,
         "trial_events": trial_events,
         "trial_results": trial_results,
+        "event_timeline": event_timeline,
         "analysis_report": analysis_report.payload,
         "task_activation": task_activation,
         "clinical_profile": dict(config.clinical_profile),

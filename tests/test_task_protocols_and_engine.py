@@ -2,6 +2,7 @@ from typing import Any
 
 import pytest
 
+from brain_core.analysis.reports import AnalysisReport
 from brain_core.cognition.mapping import functions_for_task, regions_for_task
 from brain_core.experiments.protocols import (
     GoNoGoTask,
@@ -178,3 +179,55 @@ def test_run_experiment_reports_task_activation() -> Any:
     assert task_activation["mean_regional_input"]["PFC"] > 0.0
     assert result["trial_events"][0]["regional_input"]
     assert result["analysis_report"]["task_activation"] == task_activation
+
+
+def test_run_experiment_returns_event_timeline_and_report_section() -> Any:
+    """Oś czasu zawiera bodźce, odpowiedzi i sekcję raportu Markdown."""
+    cfg = ExperimentConfig(
+        output={"save_results": False, "label": "test", "output_dir": "outputs"},
+        seed=3,
+        task={"name": "stroop", "scenario": "reward-learning", "duration": 3.0},
+    )
+
+    result = run_experiment(cfg)
+
+    event_timeline = result["event_timeline"]
+    event_types = {event["event_type"] for event in event_timeline}
+    assert "stimulus_onset" in event_types
+    assert "response" in event_types
+    assert event_timeline == sorted(
+        event_timeline, key=lambda event: (event["time_s"], event["event_type"])
+    )
+    assert result["analysis_report"]["event_timeline"] == event_timeline
+
+    report = AnalysisReport(result["analysis_report"]).to_markdown()
+    assert "## Oś czasu eksperymentu" in report
+    assert "### Słownik pojęć osi czasu" in report
+    assert "stimulus_onset" in report
+
+
+def test_run_experiment_records_clinical_pathology_event() -> Any:
+    """Profil kliniczny jest widoczny jako zdarzenie lezji lub patologii."""
+    cfg = ExperimentConfig(
+        output={"save_results": False, "label": "test", "output_dir": "outputs"},
+        seed=3,
+        task={"name": "stroop", "scenario": "reward-learning", "duration": 0.2},
+        clinical_profile={
+            "id": "dopamine_deficit",
+            "display_name": "Deficyt dopaminowy",
+            "mechanism": "Obniżona modulacja dopaminowa.",
+            "affected_regions": ["VAL"],
+            "cognitive_functions": ["uczenie nagrodą"],
+            "expected_effects": {},
+        },
+    )
+
+    result = run_experiment(cfg)
+
+    pathology_events = [
+        event
+        for event in result["event_timeline"]
+        if event["event_type"] == "lesion_pathology_event"
+    ]
+    assert pathology_events
+    assert pathology_events[0]["details"]["profile_id"] == "dopamine_deficit"
