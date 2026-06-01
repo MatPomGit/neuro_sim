@@ -233,7 +233,7 @@ class AnalysisReport:
                     "value": str(snn_comparison.get("sync_dt_s", "n/a")),
                 }
             )
-            for region, stats in snn_comparison.get("region_differences", {}).items():
+            for region, stats in (snn_comparison.get("region_differences") or {}).items():
                 for metric_name, metric_value in stats.items():
                     rows.append(
                         {
