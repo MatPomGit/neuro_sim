@@ -31,6 +31,12 @@ należy rozwijać w modułach Qt zgodnych z istniejącym podziałem
 odpowiedzialności w `brain_model/qt_*`, a wykresy osadzać przez backend
 Matplotlib dla Qt.
 
+Zakres implementacyjny migracji obejmuje moduły `brain_model/qt_app.py`,
+`brain_model/qt_state.py`, `brain_model/qt_sections.py`,
+`brain_model/qt_config.py`, `brain_model/qt_runner.py`,
+`brain_model/qt_results.py`, `brain_model/qt_plotting.py` oraz
+`brain_model/qt_styles.py`.
+
 Publiczny punkt wejścia `brain_model.gui:run_gui` pozostaje kompatybilny i
 powinien nadal służyć jako stabilna funkcja uruchamiająca GUI. Wewnętrznie może
 on delegować do implementacji PySide6, dzięki czemu użytkownicy zachowują
@@ -75,8 +81,15 @@ Negatywne / koszty:
 ## Powiązane dokumenty / issue / PR
 
 - `docs/architecture_decision_records.md`
-- `docs/adr/0016-migracja-gui-na-pyside6.md`
 - `docs/adr/0017-panel-wykresow-qt.md`
+- `docs/adr/0018-worker-symulacji-qt-object-thread.md`
 - `brain_model/gui.py`
 - `brain_model/qt_app.py`
+- `brain_model/qt_state.py`
+- `brain_model/qt_sections.py`
+- `brain_model/qt_config.py`
+- `brain_model/qt_runner.py`
+- `brain_model/qt_results.py`
 - `brain_model/qt_plotting.py`
+- `brain_model/qt_styles.py`
+- `BACKLOG.md` — P2 / 10 „Interfejs edukacyjny i tryb nauczyciela” oraz najbliższe prace / 11 „Migracja desktopowego GUI na PySide6 P2”

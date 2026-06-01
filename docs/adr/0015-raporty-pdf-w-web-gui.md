@@ -36,3 +36,4 @@ Raport badawczy w web GUI generujemy po stronie przeglądarki. Metryki i opis sc
 - `docs/web_gui.html`
 - `brain_model/report_export.py`
 - `brain_model/gui_layout.py`
+- `BACKLOG.md` — P0 / 2 „Rejestr zdarzeń i raport dydaktyczny timeline” oraz P2 / 10 „Interfejs edukacyjny i tryb nauczyciela”

@@ -38,14 +38,84 @@ Każdy ADR powinien zawierać sekcje:
 5. **Alternatywy rozważane**
 6. **Powiązane dokumenty / issue / PR**
 
-## Konwencja nazewnictwa
+## Konwencja nazewnictwa i lokalizacja ADR
 
-Docelowo rekomendujemy przechowywanie ADR jako osobnych plików w `docs/adr/`:
+Preferowaną lokalizacją nowych ADR-ów są osobne pliki w `docs/adr/`.
+Ten dokument pełni rolę indeksu oraz przechowuje historyczne wpisy ADR-0001–ADR-0011 oraz ADR-0021
+utworzone przed pełną migracją do osobnych plików.
 
-- `0001-nazwa-decyzji.md`
-- `0002-kolejna-decyzja.md`
+- Nowe pliki nazywamy `NNNN-krotki-opis-decyzji.md`, np. `0022-nowa-decyzja.md`.
+- Numer ADR musi być unikalny w całym repozytorium, niezależnie od lokalizacji pliku.
+- Status ADR przyjmuje wartości `proposed`, `accepted`, `superseded` albo `deprecated`.
+- Przy zmianie statusu lub dodaniu pliku należy zaktualizować indeks poniżej.
 
-W przypadku pojedynczego pliku zbiorczego (ten dokument), każda decyzja dostaje własny nagłówek `## ADR-XXXX`.
+## Zasada migracji ADR
+
+Od tej zmiany nowe ADR-y dodajemy jako osobne pliki w `docs/adr/`, a
+`docs/architecture_decision_records.md` aktualizujemy jako indeks decyzji. Istniejące
+wpisy zbiorcze można migrować do osobnych plików stopniowo: nowy plik powinien
+zachować dotychczasowy numer, a wpis w indeksie powinien wskazywać nową lokalizację.
+Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy status na
+`superseded` i dodajemy odnośnik do nowszego ADR.
+
+## Indeks ADR
+
+| ADR | Status | Tytuł | Lokalizacja | Powiązany backlog |
+| --- | --- | --- | --- | --- |
+| ADR-0001 | accepted | Podział na warstwy `brain_core` i `brain_model` | `docs/architecture_decision_records.md` | — |
+| ADR-0002 | accepted | Konfiguracja oparta o pliki YAML + schemat | `docs/architecture_decision_records.md` | `BACKLOG.md` P0 / 1 |
+| ADR-0003 | accepted | Deterministyczność przez kontrolę źródeł losowości | `docs/architecture_decision_records.md` | `BACKLOG.md` P0 / 1 |
+| ADR-0004 | accepted | Model regionowy Wilson-Cowan z opóźnionym sprzężeniem strukturalnym | `docs/architecture_decision_records.md` | `BACKLOG.md` P1 / 4, P1 / 5 |
+| ADR-0005 | proposed | Ujednolicenie typów neuromodulatorów między `brain_model` i `brain_core` | `docs/architecture_decision_records.md` | `BACKLOG.md` P1 / 6 |
+| ADR-0006 | proposed | Synaptyczna plastyczność neural-mass z dwiema skalami czasowymi | `docs/architecture_decision_records.md` | `docs/todo.md` Etap 5 |
+| ADR-0007 | proposed | Kanał obserwacyjny EEG/BOLD i zestaw walidacji porównawczej | `docs/architecture_decision_records.md` | `BACKLOG.md` P2 / 9, najbliższe prace / 10 |
+| ADR-0008 | proposed | Rozszerzenie EEG o warianty forward i solvery inverse | `docs/architecture_decision_records.md` | `BACKLOG.md` P2 / 9 |
+| ADR-0009 | proposed | Pilotażowa współsymulacja neural-mass ↔ SNN z backendem Brian2 | `docs/architecture_decision_records.md` | `BACKLOG.md` P3 / 11, `docs/todo.md` Etap 6 |
+| ADR-0010 | proposed | Ujednolicony postprocessing analityczny i raport benchmarkowy | `docs/architecture_decision_records.md` | `BACKLOG.md` P0 / 2, P2 / 9, najbliższe prace / 10 |
+| ADR-0011 | accepted | Modularizacja metryk analizy sygnałów i konfigurowalne zestawy analiz | `docs/architecture_decision_records.md` | `BACKLOG.md` P2 / 9, najbliższe prace / 10 |
+| ADR-0012 | accepted | Modularizacja GUI modelu poznawczego | [`docs/adr/0012-modularizacja-gui.md`](adr/0012-modularizacja-gui.md) | `BACKLOG.md` P2 / 10, najbliższe prace / 11 |
+| ADR-0013 | proposed | Stan GUI niezależny od formularzy zaawansowanych | [`docs/adr/0013-stan-gui-niezalezny-od-formularzy.md`](adr/0013-stan-gui-niezalezny-od-formularzy.md) | `BACKLOG.md` P2 / 10 |
+| ADR-0014 | proposed | Wydzielenie web GUI ze strony projektu | [`docs/adr/0014-wydzielenie-web-gui-ze-strony-projektu.md`](adr/0014-wydzielenie-web-gui-ze-strony-projektu.md) | `BACKLOG.md` P2 / 10 |
+| ADR-0015 | proposed | Raporty PDF generowane w web GUI | [`docs/adr/0015-raporty-pdf-w-web-gui.md`](adr/0015-raporty-pdf-w-web-gui.md) | `BACKLOG.md` P0 / 2, P2 / 10 |
+| ADR-0016 | proposed | Migracja desktopowego GUI na PySide6 | [`docs/adr/0016-migracja-desktop-gui-na-pyside6.md`](adr/0016-migracja-desktop-gui-na-pyside6.md) | `BACKLOG.md` P2 / 10, najbliższe prace / 11 |
+| ADR-0017 | accepted | Panel wykresów oparty o QtAgg | [`docs/adr/0017-panel-wykresow-qt.md`](adr/0017-panel-wykresow-qt.md) | `BACKLOG.md` P2 / 10, najbliższe prace / 11 |
+| ADR-0018 | accepted | Worker symulacji jako QObject uruchamiany w QThread | [`docs/adr/0018-worker-symulacji-qt-object-thread.md`](adr/0018-worker-symulacji-qt-object-thread.md) | `BACKLOG.md` P2 / 10, najbliższe prace / 11 |
+| ADR-0019 | accepted | Profile kliniczne i raport różnic między uruchomieniami | [`docs/adr/0019-profile-kliniczne-i-raport-roznic.md`](adr/0019-profile-kliniczne-i-raport-roznic.md) | `BACKLOG.md` P1 / 7 |
+| ADR-0020 | proposed | Oś czasu zdarzeń symulacji | [`docs/adr/0020-os-czasu-zdarzen-symulacji.md`](adr/0020-os-czasu-zdarzen-symulacji.md) | `BACKLOG.md` P0 / 2 |
+| ADR-0021 | proposed | Formalny kontrakt I/O dla współsymulacji neural-mass i SNN | `docs/architecture_decision_records.md` | `BACKLOG.md` P3 / 11, `docs/todo.md` Etap 6 |
+
+## Procedura dodawania kolejnego ADR
+
+1. Utwórz nowy plik `docs/adr/NNNN-krotki-opis-decyzji.md`, używając kolejnego wolnego numeru z indeksu.
+2. Oznacz **Status: proposed** i opisz kontekst, decyzję, konsekwencje, alternatywy oraz powiązania.
+3. Dodaj wpis w indeksie ADR w tym dokumencie wraz ze statusem, lokalizacją i powiązanym backlogiem, jeśli istnieje.
+4. Podlinkuj ADR w PR i poproś o review architektoniczny.
+5. Po akceptacji zmień status na **accepted**.
+6. Jeśli decyzja została zastąpiona — oznacz ją jako **superseded** i dodaj link do nowego ADR.
+
+## Krótki szablon (copy/paste)
+
+```md
+# ADR-XXXX: Tytuł decyzji
+
+**Status:** proposed
+**Data:** RRRR-MM-DD
+
+## Kontekst
+...
+
+## Decyzja
+...
+
+## Konsekwencje
+...
+
+## Alternatywy rozważane
+...
+
+## Powiązane dokumenty / issue / PR
+...
+```
 
 ---
 
@@ -166,39 +236,6 @@ W modelach symulacyjnych brak kontroli nad losowością utrudnia debugowanie, ka
 - `brain_core/simulation/random_sources.py`
 
 ---
-
-## Procedura dodawania kolejnego ADR
-
-1. Utwórz nowy rekord (`docs/adr/NNNN-*.md` lub sekcja `ADR-XXXX` w tym pliku).
-2. Oznacz **Status: proposed**.
-3. Podlinkuj ADR w PR i poproś o review architektoniczny.
-4. Po akceptacji zmień status na **accepted**.
-5. Jeśli decyzja została zastąpiona — oznacz jako **superseded** i dodaj link do nowego ADR.
-
-## Krótki szablon (copy/paste)
-
-```md
-# ADR-XXXX: Tytuł decyzji
-
-**Status:** proposed  
-**Data:** RRRR-MM-DD
-
-### Kontekst
-...
-
-### Decyzja
-...
-
-### Konsekwencje
-...
-
-### Alternatywy rozważane
-...
-
-### Powiązane
-...
-```
-
 
 ## ADR-0004: Model regionowy Wilson-Cowan z opóźnionym sprzężeniem strukturalnym
 
@@ -385,6 +422,7 @@ Dodajemy minimalny, deterministyczny tor obserwacyjny:
 - `data/validation/eeg_target.csv`
 - `data/validation/fmri_target.csv`
 - `data/validation/behavior_target.csv`
+- `BACKLOG.md` — P2 / 9 „Warstwa analityczna EEG/BOLD” oraz najbliższe prace / 10 „Raporty EEG/BOLD P2”
 
 ---
 
@@ -471,6 +509,8 @@ Wprowadzamy minimalny, testowalny szkielet:
 - `brain_core/simulation/multiscale_engine.py`
 - `tests/test_multiscale_engine.py`
 - `tests/test_spiking_population_adapter.py`
+- `BACKLOG.md` — P3 / 11 „Hybrydy mikro-makro (spiking submodels)”
+- `docs/todo.md` — Etap 6 „backend SNN dla wybranych obwodów”
 
 ---
 
@@ -515,10 +555,13 @@ Dodajemy moduły `brain_core/analysis/reports.py` oraz `brain_core/analysis/benc
 - `brain_core/analysis/benchmark_loader.py`
 - `brain_core/simulation/engine.py`
 - `data/validation/*.csv`
+- `BACKLOG.md` — P0 / 2 „Rejestr zdarzeń i raport dydaktyczny timeline”, P2 / 9 „Warstwa analityczna EEG/BOLD” oraz najbliższe prace / 10 „Raporty EEG/BOLD P2”
 
-## ADR-0007: Formalny kontrakt I/O dla współsymulacji neural-mass i SNN
+---
 
-**Status:** proposed  
+## ADR-0021: Formalny kontrakt I/O dla współsymulacji neural-mass i SNN
+
+**Status:** proposed
 **Data:** 2026-05-27
 
 ### Kontekst
@@ -562,6 +605,10 @@ Dodatkowo rozszerzamy konfigurację `configs/multi_region_delay_*.yaml` o sekcj�
 - `brain_core/populations/spiking_population.py`
 - `configs/multi_region_delay_demo.yaml`
 - `configs/multi_region_delay_extended.yaml`
+- `BACKLOG.md` — P3 / 11 „Hybrydy mikro-makro (spiking submodels)”
+- `docs/todo.md` — Etap 6 „backend SNN dla wybranych obwodów”
+
+---
 
 ## ADR-0011: Modularizacja metryk analizy sygnałów i konfigurowalne zestawy analiz
 
@@ -621,3 +668,4 @@ Dodatkowo:
 - `brain_core/simulation/config_schema.py`
 - `brain_core/simulation/engine.py`
 - `configs/default.yaml`
+- `BACKLOG.md` — P2 / 9 „Warstwa analityczna EEG/BOLD” oraz najbliższe prace / 10 „Raporty EEG/BOLD P2”
