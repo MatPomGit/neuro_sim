@@ -82,6 +82,7 @@ Negatywne / koszty:
 
 - `docs/architecture_decision_records.md`
 - `docs/adr/0017-panel-wykresow-qt.md`
+- `docs/adr/0018-worker-symulacji-qt-object-thread.md`
 - `brain_model/gui.py`
 - `brain_model/qt_app.py`
 - `brain_model/qt_state.py`
