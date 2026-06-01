@@ -274,32 +274,31 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 ---
 
 ### 8A. Implementacja roving oddball task (priorytet P1/P2)
-**Status:** `planned`
+**Status:** `partial`
 
-**Artefakty implementacyjne:** brak dedykowanego artefaktu `roving_oddball`; punktem startowym są `brain_core/experiments/protocols.py`, `brain_core/simulation/random_sources.py` i `tests/test_task_protocols_and_engine.py`.
+**Artefakty implementacyjne:** `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml`, `configs/roving_oddball_lesion_hippocampus.yaml`, `tests/test_task_protocols_and_engine.py`.
 
 **Cel:** dostarczenie referencyjnego zadania do testów predykcji, nowości i adaptacji.
 
-**Zakres prac:**
+**Zrealizowane MVP:**
 - Generator sekwencji bodźców z parametrami:
   - `n_runs`, `run_length_min/max`,
   - `stimulus_family`, `deviant_probability`,
   - `inter_stimulus_interval`, `jitter`.
+- Aliasy taska dla `roving_oddball`.
 - Konfiguracje eksperymentu:
-  - `roving_oddball_healthy.yaml`,
-  - `roving_oddball_disorder_*.yaml`,
-  - `roving_oddball_lesion_*.yaml`.
-- Implementacja metryk:
-  - wskaźnik nowości/zaskoczenia (novelty/surprise index),
-  - tempo habituacji,
-  - latencja readaptacji po zmianie standardu,
-  - różnice odpowiedzi E/I i neuromodulacyjnej.
-- Warstwa dydaktyczna:
-  - timeline trial-by-trial,
-  - komentarz „co się dzieje w mózgu i dlaczego” przy przejściach standard/deviant.
-- Warstwa porównawcza:
-  - uruchamianie identycznej sekwencji dla healthy/disorder/lesion,
-  - raport różnic amplituda-latencja-mechanizm.
+  - `configs/roving_oddball_healthy.yaml`,
+  - `configs/roving_oddball_disorder_gaba.yaml`,
+  - `configs/roving_oddball_lesion_hippocampus.yaml`.
+- Podstawowe metryki:
+  - `surprise_index`,
+  - `habituation_level`,
+  - `readaptation_latency`.
+
+**Pozostały zakres:**
+- Notebook/przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”.
+- Raport porównawczy amplitude-latency-mechanism dla healthy vs disorder vs lesion.
+- Różnice E/I i neuromodulacyjne specyficzne dla roving oddball.
 
 **Deliverables:**
 - Gotowy task `roving_oddball` z API scenariusza.
