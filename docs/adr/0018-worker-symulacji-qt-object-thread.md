@@ -50,6 +50,7 @@ Negatywne / koszty:
 
 ## Powiązane dokumenty / issue / PR
 
-- `docs/adr/0016-migracja-gui-na-pyside6.md`
+- `docs/adr/0016-migracja-desktop-gui-na-pyside6.md`
 - `brain_model/qt_app.py`
 - `brain_model/qt_runner.py`
+- `BACKLOG.md` — P2 / 10 „Interfejs edukacyjny i tryb nauczyciela” oraz najbliższe prace / 11 „Migracja desktopowego GUI na PySide6 P2”
