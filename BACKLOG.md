@@ -36,7 +36,7 @@ poziomie MVP. Nie oznacza to pełnej realizacji architektury docelowej z
 `docs/todo.md`; każda pozycja ma jawne pole **Pozostałe ograniczenia**, aby
 odróżnić działający artefakt od kompletnego zakresu badawczego.
 
-| Milestone | Status | Główne pliki/linki | Testy/linki | Pozostałe ograniczenia |
+| Milestone | Status | Główne pliki | Testy | Pozostałe ograniczenia |
 | --- | --- | --- | --- | --- |
 | Taski poznawcze `stroop`, `go_nogo`, `n_back` | `partial` | [`brain_core/experiments/protocols.py`](brain_core/experiments/protocols.py), [`brain_model/stimuli.py`](brain_model/stimuli.py), [`configs/stroop.yaml`](configs/stroop.yaml), [`configs/go_nogo.yaml`](configs/go_nogo.yaml), [`configs/n_back.yaml`](configs/n_back.yaml) | [`tests/test_task_protocols_and_engine.py`](tests/test_task_protocols_and_engine.py), [`tests/test_task_stimulus_player.py`](tests/test_task_stimulus_player.py) | Dostępne są podstawowe protokoły i konfiguracje demonstracyjne, ale brakuje pełnej biblioteki tasków v1, wspólnych raportów per task oraz referencyjnego `roving_oddball` wymaganego w `docs/todo.md`. |
 | Moduł uszkodzeń `lesions.py` | `partial` | [`brain_core/experiments/lesions.py`](brain_core/experiments/lesions.py), [`brain_model/scenarios/library.py`](brain_model/scenarios/library.py), [`brain_model/scenarios/types.py`](brain_model/scenarios/types.py) | [`tests/test_lesions.py`](tests/test_lesions.py), [`tests/test_task_protocols_and_engine.py`](tests/test_task_protocols_and_engine.py) | Obecny zakres wspiera scenariusze ogniskowe/sieciowe i integrację z taskami, ale katalog profili klinicznych, interpretacje dydaktyczne oraz raport różnic region-czas-funkcja pozostają niepełne. |
