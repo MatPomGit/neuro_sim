@@ -103,7 +103,7 @@ class AnalysisReport:
             )
             lines.append(f"- **status SNN**: {snn_comparison.get('status_pl', 'n/a')}")
             lines.append(
-                f"- **regiony SNN**: {', '.join(snn_comparison.get('regions', []))}"
+                f"- **regiony SNN**: {', '.join(snn_comparison.get('regions') or [])}"
             )
             lines.append(f"- **sync_dt [s]**: {snn_comparison.get('sync_dt_s', 'n/a')}")
             lines.append(
