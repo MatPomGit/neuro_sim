@@ -20,6 +20,7 @@ from brain_core.analysis.reports import (
 )
 from brain_core.cognition.mapping import mapping_for_task
 from brain_core.experiments.protocols import ErrorType, TrialResult, get_task
+from brain_core.populations.spiking_population import Brian2SpikingPopulationAdapter
 from brain_model.io import build_output_dir, save_run
 from brain_model.model import CognitiveBrainModel
 from brain_model.oscillators import WilsonCowanParams
@@ -28,6 +29,7 @@ from brain_model.params import BrainParams
 from .config_schema import ExperimentConfig
 from .events import build_event_timeline
 from .scheduler import SimulationScheduler, TaskStimulusPlayer
+from .signal_adapter import CouplingSignalAdapter, SNNPopulationMapping
 from .state import SimulationState
 
 
@@ -187,6 +189,120 @@ def _attach_task_activation_section(
     return AnalysisReport(payload=payload)
 
 
+def _run_local_snn_comparison(
+    *,
+    config: ExperimentConfig,
+    region_names: list[str],
+    activity: np.ndarray,
+    oscillations: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Porównuje przebieg neural-mass z lokalnie sprzężonym obwodem SNN.
+
+    Parameters
+    ----------
+    config:
+        Zweryfikowana konfiguracja eksperymentu z sekcją `snn`.
+    region_names:
+        Nazwy regionów neural-mass w kolejności kolumn macierzy `activity`.
+    activity:
+        Bazowy przebieg aktywności neural-mass bez sprzężenia zwrotnego SNN.
+    oscillations:
+        Słownik oscylacji zawierający sygnały ekscytujące i hamujące.
+
+    Returns
+    -------
+    dict[str, Any] | None
+        Sekcja raportu z porównaniem regionów albo `None`, gdy SNN jest wyłączone.
+
+    Raises
+    ------
+    ValueError
+        Gdy konfiguracja SNN nie pasuje do regionów modelu lub sygnałów oscylacji.
+    """
+    if not bool(config.snn.get("enabled", False)):
+        return None
+
+    circuits = config.snn.get("circuits", [])
+    if not circuits:
+        return None
+
+    snn_regions = tuple(str(circuit["region"]) for circuit in circuits)
+    mapping = SNNPopulationMapping(
+        snn_region_names=snn_regions,
+        neural_mass_region_names=tuple(region_names),
+    )
+    adapter = CouplingSignalAdapter(
+        mapping=mapping,
+        sync_dt=float(config.snn["sync_dt"]),
+    )
+    snn_population = Brian2SpikingPopulationAdapter(
+        region_names=list(snn_regions),
+        dt=min(config.timestep, float(config.snn["sync_dt"])),
+    )
+
+    excitatory_raw = oscillations.get("excitatory")
+    inhibitory_raw = oscillations.get("inhibitory")
+    if excitatory_raw is None or inhibitory_raw is None:
+        raise ValueError("Sygnały oscylacji 'excitatory' lub 'inhibitory' są wymagane do porównania SNN")
+    excitatory = np.asarray(excitatory_raw, dtype=float)
+    inhibitory = np.asarray(inhibitory_raw, dtype=float)
+    if excitatory.shape != activity.shape or inhibitory.shape != activity.shape:
+        raise ValueError("Sygnały oscylacji nie pasują do macierzy aktywności")
+
+    sync_stride = max(1, int(round(float(config.snn["sync_dt"]) / config.timestep)))
+    snn_activity = np.zeros_like(activity, dtype=float)
+    adjusted_activity = np.array(activity, dtype=float, copy=True)
+    last_regional = np.zeros(activity.shape[1], dtype=float)
+    mapped_indices = mapping.indices_in_neural_mass()
+    gains = np.asarray(
+        [float(circuit.get("coupling_gain", 0.2)) for circuit in circuits],
+        dtype=float,
+    )
+
+    for step_index in range(activity.shape[0]):
+        if step_index % sync_stride == 0:
+            signal = adapter.rate_to_spike_drive(
+                excitatory_rate_hz=excitatory[step_index] * adapter.MAX_FIRING_RATE_HZ,
+                inhibitory_rate_hz=inhibitory[step_index] * adapter.MAX_FIRING_RATE_HZ,
+            )
+            snn_output = snn_population.step(signal)
+            last_regional = adapter.spike_summary_to_regional_activity(
+                snn_output, n_regions=activity.shape[1]
+            )
+        snn_activity[step_index] = last_regional
+        adjusted_activity[step_index, mapped_indices] = np.clip(
+            (1.0 - gains) * activity[step_index, mapped_indices]
+            + gains * last_regional[mapped_indices],
+            0.0,
+            1.0,
+        )
+
+    region_differences: dict[str, dict[str, float]] = {}
+    for region, region_index in zip(snn_regions, mapped_indices, strict=True):
+        baseline_trace = activity[:, region_index]
+        adjusted_trace = adjusted_activity[:, region_index]
+        snn_trace = snn_activity[:, region_index]
+        difference = np.abs(adjusted_trace - baseline_trace)
+        region_differences[region] = {
+            "mean_without_snn": round(float(np.mean(baseline_trace)), 6),
+            "mean_snn_local_activity": round(float(np.mean(snn_trace)), 6),
+            "mean_with_snn": round(float(np.mean(adjusted_trace)), 6),
+            "mean_abs_difference": round(float(np.mean(difference)), 6),
+            "max_abs_difference": round(float(np.max(difference)), 6),
+        }
+
+    return {
+        "status_pl": "włączony lokalny obwód SNN",
+        "regions": list(snn_regions),
+        "neural_mass_regions": list(region_names),
+        "sync_dt_s": float(config.snn["sync_dt"]),
+        "input_rate_unit": str(config.snn.get("input_rate_unit", "Hz")),
+        "output_activity_unit": str(config.snn.get("output_activity_unit", "fraction")),
+        "backend": str(circuits[0].get("backend", "brian2")),
+        "region_differences": region_differences,
+    }
+
+
 def _simulate_task_trials(
     config: ExperimentConfig,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -317,6 +433,14 @@ def run_experiment(
         benchmark_metadata=benchmark_bundle.metadata_payload(),
     )
     analysis_report = _attach_task_activation_section(analysis_report, task_activation)
+    snn_comparison = _run_local_snn_comparison(
+        config=config,
+        region_names=list(model.names),
+        activity=activity,
+        oscillations=oscillations,
+    )
+    if snn_comparison is not None:
+        analysis_report.payload["snn_comparison"] = snn_comparison
     event_timeline = build_event_timeline(
         time=time,
         activity=activity,
@@ -372,6 +496,7 @@ def run_experiment(
         "analysis_report": analysis_report.payload,
         "task_activation": task_activation,
         "clinical_profile": dict(config.clinical_profile),
+        "snn_comparison": snn_comparison,
         "save_info": save_info,
         "elapsed": elapsed,
     }

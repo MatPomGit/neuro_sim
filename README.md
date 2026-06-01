@@ -265,6 +265,21 @@ signal = NeuralMassToSNNInput(
 out = adapter.step(signal)
 ```
 
+Przykład uruchomienia jednego zadania poznawczego z lokalnym obwodem SNN:
+
+```bash
+python -m brain_core.simulation.run --config configs/snn_hippocampus_demo.yaml
+```
+
+Konfiguracja `configs/snn_hippocampus_demo.yaml` mapuje obwód SNN na region
+`HIP` zgodnie z kolejnością regionów neural-mass używaną przez
+`SNNPopulationMapping`. Raport analizy zawiera sekcję porównującą przebieg bez
+SNN i wariant z lokalnym obwodem SNN, w tym `sync_dt`, jednostki sygnałów oraz
+różnice aktywności dla mapowanego regionu.
+
+Szczegółowy opis odpowiedzialności modułów, pól konfiguracji, kontraktu jednostek
+i zawartości raportu znajduje się w `docs/snn_cosimulation_demo.md`.
+
 ## Polityka językowa projektu
 
 W projekcie obowiązują następujące zasady językowe:

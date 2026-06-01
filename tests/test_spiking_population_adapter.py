@@ -1,13 +1,23 @@
+from typing import Any
+
 import numpy as np
 
-from brain_core.populations.spiking_population import Brian2SpikingPopulationAdapter, NeuralMassToSNNInput, SNNToNeuralMassOutput
-from brain_core.simulation.signal_adapter import CouplingSignalAdapter, SNNPopulationMapping
-from typing import Any
+from brain_core.populations.spiking_population import (
+    Brian2SpikingPopulationAdapter,
+    NeuralMassToSNNInput,
+    SNNToNeuralMassOutput,
+)
+from brain_core.simulation.signal_adapter import (
+    CouplingSignalAdapter,
+    SNNPopulationMapping,
+)
 
 
 def test_signal_contract_and_shape_validation() -> Any:
     """Opis funkcji test_signal_contract_and_shape_validation."""
-    adapter = Brian2SpikingPopulationAdapter(region_names=["hippocampus", "dlpfc"], dt=0.001)
+    adapter = Brian2SpikingPopulationAdapter(
+        region_names=["hippocampus", "dlpfc"], dt=0.001
+    )
     signal = NeuralMassToSNNInput(
         excitatory_drive_hz=np.array([18.0, 14.0]),
         inhibitory_drive_hz=np.array([6.0, 5.0]),
@@ -24,7 +34,9 @@ def test_signal_contract_and_shape_validation() -> Any:
 
 def test_pilot_circuits_only_hippocampus_dlpfc() -> Any:
     """Opis funkcji test_pilot_circuits_only_hippocampus_dlpfc."""
-    adapter = Brian2SpikingPopulationAdapter(region_names=["hippocampus", "dlpfc"], dt=0.001)
+    adapter = Brian2SpikingPopulationAdapter(
+        region_names=["hippocampus", "dlpfc"], dt=0.001
+    )
     signal = NeuralMassToSNNInput(
         excitatory_drive_hz=np.array([25.0, 15.0]),
         inhibitory_drive_hz=np.array([7.0, 8.0]),
@@ -60,3 +72,22 @@ def test_coupling_adapter_roundtrip_mapping_and_units() -> Any:
         n_regions=3,
     )
     assert np.allclose(regional, np.array([0.45, 0.0, 0.0]))
+
+
+def test_snn_report_section_compares_baseline_and_local_circuit() -> Any:
+    """Raport demo ma zawierać porównanie przebiegu bez SNN i z obwodem lokalnym."""
+    from brain_core.simulation.config_loader import load_config
+    from brain_core.simulation.engine import run_experiment
+
+    cfg = load_config("configs/snn_hippocampus_demo.yaml")
+    cfg.output["save_results"] = False
+
+    result = run_experiment(cfg)
+    snn_comparison = result["analysis_report"]["snn_comparison"]
+
+    assert snn_comparison["regions"] == ["HIP"]
+    assert snn_comparison["sync_dt_s"] == 0.010
+    assert snn_comparison["input_rate_unit"] == "Hz"
+    assert snn_comparison["output_activity_unit"] == "fraction"
+    assert "HIP" in snn_comparison["region_differences"]
+    assert snn_comparison["region_differences"]["HIP"]["max_abs_difference"] >= 0.0

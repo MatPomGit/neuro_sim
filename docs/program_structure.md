@@ -75,7 +75,8 @@ brain_core/simulation/
 
 - `config_schema.py` definiuje `ExperimentConfig` i walidację sekcji `model`, `integrator`, `task`, `pathology`, `output`, `snn` oraz `analysis`.
 - `config_loader.py` wczytuje YAML/JSON, a `run.py` udostępnia CLI eksperymentów.
-- `engine.py` spina konfigurację z aktualnym modelem poznawczym.
+- `engine.py` spina konfigurację z aktualnym modelem poznawczym i dołącza sekcję `snn_comparison` dla demonstracyjnego przebiegu neural-mass + lokalny obwód SNN.
+- `signal_adapter.py` definiuje `SNNPopulationMapping` oraz `CouplingSignalAdapter`, czyli jawny kontrakt mapowania regionów i konwersji jednostek między neural-mass i SNN.
 - `state.py`, `scheduler.py`, `multiscale_engine.py`, `integrators.py` i `random_sources.py` są fundamentem dalszej integracji wieloskalowej i deterministycznych uruchomień.
 
 ### 4.2. Anatomia, konektom i sieci
@@ -126,7 +127,7 @@ brain_core/physiology/
 ```
 
 - `wilson_cowan.py` zapewnia populacyjny model E/I.
-- `spiking_population.py` zawiera pilotażowy kontrakt wymiany neural-mass ↔ SNN.
+- `spiking_population.py` zawiera pilotażowy kontrakt wymiany neural-mass ↔ SNN oraz startowy adapter lokalnej populacji SNN.
 - `synapses/` grupuje neuromodulatory i stan synaptyczny.
 - `physiology/` dostarcza aproksymacje EEG/BOLD i sprzężenia neuro-naczyniowego.
 
@@ -156,6 +157,7 @@ configs/
 ├── stroop.yaml
 ├── multi_region_delay_demo.yaml
 ├── multi_region_delay_extended.yaml
+├── snn_hippocampus_demo.yaml
 └── brain_model_config_2026-05-28.json
 
 data/
@@ -168,7 +170,7 @@ data/
     └── fmri_target.csv
 ```
 
-Konfiguracje `configs/*.yaml` są podstawą uruchomień przez `brain_core.simulation.run`. Dane `data/*` są używane przez testy oraz moduły atlasu, konektomu i walidacji sygnałów.
+Konfiguracje `configs/*.yaml` są podstawą uruchomień przez `brain_core.simulation.run`. `snn_hippocampus_demo.yaml` dokumentuje minimalny przypadek neural-mass + lokalny obwód SNN; pełny opis znajduje się w `docs/snn_cosimulation_demo.md`. Dane `data/*` są używane przez testy oraz moduły atlasu, konektomu i walidacji sygnałów.
 
 ## 6. Dokumentacja i zasoby viewer
 
@@ -182,6 +184,7 @@ docs/
 ├── gui_defaults.json
 ├── index.html
 ├── program_structure.md
+├── snn_cosimulation_demo.md
 └── grafiki SVG/PNG/HTML przekrojów mózgu
 
 brain_viewer/
