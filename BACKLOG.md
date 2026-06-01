@@ -29,6 +29,22 @@ Na dzień 2026-05-29 status nie jest prognozą wdrożenia, tylko krótką oceną
 | P1 | Konektom, neural mass, neuromodulacja i scenariusze porównawcze | `partial` | `brain_core/anatomy/connectome.py`, `brain_core/networks/delays.py`, `brain_core/populations/wilson_cowan.py`, `brain_core/experiments/pharmacology.py`, `brain_core/experiments/lesions.py` |
 | P2 | Task battery, roving oddball, EEG/BOLD i tryb nauczyciela | `partial` / `planned` | `brain_core/experiments/protocols.py`, `brain_core/analysis/spectral.py`, `brain_core/physiology/eeg_forward_model.py`, `brain_model/qt_app.py`, `brain_model/qt_plotting.py` |
 
+### Zrealizowane milestone’y
+
+Poniższe pozycje opisują funkcje ukończone lub częściowo ukończone na
+poziomie MVP. Nie oznacza to pełnej realizacji architektury docelowej z
+`docs/todo.md`; każda pozycja ma jawne pole **Pozostałe ograniczenia**, aby
+odróżnić działający artefakt od kompletnego zakresu badawczego.
+
+| Milestone | Status | Główne pliki | Testy | Pozostałe ograniczenia |
+| --- | --- | --- | --- | --- |
+| Taski poznawcze `stroop`, `go_nogo`, `n_back` | `partial` | `brain_core/experiments/protocols.py`, `brain_model/stimuli.py`, `configs/stroop.yaml`, `configs/go_nogo.yaml`, `configs/n_back.yaml` | `tests/test_task_protocols_and_engine.py`, `tests/test_task_stimulus_player.py` | Dostępne są podstawowe protokoły i konfiguracje demonstracyjne, ale brakuje pełnej biblioteki tasków v1, wspólnych raportów per task oraz referencyjnego `roving_oddball` wymaganego w `docs/todo.md`. |
+| Moduł uszkodzeń `lesions.py` | `partial` | `brain_core/experiments/lesions.py`, `brain_model/scenarios/library.py`, `brain_model/scenarios/types.py` | `tests/test_lesions.py`, `tests/test_task_protocols_and_engine.py` | Obecny zakres wspiera scenariusze ogniskowe/sieciowe i integrację z taskami, ale katalog profili klinicznych, interpretacje dydaktyczne oraz raport różnic region-czas-funkcja pozostają niepełne. |
+| Raport benchmarkowy | `partial` | `brain_core/analysis/reports.py`, `brain_core/analysis/benchmark_loader.py`, `brain_core/simulation/engine.py`, `data/validation/eeg_target.csv`, `data/validation/fmri_target.csv`, `data/validation/behavior_target.csv` | `tests/test_observation_and_analysis.py`, `tests/test_signal_metrics_modules.py` | Raport potrafi agregować metryki i porównania referencyjne, ale nie zastępuje pełnego raportu dydaktycznego z kompletną osią trial-by-trial, wykresami i interpretacją profili z `docs/todo.md`. |
+| Metryki analityczne EEG/BOLD/zachowanie | `partial` | `brain_core/analysis/signal_metrics.py`, `brain_core/analysis/spectral.py`, `brain_core/analysis/phase_locking.py`, `brain_core/analysis/connectivity.py`, `brain_core/analysis/information_flow.py`, `brain_core/physiology/eeg_forward_model.py`, `brain_core/physiology/bold_hrf.py`, `brain_core/physiology/neurovascular_coupling.py` | `tests/test_signal_metrics_modules.py`, `tests/test_observation_and_analysis.py` | Dostępne są metryki sygnałowe i fasada kompatybilności, ale integracja z raportami EEG/BOLD, wykresami, progami jakości i porównaniami wielu profili nadal wymaga domknięcia. |
+| SNN signal adapter i kontrakt NM↔SNN | `partial` | `brain_core/simulation/signal_adapter.py`, `brain_core/populations/spiking_population.py`, `brain_core/simulation/multiscale_engine.py` | `tests/test_spiking_population_adapter.py`, `tests/test_multiscale_engine.py` | Adapter definiuje kontrakt sygnałów i pilotażową wymianę neural-mass ↔ SNN, ale backend jest startową aproksymacją; pełne obwody SNN, większe sieci i backendy typu NEST/NEURON pozostają zakresem docelowym. |
+| GUI state | `partial` | `brain_model/gui_state.py`, `brain_model/gui_layout.py`, `brain_model/qt_state.py`, `brain_model/qt_app.py`, `brain_model/qt_sections.py`, `brain_model/qt_config.py` | `tests/test_gui_state.py`, `tests/test_gui_layout_static.py`, `tests/test_qt_config.py`, `tests/test_qt_sections.py`, `tests/test_gui_dependencies_static.py` | Stan GUI jest wydzielony i testowany statycznie dla głównych przepływów, ale migracja wszystkich nowych przepływów na PySide6, tryb nauczyciela i pełna zgodność etykiet z glosariuszem pozostają częściowe. |
+
 ### Najbliższe zaplanowane prace
 
 Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualnego stanu repozytorium. Kolejność odzwierciedla zależności: najpierw domknięcie fundamentów P0, potem elementy P1/P2 potrzebne do scenariuszy dydaktycznych i porównawczych.
