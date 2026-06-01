@@ -8,7 +8,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolb
 from matplotlib.figure import Figure
 from PySide6.QtWidgets import QScrollArea, QTabWidget, QVBoxLayout, QWidget
 
-from .plotting import _attach_line_tooltips
+from .plotting import _apply_interpretation_layout, _attach_line_tooltips
 
 
 class QtPlotPanel(QTabWidget):
@@ -43,7 +43,7 @@ class QtPlotPanel(QTabWidget):
         fig = Figure(figsize=figsize, dpi=100)
         axis = fig.add_subplot(111)
         axes = draw_func(axis, *args, **kwargs) or [axis]
-        fig.tight_layout()
+        _apply_interpretation_layout(fig)
 
         container = QWidget()
         layout = QVBoxLayout(container)

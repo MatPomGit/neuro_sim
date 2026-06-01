@@ -49,3 +49,41 @@ def test_qt_results_filters_plots_by_gui_state() -> None:
 
     for plot_key in plot_keys:
         assert f'state.plots.get("{plot_key}", False)' in source
+
+
+def test_plotting_functions_add_interpretation_boxes() -> None:
+    """Sprawdź, że wykresy mają stałe opisy interpretacyjne dla użytkownika."""
+    source = PLOTTING_PATH.read_text(encoding="utf-8")
+
+    assert "def _add_interpretation_box" in source
+    assert source.count("_add_interpretation_box(") >= 12
+    assert "Mapa cieplna „Aktywność mózgu”" in source
+    assert "Rzuty SVG pokazują" in source
+
+
+def test_brain_projection_uses_svg_background_and_dynamic_limits() -> None:
+    """Sprawdź, że rzuty SVG mają kontury tła i zakres z danych SVG."""
+    source = PLOTTING_PATH.read_text(encoding="utf-8")
+
+    assert "def _plot_svg_region_background" in source
+    assert "def _set_svg_data_limits" in source
+    assert "_plot_svg_region_background(ax, shapes)" in source
+    assert "_set_svg_data_limits(ax, shapes)" in source
+
+
+def test_eeg_modules_are_vertically_offset() -> None:
+    """Sprawdź, że sygnały EEG modułów nie są rysowane bez przesunięcia."""
+    source = PLOTTING_PATH.read_text(encoding="utf-8")
+
+    assert "offset_step" in source
+    assert "eeg[:, idx[name]] + offset" in source
+    assert "serie przesunięte pionowo" in source
+
+
+def test_plot_interpretations_are_accessible_to_mixed_audiences() -> None:
+    """Sprawdź, że opisy prowadzą osoby początkujące i specjalistów."""
+    source = PLOTTING_PATH.read_text(encoding="utf-8")
+
+    assert source.count("Dla osoby początkującej") >= 10
+    assert source.count("Dla specjalisty") >= 10
+    assert "kluczowe" in source
