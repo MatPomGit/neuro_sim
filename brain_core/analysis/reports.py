@@ -111,7 +111,7 @@ class AnalysisReport:
                 f"{snn_comparison.get('input_rate_unit', 'n/a')} / "
                 f"{snn_comparison.get('output_activity_unit', 'n/a')}"
             )
-            for region, stats in snn_comparison.get("region_differences", {}).items():
+            for region, stats in (snn_comparison.get("region_differences") or {}).items():
                 lines.append(f"- **{region}**")
                 lines.append(
                     f"  - średnia aktywność bez SNN: "
