@@ -240,8 +240,12 @@ def _run_local_snn_comparison(
         dt=min(config.timestep, float(config.snn["sync_dt"])),
     )
 
-    excitatory = np.asarray(oscillations.get("excitatory"), dtype=float)
-    inhibitory = np.asarray(oscillations.get("inhibitory"), dtype=float)
+    excitatory_raw = oscillations.get("excitatory")
+    inhibitory_raw = oscillations.get("inhibitory")
+    if excitatory_raw is None or inhibitory_raw is None:
+        raise ValueError("Sygnały oscylacji 'excitatory' lub 'inhibitory' są wymagane do porównania SNN")
+    excitatory = np.asarray(excitatory_raw, dtype=float)
+    inhibitory = np.asarray(inhibitory_raw, dtype=float)
     if excitatory.shape != activity.shape or inhibitory.shape != activity.shape:
         raise ValueError("Sygnały oscylacji nie pasują do macierzy aktywności")
 
