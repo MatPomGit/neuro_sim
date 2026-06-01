@@ -1,0 +1,20 @@
+{
+  "eeg": {
+    "source": "Syntetyczny cel walidacyjny utrzymywany w repozytorium neuro_sim; nie pochodzi z danych uczestników.",
+    "scope": "Krótki sygnał demonstracyjny EEG dla kanałów Cz i Pz używany do testowania kształtu danych oraz podstawowych porównań amplitudy.",
+    "limitations": "Benchmark służy do walidacji technicznej i edukacyjnej; nie reprezentuje norm klinicznych, rozkładów populacyjnych ani pełnych właściwości czasowo-częstotliwościowych EEG.",
+    "level": "synthetic"
+  },
+  "fmri": {
+    "source": "Syntetyczny cel walidacyjny utrzymywany w repozytorium neuro_sim; nie pochodzi z akwizycji MRI ani z publicznego zbioru BIDS.",
+    "scope": "Krótki sygnał demonstracyjny fMRI dla regionów V1 i PFC używany do testowania kształtu danych oraz porównań średniej aktywności.",
+    "limitations": "Benchmark nie modeluje pełnej odpowiedzi hemodynamicznej, opóźnień skanera, wariancji międzyosobniczej ani artefaktów akwizycji.",
+    "level": "synthetic"
+  },
+  "behavior": {
+    "source": "Edukacyjny cel walidacyjny utrzymywany w repozytorium neuro_sim; wartości dobrano ręcznie do testów raportowania.",
+    "scope": "Minimalny zestaw prób z trafnością i czasem reakcji używany do sprawdzania porównań behawioralnych.",
+    "limitations": "Benchmark nie jest próbą empiryczną, nie zawiera wariancji populacyjnej i nie powinien być używany do wniosków psychometrycznych.",
+    "level": "educational"
+  }
+}

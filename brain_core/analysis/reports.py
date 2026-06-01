@@ -45,11 +45,25 @@ class AnalysisReport:
         """
         metrics = self.payload.get("metrics", {})
         compare = self.payload.get("comparison", {})
+        benchmark_metadata = self.payload.get("benchmark_metadata", {})
         lines = ["# Raport analizy", "", "## Metryki"]
         for name, value in metrics.items():
             lines.append(f"- **{name}**: {value}")
         lines.append("")
         lines.append("## Porównanie z benchmarkiem")
+        if benchmark_metadata:
+            lines.append("### Metadane benchmarków")
+            for benchmark_name, metadata in benchmark_metadata.items():
+                origin = metadata.get("comparison_origin_pl", "syntetyczny")
+                level = metadata.get("level", "n/a")
+                lines.append(
+                    f"- **{benchmark_name}**: benchmark {origin} (poziom: {level})"
+                )
+                lines.append(f"  - **źródło**: {metadata.get('source', 'n/a')}")
+                lines.append(f"  - **zakres**: {metadata.get('scope', 'n/a')}")
+                lines.append(
+                    f"  - **ograniczenia**: {metadata.get('limitations', 'n/a')}"
+                )
         for name, value in compare.items():
             lines.append(f"- **{name}**: {value}")
 
@@ -110,6 +124,17 @@ class AnalysisReport:
         for section in ("metrics", "comparison"):
             for key, value in self.payload.get(section, {}).items():
                 rows.append({"section": section, "metric": key, "value": str(value)})
+        for benchmark_name, metadata in self.payload.get(
+            "benchmark_metadata", {}
+        ).items():
+            for key, value in metadata.items():
+                rows.append(
+                    {
+                        "section": "benchmark_metadata",
+                        "metric": f"{benchmark_name}_{key}",
+                        "value": str(value),
+                    }
+                )
         task_activation = self.payload.get("task_activation")
         if task_activation:
             rows.append(
@@ -212,6 +237,7 @@ def build_analysis_report(
     benchmark: dict[str, np.ndarray] | None = None,
     fs: float = 100.0,
     analysis_set: list[str] | None = None,
+    benchmark_metadata: dict[str, dict[str, str]] | None = None,
 ) -> AnalysisReport:
     """
     Buduje raport analizy sygnałów EEG, fMRI i zachowania oraz porównania z benchmarkiem.
@@ -223,6 +249,8 @@ def build_analysis_report(
         benchmark (dict[str, np.ndarray] | None): Słownik z benchmarkami.
         fs (float): Częstotliwość próbkowania.
         analysis_set (list[str] | None): Lista analiz do wykonania.
+        benchmark_metadata (dict[str, dict[str, str]] | None): Metadane źródeł,
+            zakresów, ograniczeń i poziomów benchmarków.
 
     Returns:
         AnalysisReport: Raport z metrykami i porównaniami.
@@ -306,7 +334,11 @@ def build_analysis_report(
                 }
             )
 
-    return AnalysisReport(payload={"metrics": metrics, "comparison": comparison})
+    payload = {"metrics": metrics, "comparison": comparison}
+    if benchmark_metadata is not None:
+        payload["benchmark_metadata"] = benchmark_metadata
+
+    return AnalysisReport(payload=payload)
 
 
 def build_clinical_difference_report(

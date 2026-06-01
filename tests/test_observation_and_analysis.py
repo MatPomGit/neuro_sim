@@ -149,3 +149,104 @@ def test_run_task_across_clinical_profiles_keeps_seed_and_reports_differences() 
     assert {"region", "time_s", "cognitive_function", "mechanism"}.issubset(
         differences[0]
     )
+
+
+def test_reference_benchmark_metadata_validation() -> Any:
+    """Metadane benchmarków powinny opisywać źródło, zakres, ograniczenia i poziom."""
+    from brain_core.analysis.benchmark_loader import load_reference_benchmark_metadata
+
+    metadata = load_reference_benchmark_metadata()
+
+    assert set(metadata.keys()) == {"eeg", "fmri", "behavior"}
+    assert metadata["eeg"].level == "synthetic"
+    assert metadata["behavior"].level == "educational"
+    for item in metadata.values():
+        assert item.source
+        assert item.scope
+        assert item.limitations
+        assert item.level in {
+            "synthetic",
+            "educational",
+            "literature-inspired",
+            "empirical",
+        }
+
+
+def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> Any:
+    """Walidacja metadanych powinna odrzucać poziomy spoza rejestru."""
+    import json
+
+    from brain_core.analysis.benchmark_loader import (
+        BenchmarkValidationError,
+        load_reference_benchmark_metadata,
+    )
+
+    metadata_path = tmp_path / "benchmark_metadata.json"
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "eeg": {
+                    "source": "test",
+                    "scope": "test",
+                    "limitations": "test",
+                    "level": "unknown",
+                },
+                "fmri": {
+                    "source": "test",
+                    "scope": "test",
+                    "limitations": "test",
+                    "level": "synthetic",
+                },
+                "behavior": {
+                    "source": "test",
+                    "scope": "test",
+                    "limitations": "test",
+                    "level": "empirical",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    load_reference_benchmark_metadata.cache_clear()
+
+    try:
+        load_reference_benchmark_metadata(tmp_path)
+    except BenchmarkValidationError as error:
+        assert "nieobsługiwany poziom" in str(error)
+    else:
+        raise AssertionError("Oczekiwano błędu walidacji poziomu benchmarku.")
+    finally:
+        load_reference_benchmark_metadata.cache_clear()
+
+
+def test_report_marks_benchmark_origin_in_markdown() -> Any:
+    """Raport powinien pokazywać syntetyczny albo empiryczny charakter benchmarku."""
+    from brain_core.analysis.reports import AnalysisReport
+
+    report = AnalysisReport(
+        payload={
+            "metrics": {},
+            "comparison": {},
+            "benchmark_metadata": {
+                "eeg": {
+                    "source": "test",
+                    "scope": "test",
+                    "limitations": "test",
+                    "level": "synthetic",
+                    "comparison_origin_pl": "syntetyczny",
+                },
+                "behavior": {
+                    "source": "test",
+                    "scope": "test",
+                    "limitations": "test",
+                    "level": "empirical",
+                    "comparison_origin_pl": "empiryczny",
+                },
+            },
+        }
+    )
+
+    markdown = report.to_markdown()
+
+    assert "benchmark syntetyczny" in markdown
+    assert "benchmark empiryczny" in markdown

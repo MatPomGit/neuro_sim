@@ -11,7 +11,7 @@ from typing import Any, Callable
 
 import numpy as np
 
-from brain_core.analysis.benchmark_loader import load_reference_benchmarks
+from brain_core.analysis.benchmark_loader import load_reference_benchmark_bundle
 from brain_core.analysis.reports import (
     AnalysisReport,
     build_analysis_report,
@@ -294,14 +294,16 @@ def run_experiment(
         else behavior_series
     )
 
-    benchmark = load_reference_benchmarks()
+    benchmark_bundle = load_reference_benchmark_bundle()
     benchmark = {
-        "eeg": _align_cols(_align_rows(benchmark["eeg"], eeg.shape[0]), eeg.shape[1]),
+        "eeg": _align_cols(
+            _align_rows(benchmark_bundle.data["eeg"], eeg.shape[0]), eeg.shape[1]
+        ),
         "fmri": _align_cols(
-            _align_rows(benchmark["fmri"], fmri.shape[0]), fmri.shape[1]
+            _align_rows(benchmark_bundle.data["fmri"], fmri.shape[0]), fmri.shape[1]
         ),
         "behavior": _align_cols(
-            _align_rows(benchmark["behavior"], behavior_matrix.shape[0]),
+            _align_rows(benchmark_bundle.data["behavior"], behavior_matrix.shape[0]),
             behavior_matrix.shape[1],
         ),
     }
@@ -312,6 +314,7 @@ def run_experiment(
         benchmark=benchmark,
         fs=1.0 / config.timestep,
         analysis_set=config.analysis.get("sets"),
+        benchmark_metadata=benchmark_bundle.metadata_payload(),
     )
     analysis_report = _attach_task_activation_section(analysis_report, task_activation)
     event_timeline = build_event_timeline(

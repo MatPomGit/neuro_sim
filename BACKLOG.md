@@ -410,7 +410,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 **Cel:** systematyczne mapowanie modelu na znane efekty naukowe.
 
 **Zakres prac:**
-- Rejestr hipotez i benchmarków.
+- Rejestr hipotez i benchmarków z poziomami walidacji: `synthetic`, `educational`, `literature-inspired`, `empirical`.
 - Zautomatyzowane testy zgodności jakościowej.
 - Raport wersyjny „co model odtwarza, czego jeszcze nie”.
 
