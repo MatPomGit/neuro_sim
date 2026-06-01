@@ -73,15 +73,15 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0009 | proposed | Pilotażowa współsymulacja neural-mass ↔ SNN z backendem Brian2 | `docs/architecture_decision_records.md` | `BACKLOG.md` P3 / 11, `docs/todo.md` Etap 6 |
 | ADR-0010 | proposed | Ujednolicony postprocessing analityczny i raport benchmarkowy | `docs/architecture_decision_records.md` | `BACKLOG.md` P0 / 2, P2 / 9, najbliższe prace / 10 |
 | ADR-0011 | accepted | Modularizacja metryk analizy sygnałów i konfigurowalne zestawy analiz | `docs/architecture_decision_records.md` | `BACKLOG.md` P2 / 9, najbliższe prace / 10 |
-| ADR-0012 | accepted | Modularizacja GUI modelu poznawczego | `docs/adr/0012-modularizacja-gui.md` | `BACKLOG.md` P2 / 10, najbliższe prace / 11 |
-| ADR-0013 | proposed | Stan GUI niezależny od formularzy zaawansowanych | `docs/adr/0013-stan-gui-niezalezny-od-formularzy.md` | `BACKLOG.md` P2 / 10 |
-| ADR-0014 | proposed | Wydzielenie web GUI ze strony projektu | `docs/adr/0014-wydzielenie-web-gui-ze-strony-projektu.md` | `BACKLOG.md` P2 / 10 |
-| ADR-0015 | proposed | Raporty PDF generowane w web GUI | `docs/adr/0015-raporty-pdf-w-web-gui.md` | `BACKLOG.md` P0 / 2, P2 / 10 |
-| ADR-0016 | proposed | Migracja desktopowego GUI na PySide6 | `docs/adr/0016-migracja-desktop-gui-na-pyside6.md` | `BACKLOG.md` P2 / 10, najbliższe prace / 11 |
-| ADR-0017 | accepted | Panel wykresów oparty o QtAgg | `docs/adr/0017-panel-wykresow-qt.md` | `BACKLOG.md` P2 / 10, najbliższe prace / 11 |
-| ADR-0018 | accepted | Worker symulacji jako QObject uruchamiany w QThread | `docs/adr/0018-worker-symulacji-qt-object-thread.md` | `BACKLOG.md` P2 / 10, najbliższe prace / 11 |
-| ADR-0019 | accepted | Profile kliniczne i raport różnic między uruchomieniami | `docs/adr/0019-profile-kliniczne-i-raport-roznic.md` | `BACKLOG.md` P1 / 7 |
-| ADR-0020 | proposed | Oś czasu zdarzeń symulacji | `docs/adr/0020-os-czasu-zdarzen-symulacji.md` | `BACKLOG.md` P0 / 2 |
+| ADR-0012 | accepted | Modularizacja GUI modelu poznawczego | [`docs/adr/0012-modularizacja-gui.md`](adr/0012-modularizacja-gui.md) | `BACKLOG.md` P2 / 10, najbliższe prace / 11 |
+| ADR-0013 | proposed | Stan GUI niezależny od formularzy zaawansowanych | [`docs/adr/0013-stan-gui-niezalezny-od-formularzy.md`](adr/0013-stan-gui-niezalezny-od-formularzy.md) | `BACKLOG.md` P2 / 10 |
+| ADR-0014 | proposed | Wydzielenie web GUI ze strony projektu | [`docs/adr/0014-wydzielenie-web-gui-ze-strony-projektu.md`](adr/0014-wydzielenie-web-gui-ze-strony-projektu.md) | `BACKLOG.md` P2 / 10 |
+| ADR-0015 | proposed | Raporty PDF generowane w web GUI | [`docs/adr/0015-raporty-pdf-w-web-gui.md`](adr/0015-raporty-pdf-w-web-gui.md) | `BACKLOG.md` P0 / 2, P2 / 10 |
+| ADR-0016 | proposed | Migracja desktopowego GUI na PySide6 | [`docs/adr/0016-migracja-desktop-gui-na-pyside6.md`](adr/0016-migracja-desktop-gui-na-pyside6.md) | `BACKLOG.md` P2 / 10, najbliższe prace / 11 |
+| ADR-0017 | accepted | Panel wykresów oparty o QtAgg | [`docs/adr/0017-panel-wykresow-qt.md`](adr/0017-panel-wykresow-qt.md) | `BACKLOG.md` P2 / 10, najbliższe prace / 11 |
+| ADR-0018 | accepted | Worker symulacji jako QObject uruchamiany w QThread | [`docs/adr/0018-worker-symulacji-qt-object-thread.md`](adr/0018-worker-symulacji-qt-object-thread.md) | `BACKLOG.md` P2 / 10, najbliższe prace / 11 |
+| ADR-0019 | accepted | Profile kliniczne i raport różnic między uruchomieniami | [`docs/adr/0019-profile-kliniczne-i-raport-roznic.md`](adr/0019-profile-kliniczne-i-raport-roznic.md) | `BACKLOG.md` P1 / 7 |
+| ADR-0020 | proposed | Oś czasu zdarzeń symulacji | [`docs/adr/0020-os-czasu-zdarzen-symulacji.md`](adr/0020-os-czasu-zdarzen-symulacji.md) | `BACKLOG.md` P0 / 2 |
 | ADR-0021 | proposed | Formalny kontrakt I/O dla współsymulacji neural-mass i SNN | `docs/architecture_decision_records.md` | `BACKLOG.md` P3 / 11, `docs/todo.md` Etap 6 |
 
 ## Procedura dodawania kolejnego ADR
