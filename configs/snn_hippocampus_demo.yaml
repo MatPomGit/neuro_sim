@@ -1,0 +1,48 @@
+model:
+  noise: 0.01
+  gw_threshold: 0.58
+integrator:
+  method: euler
+  oscillator:
+    cognitive_drive_gain: 3.0
+timestep: 0.005
+seed: 37
+task:
+  name: n_back
+  scenario: task-switching
+  duration: 10.0
+output:
+  save_results: true
+  label: snn-hippocampus-demo
+  output_dir: outputs
+  save_event_timeline: true
+analysis:
+  sets: [spectral, phase_locking, connectivity, information_flow]
+snn:
+  enabled: true
+  sync_dt: 0.010
+  input_rate_unit: Hz
+  output_activity_unit: fraction
+  neural_mass_regions:
+    - VIS
+    - AUD
+    - INT
+    - SAL
+    - ATT
+    - PHON
+    - VSWM
+    - EXEC
+    - EPIS
+    - SEM
+    - HIP
+    - VAL
+    - MOT
+    - DMN
+    - LANG
+    - GW
+  circuits:
+    - region: HIP
+      backend: brian2
+      neurons: 800
+      coupling_gain: 0.20
+      notes_pl: "Lokalny obwód hipokampa sprzężony z proxy regionu HIP."

@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from brain_core.simulation.signal_adapter import SNNPopulationMapping
+
 ALLOWED_CLINICAL_PROFILE_IDS = {
     "healthy_v1",
     "dopamine_deficit",
@@ -78,6 +80,33 @@ class ExperimentConfig:
             "expected_effects": {},
         }
     )
+
+
+def _coerce_string_tuple(value: Any, field_name: str) -> tuple[str, ...]:
+    """Normalizuje listę nazw regionów SNN do krotki niepustych tekstów.
+
+    Parameters
+    ----------
+    value:
+        Wartość odczytana z konfiguracji YAML/JSON.
+    field_name:
+        Nazwa pola używana w komunikacie błędu walidacji.
+
+    Returns
+    -------
+    tuple[str, ...]
+        Krotka nazw regionów zachowująca kolejność z konfiguracji.
+
+    Raises
+    ------
+    ConfigValidationError
+        Gdy wartość nie jest listą niepustych tekstów.
+    """
+    if not isinstance(value, list) or not all(
+        isinstance(item, str) and item.strip() for item in value
+    ):
+        raise ConfigValidationError(f"{field_name} musi być listą niepustych tekstów")
+    return tuple(str(item).strip() for item in value)
 
 
 class ConfigValidationError(ValueError):
@@ -192,11 +221,19 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
     circuits = cfg.snn.get("circuits", [])
     if not isinstance(circuits, list):
         raise ConfigValidationError("snn.circuits musi być listą")
+
+    circuit_regions: list[str] = []
     for idx, circuit in enumerate(circuits):
         if not isinstance(circuit, dict):
             raise ConfigValidationError(f"snn.circuits[{idx}] musi być obiektem")
-        if "region" not in circuit:
+        region = circuit.get("region")
+        if not isinstance(region, str) or not region.strip():
             raise ConfigValidationError(f"Brak pola snn.circuits[{idx}].region")
+        circuit["region"] = region.strip()
+        circuit_regions.append(circuit["region"])
+
+    if len(circuit_regions) != len(set(circuit_regions)):
+        raise ConfigValidationError("snn.circuits.region musi zawierać unikalne nazwy")
 
     sync_dt_val = cfg.snn.get("sync_dt")
     if sync_dt_val is None:
@@ -204,15 +241,41 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
     else:
         try:
             sync_dt = float(sync_dt_val)
-        except (ValueError, TypeError):
-            raise ConfigValidationError("snn.sync_dt musi być liczbą")
+        except (ValueError, TypeError) as exc:
+            raise ConfigValidationError("snn.sync_dt musi być liczbą") from exc
 
     if sync_dt <= 0:
         raise ConfigValidationError("snn.sync_dt musi być > 0")
     ratio = sync_dt / cfg.timestep
     if abs(round(ratio) - ratio) > 1e-9:
         raise ConfigValidationError("snn.sync_dt musi być wielokrotnością timestep")
+
+    input_rate_unit = str(cfg.snn.get("input_rate_unit", "Hz"))
+    output_activity_unit = str(cfg.snn.get("output_activity_unit", "fraction"))
+    if input_rate_unit != "Hz":
+        raise ConfigValidationError("snn.input_rate_unit musi mieć wartość 'Hz'")
+    if output_activity_unit != "fraction":
+        raise ConfigValidationError(
+            "snn.output_activity_unit musi mieć wartość 'fraction'"
+        )
+
+    neural_mass_regions_value = cfg.snn.get("neural_mass_regions")
+    if neural_mass_regions_value is not None:
+        neural_mass_regions = _coerce_string_tuple(
+            neural_mass_regions_value, "snn.neural_mass_regions"
+        )
+        try:
+            SNNPopulationMapping(
+                snn_region_names=tuple(circuit_regions),
+                neural_mass_region_names=neural_mass_regions,
+            ).indices_in_neural_mass()
+        except ValueError as exc:
+            raise ConfigValidationError(str(exc)) from exc
+        cfg.snn["neural_mass_regions"] = list(neural_mass_regions)
+
     cfg.snn["sync_dt"] = sync_dt
+    cfg.snn["input_rate_unit"] = input_rate_unit
+    cfg.snn["output_activity_unit"] = output_activity_unit
 
 
 def _validate_analysis_config(cfg: ExperimentConfig) -> None:

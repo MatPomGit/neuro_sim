@@ -96,6 +96,40 @@ class AnalysisReport:
                 explanation = EVENT_TERM_EXPLANATIONS.get(english_name, "brak opisu")
                 lines.append(f"- **{english_name}**: {polish_name} — {explanation}")
 
+        snn_comparison = self.payload.get("snn_comparison")
+        if snn_comparison:
+            lines.extend(
+                ["", "## Porównanie przebiegu bez SNN i z lokalnym obwodem SNN"]
+            )
+            lines.append(f"- **status SNN**: {snn_comparison.get('status_pl', 'n/a')}")
+            lines.append(
+                f"- **regiony SNN**: {', '.join(snn_comparison.get('regions', []))}"
+            )
+            lines.append(f"- **sync_dt [s]**: {snn_comparison.get('sync_dt_s', 'n/a')}")
+            lines.append(
+                f"- **jednostki wejścia/wyjścia**: "
+                f"{snn_comparison.get('input_rate_unit', 'n/a')} / "
+                f"{snn_comparison.get('output_activity_unit', 'n/a')}"
+            )
+            for region, stats in snn_comparison.get("region_differences", {}).items():
+                lines.append(f"- **{region}**")
+                lines.append(
+                    f"  - średnia aktywność bez SNN: "
+                    f"{stats.get('mean_without_snn', 'n/a')}"
+                )
+                lines.append(
+                    f"  - średnia aktywność z SNN: "
+                    f"{stats.get('mean_with_snn', 'n/a')}"
+                )
+                lines.append(
+                    f"  - średnia różnica bezwzględna: "
+                    f"{stats.get('mean_abs_difference', 'n/a')}"
+                )
+                lines.append(
+                    f"  - maksymalna różnica bezwzględna: "
+                    f"{stats.get('max_abs_difference', 'n/a')}"
+                )
+
         clinical_differences = self.payload.get("clinical_differences", [])
         if clinical_differences:
             lines.extend(["", "## Raport różnic profili klinicznych"])
@@ -182,6 +216,32 @@ class AnalysisReport:
                     "value": f"{polish_name} — {explanation}",
                 }
             )
+
+        snn_comparison = self.payload.get("snn_comparison")
+        if snn_comparison:
+            rows.append(
+                {
+                    "section": "snn_comparison",
+                    "metric": "status_pl",
+                    "value": str(snn_comparison.get("status_pl", "n/a")),
+                }
+            )
+            rows.append(
+                {
+                    "section": "snn_comparison",
+                    "metric": "sync_dt_s",
+                    "value": str(snn_comparison.get("sync_dt_s", "n/a")),
+                }
+            )
+            for region, stats in snn_comparison.get("region_differences", {}).items():
+                for metric_name, metric_value in stats.items():
+                    rows.append(
+                        {
+                            "section": "snn_comparison",
+                            "metric": f"{region}_{metric_name}",
+                            "value": str(metric_value),
+                        }
+                    )
 
         for item in self.payload.get("clinical_differences", []):
             profile_id = item.get("profile_id", "n/a")

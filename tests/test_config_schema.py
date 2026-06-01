@@ -68,3 +68,25 @@ def test_clinical_profile_validation_rejects_unknown_profile() -> None:
                 },
             }
         )
+
+
+def test_snn_hippocampus_demo_mapping_sync_dt_and_units() -> None:
+    """Konfiguracja demo SNN ma być zgodna z mapowaniem, czasem i jednostkami."""
+    from brain_core.simulation.config_loader import load_config
+    from brain_core.simulation.signal_adapter import SNNPopulationMapping
+
+    cfg = load_config("configs/snn_hippocampus_demo.yaml")
+    circuit_regions = tuple(circuit["region"] for circuit in cfg.snn["circuits"])
+    neural_mass_regions = tuple(cfg.snn["neural_mass_regions"])
+    mapping = SNNPopulationMapping(
+        snn_region_names=circuit_regions,
+        neural_mass_region_names=neural_mass_regions,
+    )
+
+    assert cfg.snn["enabled"] is True
+    assert cfg.snn["sync_dt"] == 0.010
+    assert cfg.snn["sync_dt"] / cfg.timestep == 2.0
+    assert cfg.snn["input_rate_unit"] == "Hz"
+    assert cfg.snn["output_activity_unit"] == "fraction"
+    assert circuit_regions == ("HIP",)
+    assert mapping.indices_in_neural_mass().tolist() == [10]
