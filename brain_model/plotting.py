@@ -59,7 +59,11 @@ def _add_interpretation_box(fig: Any, text: str) -> None:
 def _extract_svg_region_paths(svg_text: str) -> list[tuple[str, str]]:
     """Wydobądź pary region-ścieżka SVG niezależnie od kolejności atrybutów."""
     region_paths = []
-    root = ET.fromstring(svg_text)
+    try:
+        root = ET.fromstring(svg_text)
+    except ET.ParseError as e:
+        warnings.warn(f"Niepoprawny format pliku SVG: {e}", UserWarning)
+        return []
     for element in root.iter():
         if element.tag.rsplit("}", 1)[-1] != "path":
             continue
