@@ -252,7 +252,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 
 **Pozostały zakres:**
 - Rozszerzyć istniejący katalog profili klinicznych v1.
-- Dodać interpretacje dydaktyczne dla każdego profilu.
+- Dodać interpretacje dydaktyczne dla każdego profilu (np. poprzez rozszerzenie schematu w config_schema.py).
 - Zdefiniować progi jakościowe różnic.
 - Dodać raport amplitude-latency-mechanism dla roving oddball.
 - Zweryfikować profile względem benchmarków.
