@@ -30,11 +30,11 @@ def test_requested_daily_life_scenarios_are_available() -> None:
     assert REQUESTED_DAILY_LIFE_SCENARIOS.issubset(available_scenarios)
 
 
-def test_requested_daily_life_scenarios_have_valid_profiles() -> None:
-    """Sprawdź podstawową spójność profili czasowych nowych scenariuszy."""
+def test_all_scenarios_have_valid_profiles() -> None:
+    """Sprawdź podstawową spójność profili czasowych wszystkich scenariuszy."""
     known_channels = set(CHANNELS)
 
-    for scenario_id in REQUESTED_DAILY_LIFE_SCENARIOS:
+    for scenario_id in list_scenarios():
         scenario = get_scenario(scenario_id)
         assert scenario.description
         assert scenario.what_changes
