@@ -99,7 +99,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 ### 2. Rejestr zdarzeń i raport dydaktyczny „timeline”
 **Status:** `partial`
 
-**Artefakty implementacyjne:** `brain_core/simulation/events.py`, `brain_core/simulation/engine.py`, `brain_core/analysis/reports.py`, `analysis/reports.py`, `brain_model/report.py`, `brain_model/report_export.py`, `tests/test_observation_and_analysis.py`, `tests/test_task_protocols_and_engine.py`.
+**Artefakty implementacyjne:** `brain_core/simulation/events.py`, `brain_core/simulation/engine.py`, `brain_core/analysis/reports.py`, `brain_model/report.py`, `brain_model/report_export.py`, `tests/test_observation_and_analysis.py`, `tests/test_task_protocols_and_engine.py`.
 
 **Cel:** student rozumie „co, kiedy i dlaczego” wydarzyło się w modelu.
 
