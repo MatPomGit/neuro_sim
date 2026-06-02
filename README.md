@@ -15,9 +15,10 @@ Najbliższe zaplanowane prace obejmują:
 3. sformalizowanie profilu `healthy_v1` jako baseline regresyjnego,
 4. potwierdzenie eksperymentów na konektomie z opóźnieniami i stabilizację neural mass,
 5. domknięcie neuromodulacji oraz scenariuszy healthy/disorder/lesion,
-6. ujednolicenie biblioteki tasków i rozwinięcie referencyjnego `roving_oddball` ponad istniejące MVP,
-7. połączenie analiz EEG/BOLD z raportami interpretacyjnymi,
-8. dopracowanie trybu nauczyciela, dokumentacji i brakujących docstringów/type hints.
+6. ujednolicenie biblioteki tasków oraz uzupełnienie dokumentacji użytkowej dla istniejących artefaktów MVP `roving_oddball`,
+7. przygotowanie przewodnika dydaktycznego, przykładowego uruchomienia i interpretacji raportu `roving_oddball`,
+8. połączenie analiz EEG/BOLD z raportami interpretacyjnymi,
+9. dopracowanie trybu nauczyciela, dokumentacji i brakujących docstringów/type hints.
 
 Aktualny opis struktury repozytorium znajduje się w `docs/program_structure.md`.
 

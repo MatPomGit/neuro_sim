@@ -68,7 +68,7 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 1. jeden spójny schemat konfiguracji dla wszystkich eksperymentów,
 2. pełny raport timeline trial-by-trial,
 3. wersjonowany baseline `healthy_v1`,
-4. domknięcie pakietu referencyjnego `roving_oddball` ponad istniejące MVP,
+4. dokumentacja użytkowa dla istniejących artefaktów MVP `roving_oddball`,
 5. pełniejsze raporty porównawcze healthy/disorder/lesion,
 6. jednolita dokumentacja uruchamiania i interpretacji scenariuszy.
 
@@ -228,9 +228,9 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 
 **Braki do domknięcia:**
 
-- Przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”.
-- Pełny raport porównawczy healthy/disorder/lesion.
-- Walidacja metryk habituacji/readaptacji.
+- Dokumentacja użytkowa: przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”.
+- Dokumentacja użytkowa: przykładowe uruchomienie scenariuszy healthy/disorder/lesion.
+- Dokumentacja użytkowa: interpretacja raportu i metryk habituacji/readaptacji.
 
 **Zakres docelowy i dalszy:**
 
@@ -244,8 +244,8 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 **Artefakty docelowe do uzupełnienia:**
 
 - przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”,
-- pełny raport porównawczy healthy vs disorder vs lesion,
-- testy regresji scenariusza i zwalidowanych metryk habituacji/readaptacji.
+- przykładowe uruchomienie scenariuszy healthy vs disorder vs lesion z istniejących konfiguracji,
+- interpretacja raportu oraz testy regresji zwalidowanych metryk habituacji/readaptacji.
 
 **Kryteria ukończenia:**
 
