@@ -9,17 +9,16 @@ Backlog jest uporządkowany według priorytetów (P0–P3) i gotowości wdrożen
 
 ---
 
-## Stan na dzień 2026-05-29
+## Stan na dzień 2026-06-02
 
 Backlog opisuje zarówno prace przyszłe, jak i obszary już częściowo zaimplementowane. Statusy oznaczają:
 - `done` — zakres pozycji jest domknięty zgodnie z kryteriami akceptacji,
 - `partial` — istnieją artefakty implementacyjne, ale pozostały elementy do ukończenia,
-- `planned` — pozycja jest zaplanowana i nie ma jeszcze wystarczającej implementacji,
-- `blocked` — realizacja wymaga wcześniejszego odblokowania zależności.
+- `planned` — pozycja jest zaplanowana i nie ma jeszcze wystarczającej implementacji.
 
 Najważniejsze istniejące fundamenty obejmują moduły eksperymentów, uszkodzeń i raportowania, m.in. `brain_core/experiments/protocols.py`, `brain_core/experiments/lesions.py` oraz `brain_core/analysis/reports.py`. Dla pozycji P0–P2 wskazano poniżej konkretne artefakty, aby oddzielić zakres już obecny w repozytorium od pozostałych prac.
 
-Na dzień 2026-05-29 status nie jest prognozą wdrożenia, tylko krótką oceną rzeczywistego stanu repozytorium na podstawie powyższych definicji.
+Na dzień 2026-06-02 status nie jest prognozą wdrożenia, tylko krótką oceną rzeczywistego stanu repozytorium na podstawie powyższych definicji.
 
 ### Mapa artefaktów P0–P2
 
@@ -28,6 +27,17 @@ Na dzień 2026-05-29 status nie jest prognozą wdrożenia, tylko krótką oceną
 | P0 | Konfiguracja, timeline i baseline zdrowego mózgu | `partial` | `brain_core/simulation/config_loader.py`, `brain_core/simulation/config_schema.py`, `brain_core/analysis/reports.py`, `brain_model/report_export.py`, `brain_model/model.py` |
 | P1 | Konektom, neural mass, neuromodulacja i scenariusze porównawcze | `partial` | `brain_core/anatomy/connectome.py`, `brain_core/networks/delays.py`, `brain_core/populations/wilson_cowan.py`, `brain_core/experiments/pharmacology.py`, `brain_core/experiments/lesions.py` |
 | P2 | Task battery, roving oddball, EEG/BOLD i tryb nauczyciela | `partial` / `planned` | `brain_core/experiments/protocols.py`, `brain_core/analysis/spectral.py`, `brain_core/physiology/eeg_forward_model.py`, `brain_model/qt_app.py`, `brain_model/qt_plotting.py` |
+
+
+### Statusy funkcji przekrojowych wymaganych w tym PR
+
+| Funkcja | Status | MVP istnieje | Pozostały zakres |
+| --- | --- | --- | --- |
+| `roving_oddball` | `partial` | Generator sekwencji, aliasy taska, konfiguracje healthy/disorder/lesion i testy reprodukowalności. | Dokumentacja użytkowa, przykład uruchomienia, interpretacja raportu oraz walidacja metryk habituacji/readaptacji. |
+| Clinical profiles | `partial` | Katalog `configs/clinical_profiles/*.yaml`, integracja ze schematem konfiguracji, lesion i scenariuszami porównawczymi. | Interpretacje dydaktyczne, progi jakościowe różnic, raport amplitude-latency-mechanism i walidacja względem benchmarków. |
+| Timeline | `partial` | `event_timeline` w `brain_core/simulation/events.py` integrowany przez silnik i raporty. | Jednolity format dla wszystkich symulacji, widok trial-by-trial, eksport HTML/PDF i powiązanie zdarzeń z wykresami. |
+| Benchmark metadata | `partial` | `data/validation/benchmark_metadata.json` oraz walidacja metadanych w `brain_core/analysis/benchmark_loader.py`. | Jawne kryteria zgodności dla każdego benchmarku, źródła literaturowe/empiryczne i raport wersyjny. |
+| SNN demo | `partial` | `configs/snn_hippocampus_demo.yaml`, adapter NM↔SNN, silnik wieloskalowy i opis demo. | Pełne sprzężenie zwrotne wpływające na trajektorię neural-mass, synchronizacja kroków i backendy NEST/NEURON/Arbor. |
 
 ### Zrealizowane milestone’y
 
@@ -49,22 +59,22 @@ odróżnić działający artefakt od kompletnego zakresu badawczego.
 
 Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualnego stanu repozytorium. Kolejność odzwierciedla zależności: najpierw domknięcie fundamentów P0, potem elementy P1/P2 potrzebne do scenariuszy dydaktycznych i porównawczych.
 
-1. **Domknięcie konfiguracji eksperymentów P0** — ujednolicić YAML/JSON wokół istniejących `ExperimentConfig`, `config_loader` i konfiguracji `configs/*.yaml`; dodać czytelne błędy walidacji oraz testy dla sekcji `stimulus`, `brain_profile`, `connectome`, `rng_seed`, `analysis`.
-2. **Oś czasu i raport dydaktyczny P0** — rozwinąć raportowanie z `brain_core/analysis/reports.py` i `brain_model/report_export.py` o spójny log zdarzeń, pełną oś trial-by-trial i słownik pojęć dla użytkownika.
-3. **Baseline `healthy_v1` P0** — sformalizować profil zdrowy jako wersjonowany artefakt, dodać dokumentację, referencyjne wykresy i progi regresji dla wyników baseline.
-4. **Konektom z opóźnieniami P1** — potwierdzić co najmniej dwa eksperymenty oparte na `brain_core/anatomy/*`, `brain_core/networks/*` i danych `data/connectomes/*`; uzupełnić mapowanie poznawcze regionów.
-5. **Stabilizacja neural mass P1** — zweryfikować scenariusze >50 regionów dla `brain_core/populations/wilson_cowan.py`, doprecyzować zakresy parametrów i sanity checks.
-6. **Neuromodulacja P1** — domknąć spójne API profili DA/5-HT/ACh/NA/GABA/glutaminian oraz dodać raport pre/post pokazujący różnice czasowo-przestrzenne.
-7. **Scenariusze healthy/disorder/lesion P1** — rozbudować katalog profili klinicznych i uszkodzeń, a następnie rozszerzyć automatyczny raport różnic o region, czas, funkcję poznawczą i komentarz dydaktyczny.
-8. **Biblioteka tasków P2** — ujednolicić istniejące protokoły `stroop`, `go_nogo`, `n_back` i API w `brain_core/experiments/protocols.py`; przygotować wspólne szablony raportów per task.
-9. **Roving oddball P2** — istniejący pakiet MVP obejmuje generator sekwencji, konfiguracje healthy/disorder/lesion i testy reprodukowalności; priorytetem pozostaje dokumentacja użytkowa: przewodnik dydaktyczny, przykładowe uruchomienie oraz interpretacja raportu i metryk habituacji/novelty/readaptacji.
-10. **Raporty EEG/BOLD P2** — połączyć metryki z `brain_core/analysis/*` i `brain_core/physiology/*` w raportach z wykresami, interpretacją i porównaniem profili.
-11. **Migracja desktopowego GUI na PySide6 P2** — domknąć przejście nowych
+1. **Domknięcie konfiguracji eksperymentów P0** — Status: `partial`. ujednolicić YAML/JSON wokół istniejących `ExperimentConfig`, `config_loader` i konfiguracji `configs/*.yaml`; dodać czytelne błędy walidacji oraz testy dla sekcji `stimulus`, `brain_profile`, `connectome`, `rng_seed`, `analysis`.
+2. **Oś czasu i raport dydaktyczny P0** — Status: `partial`. rozwinąć raportowanie z `brain_core/analysis/reports.py` i `brain_model/report_export.py` o spójny log zdarzeń, pełną oś trial-by-trial i słownik pojęć dla użytkownika.
+3. **Baseline `healthy_v1` P0** — Status: `partial`. sformalizować profil zdrowy jako wersjonowany artefakt, dodać dokumentację, referencyjne wykresy i progi regresji dla wyników baseline.
+4. **Konektom z opóźnieniami P1** — Status: `partial`. potwierdzić co najmniej dwa eksperymenty oparte na `brain_core/anatomy/*`, `brain_core/networks/*` i danych `data/connectomes/*`; uzupełnić mapowanie poznawcze regionów.
+5. **Stabilizacja neural mass P1** — Status: `partial`. zweryfikować scenariusze >50 regionów dla `brain_core/populations/wilson_cowan.py`, doprecyzować zakresy parametrów i sanity checks.
+6. **Neuromodulacja P1** — Status: `partial`. domknąć spójne API profili DA/5-HT/ACh/NA/GABA/glutaminian oraz dodać raport pre/post pokazujący różnice czasowo-przestrzenne.
+7. **Scenariusze healthy/disorder/lesion P1** — Status: `partial`. rozbudować katalog profili klinicznych i uszkodzeń, a następnie rozszerzyć automatyczny raport różnic o region, czas, funkcję poznawczą i komentarz dydaktyczny.
+8. **Biblioteka tasków P2** — Status: `partial`. ujednolicić istniejące protokoły `stroop`, `go_nogo`, `n_back` i API w `brain_core/experiments/protocols.py`; przygotować wspólne szablony raportów per task.
+9. **Roving oddball P2** — Status: `partial`. istniejący pakiet MVP obejmuje generator sekwencji, konfiguracje healthy/disorder/lesion i testy reprodukowalności; priorytetem pozostaje dokumentacja użytkowa: przewodnik dydaktyczny, przykładowe uruchomienie oraz interpretacja raportu i metryk habituacji/novelty/readaptacji.
+10. **Raporty EEG/BOLD P2** — Status: `partial`. połączyć metryki z `brain_core/analysis/*` i `brain_core/physiology/*` w raportach z wykresami, interpretacją i porównaniem profili.
+11. **Migracja desktopowego GUI na PySide6 P2** — Status: `partial`. domknąć przejście nowych
     przepływów desktopowych z `tkinter`/`TkAgg` na PySide6/Qt, zachowując
     kompatybilny punkt wejścia `brain_model.gui:run_gui` zgodnie z ADR-0016.
-12. **Tryb nauczyciela P2** — dopisać widoki edukacyjne, pytania kontrolne i
+12. **Tryb nauczyciela P2** — Status: `planned`. dopisać widoki edukacyjne, pytania kontrolne i
     polskie etykiety pojęć zgodne z `docs/english_polish_glossary.md`.
-13. **Jakość i dokumentacja przekrojowa** — utrzymać standard docstringów/type hints,
+13. **Jakość i dokumentacja przekrojowa** — Status: `partial`. utrzymać standard docstringów/type hints,
     aktualizować `docs/program_structure.md` oraz ADR przy zmianach
     strukturalnych i dopisać instrukcje uruchamiania dla scenariuszy.
 
@@ -103,7 +113,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 
 **Cel:** student rozumie „co, kiedy i dlaczego” wydarzyło się w modelu.
 
-**Zrealizowane MVP:**
+**MVP istnieje:**
 - MVP `event_timeline` istnieje w `brain_core/simulation/events.py` i jest
   integrowane z silnikiem symulacji w `brain_core/simulation/engine.py`;
   podstawowe testy timeline są ujęte w `tests/test_task_protocols_and_engine.py`.
@@ -239,6 +249,11 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 
 **Cel:** realizacja kluczowej wartości edukacyjnej i psychiatrycznej.
 
+**MVP istnieje:**
+- Katalog `configs/clinical_profiles/*.yaml` zawiera profile healthy, disorder i lesion.
+- `brain_core/simulation/config_schema.py` i `brain_core/simulation/engine.py` obsługują profil kliniczny w konfiguracji.
+- `brain_core/experiments/lesions.py` oraz `brain_model/scenarios/` wspierają scenariusze porównawcze na poziomie MVP.
+
 **Zakres prac:**
 - Zestaw profili zaburzeń (np. deficyt dopaminy, dysregulacja GABA, serotonin imbalance).
 - Scenariusze uszkodzeń mechanicznych (ogniskowe, sieciowe).
@@ -300,7 +315,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 
 **Cel:** dostarczenie referencyjnego zadania do testów predykcji, nowości i adaptacji.
 
-**Zrealizowane MVP:**
+**MVP istnieje:**
 - Generator sekwencji bodźców z parametrami:
   - `n_runs`, `run_length_min/max`,
   - `stimulus_family`, `deviant_probability`,
@@ -400,11 +415,11 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 
 **Cel:** powiązanie mechanizmów mikro z zachowaniem makro.
 
-**Istniejący pilotaż:** istnieje demo `snn_hippocampus_demo` z jednym
+**MVP istnieje:** istnieje demo `snn_hippocampus_demo` z jednym
 obwodem HIP oraz raportem `snn_comparison`, które dokumentują kontrakt
 wymiany sygnałów i porównanie raportowe bez pełnego sprzężenia zwrotnego.
 
-**Istniejące artefakty:**
+**Artefakty implementacyjne:**
 - [`configs/snn_hippocampus_demo.yaml`](configs/snn_hippocampus_demo.yaml)
 - [`docs/snn_cosimulation_demo.md`](docs/snn_cosimulation_demo.md)
 - [`brain_core/simulation/signal_adapter.py`](brain_core/simulation/signal_adapter.py)
@@ -443,6 +458,10 @@ wymiany sygnałów i porównanie raportowe bez pełnego sprzężenia zwrotnego.
 **Status:** `partial`
 
 **Cel:** systematyczne mapowanie modelu na znane efekty naukowe.
+
+**MVP istnieje:**
+- `data/validation/benchmark_metadata.json` opisuje źródło, zakres, ograniczenia i poziom walidacji dla benchmarków EEG, fMRI i zachowania.
+- `brain_core/analysis/benchmark_loader.py` waliduje kompletność metadanych i ładuje je razem z danymi referencyjnymi.
 
 **Zakres prac:**
 - Rejestr hipotez i benchmarków z poziomami walidacji: `synthetic`, `educational`, `literature-inspired`, `empirical`.

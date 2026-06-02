@@ -1,6 +1,6 @@
 # Plan rozwoju biologicznego i wieloskalowego
 
-## Status dokumentu na dzień 2026-05-29
+## Status dokumentu na dzień 2026-06-02
 
 Ten dokument zachowuje szerszy, koncepcyjny plan rozwoju biologicznego modelu. Aktualny stan repozytorium i najbliższe zaplanowane prace są utrzymywane w `BACKLOG.md`, a rzeczywista struktura katalogów jest opisana w `docs/program_structure.md`.
 
@@ -13,6 +13,67 @@ Najbliższy zakres operacyjny obejmuje:
 5. aktualizację dokumentacji, docstringów, type hints i instrukcji uruchamiania scenariuszy.
 
 Poniższe sekcje opisują kierunek docelowy i nie muszą odpowiadać jeden-do-jednego bieżącej strukturze plików.
+
+---
+
+
+## Status funkcji MVP i pozostałego zakresu
+
+Statusy funkcji w tym dokumencie używają wyłącznie wartości `done`, `partial`
+i `planned`. Sekcja porządkuje stan repozytorium bez dodawania nowych funkcji.
+
+### `roving_oddball`
+
+**Status:** `partial`
+
+**MVP istnieje:** protokół zadania, generator sekwencji, konfiguracje
+healthy/disorder/lesion i testy reprodukowalności są dostępne w aktualnym repo.
+
+**Pozostały zakres:** przewodnik dydaktyczny, przykład uruchomienia, interpretacja
+raportu oraz walidacja metryk habituacji/readaptacji.
+
+### Clinical profiles
+
+**Status:** `partial`
+
+**MVP istnieje:** katalog `configs/clinical_profiles/*.yaml` zawiera profile
+healthy, disorder i lesion, a schemat konfiguracji oraz silnik potrafią użyć
+profilu klinicznego w scenariuszu.
+
+**Pozostały zakres:** interpretacje dydaktyczne dla profili, progi różnic,
+raport amplitude-latency-mechanism i walidacja względem benchmarków.
+
+### Timeline
+
+**Status:** `partial`
+
+**MVP istnieje:** `brain_core/simulation/events.py` buduje oś zdarzeń, która
+jest integrowana z silnikiem i raportowaniem.
+
+**Pozostały zakres:** pełny widok trial-by-trial, eksport HTML/PDF,
+linkowanie zdarzeń z wykresami i objaśnienia per profil kliniczny.
+
+### Benchmark metadata
+
+**Status:** `partial`
+
+**MVP istnieje:** `data/validation/benchmark_metadata.json` opisuje syntetyczne
+i edukacyjne benchmarki EEG, fMRI oraz zachowania, a loader benchmarków waliduje
+kompletność tych metadanych.
+
+**Pozostały zakres:** kryteria zgodności per benchmark, źródła
+literaturowe/empiryczne i raport wersyjny zgodności jakościowej.
+
+### SNN demo
+
+**Status:** `partial`
+
+**MVP istnieje:** `configs/snn_hippocampus_demo.yaml` oraz
+`docs/snn_cosimulation_demo.md` opisują pilotaż neural-mass + lokalny obwód SNN
+z adapterem sygnałów i porównaniem raportowym.
+
+**Pozostały zakres:** sprzężenie zwrotne wpływające na trajektorię neural-mass,
+pełniejsza synchronizacja kroków czasowych i backendy NEST/NEURON/Arbor.
 
 ---
 
@@ -441,6 +502,8 @@ Wersja GitHub Pages z Pyodide może nadal istnieć, ale tylko jako wersja demons
 
 ### Etap 1: uporządkowanie obecnego modelu
 
+**Status:** `partial`
+
 Cel: stabilna baza.
 
 Dodać:
@@ -456,6 +519,8 @@ rozdzielenie GUI od silnika
 
 ### Etap 2: pełne modele populacyjne
 
+**Status:** `partial`
+
 Cel: biologicznie interpretowalne moduły.
 
 Dodać:
@@ -470,6 +535,8 @@ sprzężenie między regionami
 ```
 
 ### Etap 3: konektom i atlas
+
+**Status:** `partial`
 
 Cel: przejście z 16 modułów poznawczych na regiony anatomiczne.
 
@@ -494,6 +561,8 @@ DMN  = mPFC + PCC + angular gyrus
 
 ### Etap 4: neuromodulacja
 
+**Status:** `partial`
+
 Cel: biologiczne sterowanie parametrami.
 
 Dodać:
@@ -508,6 +577,8 @@ farmakologiczne manipulacje parametrów
 ```
 
 ### Etap 5: plastyczność i uczenie
+
+**Status:** `partial`
 
 Cel: model ma się zmieniać w wyniku doświadczenia.
 
@@ -526,7 +597,7 @@ homeostatic regulation
 
 Cel: lokalnie szczegółowa symulacja biologiczna.
 
-Status (2026-05-27): **częściowo zrealizowane**
+**Status:** `partial`
 
 Zrealizowano:
 
@@ -547,6 +618,8 @@ Do dalszej realizacji:
 ```
 
 ### Etap 7: walidacja
+
+**Status:** `partial`
 
 Cel: model nie tylko generuje wykresy, ale daje porównywalne dane.
 

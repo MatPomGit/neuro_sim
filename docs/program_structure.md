@@ -1,6 +1,6 @@
 # Struktura programu `neuro_sim`
 
-Ten dokument opisuje aktualny układ repozytorium na dzień 2026-05-29. Jest opisem stanu istniejącego, a nie docelowego szkicu architektury; plan najbliższych prac jest utrzymywany w `BACKLOG.md`.
+Ten dokument opisuje aktualny układ repozytorium na dzień 2026-06-02. Jest opisem stanu istniejącego, a nie docelowego szkicu architektury; plan najbliższych prac jest utrzymywany w `BACKLOG.md`.
 
 ## 1. Widok wysokiego poziomu
 
@@ -31,6 +31,21 @@ neuro_sim/
 - `main_gui.py` — uruchamia GUI desktopowe delegujące do `brain_model.gui_runner` oraz modułów GUI.
 - `python -m brain_core.simulation.run --config configs/default.yaml` — uruchamia eksperyment z pliku konfiguracyjnego przez niezależną od GUI warstwę `brain_core`.
 - Skrypty instalowane przez `pyproject.toml`: `neuro-sim`, `neuro-sim-gui`, `neuro-sim-run`.
+
+
+## 2A. Status funkcji w aktualnej strukturze
+
+Statusy używane w tym dokumencie: `done`, `partial`, `planned`. Poniższe
+pozycje opisują tylko stan dokumentowany w repozytorium, bez dodawania nowych
+modułów.
+
+| Funkcja | Status | MVP istnieje | Pozostały zakres strukturalny |
+| --- | --- | --- | --- |
+| `roving_oddball` | `partial` | `brain_core/experiments/protocols.py` oraz konfiguracje `configs/roving_oddball_*.yaml`. | Utrzymać rozwój w istniejącym protokole, konfiguracjach i raportach; bez nowej warstwy architektonicznej. |
+| Clinical profiles | `partial` | `configs/clinical_profiles/*.yaml`, `brain_core/simulation/config_schema.py`, `brain_core/experiments/lesions.py`, `brain_model/scenarios/`. | Rozszerzać metadane i interpretacje w istniejącym katalogu profili oraz raportach porównawczych. |
+| Timeline | `partial` | `brain_core/simulation/events.py`, `brain_core/simulation/engine.py`, `brain_core/analysis/reports.py`. | Rozbudować raport trial-by-trial w istniejących modułach raportowania i eksportu. |
+| Benchmark metadata | `partial` | `data/validation/benchmark_metadata.json` i `brain_core/analysis/benchmark_loader.py`. | Uzupełniać kryteria zgodności i źródła w danych walidacyjnych oraz loaderze benchmarków. |
+| SNN demo | `partial` | `configs/snn_hippocampus_demo.yaml`, `docs/snn_cosimulation_demo.md`, `brain_core/simulation/signal_adapter.py`, `brain_core/simulation/multiscale_engine.py`. | Pełniejsze sprzężenie i backendy utrzymywać w warstwie `brain_core/simulation` oraz `brain_core/populations`. |
 
 ## 3. `brain_model/` — model poznawczy, GUI i prezentacja wyników
 
@@ -146,6 +161,10 @@ brain_core/analysis/
 
 Warstwa analizy wylicza metryki spektralne, fazowe, łącznościowe i przepływu informacji. `signal_metrics.py` pełni rolę fasady kompatybilności, a `reports.py` agreguje metryki do raportów końcowych.
 
+**MVP istnieje — timeline:** oś zdarzeń jest budowana w `brain_core/simulation/events.py`, dołączana przez `brain_core/simulation/engine.py` i konsumowana przez raporty.
+
+**Pozostały zakres — timeline:** pełny raport trial-by-trial, eksport HTML/PDF i linkowanie zdarzeń z wykresami powinny pozostać w istniejących modułach analizy oraz `brain_model/report_export.py`.
+
 ## 5. Dane, konfiguracje i artefakty statyczne
 
 ```text
@@ -158,6 +177,13 @@ configs/
 ├── roving_oddball_healthy.yaml
 ├── roving_oddball_disorder_gaba.yaml
 ├── roving_oddball_lesion_hippocampus.yaml
+├── clinical_profiles/
+│   ├── healthy_v1.yaml
+│   ├── dopamine_deficit.yaml
+│   ├── gaba_dysregulation.yaml
+│   ├── serotonin_imbalance.yaml
+│   ├── hippocampal_lesion.yaml
+│   └── dlpfc_weakening.yaml
 ├── multi_region_delay_demo.yaml
 ├── multi_region_delay_extended.yaml
 ├── snn_hippocampus_demo.yaml
@@ -168,12 +194,21 @@ data/
 ├── connectomes/weights.csv
 ├── connectomes/fiber_lengths.csv
 └── validation/
+    ├── benchmark_metadata.json
     ├── behavior_target.csv
     ├── eeg_target.csv
     └── fmri_target.csv
 ```
 
-Konfiguracje `configs/*.yaml` są podstawą uruchomień przez `brain_core.simulation.run`. Artefakty MVP dla `roving_oddball` już istnieją: protokół zadania jest utrzymywany w `brain_core/experiments/protocols.py`, a trzy konfiguracje scenariuszy znajdują się w `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml` i `configs/roving_oddball_lesion_hippocampus.yaml`. `snn_hippocampus_demo.yaml` dokumentuje minimalny przypadek neural-mass + lokalny obwód SNN; pełny opis znajduje się w `docs/snn_cosimulation_demo.md`. Dane `data/*` są używane przez testy oraz moduły atlasu, konektomu i walidacji sygnałów.
+Konfiguracje `configs/*.yaml` są podstawą uruchomień przez `brain_core.simulation.run`.
+
+**MVP istnieje — `roving_oddball`:** protokół zadania jest utrzymywany w `brain_core/experiments/protocols.py`, a trzy konfiguracje scenariuszy znajdują się w `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml` i `configs/roving_oddball_lesion_hippocampus.yaml`.
+
+**MVP istnieje — clinical profiles:** katalog `configs/clinical_profiles/` zawiera profile healthy, disorder i lesion używane przez schemat konfiguracji, silnik i scenariusze porównawcze.
+
+**MVP istnieje — benchmark metadata:** `data/validation/benchmark_metadata.json` opisuje metadane benchmarków EEG, fMRI i zachowania, a dane `data/validation/*_target.csv` są używane przez testy oraz moduły walidacji sygnałów.
+
+**MVP istnieje — SNN demo:** `snn_hippocampus_demo.yaml` dokumentuje minimalny przypadek neural-mass + lokalny obwód SNN; pełny opis znajduje się w `docs/snn_cosimulation_demo.md`. Dane `data/*` są używane przez testy oraz moduły atlasu, konektomu i walidacji sygnałów.
 
 ## 6. Dokumentacja i zasoby viewer
 
@@ -239,8 +274,11 @@ Oczekiwane zmiany strukturalne powinny pozostać minimalne:
 3. utrzymać scenariusze clinical/lesion w `brain_model/scenarios/` oraz `brain_core/experiments/lesions.py`,
 4. aktualizować ADR tylko wtedy, gdy zmieni się granica odpowiedzialności modułów lub strategia konfiguracji/I/O.
 
-Następne kroki mają charakter dokumentacji użytkowej, a nie nowych artefaktów architektonicznych:
+Następne kroki mają charakter dokumentacji użytkowej i doprecyzowania istniejących artefaktów, a nie nowych warstw architektonicznych:
 
 1. przygotować przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”,
 2. dodać przykładowe uruchomienie scenariuszy healthy/disorder/lesion z istniejących konfiguracji,
-3. opisać interpretację raportu, w tym `surprise_index`, `habituation_level` i `readaptation_latency`.
+3. opisać interpretację raportu, w tym `surprise_index`, `habituation_level` i `readaptation_latency`,
+4. uzupełnić profile kliniczne o interpretacje dydaktyczne oraz progi różnic w istniejących konfiguracjach i raportach,
+5. dopisać kryteria zgodności benchmarków w `data/validation/benchmark_metadata.json`,
+6. rozwijać demo SNN bez przenoszenia kontraktu poza `brain_core/simulation` i `brain_core/populations`.
