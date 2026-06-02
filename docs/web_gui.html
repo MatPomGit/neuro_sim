@@ -169,7 +169,7 @@
     </details>
 
     <h3>Scenariusz</h3>
-    <div class="row"><label for="scenario">scenariusz</label><select id="scenario"><option value="reward-learning">reward-learning</option><option value="baseline">baseline</option><option value="task-switching">task-switching</option><option value="threat-only">threat-only</option><option value="sensory-overload">sensory-overload</option><option value="stress-recovery">stress-recovery</option></select></div>
+    <div class="row"><label for="scenario">scenariusz</label><select id="scenario"><option value="reward-learning">reward-learning</option><option value="baseline">baseline</option><option value="task-switching">task-switching</option><option value="threat-only">threat-only</option><option value="sensory-overload">sensory-overload</option><option value="stress-recovery">stress-recovery</option><option value="face-rinse">face-rinse</option><option value="sleep-onset">sleep-onset</option><option value="quiet-sleep">quiet-sleep</option><option value="rem-sleep">rem-sleep</option><option value="awakening">awakening</option><option value="pain-prick">pain-prick</option><option value="startle-response">startle-response</option><option value="physical-activity">physical-activity</option><option value="sexual-activity">sexual-activity</option><option value="reading-book">reading-book</option></select></div>
     <div id="scenarioDetails" class="status">Wybierz scenariusz, aby zobaczyć opis.</div>
 
     <details>
@@ -505,6 +505,86 @@ const SCENARIOS = {
     phases: [],
     events: [{type: "stress_peak", time: 15.0}, {type: "recovery_start", time: 24.0}],
     channels: {visual: [], auditory: [], task: [[1.0, 38.0, 0.6]], threat: [[8.0, 24.0, 0.85]], reward: [[30.0, 36.0, 0.55]]}
+  },
+  "face-rinse": {
+    description: "Opłukanie twarzy wodą: krótki bodziec dotykowo-interoceptywny po spokojnym przygotowaniu.",
+    what_changes: "Wyniki: przejściowy wzrost INT/SAL, umiarkowane pobudzenie uwagi i szybki powrót do stabilnego baseline.",
+    duration_hint: 18.0,
+    phases: [{name: "preparation", start: 0.0, end: 5.0}, {name: "water-contact", start: 5.0, end: 9.0}, {name: "settling", start: 9.0, end: 18.0}],
+    events: [{type: "water_contact", time: 5.0}, {type: "rinse_end", time: 9.0}],
+    channels: {visual: [], auditory: [], task: [[1.0, 12.0, 0.35]], threat: [], reward: []}
+  },
+  "sleep-onset": {
+    description: "Zasypianie: stopniowe wyciszanie bodźców zewnętrznych i przechodzenie w stan niskiej kontroli zadaniowej.",
+    what_changes: "Wyniki: spadek VIS/AUD/ATT/EXEC, mniejsze pobudzenie noradrenergiczne i względne utrzymanie DMN.",
+    duration_hint: 60.0,
+    phases: [{name: "relaxation", start: 0.0, end: 20.0}, {name: "drowsiness", start: 20.0, end: 42.0}, {name: "sleep-entry", start: 42.0, end: 60.0}],
+    events: [{type: "eyes_closed", time: 8.0}, {type: "sleep_entry", time: 42.0}],
+    channels: {visual: [[0.0, 8.0, 0.25]], auditory: [[0.0, 20.0, 0.2]], task: [[0.0, 12.0, 0.25]], threat: [], reward: []}
+  },
+  "quiet-sleep": {
+    description: "Sen spokojny: niska stymulacja sensoryczna, stabilny sygnał interoceptywny i brak wymagań zadaniowych.",
+    what_changes: "Wyniki: niski napęd zadaniowy, stabilizacja pobudzenia i ograniczone zapłony global workspace.",
+    duration_hint: 90.0,
+    phases: [{name: "stable-sleep", start: 0.0, end: 70.0}, {name: "micro-adjustment", start: 70.0, end: 90.0}],
+    events: [{type: "sleep_stabilized", time: 10.0}],
+    channels: {visual: [], auditory: [[70.0, 74.0, 0.18]], task: [], threat: [], reward: []}
+  },
+  "rem-sleep": {
+    description: "Faza REM: wewnętrznie generowane obrazy senne przy niskiej stymulacji zewnętrznej i większej zmienności salience (uwaga: web GUI symuluje tylko pierwszy impuls wizualny).",
+    what_changes: "Wyniki: epizodyczne piki VIS/EPIS/SAL bez zewnętrznego zadania oraz niestabilniejszy profil walencji.",
+    duration_hint: 75.0,
+    phases: [{name: "rem-entry", start: 0.0, end: 15.0}, {name: "dream-imagery", start: 15.0, end: 58.0}, {name: "rem-exit", start: 58.0, end: 75.0}],
+    events: [{type: "rem_onset", time: 15.0}, {type: "rem_offset", time: 58.0}],
+    channels: {visual: [[18.0, 26.0, 0.45], [34.0, 42.0, 0.5], [50.0, 56.0, 0.4]], auditory: [], task: [], threat: [[48.0, 54.0, 0.25]], reward: [[35.0, 44.0, 0.35]]}
+  },
+  "awakening": {
+    description: "Wybudzenie się: narastający dopływ bodźców zewnętrznych, orientacja i odzyskanie kontroli zadaniowej.",
+    what_changes: "Wyniki: wzrost VIS/AUD/ATT/EXEC, ponowny zapłon global workspace i normalizacja stanu czuwania.",
+    duration_hint: 40.0,
+    phases: [{name: "sleep-tail", start: 0.0, end: 10.0}, {name: "orientation", start: 10.0, end: 24.0}, {name: "wakefulness", start: 24.0, end: 40.0}],
+    events: [{type: "awakening_onset", time: 10.0}, {type: "eyes_open", time: 18.0}],
+    channels: {visual: [[18.0, 40.0, 0.55]], auditory: [[10.0, 24.0, 0.45]], task: [[20.0, 40.0, 0.5]], threat: [], reward: []}
+  },
+  "pain-prick": {
+    description: "Poczucie ukłucia bólu w organizmie: krótki, ostry sygnał interoceptywny z reakcją salience.",
+    what_changes: "Wyniki: szybki pik INT/SAL, wzrost noradrenaliny i krótkie zakłócenie stabilności poznawczej.",
+    duration_hint: 25.0,
+    phases: [{name: "baseline", start: 0.0, end: 8.0}, {name: "pain", start: 8.0, end: 10.5}, {name: "reappraisal", start: 10.5, end: 25.0}],
+    events: [{type: "pain_onset", time: 8.0}, {type: "pain_offset", time: 10.5}],
+    channels: {visual: [], auditory: [], task: [[10.5, 20.0, 0.45]], threat: [[8.0, 12.0, 0.55]], reward: []}
+  },
+  "startle-response": {
+    description: "Wystraszenie się: nagły bodziec słuchowy lub wzrokowy wywołujący krótką reakcję alarmową.",
+    what_changes: "Wyniki: gwałtowny pik AUD/VIS/SAL, wzrost noradrenaliny i szybka faza odzyskiwania kontroli.",
+    duration_hint: 30.0,
+    phases: [{name: "calm", start: 0.0, end: 7.0}, {name: "startle", start: 7.0, end: 9.0}, {name: "recovery", start: 9.0, end: 30.0}],
+    events: [{type: "startle_onset", time: 7.0}, {type: "recovery_start", time: 9.0}],
+    channels: {visual: [[7.0, 8.5, 0.65]], auditory: [[7.0, 8.0, 0.95]], task: [[11.0, 24.0, 0.45]], threat: [[7.0, 12.0, 0.85]], reward: []}
+  },
+  "physical-activity": {
+    description: "Aktywność fizyczna: planowanie ruchu, narastający sygnał z ciała i przyjemna faza regeneracji.",
+    what_changes: "Wyniki: utrzymany wzrost INT/ATT/EXEC, umiarkowana odpowiedź nagrody i stabilizacja po wysiłku.",
+    duration_hint: 80.0,
+    phases: [{name: "warm-up", start: 0.0, end: 15.0}, {name: "exercise", start: 15.0, end: 55.0}, {name: "cool-down", start: 55.0, end: 80.0}],
+    events: [{type: "exercise_start", time: 15.0}, {type: "cool_down_start", time: 55.0}],
+    channels: {visual: [], auditory: [], task: [[0.0, 60.0, 0.65]], threat: [], reward: [[45.0, 68.0, 0.45]]}
+  },
+  "sexual-activity": {
+    description: "Aktywność seksualna: stopniowe narastanie bodźców interoceptywnych i nagrodowych w bezpiecznym kontekście.",
+    what_changes: "Wyniki: wzrost INT/VAL, silniejsza odpowiedź dopaminowa i obniżenie profilu zagrożenia przy stabilnym kontekście.",
+    duration_hint: 90.0,
+    phases: [{name: "affiliative-context", start: 0.0, end: 20.0}, {name: "arousal", start: 20.0, end: 65.0}, {name: "resolution", start: 65.0, end: 90.0}],
+    events: [{type: "arousal_increase", time: 20.0}, {type: "resolution_start", time: 65.0}],
+    channels: {visual: [[5.0, 55.0, 0.35]], auditory: [], task: [[10.0, 65.0, 0.35]], threat: [], reward: [[20.0, 72.0, 0.85]]}
+  },
+  "reading-book": {
+    description: "Czytanie książki: stabilny bodziec wzrokowy, uwaga zadaniowa i semantyczna integracja treści.",
+    what_changes: "Wyniki: podwyższona aktywność VIS/ATT/SEM, niskie pobudzenie stresowe i umiarkowana stabilność global workspace.",
+    duration_hint: 60.0,
+    phases: [{name: "orientation", start: 0.0, end: 8.0}, {name: "sustained-reading", start: 8.0, end: 52.0}, {name: "pause", start: 52.0, end: 60.0}],
+    events: [{type: "reading_start", time: 8.0}, {type: "page_turn", time: 32.0}],
+    channels: {visual: [[2.0, 52.0, 0.75]], auditory: [], task: [[8.0, 52.0, 0.6]], threat: [], reward: [[40.0, 52.0, 0.25]]}
   }
 };
 const REGION_TO_MODULE_WEIGHTS = {
