@@ -8,7 +8,7 @@ Najbliższy zakres operacyjny obejmuje:
 
 1. domknięcie walidowalnej konfiguracji eksperymentów, osi czasu raportów i baseline `healthy_v1`,
 2. stabilizację konektomu z opóźnieniami, neural mass, neuromodulacji oraz scenariuszy healthy/disorder/lesion,
-3. ujednolicenie biblioteki tasków z priorytetem dla referencyjnego `roving_oddball`,
+3. ujednolicenie biblioteki tasków i rozwijanie referencyjnego `roving_oddball` ponad istniejące MVP,
 4. spięcie metryk EEG/BOLD z raportami interpretacyjnymi,
 5. aktualizację dokumentacji, docstringów, type hints i instrukcji uruchamiania scenariuszy.
 

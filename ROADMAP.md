@@ -32,7 +32,7 @@ Docelowy użytkownik powinien móc:
 - **Dydaktyka jako pierwszy przypadek użycia** — funkcje mają pomagać zrozumieć mechanizm, nie tylko generować przebieg numeryczny.
 - **Scenariusze porównawcze** — wartość aplikacji rośnie, gdy ten sam bodziec można uruchomić dla profilu zdrowego, zaburzenia i uszkodzenia.
 - **Raport zamiast surowych danych** — każdy eksperyment powinien kończyć się interpretowalnym raportem z osią czasu i słownikiem pojęć.
-- **Roving oddball jako zadanie referencyjne** — `roving_oddball` jest głównym scenariuszem walidującym predykcję, nowość, habituację i readaptację.
+- **Roving oddball jako zadanie referencyjne** — `roving_oddball` jest rozwijany jako główny scenariusz dla predykcji, nowości, habituacji i readaptacji; MVP zadania już istnieje, a walidacja części metryk pozostaje do domknięcia.
 
 ### 3.2. Założenia techniczne
 
@@ -68,7 +68,7 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 1. jeden spójny schemat konfiguracji dla wszystkich eksperymentów,
 2. pełny raport timeline trial-by-trial,
 3. wersjonowany baseline `healthy_v1`,
-4. dedykowany artefakt `roving_oddball`,
+4. domknięcie pakietu referencyjnego `roving_oddball` ponad istniejące MVP,
 5. pełniejsze raporty porównawcze healthy/disorder/lesion,
 6. jednolita dokumentacja uruchamiania i interpretacji scenariuszy.
 
@@ -211,29 +211,41 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 
 **Horyzont:** równolegle z końcówką Etapu 2 / przed pełną biblioteką kliniczną
 **Priorytet:** P1/P2
-**Status:** planowany dla dedykowanego `roving_oddball`
+**Status:** częściowo zrealizowany
 
 **Cele:**
 
 - Ujednolicić bibliotekę zadań poznawczych.
-- Wdrożyć `roving_oddball` jako zadanie referencyjne dla predykcji, nowości, habituacji i readaptacji.
+- Rozwinąć istniejący `roving_oddball` jako zadanie referencyjne dla predykcji, nowości, habituacji i readaptacji.
 - Zapewnić te same sekwencje bodźców dla profili healthy/disorder/lesion.
 
-**Zakres:**
+**Zrealizowane artefakty:**
 
-- wspólne API tasków dla `stroop`, `go_nogo`, `n_back` i `roving_oddball`,
-- generator sekwencji standard/deviant z parametrami runów, jitterem i kontrolą seeda,
-- metryki: novelty/surprise index, tempo habituacji, latencja readaptacji, różnice E/I i neuromodulacyjne,
+- `RovingOddballTask` jako dedykowany protokół zadania referencyjnego.
+- Aliasy `get_task` dla wariantów nazwy `roving_oddball`.
+- Konfiguracje healthy/disorder/lesion: `roving_oddball_healthy`, `roving_oddball_disorder_gaba`, `roving_oddball_lesion_hippocampus`.
+- Testy reprodukowalności sekwencji oraz ładowania konfiguracji scenariuszy.
+
+**Braki do domknięcia:**
+
+- Przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”.
+- Pełny raport porównawczy healthy/disorder/lesion.
+- Walidacja metryk habituacji/readaptacji.
+
+**Zakres docelowy i dalszy:**
+
+- utrzymanie wspólnego API tasków dla `stroop`, `go_nogo`, `n_back` i `roving_oddball`,
+- rozszerzanie generatora sekwencji standard/deviant o parametry runów, jitter i kontrolę seeda bez naruszania istniejącej reprodukowalności,
+- walidacja metryk: novelty/surprise index, tempo habituacji, latencja readaptacji, różnice E/I i neuromodulacyjne,
 - timeline trial-by-trial,
-- konfiguracje `roving_oddball_healthy`, `roving_oddball_disorder_*`, `roving_oddball_lesion_*`,
+- spójne konfiguracje `roving_oddball_healthy`, `roving_oddball_disorder_*`, `roving_oddball_lesion_*`,
 - raport healthy vs disorder vs lesion.
 
-**Artefakty docelowe:**
+**Artefakty docelowe do uzupełnienia:**
 
-- dedykowany task `roving_oddball`,
-- konfiguracje YAML dla wariantów profili,
-- testy reprodukowalności sekwencji,
-- notebook lub przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”.
+- przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”,
+- pełny raport porównawczy healthy vs disorder vs lesion,
+- testy regresji scenariusza i zwalidowanych metryk habituacji/readaptacji.
 
 **Kryteria ukończenia:**
 
@@ -367,7 +379,7 @@ Etap 6: mikro-makro + kohorty + benchmarki
 
 Najważniejsze zależności blokujące:
 
-- `roving_oddball` wymaga stabilnego RNG, wspólnego API tasków i raportu trial-by-trial,
+- `roving_oddball` ma już stabilny RNG i wspólne API tasków, a do domknięcia pozostają raport trial-by-trial oraz walidacja metryk habituacji/readaptacji,
 - profile clinical/lesion wymagają baseline `healthy_v1` oraz porównywalnych konfiguracji,
 - tryb nauczyciela wymaga gotowych raportów i spójnej terminologii PL,
 - hybrydy mikro-makro wymagają stabilnego kontraktu wymiany sygnałów i ograniczeń wydajnościowych.
