@@ -50,6 +50,22 @@ class AnalysisReport:
         for name, value in metrics.items():
             lines.append(f"- **{name}**: {value}")
         lines.append("")
+        if benchmark_metadata:
+            lines.append("## Status walidacji")
+            for benchmark_name, metadata in benchmark_metadata.items():
+                level = metadata.get("level", "n/a")
+                origin = metadata.get("comparison_origin_pl", "syntetyczny")
+                if level == "empirical":
+                    status = "walidacja empiryczna na danych referencyjnych"
+                else:
+                    status = (
+                        "walidacja syntetyczna lub edukacyjna bez danych empirycznych"
+                    )
+                lines.append(
+                    f"- **{benchmark_name}**: {status} "
+                    f"(poziom: {level}, charakter: {origin})"
+                )
+            lines.append("")
         lines.append("## Porównanie z benchmarkiem")
         if benchmark_metadata:
             lines.append("### Metadane benchmarków")
@@ -111,7 +127,9 @@ class AnalysisReport:
                 f"{snn_comparison.get('input_rate_unit', 'n/a')} / "
                 f"{snn_comparison.get('output_activity_unit', 'n/a')}"
             )
-            for region, stats in (snn_comparison.get("region_differences") or {}).items():
+            for region, stats in (
+                snn_comparison.get("region_differences") or {}
+            ).items():
                 lines.append(f"- **{region}**")
                 lines.append(
                     f"  - średnia aktywność bez SNN: "
@@ -161,6 +179,18 @@ class AnalysisReport:
         for benchmark_name, metadata in self.payload.get(
             "benchmark_metadata", {}
         ).items():
+            level = metadata.get("level", "n/a")
+            if level == "empirical":
+                validation_status = "empirical"
+            else:
+                validation_status = "synthetic"
+            rows.append(
+                {
+                    "section": "validation_status",
+                    "metric": benchmark_name,
+                    "value": validation_status,
+                }
+            )
             for key, value in metadata.items():
                 rows.append(
                     {
@@ -233,7 +263,9 @@ class AnalysisReport:
                     "value": str(snn_comparison.get("sync_dt_s", "n/a")),
                 }
             )
-            for region, stats in (snn_comparison.get("region_differences") or {}).items():
+            for region, stats in (
+                snn_comparison.get("region_differences") or {}
+            ).items():
                 for metric_name, metric_value in stats.items():
                     rows.append(
                         {

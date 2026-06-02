@@ -247,6 +247,15 @@ def test_report_marks_benchmark_origin_in_markdown() -> Any:
     )
 
     markdown = report.to_markdown()
+    csv_rows = report.to_csv_rows()
 
+    assert "## Status walidacji" in markdown
+    assert "walidacja syntetyczna" in markdown
+    assert "walidacja empiryczna" in markdown
     assert "benchmark syntetyczny" in markdown
     assert "benchmark empiryczny" in markdown
+    assert {
+        (row["metric"], row["value"])
+        for row in csv_rows
+        if row["section"] == "validation_status"
+    } == {("eeg", "synthetic"), ("behavior", "empirical")}

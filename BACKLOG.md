@@ -451,6 +451,8 @@ wymiany sygnałów i porównanie raportowe bez pełnego sprzężenia zwrotnego.
 
 **Pozostały zakres:**
 - Rozbudować rejestr hipotez i benchmarków o jawne źródła oraz kryteria zgodności.
+- Każdy benchmark musi mieć metadane, kryterium zgodności i informację, czy jest
+  edukacyjny, literaturowy czy empiryczny.
 - Zautomatyzować raport wersyjny zgodności jakościowej.
 
 ---
