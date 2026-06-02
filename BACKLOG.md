@@ -57,7 +57,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 6. **Neuromodulacja P1** — domknąć spójne API profili DA/5-HT/ACh/NA/GABA/glutaminian oraz dodać raport pre/post pokazujący różnice czasowo-przestrzenne.
 7. **Scenariusze healthy/disorder/lesion P1** — rozbudować katalog profili klinicznych i uszkodzeń, a następnie rozszerzyć automatyczny raport różnic o region, czas, funkcję poznawczą i komentarz dydaktyczny.
 8. **Biblioteka tasków P2** — ujednolicić istniejące protokoły `stroop`, `go_nogo`, `n_back` i API w `brain_core/experiments/protocols.py`; przygotować wspólne szablony raportów per task.
-9. **Roving oddball P2** — wdrożyć dedykowany generator sekwencji, konfiguracje healthy/disorder/lesion, metryki habituacji/novelty/readaptacji i testy reprodukowalności seedów.
+9. **Roving oddball P2** — domknąć pakiet referencyjny ponad istniejący generator sekwencji, konfiguracje healthy/disorder/lesion i testy reprodukowalności; priorytetem są przewodnik dydaktyczny, raport porównawczy oraz walidacja metryk habituacji/novelty/readaptacji.
 10. **Raporty EEG/BOLD P2** — połączyć metryki z `brain_core/analysis/*` i `brain_core/physiology/*` w raportach z wykresami, interpretacją i porównaniem profili.
 11. **Migracja desktopowego GUI na PySide6 P2** — domknąć przejście nowych
     przepływów desktopowych z `tkinter`/`TkAgg` na PySide6/Qt, zachowując
@@ -264,7 +264,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 ### 8. Zestaw zadań poznawczych (task battery)
 **Status:** `partial`
 
-**Artefakty implementacyjne:** `brain_core/experiments/protocols.py`, `brain_model/stimuli.py`, `configs/stroop.yaml`, `configs/go_nogo.yaml`, `configs/n_back.yaml`, `tests/test_task_protocols_and_engine.py`, `tests/test_task_stimulus_player.py`.
+**Artefakty implementacyjne:** `brain_core/experiments/protocols.py`, `brain_model/stimuli.py`, `configs/stroop.yaml`, `configs/go_nogo.yaml`, `configs/n_back.yaml`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml`, `configs/roving_oddball_lesion_hippocampus.yaml`, `tests/test_task_protocols_and_engine.py`, `tests/test_task_stimulus_player.py`.
 
 **Cel:** standaryzacja eksperymentów poznawczych.
 
@@ -272,7 +272,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 - Zadania uwagowe, pamięciowe, decyzyjne, emocjonalne.
 - Parametryzacja trudności i rodzaju bodźca.
 - Metryki behawioralne i neuronalne.
-- Obowiązkowy pakiet referencyjny z roving oddball task.
+- Domknięcie obowiązkowego pakietu referencyjnego `roving_oddball` ponad istniejące MVP.
 
 **Deliverables:**
 - Biblioteka tasków v1.
@@ -280,7 +280,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 
 **Pozostały zakres:**
 - Ujednolicić bibliotekę tasków v1 oraz szablony raportów per task.
-- Dodać obowiązkowy pakiet referencyjny z roving oddball task.
+- Uzupełnić istniejący pakiet `roving_oddball` o przewodnik dydaktyczny, raport porównawczy i walidację metryk habituacji/readaptacji.
 
 ---
 
@@ -305,17 +305,17 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
   - `surprise_index`,
   - `habituation_level`,
   - `readaptation_latency`.
+- Testy reprodukowalności sekwencji i ładowania konfiguracji scenariuszy.
 
 **Pozostały zakres:**
 - Notebook/przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”.
 - Raport porównawczy amplitude-latency-mechanism dla healthy vs disorder vs lesion.
 - Różnice E/I i neuromodulacyjne specyficzne dla roving oddball.
 
-**Deliverables:**
-- Gotowy task `roving_oddball` z API scenariusza.
-- 1 notebook dydaktyczny „Roving Oddball — od bodźca do interpretacji”.
+**Deliverables do uzupełnienia:**
+- 1 notebook lub przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”.
 - Raport porównawczy healthy vs disorder vs lesion.
-- Testy regresji scenariusza i metryk.
+- Testy regresji zwalidowanych metryk habituacji/readaptacji oraz porównań profili.
 
 **Akceptacja:**
 - Ten sam seed i konfiguracja odtwarzają identyczną sekwencję bodźców.

@@ -224,7 +224,7 @@ Testy obejmują obecnie m.in. konfigurację zadań, konektom, lesion, neuromodul
 
 Najbliższe prace nie wymagają nowej warstwy architektonicznej. Oczekiwane zmiany strukturalne powinny pozostać minimalne:
 
-1. dodać dedykowane artefakty `roving_oddball` w istniejącej warstwie `brain_core/experiments/` i `configs/`,
+1. utrzymać i rozwijać istniejące artefakty `roving_oddball` w warstwie `brain_core/experiments/` i `configs/`,
 2. rozbudować raporty w istniejących modułach `brain_core/analysis/reports.py` i `brain_model/report_export.py`,
 3. utrzymać scenariusze clinical/lesion w `brain_model/scenarios/` oraz `brain_core/experiments/lesions.py`,
 4. aktualizować ADR tylko wtedy, gdy zmieni się granica odpowiedzialności modułów lub strategia konfiguracji/I/O.
