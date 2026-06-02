@@ -126,7 +126,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 - Ujednolicić format logu zdarzeń dla wszystkich typów symulacji.
 - Rozszerzyć raport timeline o filtrowanie zdarzeń, grupowanie per trial,
   eksport HTML/PDF, linkowanie zdarzeń z wykresami oraz objaśnienia per profil
-  clinical.
+  kliniczny.
 
 ---
 
