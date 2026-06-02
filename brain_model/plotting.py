@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import warnings
+import xml.etree.ElementTree as ET
 from functools import lru_cache
 from pathlib import Path
 from textwrap import fill
@@ -20,6 +21,9 @@ SVG_VIEW_FILES = {
 }
 
 
+INTERPRETATION_WRAP_WIDTH = 90
+
+
 INTERPRETATION_BOX_STYLE = {
     "facecolor": "#f8fafc",
     "edgecolor": "#94a3b8",
@@ -29,14 +33,53 @@ INTERPRETATION_BOX_STYLE = {
 
 
 def _add_interpretation_box(fig: Any, text: str) -> None:
-    """Dodaj pod wykresem stałe pole z opisem interpretacji."""
-    wrapped_text = fill(text, width=150)
+    """Dodaj pod wykresem pojedyncze pole z opisem interpretacji."""
+    existing_artist = getattr(fig, "_neuro_sim_interpretation_artist", None)
+    if existing_artist is not None:
+        try:
+            existing_artist.remove()
+        except ValueError:
+            pass
+
+    wrapped_text = fill(text, width=INTERPRETATION_WRAP_WIDTH)
     line_count = wrapped_text.count("\n") + 1
-    fig.text(
-        0.01, 0.01, wrapped_text, ha="left", va="bottom",
-        fontsize=9, bbox=INTERPRETATION_BOX_STYLE,
+    interpretation_artist = fig.text(
+        0.01,
+        0.01,
+        wrapped_text,
+        ha="left",
+        va="bottom",
+        fontsize=9,
+        bbox=INTERPRETATION_BOX_STYLE,
     )
-    fig._neuro_sim_interpretation_bottom = min(0.34, 0.10 + line_count * 0.035)
+    fig._neuro_sim_interpretation_artist = interpretation_artist
+    fig._neuro_sim_interpretation_bottom = min(0.42, 0.10 + line_count * 0.032)
+
+
+def _extract_svg_region_paths(svg_text: str) -> list[tuple[str, str]]:
+    """Wydobądź pary region-ścieżka SVG niezależnie od kolejności atrybutów."""
+    region_paths = []
+    try:
+        root = ET.fromstring(svg_text)
+    except ET.ParseError as e:
+        warnings.warn(f"Niepoprawny format pliku SVG: {e}", UserWarning)
+        return []
+    for element in root.iter():
+        if element.tag.rsplit("}", 1)[-1] != "path":
+            continue
+        region = element.attrib.get("data-region")
+        d_attr = element.attrib.get("d")
+        if region and d_attr:
+            region_paths.append((region, d_attr))
+    return region_paths
+
+
+def _split_svg_path_coordinates(d_attr: str) -> tuple[list[float], list[float]]:
+    """Zamień liczby ze ścieżki SVG na bezpiecznie sparowane współrzędne x/y."""
+    numbers = [float(v) for v in re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", d_attr)]
+    coordinate_count = len(numbers) - (len(numbers) % 2)
+    paired_numbers = numbers[:coordinate_count]
+    return paired_numbers[0::2], paired_numbers[1::2]
 
 
 def _apply_interpretation_layout(fig: Any) -> None:
@@ -55,15 +98,16 @@ def _apply_interpretation_layout(fig: Any) -> None:
 
 
 @lru_cache(maxsize=8)
-def _load_svg_region_shapes(svg_path: str) -> dict[str, tuple[list[float], list[float]]]:
+def _load_svg_region_shapes(
+    svg_path: str,
+) -> dict[str, tuple[list[float], list[float]]]:
     """Wczytaj przybliżone kontury regionów SVG jako tło rzutów mózgu."""
     text = Path(svg_path).read_text(encoding="utf-8")
-    region_matches = re.findall(r'<path[^>]*data-region="([^"]+)"[^>]*d="([^"]+)"', text)
     shapes = {}
-    for region, d_attr in region_matches:
-        numbers = [float(v) for v in re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", d_attr)]
-        if len(numbers) >= 4:
-            shapes[region] = (numbers[0::2], numbers[1::2])
+    for region, d_attr in _extract_svg_region_paths(text):
+        xs, ys = _split_svg_path_coordinates(d_attr)
+        if len(xs) >= 2 and len(ys) >= 2:
+            shapes[region] = (xs, ys)
     return shapes
 
 
@@ -76,7 +120,9 @@ def _plot_svg_region_background(
         ax.fill(xs, ys, color="#e2e8f0", alpha=0.08, zorder=0)
 
 
-def _set_svg_data_limits(ax: Any, shapes: dict[str, tuple[list[float], list[float]]]) -> None:
+def _set_svg_data_limits(
+    ax: Any, shapes: dict[str, tuple[list[float], list[float]]]
+) -> None:
     """Dopasuj zakres osi do rzeczywistych współrzędnych regionów SVG."""
     all_x = [x for xs, _ in shapes.values() for x in xs]
     all_y = [y for _, ys in shapes.values() for y in ys]
@@ -86,8 +132,15 @@ def _set_svg_data_limits(ax: Any, shapes: dict[str, tuple[list[float], list[floa
         return
     x_min, x_max = min(all_x), max(all_x)
     y_min, y_max = min(all_y), max(all_y)
-    ax.set_xlim(x_min - max((x_max - x_min) * 0.06, 1.0), x_max + max((x_max - x_min) * 0.06, 1.0))
-    ax.set_ylim(y_max + max((y_max - y_min) * 0.06, 1.0), y_min - max((y_max - y_min) * 0.06, 1.0))
+    ax.set_xlim(
+        x_min - max((x_max - x_min) * 0.06, 1.0),
+        x_max + max((x_max - x_min) * 0.06, 1.0),
+    )
+    ax.set_ylim(
+        y_max + max((y_max - y_min) * 0.06, 1.0),
+        y_min - max((y_max - y_min) * 0.06, 1.0),
+    )
+
 
 MODULE_DESCRIPTIONS = {
     "VIS": "Przetwarzanie wzrokowe.",
@@ -173,14 +226,9 @@ REGION_TO_MODULE_WEIGHTS = {
 def _load_svg_region_centroids(svg_path: str) -> dict[str, tuple[float, float]]:
     """Wczytuje plik SVG i oblicza środki ciężkości dla zdefiniowanych regionów."""
     text = Path(svg_path).read_text(encoding="utf-8")
-    region_matches = re.findall(r'<path[^>]*data-region="([^"]+)"[^>]*d="([^"]+)"', text)
     centroids = {}
-    for region, d_attr in region_matches:
-        numbers = [float(v) for v in re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", d_attr)]
-        if len(numbers) < 2:
-            continue
-        xs = numbers[0::2]
-        ys = numbers[1::2]
+    for region, d_attr in _extract_svg_region_paths(text):
+        xs, ys = _split_svg_path_coordinates(d_attr)
         if not xs or not ys:
             continue
         centroids[region] = (sum(xs) / len(xs), sum(ys) / len(ys))
@@ -195,15 +243,21 @@ def _draw_brain_projection(
     shapes = _load_svg_region_shapes(svg_path)
     if not centroids:
         ax.text(
-            0.5, 0.5, "Brak regionów SVG do wizualizacji.",
-            ha="center", va="center", transform=ax.transAxes,
+            0.5,
+            0.5,
+            "Brak regionów SVG do wizualizacji.",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
         )
         ax.set_title(title)
         return None
 
     _plot_svg_region_background(ax, shapes)
     region_activity_t = _compute_region_activity_series(activity, idx, centroids.keys())
-    region_activity = {region: float(values[-1]) for region, values in region_activity_t.items()}
+    region_activity = {
+        region: float(values[-1]) for region, values in region_activity_t.items()
+    }
 
     xs, ys, vals, labels = [], [], [], []
     for region, (x, y) in centroids.items():
@@ -213,8 +267,16 @@ def _draw_brain_projection(
         labels.append(region)
 
     scatter = ax.scatter(
-        xs, ys, c=vals, cmap="magma", vmin=0.0, vmax=1.0, s=95,
-        edgecolors="#111827", linewidths=0.4, zorder=3,
+        xs,
+        ys,
+        c=vals,
+        cmap="magma",
+        vmin=0.0,
+        vmax=1.0,
+        s=95,
+        edgecolors="#111827",
+        linewidths=0.4,
+        zorder=3,
     )
     _set_svg_data_limits(ax, shapes)
     ax.set_aspect("equal", adjustable="box")
@@ -222,14 +284,20 @@ def _draw_brain_projection(
     ax.set_yticks([])
     ax.set_title(title)
     ax.text(
-        0.02, 0.02, f"T={float(time[-1]):.2f}s\nwartość w ostatnim kroku",
-        transform=ax.transAxes, fontsize=8,
+        0.02,
+        0.02,
+        f"T={float(time[-1]):.2f}s\nwartość w ostatnim kroku",
+        transform=ax.transAxes,
+        fontsize=8,
         bbox={
-            "facecolor": "white", "alpha": 0.8, "edgecolor": "#d1d5db",
+            "facecolor": "white",
+            "alpha": 0.8,
+            "edgecolor": "#d1d5db",
             "boxstyle": "round,pad=0.2",
         },
     )
     return scatter
+
 
 def _compute_region_activity_series(activity: Any, idx: Any, regions: Any) -> Any:
     """Opis funkcji _compute_region_activity_series."""
@@ -245,7 +313,9 @@ def _compute_region_activity_series(activity: Any, idx: Any, regions: Any) -> An
             if module not in idx:
                 continue
             values = activity[:, idx[module]]
-            numerator = values * weight if numerator is None else numerator + values * weight
+            numerator = (
+                values * weight if numerator is None else numerator + values * weight
+            )
             weight_sum += weight
         if numerator is None or weight_sum <= 0.0:
             region_activity_t[region] = activity[:, 0] * 0.0
@@ -273,7 +343,12 @@ def _attach_line_tooltips(fig: Any, axes: Any) -> Any:
             xy=(0, 0),
             xytext=(14, 14),
             textcoords="offset points",
-            bbox={"boxstyle": "round,pad=0.3", "fc": "#ffffe0", "ec": "#777777", "alpha": 0.95},
+            bbox={
+                "boxstyle": "round,pad=0.3",
+                "fc": "#ffffe0",
+                "ec": "#777777",
+                "alpha": 0.95,
+            },
             arrowprops={"arrowstyle": "->", "color": "#777777"},
         )
         annotation.set_visible(False)
@@ -322,7 +397,9 @@ def _attach_line_tooltips(fig: Any, axes: Any) -> Any:
                 other_annotation.set_visible(False)
         annotation = annotations[ax]
         annotation.xy = (x_value, y_value)
-        annotation.set_text(f"{label}\n{_describe(label)}\nt={x_value:.3g}, y={y_value:.3g}")
+        annotation.set_text(
+            f"{label}\n{_describe(label)}\nt={x_value:.3g}, y={y_value:.3g}"
+        )
         annotation.set_visible(True)
         fig.canvas.draw_idle()
 
@@ -338,8 +415,20 @@ def _style_lines(ax: Any) -> None:
 def draw_activity(ax: Any, time: Any, activity: Any, names: Any, idx: Any) -> Any:
     """Opis funkcji draw_activity."""
     selected = [
-        "VIS", "AUD", "SAL", "ATT", "PHON", "VSWM",
-        "EXEC", "EPIS", "SEM", "HIP", "VAL", "MOT", "DMN", "GW"
+        "VIS",
+        "AUD",
+        "SAL",
+        "ATT",
+        "PHON",
+        "VSWM",
+        "EXEC",
+        "EPIS",
+        "SEM",
+        "HIP",
+        "VAL",
+        "MOT",
+        "DMN",
+        "GW",
     ]
 
     for name in selected:
@@ -361,20 +450,37 @@ def draw_activity(ax: Any, time: Any, activity: Any, names: Any, idx: Any) -> An
     return [ax]
 
 
-
-
-def draw_simulated_brain_activity(ax: Any, time: Any, activity: Any, names: Any, idx: Any) -> Any:
+def draw_simulated_brain_activity(
+    ax: Any, time: Any, activity: Any, names: Any, idx: Any
+) -> Any:
     """Opis funkcji draw_simulated_brain_activity."""
     selected = [
-        "VIS", "AUD", "INT", "SAL", "ATT", "PHON", "VSWM",
-        "EXEC", "EPIS", "SEM", "HIP", "VAL", "MOT", "DMN", "GW",
+        "VIS",
+        "AUD",
+        "INT",
+        "SAL",
+        "ATT",
+        "PHON",
+        "VSWM",
+        "EXEC",
+        "EPIS",
+        "SEM",
+        "HIP",
+        "VAL",
+        "MOT",
+        "DMN",
+        "GW",
     ]
 
     labels = [name for name in selected if name in idx]
     if not labels:
         ax.text(
-            0.5, 0.5, "Brak danych modułów do wizualizacji.",
-            ha="center", va="center", transform=ax.transAxes,
+            0.5,
+            0.5,
+            "Brak danych modułów do wizualizacji.",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
         )
         ax.set_title("Symulowana aktywność mózgu")
         return [ax]
@@ -410,7 +516,9 @@ def draw_simulated_brain_activity(ax: Any, time: Any, activity: Any, names: Any,
     return [ax]
 
 
-def draw_brain_region_projections(ax: Any, time: Any, activity: Any, names: Any, idx: Any) -> Any:
+def draw_brain_region_projections(
+    ax: Any, time: Any, activity: Any, names: Any, idx: Any
+) -> Any:
     """Opis funkcji draw_brain_region_projections."""
     fig = ax.figure
     ax.remove()
@@ -425,12 +533,16 @@ def draw_brain_region_projections(ax: Any, time: Any, activity: Any, names: Any,
 
     scatter_ref = None
     for sub_ax, (svg, label) in zip(axes.flatten(), views):
-        scatter = _draw_brain_projection(sub_ax, time, activity, idx, svg, f"{label}: regiony SVG")
+        scatter = _draw_brain_projection(
+            sub_ax, time, activity, idx, svg, f"{label}: regiony SVG"
+        )
         if scatter is not None:
             scatter_ref = scatter
 
     if scatter_ref is not None:
-        cbar = fig.colorbar(scatter_ref, ax=axes.ravel().tolist(), fraction=0.02, pad=0.01)
+        cbar = fig.colorbar(
+            scatter_ref, ax=axes.ravel().tolist(), fraction=0.02, pad=0.01
+        )
         cbar.set_label("Aktywacja [0-1]")
     fig.suptitle("Aktywacja regionów mózgu na 4 rzutach (na bazie szkieletu SVG)")
     _add_interpretation_box(
@@ -447,7 +559,9 @@ def draw_brain_region_projections(ax: Any, time: Any, activity: Any, names: Any,
     return list(axes.flatten())
 
 
-def draw_region_activity_2d(ax: Any, time: Any, activity: Any, names: Any, idx: Any) -> Any:
+def draw_region_activity_2d(
+    ax: Any, time: Any, activity: Any, names: Any, idx: Any
+) -> Any:
     """Opis funkcji draw_region_activity_2d."""
     region_names = sorted(REGION_TO_MODULE_WEIGHTS.keys())
     region_activity_t = _compute_region_activity_series(activity, idx, region_names)
@@ -479,6 +593,8 @@ def draw_region_activity_2d(ax: Any, time: Any, activity: Any, names: Any, idx: 
         "żeby połączyć czas aktywacji z położeniem regionów.",
     )
     return [ax]
+
+
 def draw_diagnostics(ax: Any, time: Any, diagnostics: Any) -> Any:
     """Opis funkcji draw_diagnostics."""
     ax.plot(time, diagnostics["prediction_error"], label="błąd predykcji")
@@ -508,8 +624,6 @@ def draw_diagnostics(ax: Any, time: Any, diagnostics: Any) -> Any:
     return [ax]
 
 
-
-
 def draw_weight_trajectories(ax: Any, time: Any, diagnostics: Any) -> Any:
     """Opis funkcji draw_weight_trajectories."""
     history = diagnostics.get("weight_history", {})
@@ -517,8 +631,12 @@ def draw_weight_trajectories(ax: Any, time: Any, diagnostics: Any) -> Any:
 
     if not weights:
         ax.text(
-            0.5, 0.5, "Brak adaptacji wag lub brak wybranych par modułów.",
-            ha="center", va="center", transform=ax.transAxes,
+            0.5,
+            0.5,
+            "Brak adaptacji wag lub brak wybranych par modułów.",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
         )
         ax.set_title("Trajektorie wybranych wag W")
         ax.set_xlabel("Czas symulacji [s]")
@@ -553,8 +671,12 @@ def draw_weight_deltas(ax: Any, time: Any, diagnostics: Any) -> Any:
 
     if not deltas:
         ax.text(
-            0.5, 0.5, "Brak zmian wag do wizualizacji.",
-            ha="center", va="center", transform=ax.transAxes,
+            0.5,
+            0.5,
+            "Brak zmian wag do wizualizacji.",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
         )
         ax.set_title("Zmiany wag ΔW")
         ax.set_xlabel("Czas symulacji [s]")
@@ -581,7 +703,11 @@ def draw_weight_deltas(ax: Any, time: Any, diagnostics: Any) -> Any:
     )
     _style_lines(ax)
     return [ax]
-def draw_eeg_modules(ax: Any, time: Any, oscillations: Any, names: Any, idx: Any) -> Any:
+
+
+def draw_eeg_modules(
+    ax: Any, time: Any, oscillations: Any, names: Any, idx: Any
+) -> Any:
     """Opis funkcji draw_eeg_modules."""
     selected = ["HIP", "VSWM", "VIS", "AUD", "EXEC", "ATT", "SEM", "GW"]
     eeg = oscillations["eeg"]
@@ -589,8 +715,12 @@ def draw_eeg_modules(ax: Any, time: Any, oscillations: Any, names: Any, idx: Any
     available = [name for name in selected if name in idx]
     if not available:
         ax.text(
-            0.5, 0.5, "Brak sygnałów EEG modułów.",
-            ha="center", va="center", transform=ax.transAxes,
+            0.5,
+            0.5,
+            "Brak sygnałów EEG modułów.",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
         )
         ax.set_title("Oscylatory Wilsona-Cowana dla wybranych modułów")
         return [ax]
@@ -622,8 +752,6 @@ def draw_eeg_modules(ax: Any, time: Any, oscillations: Any, names: Any, idx: Any
     )
     _style_lines(ax)
     return [ax]
-
-
 
 
 def draw_scenario_channels(ax: Any, time: Any, scenario: Any) -> Any:
@@ -666,7 +794,9 @@ def draw_scenario_timeline(ax: Any, time: Any, scenario: Any) -> Any:
     y = 0.5
     for i, phase in enumerate(scenario.phases):
         w = phase["window"]
-        ax.axvspan(w["start"], w["end"], alpha=0.18 + 0.08 * (i % 2), label=phase["name"])
+        ax.axvspan(
+            w["start"], w["end"], alpha=0.18 + 0.08 * (i % 2), label=phase["name"]
+        )
 
     for event in scenario.events:
         t = event["time"]
@@ -689,19 +819,24 @@ def draw_scenario_timeline(ax: Any, time: Any, scenario: Any) -> Any:
     return [ax]
 
 
-
 def draw_behavior(ax: Any, time: Any, behavior: Any) -> Any:
     """Opis funkcji draw_behavior."""
     ax.plot(time, behavior["decision_score"], label="decision score", color="#1f77b4")
-    ax.plot(time, behavior["confidence"], label="confidence", color="#2ca02c", alpha=0.9)
+    ax.plot(
+        time, behavior["confidence"], label="confidence", color="#2ca02c", alpha=0.9
+    )
     ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.5)
 
     decision_times = time[behavior["decision_event"]]
     decision_scores = behavior["decision_score"][behavior["decision_event"]]
     if len(decision_times):
         ax.scatter(
-            decision_times, decision_scores, marker="o", color="#d62728",
-            label="decision event", zorder=3,
+            decision_times,
+            decision_scores,
+            marker="o",
+            color="#d62728",
+            label="decision event",
+            zorder=3,
         )
 
     ax.set_xlabel("Czas symulacji [s]")
@@ -720,6 +855,7 @@ def draw_behavior(ax: Any, time: Any, behavior: Any) -> Any:
     )
     _style_lines(ax)
     return [ax]
+
 
 def draw_band_power(ax: Any, time: Any, oscillations: Any) -> Any:
     """Opis funkcji draw_band_power."""
@@ -749,7 +885,9 @@ def draw_band_power(ax: Any, time: Any, oscillations: Any) -> Any:
     return list(axes)
 
 
-def _show_standalone(draw_func: Any, *args: Any, figsize: tuple[int, int] = (14, 6)) -> None:
+def _show_standalone(
+    draw_func: Any, *args: Any, figsize: tuple[int, int] = (14, 6)
+) -> None:
     """Tworzy nową figurę, uruchamia funkcję rysującą i wyświetla interaktywne okno wykresu."""
     fig, ax = plt.subplots(figsize=figsize)
     axes = draw_func(ax, *args) or [ax]
