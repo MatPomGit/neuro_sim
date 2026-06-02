@@ -226,7 +226,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 ### 7. Scenariusze porównawcze healthy vs disorder vs lesion
 **Status:** `partial`
 
-**Artefakty implementacyjne:** `brain_core/experiments/lesions.py`, `brain_model/scenarios/library.py`, `brain_model/scenarios/types.py`, `tests/test_lesions.py`, `tests/test_task_protocols_and_engine.py`.
+**Artefakty implementacyjne:** `configs/clinical_profiles/*.yaml`, `brain_core/simulation/config_schema.py`, `brain_core/simulation/engine.py`, `brain_core/analysis/reports.py`, `brain_core/experiments/lesions.py`, `brain_model/scenarios/library.py`, `brain_model/scenarios/types.py`, `tests/test_lesions.py`, `tests/test_task_protocols_and_engine.py`.
 
 **Cel:** realizacja kluczowej wartości edukacyjnej i psychiatrycznej.
 
@@ -239,12 +239,23 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 - Katalog profili klinicznych v1.
 - Automatyczny raport różnic (region, czas, funkcja poznawcza).
 
+**Istniejące profile:**
+- `healthy_v1`
+- `dopamine_deficit`
+- `gaba_dysregulation`
+- `serotonin_imbalance`
+- `hippocampal_lesion`
+- `dlpfc_weakening`
+
 **Akceptacja:**
 - Co najmniej 3 profile kliniczne + 2 typy lesion, każdy z interpretacją dydaktyczną.
 
 **Pozostały zakres:**
-- Uzupełnić katalog profili klinicznych v1 i interpretacje dydaktyczne.
-- Rozszerzyć automatyczny raport różnic o region, czas i funkcję poznawczą.
+- Rozszerzyć istniejący katalog profili klinicznych v1.
+- Dodać interpretacje dydaktyczne dla każdego profilu.
+- Zdefiniować progi jakościowe różnic.
+- Dodać raport amplitude-latency-mechanism dla roving oddball.
+- Zweryfikować profile względem benchmarków.
 
 ---
 
