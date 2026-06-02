@@ -120,7 +120,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 **Akceptacja:**
 - Raport umożliwia odtworzenie przebiegu eksperymentu bez zaglądania do kodu.
 - Raport dla `roving_oddball` pokazuje standard, deviant, nowy standard,
-  odpowiedź i mechanizm profilu clinical w jednej osi czasu.
+  odpowiedź i mechanizm profilu klinicznego w jednej osi czasu.
 
 **Pozostały zakres:**
 - Ujednolicić format logu zdarzeń dla wszystkich typów symulacji.
