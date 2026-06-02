@@ -99,9 +99,14 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 ### 2. Rejestr zdarzeń i raport dydaktyczny „timeline”
 **Status:** `partial`
 
-**Artefakty implementacyjne:** `brain_core/analysis/reports.py`, `analysis/reports.py`, `brain_model/report.py`, `brain_model/report_export.py`, `tests/test_observation_and_analysis.py`.
+**Artefakty implementacyjne:** `brain_core/simulation/events.py`, `brain_core/simulation/engine.py`, `brain_core/analysis/reports.py`, `brain_model/report.py`, `brain_model/report_export.py`, `tests/test_observation_and_analysis.py`, `tests/test_task_protocols_and_engine.py`.
 
 **Cel:** student rozumie „co, kiedy i dlaczego” wydarzyło się w modelu.
+
+**Zrealizowane MVP:**
+- MVP `event_timeline` istnieje w `brain_core/simulation/events.py` i jest
+  integrowane z silnikiem symulacji w `brain_core/simulation/engine.py`;
+  podstawowe testy timeline są ujęte w `tests/test_task_protocols_and_engine.py`.
 
 **Zakres prac:**
 - Event bus dla kluczowych zdarzeń (bodziec, zmiana aktywacji regionu, modulacja neurochemiczna).
@@ -114,10 +119,14 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 
 **Akceptacja:**
 - Raport umożliwia odtworzenie przebiegu eksperymentu bez zaglądania do kodu.
+- Raport dla `roving_oddball` pokazuje standard, deviant, nowy standard,
+  odpowiedź i mechanizm profilu klinicznego w jednej osi czasu.
 
 **Pozostały zakres:**
 - Ujednolicić format logu zdarzeń dla wszystkich typów symulacji.
-- Rozszerzyć raport o pełną oś czasu trial-by-trial i słownik pojęć.
+- Rozszerzyć raport timeline o filtrowanie zdarzeń, grupowanie per trial,
+  eksport HTML/PDF, linkowanie zdarzeń z wykresami oraz objaśnienia per profil
+  kliniczny.
 
 ---
 
