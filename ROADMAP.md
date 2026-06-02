@@ -79,7 +79,7 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 
 Statusy w roadmapie używają wyłącznie wartości `done`, `partial` i `planned`.
 Poniższa tabela oddziela działające MVP od zakresu docelowego, aby nie traktować
-roadmapy jako obietnicy nowych funkcji w tym PR.
+roadmapy jako obietnicy nowych funkcji na tym etapie.
 
 | Funkcja | Status | MVP istnieje | Pozostały zakres |
 | --- | --- | --- | --- |
