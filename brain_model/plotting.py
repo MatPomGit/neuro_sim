@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import re
+import warnings
 from functools import lru_cache
 from pathlib import Path
+from textwrap import fill
 from typing import Any
 
 import matplotlib.pyplot as plt
@@ -16,6 +18,76 @@ SVG_VIEW_FILES = {
     "sagittal": SVG_ASSETS_DIR / "brain_sagittal_inline_regions.svg",
     "lateral": SVG_ASSETS_DIR / "brain_lateral_inline_regions.svg",
 }
+
+
+INTERPRETATION_BOX_STYLE = {
+    "facecolor": "#f8fafc",
+    "edgecolor": "#94a3b8",
+    "boxstyle": "round,pad=0.45",
+    "alpha": 0.96,
+}
+
+
+def _add_interpretation_box(fig: Any, text: str) -> None:
+    """Dodaj pod wykresem stałe pole z opisem interpretacji."""
+    wrapped_text = fill(text, width=150)
+    line_count = wrapped_text.count("\n") + 1
+    fig.text(
+        0.01, 0.01, wrapped_text, ha="left", va="bottom",
+        fontsize=9, bbox=INTERPRETATION_BOX_STYLE,
+    )
+    fig._neuro_sim_interpretation_bottom = min(0.34, 0.10 + line_count * 0.035)
+
+
+def _apply_interpretation_layout(fig: Any) -> None:
+    """Dopasuj układ figury do opcjonalnego pola opisu interpretacyjnego."""
+    bottom = getattr(fig, "_neuro_sim_interpretation_bottom", None)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="This figure includes Axes that are not compatible with tight_layout.*",
+            category=UserWarning,
+        )
+        if bottom is None:
+            fig.tight_layout()
+        else:
+            fig.tight_layout(rect=(0.0, float(bottom), 1.0, 1.0))
+
+
+@lru_cache(maxsize=8)
+def _load_svg_region_shapes(svg_path: str) -> dict[str, tuple[list[float], list[float]]]:
+    """Wczytaj przybliżone kontury regionów SVG jako tło rzutów mózgu."""
+    text = Path(svg_path).read_text(encoding="utf-8")
+    region_matches = re.findall(r'<path[^>]*data-region="([^"]+)"[^>]*d="([^"]+)"', text)
+    shapes = {}
+    for region, d_attr in region_matches:
+        numbers = [float(v) for v in re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", d_attr)]
+        if len(numbers) >= 4:
+            shapes[region] = (numbers[0::2], numbers[1::2])
+    return shapes
+
+
+def _plot_svg_region_background(
+    ax: Any, shapes: dict[str, tuple[list[float], list[float]]]
+) -> None:
+    """Narysuj lekkie kontury regionów SVG jako tło mapy aktywacji."""
+    for xs, ys in shapes.values():
+        ax.plot(xs, ys, color="#64748b", linewidth=0.45, alpha=0.35, zorder=1)
+        ax.fill(xs, ys, color="#e2e8f0", alpha=0.08, zorder=0)
+
+
+def _set_svg_data_limits(ax: Any, shapes: dict[str, tuple[list[float], list[float]]]) -> None:
+    """Dopasuj zakres osi do rzeczywistych współrzędnych regionów SVG."""
+    all_x = [x for xs, _ in shapes.values() for x in xs]
+    all_y = [y for _, ys in shapes.values() for y in ys]
+    if not all_x or not all_y:
+        ax.set_xlim(0, 2048)
+        ax.set_ylim(2048, 0)
+        return
+    x_min, x_max = min(all_x), max(all_x)
+    y_min, y_max = min(all_y), max(all_y)
+    ax.set_xlim(x_min - max((x_max - x_min) * 0.06, 1.0), x_max + max((x_max - x_min) * 0.06, 1.0))
+    ax.set_ylim(y_max + max((y_max - y_min) * 0.06, 1.0), y_min - max((y_max - y_min) * 0.06, 1.0))
 
 MODULE_DESCRIPTIONS = {
     "VIS": "Przetwarzanie wzrokowe.",
@@ -115,14 +187,21 @@ def _load_svg_region_centroids(svg_path: str) -> dict[str, tuple[float, float]]:
     return centroids
 
 
-def _draw_brain_projection(ax: Any, time: Any, activity: Any, idx: Any, svg_path: str, title: str) -> Any:
-    """Opis funkcji _draw_brain_projection."""
+def _draw_brain_projection(
+    ax: Any, time: Any, activity: Any, idx: Any, svg_path: str, title: str
+) -> Any:
+    """Narysuj aktywację regionów na tle konturów z wybranego rzutu SVG."""
     centroids = _load_svg_region_centroids(svg_path)
+    shapes = _load_svg_region_shapes(svg_path)
     if not centroids:
-        ax.text(0.5, 0.5, "Brak regionów SVG do wizualizacji.", ha="center", va="center", transform=ax.transAxes)
+        ax.text(
+            0.5, 0.5, "Brak regionów SVG do wizualizacji.",
+            ha="center", va="center", transform=ax.transAxes,
+        )
         ax.set_title(title)
-        return
+        return None
 
+    _plot_svg_region_background(ax, shapes)
     region_activity_t = _compute_region_activity_series(activity, idx, centroids.keys())
     region_activity = {region: float(values[-1]) for region, values in region_activity_t.items()}
 
@@ -133,16 +212,24 @@ def _draw_brain_projection(ax: Any, time: Any, activity: Any, idx: Any, svg_path
         vals.append(region_activity.get(region, 0.0))
         labels.append(region)
 
-    scatter = ax.scatter(xs, ys, c=vals, cmap="magma", vmin=0.0, vmax=1.0, s=95, edgecolors="#111827", linewidths=0.4)
-    ax.set_xlim(0, 2048)
-    ax.set_ylim(2048, 0)
+    scatter = ax.scatter(
+        xs, ys, c=vals, cmap="magma", vmin=0.0, vmax=1.0, s=95,
+        edgecolors="#111827", linewidths=0.4, zorder=3,
+    )
+    _set_svg_data_limits(ax, shapes)
+    ax.set_aspect("equal", adjustable="box")
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_title(title)
-    ax.text(0.02, 0.02, f"T={float(time[-1]):.2f}s\nwartość w ostatnim kroku", transform=ax.transAxes, fontsize=8,
-            bbox={"facecolor": "white", "alpha": 0.8, "edgecolor": "#d1d5db", "boxstyle": "round,pad=0.2"})
+    ax.text(
+        0.02, 0.02, f"T={float(time[-1]):.2f}s\nwartość w ostatnim kroku",
+        transform=ax.transAxes, fontsize=8,
+        bbox={
+            "facecolor": "white", "alpha": 0.8, "edgecolor": "#d1d5db",
+            "boxstyle": "round,pad=0.2",
+        },
+    )
     return scatter
-
 
 def _compute_region_activity_series(activity: Any, idx: Any, regions: Any) -> Any:
     """Opis funkcji _compute_region_activity_series."""
@@ -169,7 +256,12 @@ def _compute_region_activity_series(activity: Any, idx: Any, regions: Any) -> An
 
 def _describe(label: str) -> str:
     """Zwraca polski opis dla podanej etykiety modułu, zmiennej lub pasma."""
-    return MODULE_DESCRIPTIONS.get(label) or DIAGNOSTIC_DESCRIPTIONS.get(label) or BAND_DESCRIPTIONS.get(label) or label
+    return (
+        MODULE_DESCRIPTIONS.get(label)
+        or DIAGNOSTIC_DESCRIPTIONS.get(label)
+        or BAND_DESCRIPTIONS.get(label)
+        or label
+    )
 
 
 def _attach_line_tooltips(fig: Any, axes: Any) -> Any:
@@ -257,6 +349,14 @@ def draw_activity(ax: Any, time: Any, activity: Any, names: Any, idx: Any) -> An
     ax.set_ylabel("Aktywacja modułu [0-1]")
     ax.set_title("Mezoskopowa dynamika procesów poznawczych")
     ax.legend(ncol=4, fontsize=9)
+    _add_interpretation_box(
+        ax.figure,
+        "Co widzisz: każda linia to jeden moduł poznawczy, a skala 0-1 mówi, jak silnie "
+        "jest aktywny w danej chwili. Dla osoby początkującej kluczowe są piki i momenty, "
+        "w których kilka linii rośnie razem. Dla specjalisty ważna jest kolejność pobudzenia "
+        "modułów, czas utrzymywania aktywacji i relacja z bodźcami scenariusza. Najpierw "
+        "sprawdź, który moduł dominuje, kiedy się włącza i czy szybko wygasa.",
+    )
     _style_lines(ax)
     return [ax]
 
@@ -272,7 +372,10 @@ def draw_simulated_brain_activity(ax: Any, time: Any, activity: Any, names: Any,
 
     labels = [name for name in selected if name in idx]
     if not labels:
-        ax.text(0.5, 0.5, "Brak danych modułów do wizualizacji.", ha="center", va="center", transform=ax.transAxes)
+        ax.text(
+            0.5, 0.5, "Brak danych modułów do wizualizacji.",
+            ha="center", va="center", transform=ax.transAxes,
+        )
         ax.set_title("Symulowana aktywność mózgu")
         return [ax]
 
@@ -295,6 +398,15 @@ def draw_simulated_brain_activity(ax: Any, time: Any, activity: Any, names: Any,
 
     colorbar = ax.figure.colorbar(image, ax=ax, pad=0.01)
     colorbar.set_label("Aktywacja [0-1]")
+    _add_interpretation_box(
+        ax.figure,
+        "Mapa cieplna „Aktywność mózgu”. Co widzisz: wiersze to moduły mózgu, "
+        "kolumny to czas, a kolor pokazuje aktywację "
+        "od ciemnej niskiej do jasnej wysokiej. Dla osoby początkującej najważniejsze są "
+        "jasne pasy i bloki, bo pokazują kiedy model jest najbardziej zaangażowany. Dla "
+        "specjalisty kluczowa jest synchronizacja modułów, opóźnienia po bodźcach i przejścia "
+        "między stanami. Zacznij od najjaśniejszych obszarów i sprawdź, które moduły świecą razem.",
+    )
     return [ax]
 
 
@@ -321,6 +433,17 @@ def draw_brain_region_projections(ax: Any, time: Any, activity: Any, names: Any,
         cbar = fig.colorbar(scatter_ref, ax=axes.ravel().tolist(), fraction=0.02, pad=0.01)
         cbar.set_label("Aktywacja [0-1]")
     fig.suptitle("Aktywacja regionów mózgu na 4 rzutach (na bazie szkieletu SVG)")
+    _add_interpretation_box(
+        fig,
+        "Rzuty SVG pokazują aktywację regionów. Co widzisz: każdy panel to inny "
+        "rzut mózgu, a szare kontury dają orientacyjny kontekst "
+        "anatomiczny, a kolor punktu pokazuje aktywację regionu w ostatnim kroku symulacji. "
+        "Dla osoby początkującej kluczowe jest, gdzie pojawiają się najjaśniejsze punkty. "
+        "Dla specjalisty ważne jest, czy aktywacja tworzy lokalne ognisko, "
+        "wzorzec boczny/lewy-prawy "
+        "albo rozlane pobudzenie. Zakres osi pochodzi z rzeczywistych współrzędnych danego SVG, "
+        "więc widok lateral nie jest rozciągany do sztucznej skali.",
+    )
     return list(axes.flatten())
 
 
@@ -345,6 +468,16 @@ def draw_region_activity_2d(ax: Any, time: Any, activity: Any, names: Any, idx: 
     ax.set_title("Aktywacja regionów mózgu w czasie (2D)")
     cbar = ax.figure.colorbar(image, ax=ax, pad=0.01)
     cbar.set_label("Aktywacja [0-1]")
+    _add_interpretation_box(
+        ax.figure,
+        "Co widzisz: każdy wiersz to region mózgu, a kolor pokazuje jego aktywację w czasie. "
+        "Dla osoby początkującej najważniejsze są jasne pasy: długi pas oznacza "
+        "utrzymaną aktywność, "
+        "a krótka plama impuls. Dla specjalisty kluczowe są grupy regionów aktywujące się razem, "
+        "opóźnienia między regionami i momenty przełączenia sieci. Porównuj ten "
+        "wykres z rzutami SVG, "
+        "żeby połączyć czas aktywacji z położeniem regionów.",
+    )
     return [ax]
 def draw_diagnostics(ax: Any, time: Any, diagnostics: Any) -> Any:
     """Opis funkcji draw_diagnostics."""
@@ -363,6 +496,14 @@ def draw_diagnostics(ax: Any, time: Any, diagnostics: Any) -> Any:
     ax.set_ylabel("Wartość")
     ax.set_title("Zmienne obliczeniowe i neuromodulacyjne")
     ax.legend()
+    _add_interpretation_box(
+        ax.figure,
+        "Co widzisz: linie pokazują zmienne pomocnicze modelu, np. błąd predykcji, zapłon "
+        "global workspace i neuromodulatory. Dla osoby początkującej kluczowe są wspólne piki, "
+        "bo oznaczają momenty zaskoczenia, stresu albo silnej zmiany stanu. Dla specjalisty ważne "
+        "są zależności czasowe: czy noradrenalina/kortyzol rosną po błędzie, a GABA/glutaminian "
+        "stabilizują pobudzenie. Nie interpretuj pojedynczej linii w oderwaniu od reszty.",
+    )
     _style_lines(ax)
     return [ax]
 
@@ -375,7 +516,10 @@ def draw_weight_trajectories(ax: Any, time: Any, diagnostics: Any) -> Any:
     weights = history.get("weights", {})
 
     if not weights:
-        ax.text(0.5, 0.5, "Brak adaptacji wag lub brak wybranych par modułów.", ha="center", va="center", transform=ax.transAxes)
+        ax.text(
+            0.5, 0.5, "Brak adaptacji wag lub brak wybranych par modułów.",
+            ha="center", va="center", transform=ax.transAxes,
+        )
         ax.set_title("Trajektorie wybranych wag W")
         ax.set_xlabel("Czas symulacji [s]")
         ax.set_ylabel("Waga")
@@ -388,6 +532,16 @@ def draw_weight_trajectories(ax: Any, time: Any, diagnostics: Any) -> Any:
     ax.set_ylabel("Wartość wagi")
     ax.set_title("Trajektorie adaptowanych wag W")
     ax.legend(fontsize=8, ncol=2)
+    _add_interpretation_box(
+        ax.figure,
+        "Co widzisz: każda linia to siła wybranego połączenia między modułami. Dla osoby "
+        "początkującej kluczowe jest, czy linia rośnie, spada czy pozostaje "
+        "stabilna. Dla specjalisty "
+        "ważne są trwałe trendy po fazach treningu, przecięcia trajektorii "
+        "i pary połączeń reagujące "
+        "na konkretne zdarzenia. Najwięcej znaczą zmiany utrzymujące się po bodźcu, "
+        "a nie pojedynczy szum.",
+    )
     _style_lines(ax)
     return [ax]
 
@@ -398,7 +552,10 @@ def draw_weight_deltas(ax: Any, time: Any, diagnostics: Any) -> Any:
     deltas = history.get("deltas", {})
 
     if not deltas:
-        ax.text(0.5, 0.5, "Brak zmian wag do wizualizacji.", ha="center", va="center", transform=ax.transAxes)
+        ax.text(
+            0.5, 0.5, "Brak zmian wag do wizualizacji.",
+            ha="center", va="center", transform=ax.transAxes,
+        )
         ax.set_title("Zmiany wag ΔW")
         ax.set_xlabel("Czas symulacji [s]")
         ax.set_ylabel("ΔW / krok")
@@ -412,6 +569,16 @@ def draw_weight_deltas(ax: Any, time: Any, diagnostics: Any) -> Any:
     ax.set_ylabel("ΔW / krok")
     ax.set_title("Przyrosty adaptowanych wag")
     ax.legend(fontsize=8, ncol=2)
+    _add_interpretation_box(
+        ax.figure,
+        "Co widzisz: ΔW pokazuje zmianę wagi w pojedynczym kroku, czyli tempo uczenia. Dla osoby "
+        "początkującej wartości powyżej zera oznaczają wzmacnianie połączenia, "
+        "poniżej zera osłabianie, "
+        "a okolice zera brak istotnej zmiany. Dla specjalisty kluczowe są serie "
+        "impulsów po bodźcach, "
+        "znak zmian i moment przejścia do stabilizacji. Ten wykres mówi o zmianie, "
+        "nie o samej wielkości wagi.",
+    )
     _style_lines(ax)
     return [ax]
 def draw_eeg_modules(ax: Any, time: Any, oscillations: Any, names: Any, idx: Any) -> Any:
@@ -419,13 +586,40 @@ def draw_eeg_modules(ax: Any, time: Any, oscillations: Any, names: Any, idx: Any
     selected = ["HIP", "VSWM", "VIS", "AUD", "EXEC", "ATT", "SEM", "GW"]
     eeg = oscillations["eeg"]
 
-    for name in selected:
-        ax.plot(time, eeg[:, idx[name]], label=name)
+    available = [name for name in selected if name in idx]
+    if not available:
+        ax.text(
+            0.5, 0.5, "Brak sygnałów EEG modułów.",
+            ha="center", va="center", transform=ax.transAxes,
+        )
+        ax.set_title("Oscylatory Wilsona-Cowana dla wybranych modułów")
+        return [ax]
+
+    eeg_view = eeg[:, [idx[name] for name in available]]
+    offset_step = max(float(eeg_view.max() - eeg_view.min()) * 1.2, 0.25)
+    offsets = []
+    for order, name in enumerate(available):
+        offset = order * offset_step
+        offsets.append(offset)
+        ax.plot(time, eeg[:, idx[name]] + offset, label=name)
 
     ax.set_xlabel("Czas symulacji [s]")
-    ax.set_ylabel("Sygnał EEG aproksymowany jako E-I")
+    ax.set_ylabel("Moduł EEG (serie przesunięte pionowo)")
+    ax.set_yticks(offsets)
+    ax.set_yticklabels(available)
     ax.set_title("Oscylatory Wilsona-Cowana dla wybranych modułów")
     ax.legend(ncol=4, fontsize=9)
+    _add_interpretation_box(
+        ax.figure,
+        "Co widzisz: każdy wiersz to uproszczony sygnał EEG jednego modułu, przesunięty pionowo "
+        "tylko po to, aby linie się nie nakładały. Dla osoby początkującej "
+        "kluczowe są rytm, wysokość "
+        "fal w obrębie wiersza i momenty, gdy kilka modułów ma piki jednocześnie. "
+        "Dla specjalisty ważna "
+        "jest synchronizacja, różnice fazy i zmiana amplitudy po bodźcach. "
+        "Nie porównuj bezwzględnej "
+        "wysokości między wierszami, bo przesunięcie jest sztuczne.",
+    )
     _style_lines(ax)
     return [ax]
 
@@ -435,7 +629,10 @@ def draw_eeg_modules(ax: Any, time: Any, oscillations: Any, names: Any, idx: Any
 def draw_scenario_channels(ax: Any, time: Any, scenario: Any) -> Any:
     """Opis funkcji draw_scenario_channels."""
     stim = build_stimulus_fn(scenario)
-    series = {k: [] for k in ["visual", "auditory", "task_cue", "threat", "reward", "interoceptive"]}
+    series = {
+        k: []
+        for k in ["visual", "auditory", "task_cue", "threat", "reward", "interoceptive"]
+    }
     for t in time:
         u = stim(float(t))
         for k in series:
@@ -447,6 +644,15 @@ def draw_scenario_channels(ax: Any, time: Any, scenario: Any) -> Any:
     ax.set_ylabel("Amplituda bodźca")
     ax.set_title("Przebieg kanałów bodźców scenariusza")
     ax.legend(ncol=3, fontsize=9)
+    _add_interpretation_box(
+        ax.figure,
+        "Co widzisz: linie pokazują bodźce i sygnały wejściowe scenariusza, np. wzrok, dźwięk, "
+        "wskazówkę zadania, zagrożenie lub nagrodę. Dla osoby początkującej to mapa tego, co model "
+        "dostaje z zewnątrz. Dla specjalisty kluczowe są amplituda, czas trwania "
+        "i nakładanie się kanałów. "
+        "Używaj tego wykresu jako przyczyny: sprawdzaj, czy aktywność, decyzje "
+        "i diagnostyka rosną po bodźcu.",
+    )
     _style_lines(ax)
     return [ax]
 
@@ -470,6 +676,16 @@ def draw_scenario_timeline(ax: Any, time: Any, scenario: Any) -> Any:
     ax.set_xlim(float(time[0]), float(time[-1]))
     if scenario.phases:
         ax.legend(loc="upper right", fontsize=8)
+    _add_interpretation_box(
+        ax.figure,
+        "Co widzisz: kolorowe obszary to fazy scenariusza, a pionowe linie "
+        "to pojedyncze zdarzenia. "
+        "Dla osoby początkującej to legenda czasu: pokazuje, kiedy coś miało się "
+        "wydarzyć. Dla specjalisty "
+        "kluczowe są granice faz, opóźnienia reakcji modelu po zdarzeniach "
+        "i to, czy zmiany pojawiają się "
+        "w fazie treningowej, testowej lub stresowej. Zawsze zestawiaj tę oś z innymi wykresami.",
+    )
     return [ax]
 
 
@@ -483,12 +699,25 @@ def draw_behavior(ax: Any, time: Any, behavior: Any) -> Any:
     decision_times = time[behavior["decision_event"]]
     decision_scores = behavior["decision_score"][behavior["decision_event"]]
     if len(decision_times):
-        ax.scatter(decision_times, decision_scores, marker="o", color="#d62728", label="decision event", zorder=3)
+        ax.scatter(
+            decision_times, decision_scores, marker="o", color="#d62728",
+            label="decision event", zorder=3,
+        )
 
     ax.set_xlabel("Czas symulacji [s]")
     ax.set_ylabel("Skala decyzyjna")
     ax.set_title("Przebiegi decyzyjne i punkty decyzji")
     ax.legend()
+    _add_interpretation_box(
+        ax.figure,
+        "Co widzisz: wynik decyzji pokazuje kierunek i siłę preferowanej odpowiedzi, "
+        "a pewność mówi, "
+        "jak stabilna jest ta odpowiedź. Dla osoby początkującej najważniejsze są "
+        "czerwone punkty decyzji "
+        "i to, czy pojawiają się wtedy, gdy pewność jest wysoka. Dla specjalisty "
+        "kluczowe są przekroczenia "
+        "progu, oscylacje przed decyzją i zależność od bodźców lub faz scenariusza.",
+    )
     _style_lines(ax)
     return [ax]
 
@@ -508,6 +737,15 @@ def draw_band_power(ax: Any, time: Any, oscillations: Any) -> Any:
     axes[0].set_title("Symulowana dynamika pasm EEG")
     axes[-1].set_xlabel("Czas symulacji [s]")
     fig.supylabel("Uproszczona moc pasmowa")
+    _add_interpretation_box(
+        fig,
+        "Co widzisz: każdy panel pokazuje uproszczoną moc jednego pasma EEG: theta, alpha, beta "
+        "lub gamma. Dla osoby początkującej najważniejsze są wzrosty danego pasma i ich czas. Dla "
+        "specjalisty kluczowe jest, które pasmo reaguje na bodziec: theta często "
+        "wiąże się z pamięcią, "
+        "alpha z hamowaniem, beta z nastawieniem zadaniowym, a gamma z lokalnym wiązaniem cech. "
+        "Porównuj piki z aktywnością modułów i kanałami scenariusza.",
+    )
     return list(axes)
 
 
@@ -515,7 +753,7 @@ def _show_standalone(draw_func: Any, *args: Any, figsize: tuple[int, int] = (14,
     """Tworzy nową figurę, uruchamia funkcję rysującą i wyświetla interaktywne okno wykresu."""
     fig, ax = plt.subplots(figsize=figsize)
     axes = draw_func(ax, *args) or [ax]
-    fig.tight_layout()
+    _apply_interpretation_layout(fig)
     _attach_line_tooltips(fig, axes)
     plt.show()
 
