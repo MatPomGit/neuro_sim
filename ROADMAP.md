@@ -2,7 +2,7 @@
 
 ## 1. Status dokumentu
 
-**Stan na dzień:** 2026-05-29
+**Stan na dzień:** 2026-06-02
 **Zakres:** kierunek rozwoju aplikacji, kamienie milowe i zależności między strumieniami prac.
 **Relacja do backlogu:** `BACKLOG.md` pozostaje operacyjną listą zadań, statusów i artefaktów. Ten dokument opisuje szerszą kolejność rozwoju oraz kryteria przejścia między etapami.
 
@@ -51,7 +51,7 @@ Docelowy użytkownik powinien móc:
 
 ---
 
-## 4. Stan wyjściowy na 2026-05-29
+## 4. Stan wyjściowy na 2026-06-02
 
 Repozytorium posiada już fundamenty potrzebne do rozwoju roadmapy:
 
@@ -73,6 +73,21 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 6. jednolita dokumentacja uruchamiania i interpretacji scenariuszy.
 
 ---
+
+
+## 4A. Status funkcji i zakres MVP
+
+Statusy w roadmapie używają wyłącznie wartości `done`, `partial` i `planned`.
+Poniższa tabela oddziela działające MVP od zakresu docelowego, aby nie traktować
+roadmapy jako obietnicy nowych funkcji na tym etapie.
+
+| Funkcja | Status | MVP istnieje | Pozostały zakres |
+| --- | --- | --- | --- |
+| `roving_oddball` | `partial` | Dedykowany protokół zadania, aliasy, konfiguracje healthy/disorder/lesion i testy reprodukowalności. | Przewodnik dydaktyczny, przykład uruchomienia, interpretacja raportu i walidacja metryk habituacji/readaptacji. |
+| Clinical profiles | `partial` | Profile w `configs/clinical_profiles/*.yaml`, integracja z konfiguracją oraz scenariuszami lesion/clinical. | Interpretacje dydaktyczne, progi różnic, raport amplitude-latency-mechanism i walidacja względem benchmarków. |
+| Timeline | `partial` | Oś `event_timeline` tworzona w `brain_core/simulation/events.py` i dołączana przez silnik oraz raporty. | Pełne grupowanie trial-by-trial, eksport raportu, linkowanie z wykresami i objaśnienia per profil. |
+| Benchmark metadata | `partial` | Metadane benchmarków w `data/validation/benchmark_metadata.json` i walidacja w loaderze benchmarków. | Kryteria zgodności per benchmark, źródła literaturowe/empiryczne i raport wersyjny. |
+| SNN demo | `partial` | Demo `snn_hippocampus_demo`, adapter sygnałów NM↔SNN, dokument demo i testy pilotażowe. | Sprzężenie zwrotne wpływające na trajektorię neural-mass, pełniejsza synchronizacja kroków i backendy NEST/NEURON/Arbor. |
 
 ## 5. Strumienie strategiczne
 
@@ -114,7 +129,7 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 
 **Horyzont:** natychmiast / przed kolejnymi zmianami strukturalnymi
 **Priorytet:** P0
-**Status:** częściowo zrealizowany
+**Status:** `partial`
 
 **Cele:**
 
@@ -139,7 +154,7 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 
 **Horyzont:** najbliższy etap wykonawczy
 **Priorytet:** P0
-**Status:** częściowo zrealizowany
+**Status:** `partial`
 
 **Cele:**
 
@@ -155,6 +170,16 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 - baseline `healthy_v1` z dokumentacją, metadanymi i progami regresji,
 - event log oraz raport timeline generowany po symulacji,
 - testy walidacji wejścia i regresji baseline.
+
+**MVP istnieje:**
+
+- `event_timeline` jest budowany w `brain_core/simulation/events.py` i dołączany do wyników symulacji.
+- Raporty potrafią korzystać z podstawowych zdarzeń bodźców, odpowiedzi, patologii i zmian aktywności.
+
+**Pozostały zakres:**
+
+- ujednolicić timeline dla wszystkich typów symulacji,
+- dodać pełny widok trial-by-trial, eksport HTML/PDF i powiązanie zdarzeń z wykresami.
 
 **Artefakty docelowe:**
 
@@ -175,7 +200,7 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 
 **Horyzont:** po domknięciu Etapu 1
 **Priorytet:** P1
-**Status:** częściowo zrealizowany
+**Status:** `partial`
 
 **Cele:**
 
@@ -211,7 +236,7 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 
 **Horyzont:** równolegle z końcówką Etapu 2 / przed pełną biblioteką kliniczną
 **Priorytet:** P1/P2
-**Status:** częściowo zrealizowany
+**Status:** `partial`
 
 **Cele:**
 
@@ -219,14 +244,14 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 - Rozwinąć istniejący `roving_oddball` jako zadanie referencyjne dla predykcji, nowości, habituacji i readaptacji.
 - Zapewnić te same sekwencje bodźców dla profili healthy/disorder/lesion.
 
-**Zrealizowane artefakty:**
+**MVP istnieje:**
 
 - `RovingOddballTask` jako dedykowany protokół zadania referencyjnego.
 - Aliasy `get_task` dla wariantów nazwy `roving_oddball`.
 - Konfiguracje healthy/disorder/lesion: `roving_oddball_healthy`, `roving_oddball_disorder_gaba`, `roving_oddball_lesion_hippocampus`.
 - Testy reprodukowalności sekwencji oraz ładowania konfiguracji scenariuszy.
 
-**Braki do domknięcia:**
+**Pozostały zakres:**
 
 - Dokumentacja użytkowa: przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”.
 - Dokumentacja użytkowa: przykładowe uruchomienie scenariuszy healthy/disorder/lesion.
@@ -259,12 +284,24 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 
 **Horyzont:** po Etapie 3
 **Priorytet:** P1/P2
-**Status:** częściowo zrealizowany
+**Status:** `partial`
 
 **Cele:**
 
 - Dostarczyć porównania healthy vs disorder vs lesion jako podstawową wartość edukacyjną.
 - Umożliwić uruchomienie identycznego bodźca na wielu profilach.
+
+**MVP istnieje:**
+
+- Profile healthy/disorder/lesion są opisane w `configs/clinical_profiles/*.yaml`.
+- Schemat konfiguracji i silnik obsługują profil kliniczny w uruchomieniu.
+- Moduły lesion i scenariuszy umożliwiają podstawowe porównania.
+
+**Pozostały zakres:**
+
+- uzupełnić interpretacje dydaktyczne dla każdego profilu,
+- zdefiniować progi jakościowe różnic i mechanizm raportowania,
+- zweryfikować profile względem benchmarków oraz metryk roving oddball.
 
 **Zakres:**
 
@@ -293,7 +330,7 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 
 **Horyzont:** po ustabilizowaniu scenariuszy porównawczych
 **Priorytet:** P2
-**Status:** częściowo zrealizowany
+**Status:** `partial`
 
 **Cele:**
 
@@ -327,13 +364,24 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 
 **Horyzont:** długoterminowo
 **Priorytet:** P3
-**Status:** częściowo zrealizowany pilotażowo dla adaptera spiking, reszta planowana
+**Status:** `partial`
 
 **Cele:**
 
 - Zintegrować wybrane obwody spiking z modelem makro.
 - Rozwinąć personalizację i symulacje kohortowe.
 - Zbudować bibliotekę benchmarków i hipotez literaturowych.
+
+**MVP istnieje:**
+
+- `snn_hippocampus_demo` pokazuje pilotaż neural-mass + lokalny obwód SNN bez pełnego feedback-loop.
+- `data/validation/benchmark_metadata.json` opisuje syntetyczne i edukacyjne benchmarki EEG, fMRI oraz zachowania.
+
+**Pozostały zakres:**
+
+- domknąć sprzężenie zwrotne SNN wpływające na trajektorię neural-mass,
+- dodać kryteria zgodności i źródła dla benchmarków literaturowych/empirycznych,
+- przygotować raport wersyjny „co model odtwarza, czego jeszcze nie”.
 
 **Zakres:**
 
