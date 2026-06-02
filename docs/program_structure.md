@@ -155,6 +155,9 @@ configs/
 ├── go_nogo.yaml
 ├── n_back.yaml
 ├── stroop.yaml
+├── roving_oddball_healthy.yaml
+├── roving_oddball_disorder_gaba.yaml
+├── roving_oddball_lesion_hippocampus.yaml
 ├── multi_region_delay_demo.yaml
 ├── multi_region_delay_extended.yaml
 ├── snn_hippocampus_demo.yaml
@@ -170,7 +173,7 @@ data/
     └── fmri_target.csv
 ```
 
-Konfiguracje `configs/*.yaml` są podstawą uruchomień przez `brain_core.simulation.run`. `snn_hippocampus_demo.yaml` dokumentuje minimalny przypadek neural-mass + lokalny obwód SNN; pełny opis znajduje się w `docs/snn_cosimulation_demo.md`. Dane `data/*` są używane przez testy oraz moduły atlasu, konektomu i walidacji sygnałów.
+Konfiguracje `configs/*.yaml` są podstawą uruchomień przez `brain_core.simulation.run`. Artefakty MVP dla `roving_oddball` już istnieją: protokół zadania jest utrzymywany w `brain_core/experiments/protocols.py`, a trzy konfiguracje scenariuszy znajdują się w `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml` i `configs/roving_oddball_lesion_hippocampus.yaml`. `snn_hippocampus_demo.yaml` dokumentuje minimalny przypadek neural-mass + lokalny obwód SNN; pełny opis znajduje się w `docs/snn_cosimulation_demo.md`. Dane `data/*` są używane przez testy oraz moduły atlasu, konektomu i walidacji sygnałów.
 
 ## 6. Dokumentacja i zasoby viewer
 
@@ -222,9 +225,22 @@ Testy obejmują obecnie m.in. konfigurację zadań, konektom, lesion, neuromodul
 
 ## 8. Najbliższe konsekwencje dla struktury repozytorium
 
-Najbliższe prace nie wymagają nowej warstwy architektonicznej. Oczekiwane zmiany strukturalne powinny pozostać minimalne:
+Najbliższe prace nie wymagają nowej warstwy architektonicznej. Artefakty MVP `roving_oddball` już istnieją i powinny być utrzymywane w aktualnych lokalizacjach:
 
-1. utrzymać i rozwijać istniejące artefakty `roving_oddball` w warstwie `brain_core/experiments/` i `configs/`,
+- `brain_core/experiments/protocols.py` — definicja protokołu i generator sekwencji zadania,
+- `configs/roving_oddball_healthy.yaml` — konfiguracja profilu healthy,
+- `configs/roving_oddball_disorder_gaba.yaml` — konfiguracja profilu disorder/GABA,
+- `configs/roving_oddball_lesion_hippocampus.yaml` — konfiguracja profilu lesion/hippocampus.
+
+Oczekiwane zmiany strukturalne powinny pozostać minimalne:
+
+1. rozwijać istniejące artefakty MVP `roving_oddball` tylko w powyższych ścieżkach lub w już istniejących modułach raportowania,
 2. rozbudować raporty w istniejących modułach `brain_core/analysis/reports.py` i `brain_model/report_export.py`,
 3. utrzymać scenariusze clinical/lesion w `brain_model/scenarios/` oraz `brain_core/experiments/lesions.py`,
 4. aktualizować ADR tylko wtedy, gdy zmieni się granica odpowiedzialności modułów lub strategia konfiguracji/I/O.
+
+Następne kroki mają charakter dokumentacji użytkowej, a nie nowych artefaktów architektonicznych:
+
+1. przygotować przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”,
+2. dodać przykładowe uruchomienie scenariuszy healthy/disorder/lesion z istniejących konfiguracji,
+3. opisać interpretację raportu, w tym `surprise_index`, `habituation_level` i `readaptation_latency`.
