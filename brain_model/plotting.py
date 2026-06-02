@@ -36,7 +36,10 @@ def _add_interpretation_box(fig: Any, text: str) -> None:
     """Dodaj pod wykresem pojedyncze pole z opisem interpretacji."""
     existing_artist = getattr(fig, "_neuro_sim_interpretation_artist", None)
     if existing_artist is not None:
-        existing_artist.remove()
+        try:
+            existing_artist.remove()
+        except ValueError:
+            pass
 
     wrapped_text = fill(text, width=INTERPRETATION_WRAP_WIDTH)
     line_count = wrapped_text.count("\n") + 1
