@@ -259,3 +259,47 @@ def test_report_marks_benchmark_origin_in_markdown() -> Any:
         for row in csv_rows
         if row["section"] == "validation_status"
     } == {("eeg", "synthetic"), ("behavior", "empirical")}
+
+
+def test_roving_oddball_profiles_share_seed_and_sequence() -> Any:
+    """Porównanie roving oddball zachowuje identyczny seed i sekwencję profili."""
+    cfg = ExperimentConfig(
+        output={"save_results": False, "label": "test", "output_dir": "outputs"},
+        seed=21,
+        task={
+            "name": "roving_oddball",
+            "scenario": "roving_oddball",
+            "duration": 8.0,
+            "n_runs": 3,
+            "run_length_min": 2,
+            "run_length_max": 2,
+            "deviant_probability": 1.0,
+            "inter_stimulus_interval": 0.5,
+            "jitter": 0.0,
+        },
+    )
+    profiles = load_clinical_profiles(
+        [
+            "configs/clinical_profiles/healthy_v1.yaml",
+            "configs/clinical_profiles/gaba_dysregulation.yaml",
+            "configs/clinical_profiles/hippocampal_lesion.yaml",
+        ]
+    )
+
+    batch = run_task_across_clinical_profiles(cfg, profiles)
+
+    comparison = batch["roving_profile_comparison"]
+    assert comparison["seed"] == 21
+    assert comparison["same_seed"] is True
+    assert comparison["same_sequence"] is True
+    assert {profile["profile_id"] for profile in comparison["profiles"]} == {
+        "healthy_v1",
+        "gaba_dysregulation",
+        "hippocampal_lesion",
+    }
+    for profile in comparison["profiles"]:
+        assert {
+            "mean_surprise_index",
+            "habituation_rate",
+            "mean_readaptation_latency",
+        }.issubset(profile)

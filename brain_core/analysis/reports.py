@@ -6,6 +6,7 @@ import csv
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -148,6 +149,58 @@ class AnalysisReport:
                     f"{stats.get('max_abs_difference', 'n/a')}"
                 )
 
+        roving_report = self.payload.get("roving_oddball")
+        if roving_report:
+            lines.extend(["", "## Raport roving oddball"])
+            lines.append(
+                f"- **standard**: {roving_report.get('standard_count', 'n/a')} triali"
+            )
+            lines.append(
+                f"- **deviant**: {roving_report.get('deviant_count', 'n/a')} triali"
+            )
+            lines.append(
+                f"- **nowy standard**: "
+                f"{roving_report.get('new_standard_count', 'n/a')} triali"
+            )
+            lines.append(
+                f"- **średni surprise_index**: "
+                f"{roving_report.get('mean_surprise_index', 'n/a')}"
+            )
+            lines.append(
+                f"- **tempo habituacji**: "
+                f"{roving_report.get('habituation_rate', 'n/a')}"
+            )
+            lines.append(
+                f"- **latency readaptacji**: "
+                f"{roving_report.get('mean_readaptation_latency', 'n/a')}"
+            )
+
+        roving_profile_comparison = self.payload.get("roving_profile_comparison")
+        if roving_profile_comparison:
+            lines.extend(["", "## Porównanie profili roving oddball"])
+            lines.append(
+                f"- **ten sam seed**: "
+                f"{roving_profile_comparison.get('same_seed', 'n/a')}"
+            )
+            lines.append(
+                f"- **ta sama sekwencja**: "
+                f"{roving_profile_comparison.get('same_sequence', 'n/a')}"
+            )
+            for profile in roving_profile_comparison.get("profiles", []):
+                lines.append(f"- **profil**: {profile.get('profile_id', 'n/a')}")
+                lines.append(
+                    f"  - średni surprise_index: "
+                    f"{profile.get('mean_surprise_index', 'n/a')}"
+                )
+                lines.append(
+                    f"  - tempo habituacji: "
+                    f"{profile.get('habituation_rate', 'n/a')}"
+                )
+                lines.append(
+                    f"  - latency readaptacji: "
+                    f"{profile.get('mean_readaptation_latency', 'n/a')}"
+                )
+
         clinical_differences = self.payload.get("clinical_differences", [])
         if clinical_differences:
             lines.extend(["", "## Raport różnic profili klinicznych"])
@@ -275,6 +328,55 @@ class AnalysisReport:
                         }
                     )
 
+        roving_report = self.payload.get("roving_oddball")
+        if roving_report:
+            for metric in (
+                "standard_count",
+                "deviant_count",
+                "new_standard_count",
+                "mean_surprise_index",
+                "habituation_rate",
+                "mean_readaptation_latency",
+            ):
+                rows.append(
+                    {
+                        "section": "roving_oddball",
+                        "metric": metric,
+                        "value": str(roving_report.get(metric, "n/a")),
+                    }
+                )
+
+        roving_profile_comparison = self.payload.get("roving_profile_comparison")
+        if roving_profile_comparison:
+            rows.append(
+                {
+                    "section": "roving_profile_comparison",
+                    "metric": "same_seed",
+                    "value": str(roving_profile_comparison.get("same_seed", "n/a")),
+                }
+            )
+            rows.append(
+                {
+                    "section": "roving_profile_comparison",
+                    "metric": "same_sequence",
+                    "value": str(roving_profile_comparison.get("same_sequence", "n/a")),
+                }
+            )
+            for profile in roving_profile_comparison.get("profiles", []):
+                profile_id = profile.get("profile_id", "n/a")
+                for metric in (
+                    "mean_surprise_index",
+                    "habituation_rate",
+                    "mean_readaptation_latency",
+                ):
+                    rows.append(
+                        {
+                            "section": "roving_profile_comparison",
+                            "metric": f"{profile_id}_{metric}",
+                            "value": str(profile.get(metric, "n/a")),
+                        }
+                    )
+
         for item in self.payload.get("clinical_differences", []):
             profile_id = item.get("profile_id", "n/a")
             for metric in (
@@ -292,6 +394,98 @@ class AnalysisReport:
                     }
                 )
         return rows
+
+
+def build_roving_oddball_report(
+    trial_results: list[dict[str, Any]],
+    *,
+    profile_id: str | None = None,
+) -> dict[str, object]:
+    """Agreguje metryki sekwencji roving oddball z wyników triali.
+
+    Parameters
+    ----------
+    trial_results:
+        Lista wyników triali zawierająca warunki ``standard`` i ``deviant``
+        oraz metryki ``surprise_index``, ``habituation_level`` i
+        ``readaptation_latency``.
+    profile_id:
+        Opcjonalny identyfikator profilu klinicznego dodawany do raportu
+        porównawczego.
+
+    Returns
+    -------
+    dict[str, object]
+        Podsumowanie liczby standardów, dewiantów, nowych standardów, średniego
+        indeksu zaskoczenia, tempa habituacji i latencji readaptacji.
+    """
+    if not trial_results:
+        return {
+            "profile_id": profile_id,
+            "standard_count": 0,
+            "deviant_count": 0,
+            "new_standard_count": 0,
+            "mean_surprise_index": 0.0,
+            "habituation_rate": 0.0,
+            "mean_readaptation_latency": 0.0,
+            "sequence_signature": [],
+        }
+
+    surprise_values = [
+        float(result.get("surprise_index", 0.0)) for result in trial_results
+    ]
+    readaptation_values = [
+        float(result.get("readaptation_latency", 0.0))
+        for result in trial_results
+        if float(result.get("readaptation_latency", 0.0)) > 0.0
+    ]
+    habituation_deltas: list[float] = []
+    previous_by_run: dict[int, float] = {}
+    for result in trial_results:
+        if result.get("condition") != "standard":
+            continue
+        run_index = int(result.get("run_index", -1))
+        level = float(result.get("habituation_level", 0.0))
+        if run_index in previous_by_run:
+            delta = level - previous_by_run[run_index]
+            if delta > 0.0:
+                habituation_deltas.append(delta)
+        previous_by_run[run_index] = level
+
+    sequence_signature = [
+        {
+            "trial_id": int(result.get("trial_id", index)),
+            "condition": str(result.get("condition", "n/a")),
+            "tone_hz": result.get("tone_hz", "n/a"),
+            "is_new_standard": bool(result.get("is_new_standard", False)),
+        }
+        for index, result in enumerate(trial_results)
+    ]
+
+    summary: dict[str, object] = {
+        "standard_count": sum(
+            1 for result in trial_results if result.get("condition") == "standard"
+        ),
+        "deviant_count": sum(
+            1 for result in trial_results if result.get("condition") == "deviant"
+        ),
+        "new_standard_count": sum(
+            1 for result in trial_results if result.get("is_new_standard", False)
+        ),
+        "mean_surprise_index": round(float(np.mean(surprise_values)), 6),
+        "habituation_rate": (
+            round(float(np.mean(habituation_deltas)), 6) if habituation_deltas else 0.0
+        ),
+        "mean_readaptation_latency": (
+            round(float(np.mean(readaptation_values)), 6)
+            if readaptation_values
+            else 0.0
+        ),
+        "sequence_signature": sequence_signature,
+    }
+    if profile_id is not None:
+        summary["profile_id"] = profile_id
+    return summary
 
 
 def write_report_files(

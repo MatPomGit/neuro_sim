@@ -231,3 +231,35 @@ def test_run_experiment_records_clinical_pathology_event() -> Any:
     ]
     assert pathology_events
     assert pathology_events[0]["details"]["profile_id"] == "dopamine_deficit"
+
+
+def test_roving_oddball_report_contains_conditions_and_habituation_metrics() -> Any:
+    """Raport Markdown roving oddball pokazuje warunki i metryki habituacji."""
+    cfg = ExperimentConfig(
+        task={
+            "name": "roving_oddball",
+            "scenario": "roving_oddball",
+            "duration": 8.0,
+            "n_runs": 3,
+            "run_length_min": 2,
+            "run_length_max": 2,
+            "deviant_probability": 1.0,
+            "inter_stimulus_interval": 0.5,
+            "jitter": 0.0,
+        },
+        output={"save_results": False},
+    )
+
+    result = run_experiment(cfg)
+    roving_report = result["analysis_report"]["roving_oddball"]
+    markdown = AnalysisReport(result["analysis_report"]).to_markdown()
+
+    assert roving_report["standard_count"] > 0
+    assert roving_report["deviant_count"] > 0
+    assert roving_report["new_standard_count"] > 0
+    assert roving_report["habituation_rate"] > 0.0
+    assert "standard" in markdown
+    assert "deviant" in markdown
+    assert "nowy standard" in markdown
+    assert "tempo habituacji" in markdown
+    assert "latency readaptacji" in markdown
