@@ -420,12 +420,10 @@ wymiany sygnałów i porównanie raportowe bez pełnego sprzężenia zwrotnego.
 - Przejść z porównania raportowego do sprzężenia zwrotnego wpływającego na
   trajektorię neural-mass w trakcie symulacji.
 - Udokumentować synchronizację kroków czasowych i porównanie jakościowe efektów.
-- Po pełnym feedback-loop dla jednego obwodu dodać zadanie wdrożenia backendu
-  NEST.
-- Po pełnym feedback-loop dla jednego obwodu dodać zadanie wdrożenia backendu
-  NEURON.
-- Po pełnym feedback-loop dla jednego obwodu dodać zadanie wdrożenia backendu
-  Arbor.
+- Po pełnym feedback-loop dla jednego obwodu dodać zadania wdrożenia backendów:
+  - NEST
+  - NEURON
+  - Arbor
 
 ---
 
