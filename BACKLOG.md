@@ -29,7 +29,7 @@ Na dzień 2026-06-02 status nie jest prognozą wdrożenia, tylko krótką oceną
 | P2 | Task battery, roving oddball, EEG/BOLD i tryb nauczyciela | `partial` / `planned` | `brain_core/experiments/protocols.py`, `brain_core/analysis/spectral.py`, `brain_core/physiology/eeg_forward_model.py`, `brain_model/qt_app.py`, `brain_model/qt_plotting.py` |
 
 
-### Statusy funkcji przekrojowych wymaganych w tym PR
+### Statusy funkcji przekrojowych w obecnej wersji
 
 | Funkcja | Status | MVP istnieje | Pozostały zakres |
 | --- | --- | --- | --- |
