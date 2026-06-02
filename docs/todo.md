@@ -27,7 +27,7 @@ i `planned`. Sekcja porządkuje stan repozytorium bez dodawania nowych funkcji.
 **Status:** `partial`
 
 **MVP istnieje:** protokół zadania, generator sekwencji, konfiguracje
-healthy/disorder/lesion i testy reprodukowalności są dostępne w aktualnym repo.
+healthy/disorder/lesion i testy reprodukowalności są dostępne w aktualnym repozytorium.
 
 **Pozostały zakres:** przewodnik dydaktyczny, przykład uruchomienia, interpretacja
 raportu oraz walidacja metryk habituacji/readaptacji.
