@@ -43,6 +43,16 @@ Ten dokument definiuje mapowanie nazw technicznych używanych w kodzie (angielsk
 | stress_recovery | regeneracja po stresie | Nazwa scenariusza |
 | task_switching | przełączanie zadań | Nazwa scenariusza |
 | sensory_overload | przeciążenie sensoryczne | Nazwa scenariusza |
+| face-rinse | opłukanie twarzy wodą | Nazwa scenariusza |
+| sleep-onset | zasypianie | Nazwa scenariusza |
+| quiet-sleep | sen spokojny | Nazwa scenariusza |
+| rem-sleep | faza REM | Nazwa scenariusza |
+| awakening | wybudzenie się | Nazwa scenariusza |
+| pain-prick | ukłucie bólu | Nazwa scenariusza |
+| startle-response | wystraszenie się | Nazwa scenariusza |
+| physical-activity | aktywność fizyczna | Nazwa scenariusza |
+| sexual-activity | aktywność seksualna | Nazwa scenariusza |
+| reading-book | czytanie książki | Nazwa scenariusza |
 | run | uruchom | Komenda akcji |
 | batch | seria uruchomień | Komenda akcji |
 | save_results | zapisz wyniki | Opcja wyjścia |
