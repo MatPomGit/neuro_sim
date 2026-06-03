@@ -248,7 +248,7 @@ roadmapy jako obietnicy nowych funkcji na tym etapie.
 
 - `brain_core/experiments/protocols.py` zawiera `RovingOddballTask` jako dedykowany protokół zadania referencyjnego oraz aliasy `get_task` dla wariantów nazwy `roving_oddball`.
 - Konfiguracje healthy/disorder/lesion istnieją w `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml` i `configs/roving_oddball_lesion_hippocampus.yaml`.
-- Testy reprodukowalności sekwencji oraz ładowania konfiguracji scenariuszy.
+- tests/test_task_protocols_and_engine.py zawiera testy reprodukowalności sekwencji oraz ładowania konfiguracji scenariuszy.
 
 **Pozostały zakres:**
 
