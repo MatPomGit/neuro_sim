@@ -244,7 +244,7 @@ def _summarize_trace_metrics(
     baseline_trace: np.ndarray,
     compared_trace: np.ndarray,
     feedback_trace: np.ndarray | None = None,
-) -> dict[str, float]:
+) -> dict[str, float | int]:
     """Wylicza stabilne metryki porównania przebiegów regionalnych.
 
     Parameters
@@ -258,8 +258,8 @@ def _summarize_trace_metrics(
 
     Returns
     -------
-    dict[str, float]
-        Zaokrąglone metryki aktywności i różnic względem baseline.
+    dict[str, float | int]
+        Zaokrąglone metryki aktywności, długości i różnic względem baseline.
     """
     difference = np.abs(compared_trace - baseline_trace)
     metrics = {
@@ -267,6 +267,7 @@ def _summarize_trace_metrics(
         "max_activity": round(float(np.max(np.abs(compared_trace))), 6),
         "mean_abs_difference_vs_baseline": round(float(np.mean(difference)), 6),
         "max_abs_difference_vs_baseline": round(float(np.max(difference)), 6),
+        "length": int(compared_trace.shape[0]),
     }
     if feedback_trace is not None:
         metrics["max_abs_feedback_drive"] = round(
