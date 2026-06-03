@@ -414,11 +414,12 @@ class QtSections:
         try:
             if binding.control_kind == "line_edit":
                 write_line_edit(control, value)
-                return
-            if binding.control_kind == "check_box":
+            elif binding.control_kind == "check_box":
                 write_check_box(control, value)
-                return
-            write_combo_box(control, value)
+            elif binding.control_kind == "combo_box":
+                write_combo_box(control, value)
+            else:
+                raise ValueError(f"Nieobsługiwany typ kontrolki: {binding.control_kind}")
         finally:
             control.blockSignals(signals_were_blocked)
 
