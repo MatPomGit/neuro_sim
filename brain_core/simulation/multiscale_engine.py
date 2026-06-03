@@ -110,7 +110,7 @@ class ClosedLoopFeedbackPath:
             raw_value = raw_drive.get(self.target_region_name, 0.0)
         else:
             raw_value = raw_drive
-        drive_value = float(raw_value)
+        drive_value = float(raw_value) if raw_value is not None else 0.0
         if not np.isfinite(drive_value):
             raise ValueError("Sygnał sprzężenia SNN musi być skończony")
         self._pending_drive = float(
