@@ -339,7 +339,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 
 **Deliverables do uzupełnienia:**
 - Testy regresji zwalidowanych metryk habituacji/readaptacji.
-- Porównanie profili healthy/disorder/lesion.
+- Raport z porównania profili healthy/disorder/lesion.
 - Raport amplitude-latency-mechanism.
 
 **Akceptacja:**
