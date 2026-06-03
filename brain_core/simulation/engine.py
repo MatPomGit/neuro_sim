@@ -546,7 +546,7 @@ def _classify_roving_profile_group(profile_id: str, result: dict[str, Any]) -> s
             profile.get("display_name", ""),
         )
     )
-    pathology = result.get("analysis_report", {}).get("clinical_profile", {})
+    pathology = (result.get("analysis_report") or {}).get("clinical_profile") or {}
     pathology_text = str(pathology.get("pathology_scenario", "")).lower()
     combined_text = f"{profile_text} {pathology_text}"
     if "lesion" in combined_text or "uszkod" in combined_text:
