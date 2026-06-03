@@ -70,3 +70,23 @@ def test_qt_window_blocks_close_while_worker_is_active() -> None:
     assert "Zamknięcie okna będzie możliwe po zakończeniu obliczeń." in source
     assert "event.ignore()" in source
     assert "super().closeEvent(event)" in source
+
+
+def _function_source(path: Path, function_name: str) -> str:
+    """Zwróć znormalizowany kod źródłowy funkcji modułowej."""
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    function = next(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.FunctionDef) and node.name == function_name
+    )
+    return ast.unparse(function)
+
+
+def test_yaml_engine_config_uses_gui_scenario_selection() -> None:
+    """Konfiguracja YAML zachowuje ręcznie wybrany scenariusz z GUI."""
+    source = _function_source(QT_RUNNER_PATH, "build_engine_config")
+
+    assert "task_config = raw_config.setdefault('task', {})" in source
+    assert "task_config['scenario'] = state.scenario" in source
+    assert "task_config['duration'] = T" in source

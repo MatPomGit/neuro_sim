@@ -40,6 +40,20 @@ def test_quick_start_has_suggested_duration_button() -> None:
         "suggested_duration_button.clicked.connect(self.apply_suggested_duration)"
         in source
     )
+    assert (
+        "self.scenario_combo.currentTextChanged.connect(self.on_scenario_changed)"
+        in source
+    )
+    assert "self.scenario_config_combo.currentTextChanged.connect" in source
+    assert "lambda _text: self.apply_scenario_yaml_config()" in source
+
+
+def test_scenario_change_refreshes_details_and_automatic_duration() -> None:
+    """Zmiana scenariusza automatycznie odświeża opis oraz sugerowany czas."""
+    source = _method_source(QT_SECTIONS_PATH, "on_scenario_changed", "QtSections")
+
+    assert "self.refresh_scenario_details()" in source
+    assert "self.apply_suggested_duration(show_status=False)" in source
 
 
 def test_apply_suggested_duration_updates_controls_state_dt_and_status() -> None:
@@ -53,6 +67,7 @@ def test_apply_suggested_duration_updates_controls_state_dt_and_status() -> None
     assert "self.on_auto_dt_toggled(True)" in source
     assert "self.state.T = read_line_edit(self.T_edit)" in source
     assert "self.state.dt = read_line_edit(self.dt_edit)" in source
+    assert "show_status and status_callback is not None" in source
     assert "Ustawiono sugerowany czas scenariusza." in source
 
 
