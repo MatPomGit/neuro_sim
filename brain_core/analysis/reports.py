@@ -56,7 +56,7 @@ def _classify_clinical_difference(
     thresholds = dict(DEFAULT_CLINICAL_SEVERITY_THRESHOLDS)
     if severity_thresholds:
         thresholds.update(
-            {key: float(value) for key, value in severity_thresholds.items()}
+            {key: float(v) for key, v in severity_thresholds.items()}
         )
 
     if value >= thresholds["large"]:
