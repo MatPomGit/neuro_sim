@@ -190,6 +190,175 @@ def _attach_task_activation_section(
     return AnalysisReport(payload=payload)
 
 
+def _build_snn_runtime(
+    *,
+    config: ExperimentConfig,
+    region_names: list[str],
+) -> tuple[
+    tuple[str, ...],
+    SNNPopulationMapping,
+    CouplingSignalAdapter,
+    Brian2SpikingPopulationAdapter,
+    np.ndarray,
+    np.ndarray,
+]:
+    """Buduje wspólne obiekty wykonawcze dla porównań SNN.
+
+    Parameters
+    ----------
+    config:
+        Zweryfikowana konfiguracja eksperymentu.
+    region_names:
+        Nazwy regionów neural-mass w kolejności modelu.
+
+    Returns
+    -------
+    tuple
+        Regiony SNN, mapowanie, adapter sygnału, populacja SNN, indeksy regionów
+        i wektor wzmocnień sprzężenia.
+    """
+    circuits = config.snn.get("circuits", [])
+    snn_regions = tuple(str(circuit["region"]) for circuit in circuits)
+    mapping = SNNPopulationMapping(
+        snn_region_names=snn_regions,
+        neural_mass_region_names=tuple(region_names),
+    )
+    adapter = CouplingSignalAdapter(
+        mapping=mapping,
+        sync_dt=float(config.snn["sync_dt"]),
+    )
+    snn_population = Brian2SpikingPopulationAdapter(
+        region_names=list(snn_regions),
+        dt=min(config.timestep, float(config.snn["sync_dt"])),
+    )
+    mapped_indices = mapping.indices_in_neural_mass()
+    gains = np.asarray(
+        [float(circuit.get("coupling_gain", 0.2)) for circuit in circuits],
+        dtype=float,
+    )
+    return snn_regions, mapping, adapter, snn_population, mapped_indices, gains
+
+
+def _summarize_trace_metrics(
+    *,
+    baseline_trace: np.ndarray,
+    compared_trace: np.ndarray,
+    feedback_trace: np.ndarray | None = None,
+) -> dict[str, float]:
+    """Wylicza stabilne metryki porównania przebiegów regionalnych.
+
+    Parameters
+    ----------
+    baseline_trace:
+        Bazowy przebieg neural-mass bez SNN.
+    compared_trace:
+        Przebieg porównywany z bazowym.
+    feedback_trace:
+        Opcjonalny przebieg amplitudy wejścia zwrotnego SNN.
+
+    Returns
+    -------
+    dict[str, float]
+        Zaokrąglone metryki aktywności i różnic względem baseline.
+    """
+    difference = np.abs(compared_trace - baseline_trace)
+    metrics = {
+        "mean_activity": round(float(np.mean(compared_trace)), 6),
+        "max_activity": round(float(np.max(np.abs(compared_trace))), 6),
+        "mean_abs_difference_vs_baseline": round(float(np.mean(difference)), 6),
+        "max_abs_difference_vs_baseline": round(float(np.max(difference)), 6),
+    }
+    if feedback_trace is not None:
+        metrics["max_abs_feedback_drive"] = round(
+            float(np.max(np.abs(feedback_trace))), 6
+        )
+    return metrics
+
+
+def _simulate_closed_loop_snn_activity(
+    *,
+    config: ExperimentConfig,
+    region_names: list[str],
+) -> tuple[np.ndarray, np.ndarray]:
+    """Uruchamia wariant, w którym SNN modyfikuje wejście HIP w kolejnym kroku.
+
+    Parameters
+    ----------
+    config:
+        Zweryfikowana konfiguracja z sekcją SNN.
+    region_names:
+        Nazwy regionów neural-mass w kolejności modelu.
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray]
+        Aktywność closed-loop oraz macierz zastosowanego wejścia zwrotnego.
+    """
+    _, _, adapter, snn_population, _, gains = _build_snn_runtime(
+        config=config,
+        region_names=region_names,
+    )
+    sync_stride = max(1, int(round(float(config.snn["sync_dt"]) / config.timestep)))
+    max_feedback_amplitude = float(config.snn.get("max_feedback_amplitude", 0.15))
+    pending_drive = np.zeros(len(region_names), dtype=float)
+    applied_drives: list[np.ndarray] = []
+
+    def external_drive_callback(
+        step_index: int,
+        _time_s: float,
+        cognitive_activity: np.ndarray,
+        excitatory_activity: np.ndarray,
+        inhibitory_activity: np.ndarray,
+    ) -> np.ndarray:
+        """Zwraca opóźnione wejście SNN i kolejkuje sygnał na następny krok."""
+        nonlocal pending_drive
+        applied_drive = pending_drive.copy()
+        if step_index % sync_stride == 0:
+            excitatory_source = excitatory_activity
+            inhibitory_source = inhibitory_activity
+            if not np.any(excitatory_source) and not np.any(inhibitory_source):
+                excitatory_source = cognitive_activity
+                inhibitory_source = 0.5 * cognitive_activity
+            signal = adapter.rate_to_spike_drive(
+                excitatory_rate_hz=excitatory_source * adapter.MAX_FIRING_RATE_HZ,
+                inhibitory_rate_hz=inhibitory_source * adapter.MAX_FIRING_RATE_HZ,
+            )
+            snn_output = snn_population.step(signal)
+            coupling_drive = adapter.spike_summary_to_closed_loop_drive(
+                snn_output=snn_output,
+                n_regions=len(region_names),
+                coupling_gain=gains,
+                max_abs_amplitude=max_feedback_amplitude,
+            )
+            pending_drive = coupling_drive.drive
+        applied_drives.append(applied_drive)
+        return applied_drive
+
+    model_params = BrainParams(dt=config.timestep, **config.model)
+    osc_params = WilsonCowanParams(**config.integrator.get("oscillator", {}))
+    stimulus_scenario = str(config.task.get("scenario", "reward-learning"))
+    try:
+        model = CognitiveBrainModel(
+            params=model_params,
+            oscillator_params=osc_params,
+            seed=config.seed,
+            stimulus=stimulus_scenario,
+        )
+    except ValueError:
+        model = CognitiveBrainModel(
+            params=model_params,
+            oscillator_params=osc_params,
+            seed=config.seed,
+            stimulus="reward-learning",
+        )
+    _, closed_loop_activity, _, _, _ = model.simulate(
+        T=float(config.task.get("duration", 45.0)),
+        external_drive_callback=external_drive_callback,
+    )
+    feedback = np.asarray(applied_drives, dtype=float)
+    return closed_loop_activity, feedback
+
+
 def _run_local_snn_comparison(
     *,
     config: ExperimentConfig,
@@ -197,7 +366,7 @@ def _run_local_snn_comparison(
     activity: np.ndarray,
     oscillations: dict[str, Any],
 ) -> dict[str, Any] | None:
-    """Porównuje przebieg neural-mass z lokalnie sprzężonym obwodem SNN.
+    """Porównuje baseline, wariant raportowy SNN i wariant closed-loop SNN.
 
     Parameters
     ----------
@@ -213,7 +382,7 @@ def _run_local_snn_comparison(
     Returns
     -------
     dict[str, Any] | None
-        Sekcja raportu z porównaniem regionów albo `None`, gdy SNN jest wyłączone.
+        Sekcja raportu z metrykami trybów albo `None`, gdy SNN jest wyłączone.
 
     Raises
     ------
@@ -227,19 +396,14 @@ def _run_local_snn_comparison(
     if not circuits:
         return None
 
-    snn_regions = tuple(str(circuit["region"]) for circuit in circuits)
-    mapping = SNNPopulationMapping(
-        snn_region_names=snn_regions,
-        neural_mass_region_names=tuple(region_names),
-    )
-    adapter = CouplingSignalAdapter(
-        mapping=mapping,
-        sync_dt=float(config.snn["sync_dt"]),
-    )
-    snn_population = Brian2SpikingPopulationAdapter(
-        region_names=list(snn_regions),
-        dt=min(config.timestep, float(config.snn["sync_dt"])),
-    )
+    (
+        snn_regions,
+        _,
+        adapter,
+        snn_population,
+        mapped_indices,
+        gains,
+    ) = _build_snn_runtime(config=config, region_names=region_names)
 
     excitatory_raw = oscillations.get("excitatory")
     inhibitory_raw = oscillations.get("inhibitory")
@@ -254,13 +418,8 @@ def _run_local_snn_comparison(
 
     sync_stride = max(1, int(round(float(config.snn["sync_dt"]) / config.timestep)))
     snn_activity = np.zeros_like(activity, dtype=float)
-    adjusted_activity = np.array(activity, dtype=float, copy=True)
+    report_only_activity = np.array(activity, dtype=float, copy=True)
     last_regional = np.zeros(activity.shape[1], dtype=float)
-    mapped_indices = mapping.indices_in_neural_mass()
-    gains = np.asarray(
-        [float(circuit.get("coupling_gain", 0.2)) for circuit in circuits],
-        dtype=float,
-    )
 
     for step_index in range(activity.shape[0]):
         if step_index % sync_stride == 0:
@@ -273,35 +432,72 @@ def _run_local_snn_comparison(
                 snn_output, n_regions=activity.shape[1]
             )
         snn_activity[step_index] = last_regional
-        adjusted_activity[step_index, mapped_indices] = np.clip(
+        report_only_activity[step_index, mapped_indices] = np.clip(
             (1.0 - gains) * activity[step_index, mapped_indices]
             + gains * last_regional[mapped_indices],
             0.0,
             1.0,
         )
 
+    closed_loop_activity, feedback_drive = _simulate_closed_loop_snn_activity(
+        config=config,
+        region_names=region_names,
+    )
+    if closed_loop_activity.shape != activity.shape:
+        raise ValueError("Przebieg closed_loop_snn nie pasuje do baseline")
+    if feedback_drive.shape != activity.shape:
+        raise ValueError("Sygnał sprzężenia closed_loop_snn nie pasuje do baseline")
+
     region_differences: dict[str, dict[str, float]] = {}
+    mode_metrics: dict[str, dict[str, dict[str, float]]] = {
+        "baseline": {},
+        "report_only_snn": {},
+        "closed_loop_snn": {},
+    }
     for region, region_index in zip(snn_regions, mapped_indices, strict=True):
         baseline_trace = activity[:, region_index]
-        adjusted_trace = adjusted_activity[:, region_index]
-        snn_trace = snn_activity[:, region_index]
-        difference = np.abs(adjusted_trace - baseline_trace)
+        report_only_trace = report_only_activity[:, region_index]
+        closed_loop_trace = closed_loop_activity[:, region_index]
+        feedback_trace = feedback_drive[:, region_index]
+        mode_metrics["baseline"][region] = {
+            "mean_activity": round(float(np.mean(baseline_trace)), 6),
+            "max_activity": round(float(np.max(np.abs(baseline_trace))), 6),
+            "length": int(baseline_trace.shape[0]),
+        }
+        mode_metrics["report_only_snn"][region] = _summarize_trace_metrics(
+            baseline_trace=baseline_trace,
+            compared_trace=report_only_trace,
+        )
+        mode_metrics["closed_loop_snn"][region] = _summarize_trace_metrics(
+            baseline_trace=baseline_trace,
+            compared_trace=closed_loop_trace,
+            feedback_trace=feedback_trace,
+        )
         region_differences[region] = {
-            "mean_without_snn": round(float(np.mean(baseline_trace)), 6),
-            "mean_snn_local_activity": round(float(np.mean(snn_trace)), 6),
-            "mean_with_snn": round(float(np.mean(adjusted_trace)), 6),
-            "mean_abs_difference": round(float(np.mean(difference)), 6),
-            "max_abs_difference": round(float(np.max(difference)), 6),
+            "mean_without_snn": mode_metrics["baseline"][region]["mean_activity"],
+            "mean_snn_local_activity": round(
+                float(np.mean(snn_activity[:, region_index])), 6
+            ),
+            "mean_with_snn": mode_metrics["report_only_snn"][region]["mean_activity"],
+            "mean_abs_difference": mode_metrics["report_only_snn"][region][
+                "mean_abs_difference_vs_baseline"
+            ],
+            "max_abs_difference": mode_metrics["report_only_snn"][region][
+                "max_abs_difference_vs_baseline"
+            ],
         }
 
     return {
         "status_pl": "włączony lokalny obwód SNN",
         "regions": list(snn_regions),
         "neural_mass_regions": list(region_names),
+        "mode": str(config.snn.get("mode", "report_only")),
         "sync_dt_s": float(config.snn["sync_dt"]),
+        "max_feedback_amplitude": float(config.snn.get("max_feedback_amplitude", 0.15)),
         "input_rate_unit": str(config.snn.get("input_rate_unit", "Hz")),
         "output_activity_unit": str(config.snn.get("output_activity_unit", "fraction")),
         "backend": str(circuits[0].get("backend", "brian2")),
+        "mode_metrics": mode_metrics,
         "region_differences": region_differences,
     }
 

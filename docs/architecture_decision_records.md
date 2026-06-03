@@ -671,3 +671,68 @@ Dodatkowo:
 - `brain_core/simulation/engine.py`
 - `configs/default.yaml`
 - `BACKLOG.md` — P2 / 9 „Warstwa analityczna EEG/BOLD” oraz najbliższe prace / 10 „Raporty EEG/BOLD P2”
+
+---
+
+## ADR-0012: Tryby raportowy i closed-loop dla lokalnego obwodu SNN HIP
+
+**Status:** accepted
+**Data:** 2026-06-03
+
+### Kontekst
+
+Demo `snn_hippocampus_demo` dotychczas raportowało lokalny obwód SNN jako
+porównanie post-hoc względem przebiegu neural-mass. Taki wariant pozwalał
+sprawdzić kontrakt jednostek i mapowania, ale nie reprezentował pętli, w której
+wynik SNN wpływa na wejście regionu `HIP` w następnym kroku neural-mass.
+
+### Decyzja
+
+Dodajemy dwa jawne tryby sekcji `snn.mode`:
+
+- `report_only` — SNN jest uruchamiany do porównania i raportowania, bez wpływu
+  na przebieg neural-mass;
+- `closed_loop` — wyjście SNN jest przekształcane w ograniczony amplitudowo
+  wektor wejścia, kolejkowany z opóźnieniem jednego kroku i dopisywany do
+  wejścia regionu `HIP` w kolejnym kroku neural-mass.
+
+Granice odpowiedzialności pozostają rozdzielone:
+
+- `CouplingSignalAdapter` odpowiada za mapowanie jednostek i ograniczenie
+  amplitudy wejścia zwrotnego;
+- `MultiScaleEngine` udostępnia generyczną ścieżkę opóźnionego sprzężenia
+  SNN -> neural-mass;
+- `engine.py` buduje metryki raportu dla `baseline`, `report_only_snn` oraz
+  `closed_loop_snn`.
+
+### Konsekwencje
+
+**Pozytywne:**
+
+- wariant closed-loop jest jawnie konfigurowalny i testowalny;
+- raport rozróżnia metryki baseline, raportowe SNN i rzeczywiste sprzężenie;
+- amplituda sprzężenia jest ograniczona parametrem `snn.max_feedback_amplitude`,
+  co zmniejsza ryzyko niestabilności numerycznej.
+
+**Negatywne / koszty:**
+
+- uruchomienie raportu SNN wykonuje dodatkową symulację closed-loop;
+- demo nadal używa deterministycznego adaptera startowego SNN zamiast pełnej
+  sieci neuronów impulsowych.
+
+### Alternatywy rozważane
+
+- Modyfikacja aktywności `HIP` wyłącznie post-hoc: prostsza, ale nie spełnia
+  wymagania wpływu na kolejny krok neural-mass.
+- Bezpośrednie wpisywanie wyjścia SNN do stanu `HIP`: silniejsze sprzężenie, ale
+  mniej stabilne i trudniejsze do interpretacji niż jawne wejście zewnętrzne.
+
+### Powiązane
+
+- `brain_core/simulation/signal_adapter.py`
+- `brain_core/simulation/multiscale_engine.py`
+- `brain_core/simulation/engine.py`
+- `brain_model/model.py`
+- `configs/snn_hippocampus_demo.yaml`
+- `tests/test_spiking_population_adapter.py`
+- `tests/test_multiscale_engine.py`

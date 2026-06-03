@@ -122,32 +122,47 @@ class AnalysisReport:
             lines.append(
                 f"- **regiony SNN**: {', '.join(snn_comparison.get('regions') or [])}"
             )
+            lines.append(f"- **tryb SNN**: {snn_comparison.get('mode', 'n/a')}")
             lines.append(f"- **sync_dt [s]**: {snn_comparison.get('sync_dt_s', 'n/a')}")
+            lines.append(
+                f"- **maksymalna amplituda sprzężenia**: "
+                f"{snn_comparison.get('max_feedback_amplitude', 'n/a')}"
+            )
             lines.append(
                 f"- **jednostki wejścia/wyjścia**: "
                 f"{snn_comparison.get('input_rate_unit', 'n/a')} / "
                 f"{snn_comparison.get('output_activity_unit', 'n/a')}"
             )
-            for region, stats in (
-                snn_comparison.get("region_differences") or {}
-            ).items():
-                lines.append(f"- **{region}**")
-                lines.append(
-                    f"  - średnia aktywność bez SNN: "
-                    f"{stats.get('mean_without_snn', 'n/a')}"
-                )
-                lines.append(
-                    f"  - średnia aktywność z SNN: "
-                    f"{stats.get('mean_with_snn', 'n/a')}"
-                )
-                lines.append(
-                    f"  - średnia różnica bezwzględna: "
-                    f"{stats.get('mean_abs_difference', 'n/a')}"
-                )
-                lines.append(
-                    f"  - maksymalna różnica bezwzględna: "
-                    f"{stats.get('max_abs_difference', 'n/a')}"
-                )
+            mode_metrics = snn_comparison.get("mode_metrics") or {}
+            if mode_metrics:
+                for mode_name in ("baseline", "report_only_snn", "closed_loop_snn"):
+                    if mode_name in mode_metrics:
+                        lines.append(f"- **{mode_name}**")
+                        for region, stats in mode_metrics[mode_name].items():
+                            lines.append(f"  - **{region}**")
+                            for metric_name, metric_value in stats.items():
+                                lines.append(f"    - {metric_name}: {metric_value}")
+            else:
+                for region, stats in (
+                    snn_comparison.get("region_differences") or {}
+                ).items():
+                    lines.append(f"- **{region}**")
+                    lines.append(
+                        f"  - średnia aktywność bez SNN: "
+                        f"{stats.get('mean_without_snn', 'n/a')}"
+                    )
+                    lines.append(
+                        f"  - średnia aktywność z SNN: "
+                        f"{stats.get('mean_with_snn', 'n/a')}"
+                    )
+                    lines.append(
+                        f"  - średnia różnica bezwzględna: "
+                        f"{stats.get('mean_abs_difference', 'n/a')}"
+                    )
+                    lines.append(
+                        f"  - maksymalna różnica bezwzględna: "
+                        f"{stats.get('max_abs_difference', 'n/a')}"
+                    )
 
         roving_report = self.payload.get("roving_oddball")
         if roving_report:
@@ -310,24 +325,38 @@ class AnalysisReport:
                     "value": str(snn_comparison.get("status_pl", "n/a")),
                 }
             )
-            rows.append(
-                {
-                    "section": "snn_comparison",
-                    "metric": "sync_dt_s",
-                    "value": str(snn_comparison.get("sync_dt_s", "n/a")),
-                }
-            )
-            for region, stats in (
-                snn_comparison.get("region_differences") or {}
-            ).items():
-                for metric_name, metric_value in stats.items():
-                    rows.append(
-                        {
-                            "section": "snn_comparison",
-                            "metric": f"{region}_{metric_name}",
-                            "value": str(metric_value),
-                        }
-                    )
+            for metadata_name in ("mode", "sync_dt_s", "max_feedback_amplitude"):
+                rows.append(
+                    {
+                        "section": "snn_comparison",
+                        "metric": metadata_name,
+                        "value": str(snn_comparison.get(metadata_name, "n/a")),
+                    }
+                )
+            mode_metrics = snn_comparison.get("mode_metrics") or {}
+            if mode_metrics:
+                for mode_name, regions in mode_metrics.items():
+                    for region, stats in regions.items():
+                        for metric_name, metric_value in stats.items():
+                            rows.append(
+                                {
+                                    "section": "snn_comparison",
+                                    "metric": f"{mode_name}_{region}_{metric_name}",
+                                    "value": str(metric_value),
+                                }
+                            )
+            else:
+                for region, stats in (
+                    snn_comparison.get("region_differences") or {}
+                ).items():
+                    for metric_name, metric_value in stats.items():
+                        rows.append(
+                            {
+                                "section": "snn_comparison",
+                                "metric": f"{region}_{metric_name}",
+                                "value": str(metric_value),
+                            }
+                        )
 
         roving_report = self.payload.get("roving_oddball")
         if roving_report:

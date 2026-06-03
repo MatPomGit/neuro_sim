@@ -20,7 +20,9 @@ analysis:
   sets: [spectral, phase_locking, connectivity, information_flow]
 snn:
   enabled: true
+  mode: closed_loop
   sync_dt: 0.010
+  max_feedback_amplitude: 0.15
   input_rate_unit: Hz
   output_activity_unit: fraction
   neural_mass_regions:

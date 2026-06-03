@@ -1,12 +1,13 @@
-from __future__ import annotations
-
 """Silnik współsymulacji modułów o różnych krokach czasowych."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Protocol
 
-from .state import SimulationState
+import numpy as np
 
+from .state import SimulationState
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,6 +22,7 @@ class MultiScaleIOContract:
         activity_unit (str): Jednostka aktywności.
         mapped_populations (tuple[str, ...]): Mapowane populacje.
     """
+
     base_dt: float
     snn_sync_dt: float
     rate_unit: str
@@ -49,7 +51,6 @@ class MultiScaleIOContract:
             raise ValueError("mapped_populations nie może być puste")
 
 
-
 class TimeScaleModule(Protocol):
     """
     Interfejs modułu aktualizowanego z własnym krokiem czasowym.
@@ -58,10 +59,63 @@ class TimeScaleModule(Protocol):
         state (SimulationState): Stan symulacji.
         dt (float): Krok czasowy.
     """
+
     def update(self, state: SimulationState, dt: float) -> None:
         """Aktualizuje moduł na podstawie stanu symulacji i kroku czasowego."""
         ...
 
+
+@dataclass(slots=True)
+class ClosedLoopFeedbackPath:
+    """Jednokrokowa ścieżka sprzężenia zwrotnego SNN -> neural-mass.
+
+    Parameters
+    ----------
+    target_region_name:
+        Nazwa regionu neural-mass, którego wejście ma być modyfikowane.
+    source_metric:
+        Klucz metryk, pod którym zadanie SNN zapisuje aktualny sygnał zwrotny.
+    target_metric:
+        Klucz metryk odczytywany przez zadanie neural-mass jako wejście zewnętrzne.
+    max_abs_amplitude:
+        Maksymalna bezwzględna amplituda dopisana do wejścia regionu.
+    """
+
+    target_region_name: str
+    source_metric: str = "snn_closed_loop_drive"
+    target_metric: str = "neural_mass_external_drive"
+    max_abs_amplitude: float = 0.15
+    _pending_drive: float = 0.0
+
+    def __post_init__(self) -> None:
+        """Waliduje konfigurację ścieżki sprzężenia przed startem symulacji."""
+        if not self.target_region_name.strip():
+            raise ValueError("target_region_name nie może być pusty")
+        if not np.isfinite(self.max_abs_amplitude) or self.max_abs_amplitude <= 0:
+            raise ValueError("max_abs_amplitude musi być skończoną liczbą > 0")
+
+    def apply_pending_drive(self, state: SimulationState) -> None:
+        """Dopisuje opóźniony sygnał SNN do wejścia regionu neural-mass."""
+        drive_by_region = state.metrics.setdefault(self.target_metric, {})
+        if not isinstance(drive_by_region, dict):
+            raise ValueError(
+                f"state.metrics['{self.target_metric}'] musi być słownikiem"
+            )
+        drive_by_region[self.target_region_name] = self._pending_drive
+
+    def queue_next_drive(self, state: SimulationState) -> None:
+        """Pobiera bieżące wyjście SNN i kolejkuje je na następny krok neural-mass."""
+        raw_drive = state.metrics.get(self.source_metric, 0.0)
+        if isinstance(raw_drive, dict):
+            raw_value = raw_drive.get(self.target_region_name, 0.0)
+        else:
+            raw_value = raw_drive
+        drive_value = float(raw_value) if raw_value is not None else 0.0
+        if not np.isfinite(drive_value):
+            raise ValueError("Sygnał sprzężenia SNN musi być skończony")
+        self._pending_drive = float(
+            np.clip(drive_value, -self.max_abs_amplitude, self.max_abs_amplitude)
+        )
 
 
 @dataclass(slots=True)
@@ -75,6 +129,7 @@ class TimeScaleTask:
         dt (float): Krok czasowy zadania.
         _accumulator (float): Akumulator czasu.
     """
+
     name: str
     module: TimeScaleModule
     dt: float
@@ -118,13 +173,14 @@ class MultiScaleEngine:
         base_dt: float,
         tasks: list[TimeScaleTask],
         io_contract: MultiScaleIOContract | None = None,
+        closed_loop_feedback: ClosedLoopFeedbackPath | None = None,
     ) -> None:
         """Inicjalizuje silnik i opcjonalnie waliduje kontrakt I/O."""
         if base_dt <= 0:
             raise ValueError("base_dt musi być > 0")
         if tasks is None:
             raise ValueError("tasks nie może być None")
-        
+
         task_names = [t.name for t in tasks]
         if len(task_names) != len(set(task_names)):
             raise ValueError("Zadania (tasks) muszą mieć unikalne nazwy")
@@ -132,17 +188,26 @@ class MultiScaleEngine:
         self.base_dt: float = float(base_dt)
         self.tasks: list[TimeScaleTask] = tasks
         self.io_contract: MultiScaleIOContract | None = io_contract
+        self.closed_loop_feedback: ClosedLoopFeedbackPath | None = closed_loop_feedback
         if self.io_contract is not None:
             self.io_contract.validate()
             if abs(self.io_contract.base_dt - self.base_dt) > 1e-12:
-                raise ValueError("io_contract.base_dt musi być zgodny z base_dt silnika")
+                raise ValueError(
+                    "io_contract.base_dt musi być zgodny z base_dt silnika"
+                )
 
     def run_step(self, state: SimulationState) -> dict[str, int]:
         """Uruchamia pojedynczy krok współsymulacji i zwraca liczbę wywołań zadań."""
         if state is None:
             raise ValueError("state nie może być None")
+        if self.closed_loop_feedback is not None:
+            self.closed_loop_feedback.apply_pending_drive(state)
+
         run_counts: dict[str, int] = {}
         for task in self.tasks:
             run_counts[task.name] = task.tick(state, self.base_dt)
+        if self.closed_loop_feedback is not None:
+            self.closed_loop_feedback.queue_next_drive(state)
+
         state.advance(self.base_dt)
         return run_counts
