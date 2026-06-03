@@ -91,8 +91,8 @@ class ClosedLoopFeedbackPath:
         """Waliduje konfigurację ścieżki sprzężenia przed startem symulacji."""
         if not self.target_region_name.strip():
             raise ValueError("target_region_name nie może być pusty")
-        if self.max_abs_amplitude <= 0:
-            raise ValueError("max_abs_amplitude musi być > 0")
+        if not np.isfinite(self.max_abs_amplitude) or self.max_abs_amplitude <= 0:
+            raise ValueError("max_abs_amplitude musi być skończoną liczbą > 0")
 
     def apply_pending_drive(self, state: SimulationState) -> None:
         """Dopisuje opóźniony sygnał SNN do wejścia regionu neural-mass."""
