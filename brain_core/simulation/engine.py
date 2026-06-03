@@ -16,6 +16,7 @@ from brain_core.analysis.reports import (
     AnalysisReport,
     build_analysis_report,
     build_clinical_difference_report,
+    build_roving_oddball_report,
     write_report_files,
 )
 from brain_core.cognition.mapping import mapping_for_task
@@ -243,7 +244,9 @@ def _run_local_snn_comparison(
     excitatory_raw = oscillations.get("excitatory")
     inhibitory_raw = oscillations.get("inhibitory")
     if excitatory_raw is None or inhibitory_raw is None:
-        raise ValueError("Sygnały oscylacji 'excitatory' lub 'inhibitory' są wymagane do porównania SNN")
+        raise ValueError(
+            "Sygnały oscylacji 'excitatory' lub 'inhibitory' są wymagane do porównania SNN"
+        )
     excitatory = np.asarray(excitatory_raw, dtype=float)
     inhibitory = np.asarray(inhibitory_raw, dtype=float)
     if excitatory.shape != activity.shape or inhibitory.shape != activity.shape:
@@ -356,6 +359,15 @@ def _simulate_task_trials(
         ):
             if metric_name in stimulus.payload:
                 trial_result[metric_name] = stimulus.payload[metric_name]
+        for payload_name in (
+            "tone_hz",
+            "previous_standard_hz",
+            "run_index",
+            "repetition_index",
+            "is_new_standard",
+        ):
+            if payload_name in stimulus.payload:
+                trial_result[payload_name] = stimulus.payload[payload_name]
         trial_results.append(trial_result)
 
     return state.metrics.get("trial_events", []), trial_results
@@ -433,6 +445,13 @@ def run_experiment(
         benchmark_metadata=benchmark_bundle.metadata_payload(),
     )
     analysis_report = _attach_task_activation_section(analysis_report, task_activation)
+    if str(config.task.get("name") or "") in {"roving_oddball", "roving-oddball"}:
+        analysis_report.payload["roving_oddball"] = build_roving_oddball_report(
+            trial_results,
+            profile_id=str(
+                config.clinical_profile.get("id") or config.output.get("label") or "run"
+            ),
+        )
     snn_comparison = _run_local_snn_comparison(
         config=config,
         region_names=list(model.names),
@@ -499,6 +518,45 @@ def run_experiment(
         "snn_comparison": snn_comparison,
         "save_info": save_info,
         "elapsed": elapsed,
+    }
+
+
+def _build_roving_profile_comparison(
+    *,
+    seed: int,
+    runs: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Porównuje metryki roving oddball przy wspólnym seedzie i sekwencji.
+
+    Parameters
+    ----------
+    seed:
+        Ziarno użyte do wygenerowania wspólnej sekwencji bodźców.
+    runs:
+        Wyniki uruchomień per profil kliniczny.
+
+    Returns
+    -------
+    dict[str, Any]
+        Raport z agregatami per profil oraz flagami zgodności seeda i sekwencji.
+    """
+    profiles: list[dict[str, object]] = []
+    signatures: list[Any] = []
+    for profile_id, result in runs.items():
+        roving_report = build_roving_oddball_report(
+            result.get("trial_results") or [],
+            profile_id=profile_id,
+        )
+        profiles.append(roving_report)
+        signatures.append(roving_report.get("sequence_signature") or [])
+
+    reference_signature = signatures[0] if signatures else []
+    same_sequence = all(signature == reference_signature for signature in signatures)
+    return {
+        "seed": seed,
+        "same_seed": True,
+        "same_sequence": same_sequence,
+        "profiles": profiles,
     }
 
 
@@ -584,10 +642,20 @@ def run_task_across_clinical_profiles(
     reference_id = "healthy_v1" if "healthy_v1" in runs else next(iter(runs))
     compared = {key: value for key, value in runs.items() if key != reference_id}
     difference_report = build_clinical_difference_report(runs[reference_id], compared)
-    return {
+    batch_report: dict[str, Any] = {
         "seed": base_config.seed,
         "task": dict(base_config.task),
         "reference_profile_id": reference_id,
         "runs": runs,
         "clinical_difference_report": difference_report.payload,
     }
+    if str(base_config.task.get("name") or "") in {"roving_oddball", "roving-oddball"}:
+        roving_profile_comparison = _build_roving_profile_comparison(
+            seed=base_config.seed,
+            runs=runs,
+        )
+        batch_report["roving_profile_comparison"] = roving_profile_comparison
+        difference_report.payload["roving_profile_comparison"] = (
+            roving_profile_comparison
+        )
+    return batch_report
