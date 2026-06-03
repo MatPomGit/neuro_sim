@@ -110,3 +110,30 @@ def test_task_stimulus_player_sums_overlapping_active_inputs() -> None:
     assert state.regions["ACC"].tolist() == [3.0]
     assert state.regions["DLPFC"].tolist() == [0.5]
     assert [event["trial_id"] for event in state.metrics["trial_events"]] == [1, 2]
+
+
+def test_task_stimulus_player_handles_invalid_regional_input_safely(caplog) -> None:
+    """Weryfikuje bezpieczne zerowanie niepoprawnych amplitud bodźca."""
+    stimulus = TrialStimulus(
+        trial_id=1,
+        onset_s=0.0,
+        duration_s=0.5,
+        payload={},
+        condition="invalid",
+        regional_input={"ACC": None, "DLPFC": object(), "VIS": "1.25"},
+    )
+    player = TaskStimulusPlayer(stimuli=[stimulus])
+    state = SimulationState(time=0.0)
+
+    player.update(state, dt=0.1)
+
+    assert state.regions["ACC"].tolist() == [0.0]
+    assert state.regions["DLPFC"].tolist() == [0.0]
+    assert state.regions["VIS"].tolist() == [1.25]
+    assert state.metrics["trial_events"][0]["regional_input"] == {
+        "ACC": 0.0,
+        "DLPFC": 0.0,
+        "VIS": 1.25,
+    }
+    assert "Pominięto pustą amplitudę" in caplog.text
+    assert "Pominięto niepoprawną amplitudę" in caplog.text
