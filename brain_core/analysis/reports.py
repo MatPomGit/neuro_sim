@@ -186,7 +186,7 @@ class AnalysisReport:
                 f"- **ta sama sekwencja**: "
                 f"{roving_profile_comparison.get('same_sequence', 'n/a')}"
             )
-            for profile in roving_profile_comparison.get("profiles", []):
+            for profile in (roving_profile_comparison.get("profiles") or []):
                 lines.append(f"- **profil**: {profile.get('profile_id', 'n/a')}")
                 lines.append(
                     f"  - średni surprise_index: "
