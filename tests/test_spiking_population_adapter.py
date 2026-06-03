@@ -144,7 +144,10 @@ def test_snn_closed_loop_report_is_stable_and_deterministic() -> Any:
 
     assert np.all(np.isfinite(first["activity"]))
     assert first["activity"].shape == second["activity"].shape
-    assert hip_modes["baseline"]["HIP"]["length"] == first["activity"].shape[0]
+    for mode_name in ("baseline", "report_only_snn", "closed_loop_snn"):
+        hip_metrics = hip_modes[mode_name]["HIP"]
+        assert hip_metrics["length"] == first["activity"].shape[0]
+        assert all(np.isfinite(value) for value in hip_metrics.values())
     assert (
         hip_modes["closed_loop_snn"]["HIP"]["max_abs_feedback_drive"]
         <= first_report["max_feedback_amplitude"]
