@@ -27,6 +27,9 @@ ALLOWED_CLINICAL_PROFILE_KEYS = {
     "affected_regions",
     "cognitive_functions",
     "expected_effects",
+    "expected_direction",
+    "severity_level",
+    "primary_metric",
 }
 
 
@@ -81,6 +84,9 @@ class ExperimentConfig:
             "affected_regions": [],
             "cognitive_functions": [],
             "expected_effects": {},
+            "expected_direction": "stable_reference",
+            "severity_level": {"small": 0.0, "medium": 0.02, "large": 0.05},
+            "primary_metric": "mean_abs_difference",
         }
     )
 
@@ -207,6 +213,47 @@ def _validate_clinical_profile_config(cfg: ExperimentConfig) -> None:
             "clinical_profile.expected_effects musi być obiektem"
         )
 
+    expected_direction = cfg.clinical_profile.get(
+        "expected_direction", "stable_reference"
+    )
+    if not isinstance(expected_direction, str) or not expected_direction.strip():
+        raise ConfigValidationError(
+            "clinical_profile.expected_direction musi być tekstem"
+        )
+
+    primary_metric = cfg.clinical_profile.get("primary_metric", "mean_abs_difference")
+    if primary_metric not in {"mean_abs_difference", "max_abs_difference"}:
+        raise ConfigValidationError(
+            "clinical_profile.primary_metric musi mieć wartość "
+            "'mean_abs_difference' albo 'max_abs_difference'"
+        )
+
+    severity_level = cfg.clinical_profile.get(
+        "severity_level", {"small": 0.0, "medium": 0.02, "large": 0.05}
+    )
+    if not isinstance(severity_level, dict):
+        raise ConfigValidationError(
+            "clinical_profile.severity_level musi być obiektem z progami"
+        )
+    for threshold_name in ("small", "medium", "large"):
+        if threshold_name not in severity_level:
+            raise ConfigValidationError(
+                f"Brak progu clinical_profile.severity_level.{threshold_name}"
+            )
+        try:
+            severity_level[threshold_name] = float(severity_level[threshold_name])
+        except (TypeError, ValueError) as error:
+            raise ConfigValidationError(
+                f"clinical_profile.severity_level.{threshold_name} musi być liczbą"
+            ) from error
+    if not (
+        severity_level["small"] <= severity_level["medium"] <= severity_level["large"]
+    ):
+        raise ConfigValidationError(
+            "Progi clinical_profile.severity_level muszą spełniać "
+            "small <= medium <= large"
+        )
+
     cfg.clinical_profile["id"] = str(profile_id)
     cfg.clinical_profile["affected_regions"] = list(
         cfg.clinical_profile.get("affected_regions", [])
@@ -215,6 +262,9 @@ def _validate_clinical_profile_config(cfg: ExperimentConfig) -> None:
         cfg.clinical_profile.get("cognitive_functions", [])
     )
     cfg.clinical_profile["expected_effects"] = dict(expected_effects)
+    cfg.clinical_profile["expected_direction"] = expected_direction.strip()
+    cfg.clinical_profile["primary_metric"] = str(primary_metric)
+    cfg.clinical_profile["severity_level"] = dict(severity_level)
 
 
 def _validate_snn_config(cfg: ExperimentConfig) -> None:
@@ -268,8 +318,11 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
             "snn.max_feedback_amplitude musi być liczbą"
         ) from exc
     import math
+
     if not math.isfinite(max_feedback_amplitude) or max_feedback_amplitude <= 0:
-        raise ConfigValidationError("snn.max_feedback_amplitude musi być skończoną liczbą > 0")
+        raise ConfigValidationError(
+            "snn.max_feedback_amplitude musi być skończoną liczbą > 0"
+        )
 
     input_rate_unit = str(cfg.snn.get("input_rate_unit", "Hz"))
     output_activity_unit = str(cfg.snn.get("output_activity_unit", "fraction"))

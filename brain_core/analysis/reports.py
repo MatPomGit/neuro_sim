@@ -18,6 +18,112 @@ from .phase_locking import compute_phase_locking
 from .signal_metrics import comparative_report
 from .spectral import compute_band_powers
 
+DEFAULT_CLINICAL_SEVERITY_THRESHOLDS = {"small": 0.0, "medium": 0.02, "large": 0.05}
+
+
+def _format_polish_list(values: list[str]) -> str:
+    """Zwraca czytelny opis listy pojęć używany w komentarzu edukacyjnym."""
+    cleaned_values = [str(value) for value in values if str(value).strip()]
+    if not cleaned_values:
+        return "brak wskazanych elementów"
+    if len(cleaned_values) == 1:
+        return cleaned_values[0]
+    return ", ".join(cleaned_values[:-1]) + f" oraz {cleaned_values[-1]}"
+
+
+def _classify_clinical_difference(
+    value: float,
+    severity_thresholds: dict[str, Any] | None,
+) -> str:
+    """Klasyfikuje skalę różnicy klinicznej na podstawie jawnych progów profilu.
+
+    Parameters
+    ----------
+    value:
+        Wartość metryki różnicy, zwykle średnia albo maksymalna różnica
+        bezwzględna aktywności względem profilu referencyjnego.
+    severity_thresholds:
+        Progi z sekcji ``clinical_profile.severity_level``. Wartości ``medium``
+        i ``large`` są traktowane jako dolne granice odpowiednio średniej
+        oraz dużej różnicy.
+
+    Returns
+    -------
+    str
+        Polska etykieta: ``mała różnica``, ``średnia różnica`` albo
+        ``duża różnica``.
+    """
+    thresholds = dict(DEFAULT_CLINICAL_SEVERITY_THRESHOLDS)
+    if severity_thresholds:
+        thresholds.update(
+            {key: float(v) for key, v in severity_thresholds.items()}
+        )
+
+    if value >= thresholds["large"]:
+        return "duża różnica"
+    if value >= thresholds["medium"]:
+        return "średnia różnica"
+    return "mała różnica"
+
+
+def _describe_observed_direction(signed_difference: float) -> str:
+    """Opisuje kierunek zmiany aktywności względem profilu referencyjnego."""
+    tol = 1e-7
+    if signed_difference > tol:
+        return "wzrost aktywności"
+    if signed_difference < -tol:
+        return "spadek aktywności"
+    return "bez zmian aktywności"
+
+
+def _build_educational_comment(
+    *,
+    profile: dict[str, Any],
+    region: str,
+    time_s: float,
+    severity_label: str,
+    observed_direction: str,
+) -> str:
+    """Tworzy dydaktyczny komentarz łączący metadane profilu z wynikiem.
+
+    Parameters
+    ----------
+    profile:
+        Metadane profilu klinicznego zawierające mechanizm, regiony, funkcje
+        poznawcze i oczekiwane efekty.
+    region:
+        Region z największą różnicą względem profilu referencyjnego.
+    time_s:
+        Czas największej różnicy w sekundach.
+    severity_label:
+        Polska etykieta skali różnicy.
+    observed_direction:
+        Kierunek zmiany aktywności względem profilu referencyjnego.
+
+    Returns
+    -------
+    str
+        Jednozdaniowy komentarz do raportu klinicznego.
+    """
+    affected_regions = _format_polish_list(profile.get("affected_regions") or [])
+    cognitive_functions = _format_polish_list(profile.get("cognitive_functions") or [])
+    expected_effects = profile.get("expected_effects") or {}
+    if expected_effects:
+        effects_description = "; ".join(
+            f"{key}: {value}" for key, value in expected_effects.items()
+        )
+    else:
+        effects_description = "brak dodatkowych oczekiwanych efektów"
+
+    return (
+        f"Mechanizm: {profile.get('mechanism', 'n/a')} Regiony wskazane w profilu "
+        f"to {affected_regions}, a powiązane funkcje poznawcze to "
+        f"{cognitive_functions}. Oczekiwane efekty: {effects_description}. "
+        f"W symulacji największy sygnał interpretacyjny wystąpił w regionie "
+        f"{region} około {time_s} s i oznacza {severity_label} "
+        f"({observed_direction})."
+    )
+
 
 @dataclass
 class AnalysisReport:
@@ -233,6 +339,21 @@ class AnalysisReport:
                     f"  - **średnia różnica bezwzględna**: "
                     f"{item.get('mean_abs_difference', 'n/a')}"
                 )
+                lines.append(
+                    f"  - **klasyfikacja różnicy**: "
+                    f"{item.get('difference_classification', 'n/a')}"
+                )
+                lines.append(
+                    f"  - **metryka główna**: {item.get('primary_metric', 'n/a')}"
+                )
+                lines.append(
+                    f"  - **kierunek obserwowany**: "
+                    f"{item.get('observed_direction', 'n/a')}"
+                )
+                lines.append(
+                    f"  - **komentarz dydaktyczny**: "
+                    f"{item.get('educational_comment', 'n/a')}"
+                )
         return "\n".join(lines)
 
     def to_csv_rows(self) -> list[dict[str, str]]:
@@ -422,6 +543,12 @@ class AnalysisReport:
                 "cognitive_function",
                 "mechanism",
                 "mean_abs_difference",
+                "max_abs_difference",
+                "primary_metric",
+                "expected_direction",
+                "observed_direction",
+                "difference_classification",
+                "educational_comment",
             ):
                 rows.append(
                     {
@@ -714,7 +841,8 @@ def build_clinical_difference_report(
 
         rows = min(reference_activity.shape[0], activity.shape[0])
         cols = min(reference_activity.shape[1], activity.shape[1])
-        delta = np.abs(activity[:rows, :cols] - reference_activity[:rows, :cols])
+        signed_delta = activity[:rows, :cols] - reference_activity[:rows, :cols]
+        delta = np.abs(signed_delta)
         mean_by_region = np.mean(delta, axis=0)
         region_idx = int(np.argmax(mean_by_region))
         time_idx = int(np.argmax(delta[:, region_idx]))
@@ -727,18 +855,50 @@ def build_clinical_difference_report(
             if region_idx < len(reference_names)
             else f"region_{region_idx}"
         )
+        mean_abs_difference = round(float(mean_by_region[region_idx]), 8)
+        max_abs_difference = round(float(delta[time_idx, region_idx]), 8)
+        primary_metric = str(profile.get("primary_metric", "mean_abs_difference"))
+        primary_value = (
+            max_abs_difference
+            if primary_metric == "max_abs_difference"
+            else mean_abs_difference
+        )
+        severity_label = _classify_clinical_difference(
+            primary_value, profile.get("severity_level")
+        )
+        time_s = round(float(reference_time[min(time_idx, reference_time.size - 1)]), 6)
+        observed_direction = _describe_observed_direction(
+            float(np.mean(signed_delta[:, region_idx]))
+        )
+        educational_comment = _build_educational_comment(
+            profile=profile,
+            region=region,
+            time_s=time_s,
+            severity_label=severity_label,
+            observed_direction=observed_direction,
+        )
         differences.append(
             {
                 "profile_id": profile.get("id", profile_id),
                 "display_name": profile.get("display_name", profile_id),
                 "region": region,
-                "time_s": round(
-                    float(reference_time[min(time_idx, reference_time.size - 1)]), 6
-                ),
+                "time_s": time_s,
                 "cognitive_function": functions[0] if functions else "n/a",
                 "mechanism": profile.get("mechanism", "n/a"),
-                "mean_abs_difference": round(float(mean_by_region[region_idx]), 8),
-                "max_abs_difference": round(float(delta[time_idx, region_idx]), 8),
+                "affected_regions": list(profile.get("affected_regions") or []),
+                "cognitive_functions": list(functions),
+                "expected_effects": dict(profile.get("expected_effects") or {}),
+                "expected_direction": profile.get("expected_direction", "n/a"),
+                "observed_direction": observed_direction,
+                "primary_metric": primary_metric,
+                "severity_level": dict(
+                    profile.get("severity_level")
+                    or DEFAULT_CLINICAL_SEVERITY_THRESHOLDS
+                ),
+                "difference_classification": severity_label,
+                "educational_comment": educational_comment,
+                "mean_abs_difference": mean_abs_difference,
+                "max_abs_difference": max_abs_difference,
             }
         )
 
