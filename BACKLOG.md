@@ -24,7 +24,7 @@ Na dzień 2026-06-02 status nie jest prognozą wdrożenia, tylko krótką oceną
 
 | Priorytet | Zakres | Status dominujący | Główne istniejące artefakty |
 | --- | --- | --- | --- |
-| P0 | Konfiguracja, timeline i baseline zdrowego mózgu | `partial` | `brain_core/simulation/config_loader.py`, `brain_core/simulation/config_schema.py`, `brain_core/analysis/reports.py`, `brain_model/report_export.py`, `brain_model/model.py` |
+| P0 | Konfiguracja, timeline i baseline zdrowego mózgu | `partial` | `brain_core/simulation/config_loader.py`, `brain_core/simulation/config_schema.py`, `brain_core/simulation/events.py`, `brain_core/simulation/engine.py`, `brain_core/analysis/reports.py`, `brain_model/report_export.py`, `brain_model/model.py`, `tests/test_task_protocols_and_engine.py` |
 | P1 | Konektom, neural mass, neuromodulacja i scenariusze porównawcze | `partial` | `brain_core/anatomy/connectome.py`, `brain_core/networks/delays.py`, `brain_core/populations/wilson_cowan.py`, `brain_core/experiments/pharmacology.py`, `brain_core/experiments/lesions.py` |
 | P2 | Task battery, roving oddball, EEG/BOLD i tryb nauczyciela | `partial` / `planned` | `brain_core/experiments/protocols.py`, `brain_core/analysis/spectral.py`, `brain_core/physiology/eeg_forward_model.py`, `brain_model/qt_app.py`, `brain_model/qt_plotting.py` |
 
@@ -35,7 +35,7 @@ Na dzień 2026-06-02 status nie jest prognozą wdrożenia, tylko krótką oceną
 | --- | --- | --- | --- |
 | `roving_oddball` | `partial` | Artefakty MVP istnieją w `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml` i `configs/roving_oddball_lesion_hippocampus.yaml`; obejmują generator sekwencji, aliasy taska i testy reprodukowalności. | Dokumentacja użytkowa: przewodnik dydaktyczny, przykład uruchomienia, interpretacja raportu oraz walidacja metryk habituacji/readaptacji. |
 | Clinical profiles | `partial` | Katalog `configs/clinical_profiles/*.yaml`, integracja ze schematem konfiguracji, lesion i scenariuszami porównawczymi. | Interpretacje dydaktyczne, progi jakościowe różnic, raport amplitude-latency-mechanism i walidacja względem benchmarków. |
-| Timeline | `partial` | `event_timeline` w `brain_core/simulation/events.py` integrowany przez silnik i raporty. | Jednolity format dla wszystkich symulacji, widok trial-by-trial, eksport HTML/PDF i powiązanie zdarzeń z wykresami. |
+| Timeline | `partial` | `event_timeline` w `brain_core/simulation/events.py` jest integrowany przez `brain_core/simulation/engine.py`, raporty i testy timeline w `tests/test_task_protocols_and_engine.py`. | Jednolity format dla wszystkich symulacji, widok trial-by-trial, filtrowanie zdarzeń, grupowanie per trial, eksport HTML/PDF, linkowanie zdarzeń z wykresami i objaśnienia per profil kliniczny. |
 | Benchmark metadata | `partial` | `data/validation/benchmark_metadata.json` oraz walidacja metadanych w `brain_core/analysis/benchmark_loader.py`. | Jawne kryteria zgodności dla każdego benchmarku, źródła literaturowe/empiryczne i raport wersyjny. |
 | SNN demo | `partial` | `configs/snn_hippocampus_demo.yaml`, adapter NM↔SNN, silnik wieloskalowy i opis demo. | Pełne sprzężenie zwrotne wpływające na trajektorię neural-mass, synchronizacja kroków i backendy NEST/NEURON/Arbor. |
 
