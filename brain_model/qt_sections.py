@@ -409,13 +409,18 @@ class QtSections:
             value = COMMAND_LABELS.get(value, value)
         if binding.state_field == "scenario_config_path":
             value = label_for_scenario_yaml_path(str(value))
-        if binding.control_kind == "line_edit":
-            write_line_edit(control, value)
-            return
-        if binding.control_kind == "check_box":
-            write_check_box(control, value)
-            return
-        write_combo_box(control, value)
+
+        signals_were_blocked = control.blockSignals(True)
+        try:
+            if binding.control_kind == "line_edit":
+                write_line_edit(control, value)
+                return
+            if binding.control_kind == "check_box":
+                write_check_box(control, value)
+                return
+            write_combo_box(control, value)
+        finally:
+            control.blockSignals(signals_were_blocked)
 
     def _sync_state_from_binding_group(self, group_name: str) -> None:
         """Przepisz wartości jednej grupy kontrolek Qt do stanu GUI.

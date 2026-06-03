@@ -136,6 +136,16 @@ def _omitted_gui_state_fields() -> set[str]:
     }
 
 
+def test_write_bound_control_blocks_signals_during_programmatic_sync() -> None:
+    """Programowa synchronizacja kontrolek nie uruchamia handlerów Qt."""
+    source = _method_source(QT_SECTIONS_PATH, "_write_bound_control", "QtSections")
+
+    assert "signals_were_blocked = control.blockSignals(True)" in source
+    assert "control.blockSignals(signals_were_blocked)" in source
+    assert "try:" in source
+    assert "finally:" in source
+
+
 def test_gui_state_fields_are_bound_or_consciously_omitted() -> None:
     """Każde pole `GuiState` ma mapowanie kontrolki albo jawne uzasadnienie pominięcia."""
     gui_state_fields = {field.name for field in fields(GuiState)}
