@@ -306,3 +306,50 @@ def test_roving_oddball_profiles_share_seed_and_sequence() -> Any:
             "habituation_rate",
             "mean_readaptation_latency",
         }.issubset(profile)
+
+
+def test_clinical_difference_report_classifies_disorders_and_lesions() -> Any:
+    """Raport ma klasyfikować różnice dla trzech zaburzeń i dwóch lesion."""
+    cfg = ExperimentConfig(
+        output={"save_results": False, "label": "test", "output_dir": "outputs"},
+        seed=13,
+        task={"scenario": "reward-learning", "duration": 2.0},
+    )
+    profiles = load_clinical_profiles(
+        [
+            "configs/clinical_profiles/healthy_v1.yaml",
+            "configs/clinical_profiles/dopamine_deficit.yaml",
+            "configs/clinical_profiles/gaba_dysregulation.yaml",
+            "configs/clinical_profiles/serotonin_imbalance.yaml",
+            "configs/clinical_profiles/hippocampal_lesion.yaml",
+            "configs/clinical_profiles/dlpfc_weakening.yaml",
+        ]
+    )
+
+    batch = run_task_across_clinical_profiles(cfg, profiles)
+
+    differences = batch["clinical_difference_report"]["clinical_differences"]
+    differences_by_profile = {item["profile_id"]: item for item in differences}
+    assert set(differences_by_profile) == {
+        "dopamine_deficit",
+        "gaba_dysregulation",
+        "serotonin_imbalance",
+        "hippocampal_lesion",
+        "dlpfc_weakening",
+    }
+    assert {
+        differences_by_profile["dopamine_deficit"]["difference_classification"],
+        differences_by_profile["gaba_dysregulation"]["difference_classification"],
+        differences_by_profile["serotonin_imbalance"]["difference_classification"],
+    } <= {"mała różnica", "średnia różnica", "duża różnica"}
+    assert {
+        differences_by_profile["hippocampal_lesion"]["difference_classification"],
+        differences_by_profile["dlpfc_weakening"]["difference_classification"],
+    } <= {"mała różnica", "średnia różnica", "duża różnica"}
+    for item in differences:
+        assert item["primary_metric"] == "mean_abs_difference"
+        assert item["expected_direction"] != "n/a"
+        assert item["severity_level"]["medium"] == 0.02
+        assert "Mechanizm:" in item["educational_comment"]
+        assert item["mechanism"] in item["educational_comment"]
+        assert item["cognitive_function"] in item["educational_comment"]

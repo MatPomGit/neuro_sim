@@ -1,4 +1,4 @@
-# ADR-0022: Konfiguracje YAML i panele wyników Qt oparte na silniku
+# ADR-0023: Konfiguracje YAML i panele wyników Qt oparte na silniku
 
 **Status:** proposed  
 **Data:** 2026-06-03
