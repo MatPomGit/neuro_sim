@@ -268,8 +268,9 @@ def _summarize_last_comparison(benchmark_name: str, comparison: dict[str, Any]) 
         sorted(name for name in benchmark_metrics if name not in preferred_order)
     )
     return "; ".join(
-        f"{metric_name}={benchmark_metrics[metric_name]}"
+        f"{metric_name}={value:.4f}" if isinstance(value, (float, np.floating)) else f"{metric_name}={value}"
         for metric_name in ordered_names
+        if (value := benchmark_metrics[metric_name]) is not None
     )
 
 
