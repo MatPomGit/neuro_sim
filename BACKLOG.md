@@ -24,7 +24,7 @@ Na dzień 2026-06-02 status nie jest prognozą wdrożenia, tylko krótką oceną
 
 | Priorytet | Zakres | Status dominujący | Główne istniejące artefakty |
 | --- | --- | --- | --- |
-| P0 | Konfiguracja, timeline i baseline zdrowego mózgu | `partial` | `brain_core/simulation/config_loader.py`, `brain_core/simulation/config_schema.py`, `brain_core/simulation/events.py`, `brain_core/simulation/engine.py`, `brain_core/analysis/reports.py`, `brain_model/report_export.py`, `brain_model/model.py`, `tests/test_task_protocols_and_engine.py` |
+| P0 | Konfiguracja, timeline i baseline zdrowego mózgu | `partial` | `brain_core/simulation/config_loader.py`, `brain_core/simulation/config_schema.py`, `brain_core/simulation/events.py`, `brain_core/simulation/engine.py`, `brain_core/analysis/reports.py`, `brain_model/report_export.py`, `brain_model/model.py` |
 | P1 | Konektom, neural mass, neuromodulacja i scenariusze porównawcze | `partial` | `brain_core/anatomy/connectome.py`, `brain_core/networks/delays.py`, `brain_core/populations/wilson_cowan.py`, `brain_core/experiments/pharmacology.py`, `brain_core/experiments/lesions.py` |
 | P2 | Task battery, roving oddball, EEG/BOLD i tryb nauczyciela | `partial` / `planned` | `brain_core/experiments/protocols.py`, `brain_core/analysis/spectral.py`, `brain_core/physiology/eeg_forward_model.py`, `brain_model/qt_app.py`, `brain_model/qt_plotting.py` |
 
