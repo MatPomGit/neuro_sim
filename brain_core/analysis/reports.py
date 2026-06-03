@@ -186,8 +186,9 @@ class AnalysisReport:
                 f"- **ta sama sekwencja**: "
                 f"{roving_profile_comparison.get('same_sequence', 'n/a')}"
             )
-            for profile in (roving_profile_comparison.get("profiles") or []):
+            for profile in roving_profile_comparison.get("profiles") or []:
                 lines.append(f"- **profil**: {profile.get('profile_id', 'n/a')}")
+                lines.append(f"  - grupa: {profile.get('profile_group', 'n/a')}")
                 lines.append(
                     f"  - średni surprise_index: "
                     f"{profile.get('mean_surprise_index', 'n/a')}"
@@ -362,8 +363,15 @@ class AnalysisReport:
                     "value": str(roving_profile_comparison.get("same_sequence", "n/a")),
                 }
             )
-            for profile in (roving_profile_comparison.get("profiles") or []):
+            for profile in roving_profile_comparison.get("profiles") or []:
                 profile_id = profile.get("profile_id", "n/a")
+                rows.append(
+                    {
+                        "section": "roving_profile_comparison",
+                        "metric": f"{profile_id}_profile_group",
+                        "value": str(profile.get("profile_group", "n/a")),
+                    }
+                )
                 for metric in (
                     "mean_surprise_index",
                     "habituation_rate",
@@ -455,9 +463,15 @@ def build_roving_oddball_report(
 
     sequence_signature = [
         {
-            "trial_id": int(val) if (val := result.get("trial_id")) is not None else index,
-            "condition": str(val) if (val := result.get("condition")) is not None else "n/a",
-            "tone_hz": result.get("tone_hz") if result.get("tone_hz") is not None else "n/a",
+            "trial_id": (
+                int(val) if (val := result.get("trial_id")) is not None else index
+            ),
+            "condition": (
+                str(val) if (val := result.get("condition")) is not None else "n/a"
+            ),
+            "tone_hz": (
+                result.get("tone_hz") if result.get("tone_hz") is not None else "n/a"
+            ),
             "is_new_standard": bool(result.get("is_new_standard")),
         }
         for index, result in enumerate(trial_results)
