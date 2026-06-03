@@ -125,6 +125,8 @@ Sekcja `snn_comparison` zawiera:
 - backend adaptera,
 - `requested_mode`, czyli tryb żądany w konfiguracji,
 - `computed_modes`, czyli warianty faktycznie policzone w raporcie,
+- `comparison_note_pl`, czyli polską uwagę, że `closed_loop_snn` jest dodatkowym
+  wariantem porównawczym, a nie nadpisaniem żądanego trybu,
 - osobne metryki dla `baseline`, `report_only_snn` i `closed_loop_snn`, w tym
   długość sygnału oraz amplitudę feedbacku dla wariantu closed-loop,
 - metryki różnic dla każdego mapowanego regionu:
@@ -138,7 +140,8 @@ Wariant `report_only_snn` nie modyfikuje surowego przebiegu neural-mass
 zapisywanego przez symulację. Wariant `closed_loop_snn` jest liczony jako
 jawny dodatkowy wariant porównawczy także wtedy, gdy `snn.mode` ma wartość
 `report_only`; dlatego raport rozdziela tryb żądany (`requested_mode`) od listy
-wariantów faktycznie policzonych (`computed_modes`).
+wariantów faktycznie policzonych (`computed_modes`) i dodaje `comparison_note_pl`
+z informacją, że `closed_loop_snn` jest dodatkowym wariantem porównawczym.
 
 ## Walidacja i testy
 

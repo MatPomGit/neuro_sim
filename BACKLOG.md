@@ -9,7 +9,7 @@ Backlog jest uporządkowany według priorytetów (P0–P3) i gotowości wdrożen
 
 ---
 
-## Stan na dzień 2026-06-02
+## Stan na dzień 2026-06-03
 
 Backlog opisuje zarówno prace przyszłe, jak i obszary już częściowo zaimplementowane. Statusy oznaczają:
 - `done` — zakres pozycji jest domknięty zgodnie z kryteriami akceptacji,
@@ -18,7 +18,18 @@ Backlog opisuje zarówno prace przyszłe, jak i obszary już częściowo zaimple
 
 Najważniejsze istniejące fundamenty obejmują moduły eksperymentów, uszkodzeń i raportowania, m.in. `brain_core/experiments/protocols.py`, `brain_core/experiments/lesions.py` oraz `brain_core/analysis/reports.py`. Dla pozycji P0–P2 wskazano poniżej konkretne artefakty, aby oddzielić zakres już obecny w repozytorium od pozostałych prac.
 
-Na dzień 2026-06-02 status nie jest prognozą wdrożenia, tylko krótką oceną rzeczywistego stanu repozytorium na podstawie powyższych definicji.
+Na dzień 2026-06-03 status nie jest prognozą wdrożenia, tylko krótką oceną rzeczywistego stanu repozytorium na podstawie powyższych definicji.
+
+### Najbliższe krytyczne ryzyka
+
+- **Kalibracja progów clinical profiles** — istnieją progi jakościowe, ale wymagają
+  sprawdzenia względem benchmarków i scenariuszy `roving_oddball`.
+- **Interpretacja benchmarków** — metadane benchmarków są dostępne, lecz nadal
+  trzeba dopisać jawne kryteria zgodności i ograniczenia interpretacyjne.
+- **Koszt `closed_loop` SNN** — wariant działa jako MVP, ale wymaga pomiaru
+  kosztu względem `report_only` dla tych samych zadań, seedów i czasów symulacji.
+- **Kompletność raportu trial-by-trial** — raporty i timeline istnieją częściowo,
+  ale pełne grupowanie zdarzeń per trial pozostaje krytycznym brakiem dydaktycznym.
 
 ### Mapa artefaktów P0–P2
 

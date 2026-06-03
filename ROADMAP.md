@@ -6,7 +6,7 @@
 **Zakres:** kierunek rozwoju aplikacji, kamienie milowe i zależności między strumieniami prac.
 **Relacja do backlogu:** `BACKLOG.md` pozostaje operacyjną listą zadań, statusów i artefaktów. Ten dokument opisuje szerszą kolejność rozwoju oraz kryteria przejścia między etapami.
 
-Roadmapa zakłada rozwój iteracyjny: najpierw domknięcie reprodukowalnego pipeline’u eksperymentów i raportów, następnie rozszerzenia biologiczne i kliniczne, a dopiero później warstwa platformowa oraz hybrydy mikro-makro.
+Roadmapa zakłada rozwój iteracyjny: ponieważ kluczowe artefakty MVP już istnieją, najbliższy akcent przesuwa się z ich wdrażania na walidację, spójne sklejenie interpretacji dydaktycznej oraz dopięcie raportów porównawczych. Dopiero po tym należy rozszerzać warstwę biologiczną, kliniczną, platformową oraz hybrydy mikro-makro.
 
 ---
 
@@ -51,7 +51,7 @@ Docelowy użytkownik powinien móc:
 
 ---
 
-## 4. Stan wyjściowy na 2026-06-02
+## 4. Stan wyjściowy po przeglądzie 2026-06-03
 
 Repozytorium posiada już fundamenty potrzebne do rozwoju roadmapy:
 
@@ -68,9 +68,9 @@ Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
 1. jeden spójny schemat konfiguracji dla wszystkich eksperymentów,
 2. pełny raport timeline trial-by-trial,
 3. wersjonowany baseline `healthy_v1`,
-4. dokumentacja użytkowa dla istniejących artefaktów MVP `roving_oddball`,
+4. walidacja i dydaktyczne sklejenie interpretacji `roving_oddball`,
 5. pełniejsze raporty porównawcze healthy/disorder/lesion,
-6. jednolita dokumentacja uruchamiania i interpretacji scenariuszy.
+6. kompletność raportu trial-by-trial i jednolita dokumentacja interpretacji scenariuszy.
 
 ---
 
@@ -83,11 +83,11 @@ roadmapy jako obietnicy nowych funkcji na tym etapie.
 
 | Funkcja | Status | MVP istnieje | Pozostały zakres |
 | --- | --- | --- | --- |
-| `roving_oddball` | `partial` | Artefakty MVP istnieją w `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml` i `configs/roving_oddball_lesion_hippocampus.yaml`; obejmują aliasy oraz testy reprodukowalności. | Dokumentacja użytkowa: przewodnik dydaktyczny, przykład uruchomienia, interpretacja raportu i walidacja metryk habituacji/readaptacji. |
-| Clinical profiles | `partial` | Profile w `configs/clinical_profiles/*.yaml`, integracja z konfiguracją oraz scenariuszami lesion/clinical. | Interpretacje dydaktyczne, progi różnic, raport amplitude-latency-mechanism i walidacja względem benchmarków. |
+| `roving_oddball` | `partial` | Artefakty MVP istnieją w `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml`, `configs/roving_oddball_lesion_hippocampus.yaml` i `docs/roving_oddball_guide.md`; obejmują aliasy, testy reprodukowalności i przewodnik dydaktyczny. | Walidacja metryk habituacji/readaptacji, porównanie profili healthy/disorder/lesion i raport amplitude-latency-mechanism. |
+| Clinical profiles | `partial` | Profile w `configs/clinical_profiles/*.yaml`, integracja z konfiguracją oraz scenariuszami lesion/clinical; istnieją jakościowe progi różnic i podstawowe komentarze dydaktyczne. | Kalibracja progów, raport amplitude-latency-mechanism i walidacja względem benchmarków. |
 | Timeline | `partial` | Oś `event_timeline` tworzona w `brain_core/simulation/events.py` i dołączana przez silnik oraz raporty. | Pełne grupowanie trial-by-trial, eksport raportu, linkowanie z wykresami i objaśnienia per profil. |
 | Benchmark metadata | `partial` | Metadane benchmarków w `data/validation/benchmark_metadata.json` i walidacja w loaderze benchmarków. | Kryteria zgodności per benchmark, źródła literaturowe/empiryczne i raport wersyjny. |
-| SNN demo | `partial` | Demo `snn_hippocampus_demo`, adapter sygnałów NM↔SNN, dokument demo i testy pilotażowe. | Sprzężenie zwrotne wpływające na trajektorię neural-mass, pełniejsza synchronizacja kroków i backendy NEST/NEURON/Arbor. |
+| SNN demo | `partial` | Demo `snn_hippocampus_demo`, adapter sygnałów NM↔SNN, tryb `closed_loop`, dokument demo i testy pilotażowe. | Walidacja stabilności closed-loop, pomiar kosztu `report_only` vs `closed_loop`, pełniejsza synchronizacja kroków i backendy NEST/NEURON/Arbor. |
 
 ## 5. Strumienie strategiczne
 
@@ -369,12 +369,12 @@ roadmapy jako obietnicy nowych funkcji na tym etapie.
 
 **MVP istnieje:**
 
-- `snn_hippocampus_demo` pokazuje pilotaż neural-mass + lokalny obwód SNN bez pełnego feedback-loop.
+- `snn_hippocampus_demo` pokazuje pilotaż neural-mass + lokalny obwód SNN z trybem `closed_loop` oraz raportowym wariantem `report_only`.
 - `data/validation/benchmark_metadata.json` opisuje syntetyczne i edukacyjne benchmarki EEG, fMRI oraz zachowania.
 
 **Pozostały zakres:**
 
-- domknąć sprzężenie zwrotne SNN wpływające na trajektorię neural-mass,
+- zwalidować stabilność i koszt sprzężenia zwrotnego SNN wpływającego na trajektorię neural-mass,
 - dodać kryteria zgodności i źródła dla benchmarków literaturowych/empirycznych,
 - przygotować raport wersyjny „co model odtwarza, czego jeszcze nie”.
 
@@ -453,6 +453,15 @@ Najważniejsze zależności blokujące:
 ---
 
 ## 9. Ryzyka i mitigacje
+
+### Najbliższe krytyczne ryzyka
+
+| Ryzyko | Dlaczego jest krytyczne teraz | Najbliższa mitigacja |
+| --- | --- | --- |
+| Kalibracja progów clinical profiles | progi wpływają na komentarze dydaktyczne i raporty porównawcze | porównać profile z benchmarkami i dodać testy regresji progów |
+| Interpretacja benchmarków | metadane bez jawnych kryteriów mogą prowadzić do nadinterpretacji | dopisać kryteria zgodności, źródła i ograniczenia dla każdego benchmarku |
+| Koszt `closed_loop` SNN | dodatkowa symulacja może ograniczyć użycie w GUI i scenariuszach lekcyjnych | zmierzyć `report_only` vs `closed_loop` na tym samym zadaniu, seedzie i czasie |
+| Kompletność raportu trial-by-trial | bez pełnego widoku per trial użytkownik nie odtworzy mechanizmu wyniku | domknąć grupowanie zdarzeń, opis mechanizmu i linki do wykresów |
 
 | Ryzyko | Skutek | Mitigacja |
 | --- | --- | --- |

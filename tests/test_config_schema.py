@@ -112,3 +112,5 @@ def test_snn_report_only_mode_is_preserved_as_requested_mode() -> None:
 
     assert cfg.snn["mode"] == "report_only"
     assert cfg.snn["sync_dt"] == 0.02
+    assert "requested_mode" not in cfg.snn
+    assert "computed_modes" not in cfg.snn

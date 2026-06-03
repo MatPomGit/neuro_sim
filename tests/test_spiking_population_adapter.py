@@ -118,6 +118,8 @@ def test_snn_report_section_compares_baseline_and_local_circuit() -> Any:
         "report_only_snn",
         "closed_loop_snn",
     ]
+    assert "mode" not in snn_comparison
+    assert "dodatkowym wariantem porównawczym" in snn_comparison["comparison_note_pl"]
     assert snn_comparison["sync_dt_s"] == 0.010
     assert snn_comparison["max_feedback_amplitude"] == 0.15
     assert snn_comparison["input_rate_unit"] == "Hz"
@@ -179,6 +181,8 @@ def test_snn_report_only_request_marks_closed_loop_as_computed_variant() -> Any:
         "report_only_snn",
         "closed_loop_snn",
     ]
+    assert "mode" not in snn_comparison
+    assert "dodatkowym wariantem porównawczym" in snn_comparison["comparison_note_pl"]
     assert set(snn_comparison["mode_metrics"]) == set(snn_comparison["computed_modes"])
 
 
@@ -197,6 +201,10 @@ def test_snn_markdown_report_names_requested_and_computed_modes() -> Any:
                     "report_only_snn",
                     "closed_loop_snn",
                 ],
+                "comparison_note_pl": (
+                    "closed_loop_snn jest dodatkowym wariantem porównawczym "
+                    "liczonym także dla report_only."
+                ),
                 "sync_dt_s": 0.01,
                 "max_feedback_amplitude": 0.15,
                 "input_rate_unit": "Hz",
@@ -219,6 +227,8 @@ def test_snn_markdown_report_names_requested_and_computed_modes() -> Any:
     assert (
         "policzone warianty**: baseline, report_only_snn, closed_loop_snn" in markdown
     )
+    assert "uwaga porównawcza**" in markdown
+    assert "dodatkowym wariantem porównawczym" in markdown
     assert "baseline" in markdown
     assert "report_only_snn" in markdown
     assert "closed_loop_snn" in markdown

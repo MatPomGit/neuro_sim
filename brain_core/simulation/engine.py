@@ -440,6 +440,13 @@ def _run_local_snn_comparison(
             1.0,
         )
 
+    requested_mode = str(config.snn.get("mode", "report_only"))
+    computed_modes = ["baseline", "report_only_snn", "closed_loop_snn"]
+    comparison_note_pl = (
+        "closed_loop_snn jest dodatkowym wariantem porównawczym liczonym "
+        "także wtedy, gdy żądany tryb SNN to report_only."
+    )
+
     closed_loop_activity, feedback_drive = _simulate_closed_loop_snn_activity(
         config=config,
         region_names=region_names,
@@ -450,8 +457,6 @@ def _run_local_snn_comparison(
         raise ValueError("Sygnał sprzężenia closed_loop_snn nie pasuje do baseline")
 
     region_differences: dict[str, dict[str, float]] = {}
-    requested_mode = str(config.snn.get("mode", "report_only"))
-    computed_modes = ["baseline", "report_only_snn", "closed_loop_snn"]
     mode_metrics: dict[str, dict[str, dict[str, float]]] = {
         mode_name: {} for mode_name in computed_modes
     }
@@ -494,6 +499,7 @@ def _run_local_snn_comparison(
         "neural_mass_regions": list(region_names),
         "requested_mode": requested_mode,
         "computed_modes": computed_modes,
+        "comparison_note_pl": comparison_note_pl,
         "sync_dt_s": float(config.snn["sync_dt"]),
         "max_feedback_amplitude": float(config.snn.get("max_feedback_amplitude", 0.15)),
         "input_rate_unit": str(config.snn.get("input_rate_unit", "Hz")),

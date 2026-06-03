@@ -1,6 +1,6 @@
 # Plan rozwoju biologicznego i wieloskalowego
 
-## Status dokumentu na dzień 2026-06-02
+## Status dokumentu na dzień 2026-06-03
 
 Ten dokument zachowuje szerszy, koncepcyjny plan rozwoju biologicznego modelu. Aktualny stan repozytorium i najbliższe zaplanowane prace są utrzymywane w `BACKLOG.md`, a rzeczywista struktura katalogów jest opisana w `docs/program_structure.md`.
 
@@ -27,10 +27,11 @@ i `planned`. Sekcja porządkuje stan repozytorium bez dodawania nowych funkcji.
 **Status:** `partial`
 
 **MVP istnieje:** protokół zadania, generator sekwencji, konfiguracje
-healthy/disorder/lesion i testy reprodukowalności są dostępne w aktualnym repozytorium.
+healthy/disorder/lesion, testy reprodukowalności oraz przewodnik
+dydaktyczny `docs/roving_oddball_guide.md` są dostępne w aktualnym repozytorium.
 
-**Pozostały zakres:** przewodnik dydaktyczny, przykład uruchomienia, interpretacja
-raportu oraz walidacja metryk habituacji/readaptacji.
+**Pozostały zakres:** walidacja metryk habituacji/readaptacji, porównanie
+profili healthy/disorder/lesion oraz raport amplitude-latency-mechanism.
 
 ### Clinical profiles
 
@@ -38,10 +39,12 @@ raportu oraz walidacja metryk habituacji/readaptacji.
 
 **MVP istnieje:** katalog `configs/clinical_profiles/*.yaml` zawiera profile
 healthy, disorder i lesion, a schemat konfiguracji oraz silnik potrafią użyć
-profilu klinicznego w scenariuszu.
+profilu klinicznego w scenariuszu; istnieją też jakościowe progi różnic
+i podstawowe komentarze dydaktyczne.
 
-**Pozostały zakres:** interpretacje dydaktyczne dla profili, progi różnic,
-raport amplitude-latency-mechanism i walidacja względem benchmarków.
+**Pozostały zakres:** kalibracja progów względem benchmarków, raport
+amplitude-latency-mechanism dla `roving_oddball` i doprecyzowanie ograniczeń
+interpretacyjnych.
 
 ### Timeline
 
@@ -70,10 +73,48 @@ literaturowe/empiryczne i raport wersyjny zgodności jakościowej.
 
 **MVP istnieje:** `configs/snn_hippocampus_demo.yaml` oraz
 `docs/snn_cosimulation_demo.md` opisują pilotaż neural-mass + lokalny obwód SNN
-z adapterem sygnałów i porównaniem raportowym.
+z adapterem sygnałów, porównaniem raportowym oraz działającym wariantem
+`closed_loop`.
 
-**Pozostały zakres:** sprzężenie zwrotne wpływające na trajektorię neural-mass,
-pełniejsza synchronizacja kroków czasowych i backendy NEST/NEURON/Arbor.
+**Pozostały zakres:** walidacja stabilności `closed_loop`, porównanie kosztu
+`report_only` vs `closed_loop`, pełniejsza synchronizacja kroków czasowych
+i backendy NEST/NEURON/Arbor.
+
+### GUI YAML presets
+
+**Status:** `partial`
+
+**MVP istnieje:** `brain_model/qt_config.py` udostępnia presety YAML dla
+scenariuszy `roving_oddball` i `snn_hippocampus_demo`, a statyczne testy
+`tests/test_qt_yaml_scenarios_static.py` sprawdzają ich obecność i walidację.
+
+**Pozostały zakres:** dopiąć pełną interpretację dydaktyczną presetów w GUI,
+spójne polskie etykiety oraz instrukcję wyboru scenariuszy bez duplikowania
+logiki silnika w warstwie prezentacji.
+
+### Rejestr walidacji
+
+**Status:** `partial`
+
+**MVP istnieje:** `docs/validation_registry.md`,
+`data/validation/benchmark_metadata.json` i `brain_core/analysis/benchmark_loader.py`
+opisują oraz walidują podstawowe benchmarki edukacyjne.
+
+**Pozostały zakres:** uzupełnić kryteria zgodności, źródła, poziomy walidacji
+oraz raport wersyjny pokazujący, które efekty model odtwarza jakościowo,
+a które pozostają poza zakresem.
+
+## Najbliższe krytyczne ryzyka
+
+- **Kalibracja progów clinical profiles** — progi jakościowe istnieją, ale ich
+  wartości trzeba sprawdzić względem benchmarków i scenariuszy `roving_oddball`.
+- **Interpretacja benchmarków** — benchmarki edukacyjne mają metadane, lecz
+  wymagają jawnych kryteriów zgodności i opisanych ograniczeń interpretacji.
+- **Koszt `closed_loop` SNN** — działający wariant closed-loop wymaga porównania
+  kosztu z `report_only` na tym samym zadaniu, seedzie i czasie symulacji.
+- **Kompletność raportu trial-by-trial** — timeline istnieje częściowo, ale
+  pełne grupowanie zdarzeń per trial jest niezbędne dla interpretacji
+  dydaktycznej.
 
 ---
 
