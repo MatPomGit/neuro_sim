@@ -267,8 +267,9 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
         raise ConfigValidationError(
             "snn.max_feedback_amplitude musi być liczbą"
         ) from exc
-    if max_feedback_amplitude <= 0:
-        raise ConfigValidationError("snn.max_feedback_amplitude musi być > 0")
+    import math
+    if not math.isfinite(max_feedback_amplitude) or max_feedback_amplitude <= 0:
+        raise ConfigValidationError("snn.max_feedback_amplitude musi być skończoną liczbą > 0")
 
     input_rate_unit = str(cfg.snn.get("input_rate_unit", "Hz"))
     output_activity_unit = str(cfg.snn.get("output_activity_unit", "fraction"))
