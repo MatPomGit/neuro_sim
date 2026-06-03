@@ -544,11 +544,11 @@ def _build_roving_profile_comparison(
     signatures: list[Any] = []
     for profile_id, result in runs.items():
         roving_report = build_roving_oddball_report(
-            result.get("trial_results", []),
+            result.get("trial_results") or [],
             profile_id=profile_id,
         )
         profiles.append(roving_report)
-        signatures.append(roving_report.get("sequence_signature", []))
+        signatures.append(roving_report.get("sequence_signature") or [])
 
     reference_signature = signatures[0] if signatures else []
     same_sequence = all(signature == reference_signature for signature in signatures)
