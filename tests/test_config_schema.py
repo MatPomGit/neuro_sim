@@ -92,3 +92,23 @@ def test_snn_hippocampus_demo_mapping_sync_dt_and_units() -> None:
     assert cfg.snn["output_activity_unit"] == "fraction"
     assert circuit_regions == ("HIP",)
     assert mapping.indices_in_neural_mass().tolist() == [10]
+
+
+def test_snn_report_only_mode_is_preserved_as_requested_mode() -> None:
+    """Walidator zachowuje jawnie żądany tryb SNN do raportu porównawczego."""
+    cfg = validate_config(
+        {
+            "timestep": 0.01,
+            "task": {"duration": 1.0},
+            "snn": {
+                "enabled": True,
+                "mode": "report_only",
+                "sync_dt": 0.02,
+                "circuits": [{"region": "HIP"}],
+                "neural_mass_regions": ["VIS", "HIP"],
+            },
+        }
+    )
+
+    assert cfg.snn["mode"] == "report_only"
+    assert cfg.snn["sync_dt"] == 0.02

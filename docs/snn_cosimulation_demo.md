@@ -3,8 +3,8 @@
 Ten dokument opisuje demonstracyjny moduł współsymulacji neural-mass z lokalnym
 obwodem SNN używany przez konfigurację `configs/snn_hippocampus_demo.yaml`.
 Celem modułu jest pokazanie jawnego kontraktu wymiany sygnałów, walidowalnego
-mapowania regionów oraz raportu porównującego przebieg bazowy bez SNN z
-wariantem zawierającym lokalny obwód SNN.
+mapowania regionów oraz raportu porównującego przebieg bazowy bez SNN,
+wariant report-only SNN i wariant closed-loop SNN.
 
 ## Zakres i odpowiedzialności
 
@@ -22,8 +22,9 @@ Główne elementy:
 - `brain_core/simulation/config_schema.py` — waliduje sekcję `snn`, w tym
   `sync_dt`, jednostki i spójność mapowania regionów.
 - `brain_core/simulation/engine.py` — uruchamia demonstracyjne porównanie
-  przebiegu bez SNN oraz z lokalnym obwodem SNN i dołącza wynik jako
-  `snn_comparison`.
+  baseline, report-only SNN i closed-loop SNN oraz dołącza wynik jako
+  `snn_comparison`. Pole `requested_mode` zapisuje tryb żądany w konfiguracji,
+  a `computed_modes` wymienia warianty faktycznie policzone w raporcie.
 - `brain_core/analysis/reports.py` — eksportuje `snn_comparison` do raportu
   Markdown oraz CSV.
 
@@ -79,7 +80,8 @@ Znaczenie pól:
 - `circuits[].region` musi występować w `neural_mass_regions`; w demo jest to
   region `HIP`.
 - `coupling_gain` określa udział lokalnej aktywności SNN przy obliczaniu
-  porównawczego przebiegu „z SNN”.
+  porównawczego przebiegu `report_only_snn`; w trybie `closed_loop` ten sam
+  kontrakt służy do ograniczonego amplitudowo wejścia zwrotnego.
 
 ## Kontrakt sygnałów i jednostek
 
@@ -121,6 +123,10 @@ Sekcja `snn_comparison` zawiera:
 - `sync_dt_s`,
 - jednostki wejścia i wyjścia,
 - backend adaptera,
+- `requested_mode`, czyli tryb żądany w konfiguracji,
+- `computed_modes`, czyli warianty faktycznie policzone w raporcie,
+- osobne metryki dla `baseline`, `report_only_snn` i `closed_loop_snn`, w tym
+  długość sygnału oraz amplitudę feedbacku dla wariantu closed-loop,
 - metryki różnic dla każdego mapowanego regionu:
   - `mean_without_snn`,
   - `mean_snn_local_activity`,
@@ -128,9 +134,11 @@ Sekcja `snn_comparison` zawiera:
   - `mean_abs_difference`,
   - `max_abs_difference`.
 
-Porównanie nie modyfikuje surowego przebiegu neural-mass zapisywanego przez
-symulację. Jest dodatkowym artefaktem raportowym, który pozwala ocenić wpływ
-lokalnego obwodu SNN na mapowany region.
+Wariant `report_only_snn` nie modyfikuje surowego przebiegu neural-mass
+zapisywanego przez symulację. Wariant `closed_loop_snn` jest liczony jako
+jawny dodatkowy wariant porównawczy także wtedy, gdy `snn.mode` ma wartość
+`report_only`; dlatego raport rozdziela tryb żądany (`requested_mode`) od listy
+wariantów faktycznie policzonych (`computed_modes`).
 
 ## Walidacja i testy
 
@@ -148,7 +156,8 @@ PYTHONPATH=. pytest tests/test_config_schema.py tests/test_spiking_population_ad
 ```
 
 Najważniejsze przypadki testowe sprawdzają konfigurację demo, indeks mapowania
-`HIP`, jednostki, `sync_dt` oraz obecność sekcji raportu `snn_comparison`.
+`HIP`, jednostki, `sync_dt`, obecność sekcji raportu `snn_comparison` oraz
+rozdzielenie trybu żądanego od wariantów faktycznie policzonych.
 
 ## Ograniczenia pilotażu
 
@@ -156,6 +165,6 @@ Najważniejsze przypadki testowe sprawdzają konfigurację demo, indeks mapowani
   backendu zastępczego; pełna sieć Brian2/NEST jest osobnym krokiem rozwoju.
 - Demo obejmuje jeden lokalny obwód hipokampa, aby zachować prostą walidację i
   czytelny raport.
-- Porównanie „z SNN” jest artefaktem analitycznym raportu, a nie pełnym
-  sprzężeniem zwrotnym zmieniającym całą trajektorię neural-mass w trakcie
-  integracji.
+- Closed-loop jest MVP demonstracyjnym dla HIP; przed użyciem badawczym wymaga
+  dalszej walidacji stabilności, porównania kosztu `report_only` vs
+  `closed_loop` oraz pełniejszego backendu biologicznego.

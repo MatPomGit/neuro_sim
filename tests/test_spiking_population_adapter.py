@@ -112,7 +112,12 @@ def test_snn_report_section_compares_baseline_and_local_circuit() -> Any:
     snn_comparison = result["analysis_report"]["snn_comparison"]
 
     assert snn_comparison["regions"] == ["HIP"]
-    assert snn_comparison["mode"] == "closed_loop"
+    assert snn_comparison["requested_mode"] == "closed_loop"
+    assert snn_comparison["computed_modes"] == [
+        "baseline",
+        "report_only_snn",
+        "closed_loop_snn",
+    ]
     assert snn_comparison["sync_dt_s"] == 0.010
     assert snn_comparison["max_feedback_amplitude"] == 0.15
     assert snn_comparison["input_rate_unit"] == "Hz"
@@ -153,3 +158,67 @@ def test_snn_closed_loop_report_is_stable_and_deterministic() -> Any:
         <= first_report["max_feedback_amplitude"]
     )
     assert first_report["mode_metrics"] == second_report["mode_metrics"]
+
+
+def test_snn_report_only_request_marks_closed_loop_as_computed_variant() -> Any:
+    """Raport rozdziela tryb żądany od pełnej listy wariantów porównawczych."""
+    from brain_core.simulation.config_loader import load_config
+    from brain_core.simulation.engine import run_experiment
+
+    cfg = load_config("configs/snn_hippocampus_demo.yaml")
+    cfg.output["save_results"] = False
+    cfg.task["duration"] = 1.0
+    cfg.snn["mode"] = "report_only"
+
+    result = run_experiment(cfg)
+    snn_comparison = result["analysis_report"]["snn_comparison"]
+
+    assert snn_comparison["requested_mode"] == "report_only"
+    assert snn_comparison["computed_modes"] == [
+        "baseline",
+        "report_only_snn",
+        "closed_loop_snn",
+    ]
+    assert set(snn_comparison["mode_metrics"]) == set(snn_comparison["computed_modes"])
+
+
+def test_snn_markdown_report_names_requested_and_computed_modes() -> Any:
+    """Raport Markdown pokazuje tryb żądany i warianty faktycznie policzone."""
+    from brain_core.analysis.reports import AnalysisReport
+
+    report = AnalysisReport(
+        {
+            "snn_comparison": {
+                "status_pl": "włączony lokalny obwód SNN",
+                "regions": ["HIP"],
+                "requested_mode": "report_only",
+                "computed_modes": [
+                    "baseline",
+                    "report_only_snn",
+                    "closed_loop_snn",
+                ],
+                "sync_dt_s": 0.01,
+                "max_feedback_amplitude": 0.15,
+                "input_rate_unit": "Hz",
+                "output_activity_unit": "fraction",
+                "mode_metrics": {
+                    mode_name: {"HIP": {"length": 5, "max_activity": 0.1}}
+                    for mode_name in (
+                        "baseline",
+                        "report_only_snn",
+                        "closed_loop_snn",
+                    )
+                },
+            }
+        }
+    )
+
+    markdown = report.to_markdown()
+
+    assert "żądany tryb SNN**: report_only" in markdown
+    assert (
+        "policzone warianty**: baseline, report_only_snn, closed_loop_snn" in markdown
+    )
+    assert "baseline" in markdown
+    assert "report_only_snn" in markdown
+    assert "closed_loop_snn" in markdown
