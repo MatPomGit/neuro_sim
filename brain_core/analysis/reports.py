@@ -136,11 +136,12 @@ class AnalysisReport:
             mode_metrics = snn_comparison.get("mode_metrics") or {}
             if mode_metrics:
                 for mode_name in ("baseline", "report_only_snn", "closed_loop_snn"):
-                    lines.append(f"- **{mode_name}**")
-                    for region, stats in (mode_metrics.get(mode_name) or {}).items():
-                        lines.append(f"  - **{region}**")
-                        for metric_name, metric_value in stats.items():
-                            lines.append(f"    - {metric_name}: {metric_value}")
+                    if mode_name in mode_metrics:
+                        lines.append(f"- **{mode_name}**")
+                        for region, stats in mode_metrics[mode_name].items():
+                            lines.append(f"  - **{region}**")
+                            for metric_name, metric_value in stats.items():
+                                lines.append(f"    - {metric_name}: {metric_value}")
             else:
                 for region, stats in (
                     snn_comparison.get("region_differences") or {}
