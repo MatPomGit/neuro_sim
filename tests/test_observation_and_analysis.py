@@ -261,6 +261,37 @@ def test_report_marks_benchmark_origin_in_markdown() -> Any:
     } == {("eeg", "synthetic"), ("behavior", "empirical")}
 
 
+def test_validation_registry_benchmarks_are_reported() -> Any:
+    """Każdy benchmark z metadanych ma wpis w rejestrze i raport zgodności."""
+    from brain_core.analysis.benchmark_loader import load_reference_benchmark_bundle
+    from brain_core.analysis.reports import (
+        build_analysis_report,
+        load_validation_registry,
+    )
+
+    bundle = load_reference_benchmark_bundle()
+    registry = load_validation_registry()
+
+    report = build_analysis_report(
+        eeg=bundle.data["eeg"],
+        fmri=bundle.data["fmri"],
+        behavior=bundle.data["behavior"],
+        benchmark=bundle.data,
+        benchmark_metadata=bundle.metadata_payload(),
+    )
+    markdown = report.to_markdown()
+    reported_benchmarks = {
+        item["benchmark"] for item in report.payload["validation_compliance"]
+    }
+
+    assert set(bundle.metadata) <= set(registry)
+    assert reported_benchmarks == set(bundle.metadata)
+    assert "## Zgodność walidacyjna" in markdown
+    for benchmark_name, metadata in bundle.metadata_payload().items():
+        assert f"| {benchmark_name} | {metadata['level']} |" in markdown
+        assert f"{benchmark_name}_mae" in " ".join(report.payload["comparison"])
+
+
 def test_roving_oddball_profiles_share_seed_and_sequence() -> Any:
     """Porównanie roving oddball zachowuje identyczny seed i sekwencję profili."""
     cfg = ExperimentConfig(

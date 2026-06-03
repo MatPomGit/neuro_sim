@@ -19,6 +19,17 @@ from .signal_metrics import comparative_report
 from .spectral import compute_band_powers
 
 DEFAULT_CLINICAL_SEVERITY_THRESHOLDS = {"small": 0.0, "medium": 0.02, "large": 0.05}
+DEFAULT_VALIDATION_REGISTRY_PATH = (
+    Path(__file__).resolve().parents[2] / "docs" / "validation_registry.md"
+)
+VALIDATION_REGISTRY_COLUMNS = (
+    "benchmark",
+    "level",
+    "source",
+    "expected_effect",
+    "tolerance",
+    "status",
+)
 
 
 def _format_polish_list(values: list[str]) -> str:
@@ -123,6 +134,206 @@ def _build_educational_comment(
     )
 
 
+@dataclass(frozen=True)
+class ValidationComplianceEntry:
+    """Wiersz zgodności walidacyjnej benchmarku prezentowany w raporcie.
+
+    Parameters
+    ----------
+    benchmark:
+        Techniczna nazwa benchmarku z metadanych i rejestru walidacji.
+    level:
+        Poziom benchmarku: ``synthetic``, ``educational``,
+        ``literature-inspired`` albo ``empirical``.
+    tolerance:
+        Opis tolerancji akceptowanej dla porównań regresyjnych.
+    status:
+        Aktualny status benchmarku odczytany z rejestru walidacji.
+    last_comparison_result:
+        Zwięzłe podsumowanie ostatnich metryk porównania zapisanych w raporcie.
+    """
+
+    benchmark: str
+    level: str
+    tolerance: str
+    status: str
+    last_comparison_result: str
+
+    def to_dict(self) -> dict[str, str]:
+        """Zwróć wiersz zgodności w formie serializowalnej do JSON.
+
+        Returns
+        -------
+        dict[str, str]
+            Słownik z nazwą benchmarku, poziomem, tolerancją, statusem
+            i wynikiem ostatniego porównania.
+        """
+        return {
+            "benchmark": self.benchmark,
+            "level": self.level,
+            "tolerance": self.tolerance,
+            "status": self.status,
+            "last_comparison_result": self.last_comparison_result,
+        }
+
+
+def _clean_registry_cell(value: str) -> str:
+    """Oczyść komórkę tabeli Markdown z prostego formatowania kodowego."""
+    return value.strip().strip("`").strip()
+
+
+def load_validation_registry(
+    registry_path: str | Path = DEFAULT_VALIDATION_REGISTRY_PATH,
+) -> dict[str, dict[str, str]]:
+    """Załaduj rejestr walidacji benchmarków z tabeli Markdown.
+
+    Parameters
+    ----------
+    registry_path:
+        Ścieżka do pliku ``docs/validation_registry.md`` zawierającego tabelę
+        z kolumnami benchmarku, poziomu, tolerancji i statusu.
+
+    Returns
+    -------
+    dict[str, dict[str, str]]
+        Rejestr indeksowany nazwą benchmarku. Każdy wpis zawiera m.in. pola
+        ``level``, ``tolerance`` i ``status``.
+
+    Raises
+    ------
+    ValueError
+        Gdy plik rejestru nie istnieje albo tabela nie zawiera żadnego wpisu.
+    """
+    path = Path(registry_path)
+    if not path.exists():
+        raise ValueError(f"Rejestr walidacji nie istnieje: {path}")
+
+    entries: dict[str, dict[str, str]] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped_line = line.strip()
+        if not stripped_line.startswith("|") or "---" in stripped_line:
+            continue
+        cells = [cell.strip() for cell in stripped_line.strip("|").split("|")]
+        if len(cells) != len(VALIDATION_REGISTRY_COLUMNS):
+            continue
+        if cells[0].lower() == "benchmark":
+            continue
+
+        row = {
+            column: _clean_registry_cell(value)
+            for column, value in zip(VALIDATION_REGISTRY_COLUMNS, cells)
+        }
+        benchmark_name = row["benchmark"]
+        if benchmark_name:
+            entries[benchmark_name] = row
+
+    if not entries:
+        raise ValueError(f"Rejestr walidacji nie zawiera wpisów benchmarków: {path}")
+    return entries
+
+
+def _summarize_last_comparison(benchmark_name: str, comparison: dict[str, Any]) -> str:
+    """Zbuduj krótki opis ostatnich metryk porównania dla benchmarku.
+
+    Parameters
+    ----------
+    benchmark_name:
+        Nazwa benchmarku, np. ``eeg`` albo ``behavior``.
+    comparison:
+        Słownik metryk porównawczych zapisany w raporcie, z kluczami
+        prefiksowanymi nazwą benchmarku.
+
+    Returns
+    -------
+    str
+        Opis w formacie ``metryka=wartość`` albo ``n/a``, jeżeli raport nie
+        zawiera jeszcze porównania dla danego benchmarku.
+    """
+    prefix = f"{benchmark_name}_"
+    benchmark_metrics = {
+        key.removeprefix(prefix): value
+        for key, value in comparison.items()
+        if key.startswith(prefix)
+    }
+    if not benchmark_metrics:
+        return "n/a"
+
+    preferred_order = ("mae", "rmse", "correlation")
+    ordered_names = [
+        metric_name
+        for metric_name in preferred_order
+        if metric_name in benchmark_metrics
+    ]
+    ordered_names.extend(
+        sorted(name for name in benchmark_metrics if name not in preferred_order)
+    )
+    return "; ".join(
+        f"{metric_name}={benchmark_metrics[metric_name]}"
+        for metric_name in ordered_names
+    )
+
+
+def collect_validation_compliance(
+    benchmark_metadata: dict[str, dict[str, str]],
+    comparison: dict[str, Any] | None = None,
+    registry_path: str | Path = DEFAULT_VALIDATION_REGISTRY_PATH,
+) -> list[dict[str, str]]:
+    """Połącz metadane benchmarków, rejestr walidacji i wyniki porównań.
+
+    Parameters
+    ----------
+    benchmark_metadata:
+        Metadane benchmarków z ``benchmark_metadata.json`` zapisane w payloadzie
+        raportu. Poziom z tych metadanych pozostaje źródłem prawdy dla
+        rozróżnienia ``synthetic``, ``educational``, ``literature-inspired``
+        i ``empirical``.
+    comparison:
+        Ostatnie metryki porównawcze raportu, zwykle wynik funkcji
+        ``comparative_report`` z prefiksami nazw benchmarków.
+    registry_path:
+        Ścieżka do tabelarycznego rejestru walidacji.
+
+    Returns
+    -------
+    list[dict[str, str]]
+        Lista wierszy sekcji „Zgodność walidacyjna” gotowa do serializacji.
+
+    Raises
+    ------
+    ValueError
+        Gdy metadane wskazują benchmark bez wpisu w rejestrze walidacji.
+    """
+    registry = load_validation_registry(registry_path)
+    comparison_payload = comparison or {}
+    entries: list[dict[str, str]] = []
+
+    for benchmark_name, metadata in benchmark_metadata.items():
+        registry_entry = registry.get(benchmark_name)
+        if registry_entry is None:
+            raise ValueError(
+                "Brak wpisu w rejestrze walidacji dla benchmarku: " f"{benchmark_name}"
+            )
+
+        metadata_level = str(metadata.get("level", "n/a"))
+        registry_level = registry_entry.get("level", "n/a")
+        status = registry_entry.get("status", "n/a")
+        if registry_level != metadata_level:
+            status = f"{status} (uwaga: poziom w rejestrze: {registry_level})"
+
+        entries.append(
+            ValidationComplianceEntry(
+                benchmark=benchmark_name,
+                level=metadata_level,
+                tolerance=registry_entry.get("tolerance", "n/a"),
+                status=status,
+                last_comparison_result=_summarize_last_comparison(
+                    benchmark_name, comparison_payload
+                ),
+            ).to_dict()
+        )
+    return entries
+
+
 @dataclass
 class AnalysisReport:
     """
@@ -151,6 +362,7 @@ class AnalysisReport:
         metrics = self.payload.get("metrics", {})
         compare = self.payload.get("comparison", {})
         benchmark_metadata = self.payload.get("benchmark_metadata", {})
+        validation_compliance = self.payload.get("validation_compliance", [])
         lines = ["# Raport analizy", "", "## Metryki"]
         for name, value in metrics.items():
             lines.append(f"- **{name}**: {value}")
@@ -162,13 +374,31 @@ class AnalysisReport:
                 origin = metadata.get("comparison_origin_pl", "syntetyczny")
                 if level == "empirical":
                     status = "walidacja empiryczna na danych referencyjnych"
+                elif level == "literature-inspired":
+                    status = "walidacja inspirowana literaturą bez danych empirycznych"
+                elif level == "educational":
+                    status = "walidacja edukacyjna bez danych empirycznych"
                 else:
-                    status = (
-                        "walidacja syntetyczna lub edukacyjna bez danych empirycznych"
-                    )
+                    status = "walidacja syntetyczna bez danych empirycznych"
                 lines.append(
                     f"- **{benchmark_name}**: {status} "
                     f"(poziom: {level}, charakter: {origin})"
+                )
+            lines.append("")
+        if validation_compliance:
+            lines.append("## Zgodność walidacyjna")
+            lines.append(
+                "| Benchmark | Poziom | Tolerancja | Status | "
+                "Wynik ostatniego porównania |"
+            )
+            lines.append("| --- | --- | --- | --- | --- |")
+            for item in validation_compliance:
+                lines.append(
+                    f"| {item.get('benchmark', 'n/a')} "
+                    f"| {item.get('level', 'n/a')} "
+                    f"| {item.get('tolerance', 'n/a')} "
+                    f"| {item.get('status', 'n/a')} "
+                    f"| {item.get('last_comparison_result', 'n/a')} |"
                 )
             lines.append("")
         lines.append("## Porównanie z benchmarkiem")
@@ -376,15 +606,11 @@ class AnalysisReport:
             "benchmark_metadata", {}
         ).items():
             level = metadata.get("level", "n/a")
-            if level == "empirical":
-                validation_status = "empirical"
-            else:
-                validation_status = "synthetic"
             rows.append(
                 {
                     "section": "validation_status",
                     "metric": benchmark_name,
-                    "value": validation_status,
+                    "value": str(level),
                 }
             )
             for key, value in metadata.items():
@@ -395,6 +621,22 @@ class AnalysisReport:
                         "value": str(value),
                     }
                 )
+        for item in self.payload.get("validation_compliance", []):
+            benchmark_name = item.get("benchmark", "n/a")
+            for metric_name in (
+                "level",
+                "tolerance",
+                "status",
+                "last_comparison_result",
+            ):
+                rows.append(
+                    {
+                        "section": "validation_compliance",
+                        "metric": f"{benchmark_name}_{metric_name}",
+                        "value": str(item.get(metric_name, "n/a")),
+                    }
+                )
+
         task_activation = self.payload.get("task_activation")
         if task_activation:
             rows.append(
@@ -811,6 +1053,10 @@ def build_analysis_report(
     payload = {"metrics": metrics, "comparison": comparison}
     if benchmark_metadata is not None:
         payload["benchmark_metadata"] = benchmark_metadata
+        payload["validation_compliance"] = collect_validation_compliance(
+            benchmark_metadata=benchmark_metadata,
+            comparison=comparison,
+        )
 
     return AnalysisReport(payload=payload)
 
