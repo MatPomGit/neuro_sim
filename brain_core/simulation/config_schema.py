@@ -6,7 +6,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from brain_core.simulation.signal_adapter import SNNPopulationMapping
+from brain_core.simulation.signal_adapter import (
+    ALLOWED_SNN_COUPLING_MODES,
+    SNNPopulationMapping,
+)
 
 ALLOWED_CLINICAL_PROFILE_IDS = {
     "healthy_v1",
@@ -250,6 +253,23 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
     if abs(round(ratio) - ratio) > 1e-9:
         raise ConfigValidationError("snn.sync_dt musi być wielokrotnością timestep")
 
+    coupling_mode = str(cfg.snn.get("mode", "report_only"))
+    if coupling_mode not in ALLOWED_SNN_COUPLING_MODES:
+        allowed_modes = ", ".join(ALLOWED_SNN_COUPLING_MODES)
+        raise ConfigValidationError(
+            f"snn.mode musi mieć jedną z wartości: {allowed_modes}"
+        )
+
+    max_feedback_amplitude_raw = cfg.snn.get("max_feedback_amplitude", 0.15)
+    try:
+        max_feedback_amplitude = float(max_feedback_amplitude_raw)
+    except (ValueError, TypeError) as exc:
+        raise ConfigValidationError(
+            "snn.max_feedback_amplitude musi być liczbą"
+        ) from exc
+    if max_feedback_amplitude <= 0:
+        raise ConfigValidationError("snn.max_feedback_amplitude musi być > 0")
+
     input_rate_unit = str(cfg.snn.get("input_rate_unit", "Hz"))
     output_activity_unit = str(cfg.snn.get("output_activity_unit", "fraction"))
     if input_rate_unit != "Hz":
@@ -273,6 +293,8 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
             raise ConfigValidationError(str(exc)) from exc
         cfg.snn["neural_mass_regions"] = list(neural_mass_regions)
 
+    cfg.snn["mode"] = coupling_mode
+    cfg.snn["max_feedback_amplitude"] = max_feedback_amplitude
     cfg.snn["sync_dt"] = sync_dt
     cfg.snn["input_rate_unit"] = input_rate_unit
     cfg.snn["output_activity_unit"] = output_activity_unit

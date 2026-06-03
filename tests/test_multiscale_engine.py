@@ -1,15 +1,21 @@
 import time
+from typing import Any
 
 import numpy as np
 
 from brain_core.networks.delays import DelayBuffer
-from brain_core.simulation.multiscale_engine import MultiScaleEngine, MultiScaleIOContract, TimeScaleTask
+from brain_core.simulation.multiscale_engine import (
+    ClosedLoopFeedbackPath,
+    MultiScaleEngine,
+    MultiScaleIOContract,
+    TimeScaleTask,
+)
 from brain_core.simulation.state import SimulationState
-from typing import Any
 
 
 class CounterModule:
     """Opis klasy CounterModule."""
+
     def __init__(self) -> None:
         """Opis funkcji __init__."""
         self.steps: int = 0
@@ -32,7 +38,14 @@ def test_multiscale_scheduler_respects_different_dt() -> Any:
         activity_unit="fraction",
         mapped_populations=("hippocampus",),
     )
-    engine = MultiScaleEngine(0.001, [TimeScaleTask("neural_mass", fast, 0.001), TimeScaleTask("snn_sync", slow, 0.005)], io_contract=contract)
+    engine = MultiScaleEngine(
+        0.001,
+        [
+            TimeScaleTask("neural_mass", fast, 0.001),
+            TimeScaleTask("snn_sync", slow, 0.005),
+        ],
+        io_contract=contract,
+    )
     state = SimulationState()
 
     for _ in range(20):
@@ -49,7 +62,13 @@ def test_cosim_performance_and_numerical_stability_smoke() -> Any:
     """Opis funkcji test_cosim_performance_and_numerical_stability_smoke."""
     fast = CounterModule()
     slow = CounterModule()
-    engine = MultiScaleEngine(0.001, [TimeScaleTask("hippocampus_nm", fast, 0.001), TimeScaleTask("dlpfc_snn", slow, 0.002)])
+    engine = MultiScaleEngine(
+        0.001,
+        [
+            TimeScaleTask("hippocampus_nm", fast, 0.001),
+            TimeScaleTask("dlpfc_snn", slow, 0.002),
+        ],
+    )
     state = SimulationState()
 
     t0 = time.perf_counter()
@@ -75,3 +94,36 @@ def test_delay_buffer_length_and_no_nan_drift() -> Any:
         assert np.all(np.isfinite(delayed))
 
     assert buffer._history.shape[0] == int(np.max(delays)) + 1
+
+
+class FeedbackWriterModule:
+    """Moduł testowy zapisujący deterministyczne wyjście SNN do stanu."""
+
+    def __init__(self, drive: float) -> None:
+        """Zapamiętuje amplitudę sygnału zwrotnego dla kolejnych kroków."""
+        self.drive = drive
+
+    def update(self, state: SimulationState, dt: float) -> None:
+        """Zapisuje sygnał zwrotny SNN w metrykach stanu symulacji."""
+        state.metrics["snn_closed_loop_drive"] = {"HIP": self.drive}
+
+
+def test_closed_loop_feedback_path_applies_snn_drive_one_step_later() -> Any:
+    """Ścieżka closed-loop dopisuje ograniczony sygnał do wejścia HIP z opóźnieniem."""
+    state = SimulationState()
+    writer = FeedbackWriterModule(drive=0.3)
+    feedback = ClosedLoopFeedbackPath(target_region_name="HIP", max_abs_amplitude=0.15)
+    engine = MultiScaleEngine(
+        0.001,
+        [TimeScaleTask("snn_sync", writer, 0.001)],
+        closed_loop_feedback=feedback,
+    )
+
+    engine.run_step(state)
+    first_drive = state.metrics["neural_mass_external_drive"]["HIP"]
+    engine.run_step(state)
+    second_drive = state.metrics["neural_mass_external_drive"]["HIP"]
+
+    assert first_drive == 0.0
+    assert second_drive == 0.15
+    assert np.isfinite(second_drive)

@@ -84,7 +84,9 @@ def test_snn_hippocampus_demo_mapping_sync_dt_and_units() -> None:
     )
 
     assert cfg.snn["enabled"] is True
+    assert cfg.snn["mode"] == "closed_loop"
     assert cfg.snn["sync_dt"] == 0.010
+    assert cfg.snn["max_feedback_amplitude"] == 0.15
     assert cfg.snn["sync_dt"] / cfg.timestep == 2.0
     assert cfg.snn["input_rate_unit"] == "Hz"
     assert cfg.snn["output_activity_unit"] == "fraction"

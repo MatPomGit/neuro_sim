@@ -10,7 +10,7 @@ from .plasticity import apply_state_learning, build_weight_history_series, updat
 from .scenarios import get_scenario, CHANNELS
 from .stimuli import build_stimulus_fn
 from .oscillators import WilsonCowanOscillatorBank
-from typing import Any
+from typing import Any, Callable
 
 
 class CognitiveBrainModel:
@@ -213,8 +213,34 @@ class CognitiveBrainModel:
         broadcast[self.idx["DMN"]] -= 0.25 * gw_ignition
         return broadcast
 
-    def step(self, x: np.ndarray, t: float) -> tuple[np.ndarray, dict[str, Any]]:
-        """Wykonuje pojedynczy krok integracji numerycznej modelu dla czasu t."""
+    def step(
+        self,
+        x: np.ndarray,
+        t: float,
+        external_drive: np.ndarray | None = None,
+    ) -> tuple[np.ndarray, dict[str, Any]]:
+        """Wykonuje pojedynczy krok integracji modelu dla czasu t.
+
+        Parameters
+        ----------
+        x:
+            Bieżący wektor aktywacji regionów neural-mass.
+        t:
+            Czas symulacji w sekundach.
+        external_drive:
+            Opcjonalny, jawny wektor dodatkowego wejścia regionalnego, np.
+            opóźnione sprzężenie zwrotne SNN dla regionu HIP.
+
+        Returns
+        -------
+        tuple[np.ndarray, dict[str, Any]]
+            Następny stan aktywacji i diagnostyka kroku.
+
+        Raises
+        ------
+        ValueError
+            Gdy external_drive ma niepoprawny kształt lub wartości nieskończone.
+        """
         p = self.p
         u = self.stimulus_fn(t)
 
@@ -245,6 +271,13 @@ class CognitiveBrainModel:
             prediction_error=prediction_error,
             acetylcholine=acetylcholine,
         )
+        if external_drive is not None:
+            external_drive_arr = np.asarray(external_drive, dtype=float)
+            if external_drive_arr.shape != (self.n,):
+                raise ValueError("external_drive musi mieć kształt zgodny z regionami")
+            if not np.all(np.isfinite(external_drive_arr)):
+                raise ValueError("external_drive musi zawierać wartości skończone")
+            external += external_drive_arr
 
         # Wartościowanie przez błąd predykcji nagrody.
         external[self.idx["VAL"]] += 0.50 * dopamine_delta
@@ -299,8 +332,32 @@ class CognitiveBrainModel:
 
         return x_next, diagnostics
 
-    def simulate(self, T: float = 45.0, progress_callback: Any = None) -> tuple[np.ndarray, np.ndarray, dict[str, Any], dict[str, Any], dict[str, Any]]:
-        """Przeprowadza pełną symulację modelu w przedziale czasowym od 0 do T."""
+    def simulate(
+        self,
+        T: float = 45.0,
+        progress_callback: Any = None,
+        external_drive_callback: Callable[
+            [int, float, np.ndarray, np.ndarray, np.ndarray], np.ndarray | None
+        ]
+        | None = None,
+    ) -> tuple[np.ndarray, np.ndarray, dict[str, Any], dict[str, Any], dict[str, Any]]:
+        """Przeprowadza pełną symulację modelu w przedziale czasowym od 0 do T.
+
+        Parameters
+        ----------
+        T:
+            Czas trwania symulacji w sekundach.
+        progress_callback:
+            Opcjonalne wywołanie raportujące postęp symulacji.
+        external_drive_callback:
+            Funkcja zwracająca dodatkowe wejście regionalne dla bieżącego kroku.
+            Używana do jawnego sprzężenia zwrotnego SNN -> neural-mass.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray, dict[str, Any], dict[str, Any], dict[str, Any]]
+            Czas, aktywność, diagnostyka, oscylacje i zachowanie.
+        """
         steps = int(T / self.p.dt)
         time = np.arange(steps) * self.p.dt
 
@@ -376,7 +433,17 @@ class CognitiveBrainModel:
             behavior["decision_event"][k] = sample.decision != "wait" and prev_decision == "wait"
             prev_decision = sample.decision
 
-            x, diag = self.step(x, t)
+            external_drive = None
+            if external_drive_callback is not None:
+                external_drive = external_drive_callback(
+                    k,
+                    float(t),
+                    x.copy(),
+                    excitatory[k].copy(),
+                    inhibitory[k].copy(),
+                )
+
+            x, diag = self.step(x, t, external_drive=external_drive)
 
             for key in diagnostics:
                 diagnostics[key][k] = diag[key]

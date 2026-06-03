@@ -11,7 +11,7 @@ Moduł eksportuje publiczne klasy i protokoły używane do:
 
 from .events import SimulationEvent, build_event_timeline
 from .integrators import BaseIntegrator, EulerMaruyamaIntegrator, RK4Integrator
-from .multiscale_engine import MultiScaleEngine, TimeScaleTask
+from .multiscale_engine import ClosedLoopFeedbackPath, MultiScaleEngine, TimeScaleTask
 from .random_sources import RandomSources
 from .scheduler import CoSimulationHook, SimulationModule, SimulationScheduler
 from .state import SimulationState
@@ -22,6 +22,7 @@ __all__: list[str] = [
     "SimulationState",
     "SimulationScheduler",
     "MultiScaleEngine",
+    "ClosedLoopFeedbackPath",
     "TimeScaleTask",
     "SimulationModule",
     "CoSimulationHook",
