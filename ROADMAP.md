@@ -32,7 +32,7 @@ Docelowy użytkownik powinien móc:
 - **Dydaktyka jako pierwszy przypadek użycia** — funkcje mają pomagać zrozumieć mechanizm, nie tylko generować przebieg numeryczny.
 - **Scenariusze porównawcze** — wartość aplikacji rośnie, gdy ten sam bodziec można uruchomić dla profilu zdrowego, zaburzenia i uszkodzenia.
 - **Raport zamiast surowych danych** — każdy eksperyment powinien kończyć się interpretowalnym raportem z osią czasu i słownikiem pojęć.
-- **Roving oddball jako zadanie referencyjne** — `roving_oddball` jest rozwijany jako główny scenariusz dla predykcji, nowości, habituacji i readaptacji; MVP zadania już istnieje, a walidacja części metryk pozostaje do domknięcia.
+- **Roving oddball jako zadanie referencyjne** — `roving_oddball` jest rozwijany jako główny scenariusz dla predykcji, nowości, habituacji i readaptacji; artefakty MVP już istnieją w `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml` i `configs/roving_oddball_lesion_hippocampus.yaml`, a walidacja części metryk pozostaje do domknięcia.
 
 ### 3.2. Założenia techniczne
 
@@ -83,7 +83,7 @@ roadmapy jako obietnicy nowych funkcji na tym etapie.
 
 | Funkcja | Status | MVP istnieje | Pozostały zakres |
 | --- | --- | --- | --- |
-| `roving_oddball` | `partial` | Dedykowany protokół zadania, aliasy, konfiguracje healthy/disorder/lesion i testy reprodukowalności. | Przewodnik dydaktyczny, przykład uruchomienia, interpretacja raportu i walidacja metryk habituacji/readaptacji. |
+| `roving_oddball` | `partial` | Artefakty MVP istnieją w `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml` i `configs/roving_oddball_lesion_hippocampus.yaml`; obejmują aliasy oraz testy reprodukowalności. | Dokumentacja użytkowa: przewodnik dydaktyczny, przykład uruchomienia, interpretacja raportu i walidacja metryk habituacji/readaptacji. |
 | Clinical profiles | `partial` | Profile w `configs/clinical_profiles/*.yaml`, integracja z konfiguracją oraz scenariuszami lesion/clinical. | Interpretacje dydaktyczne, progi różnic, raport amplitude-latency-mechanism i walidacja względem benchmarków. |
 | Timeline | `partial` | Oś `event_timeline` tworzona w `brain_core/simulation/events.py` i dołączana przez silnik oraz raporty. | Pełne grupowanie trial-by-trial, eksport raportu, linkowanie z wykresami i objaśnienia per profil. |
 | Benchmark metadata | `partial` | Metadane benchmarków w `data/validation/benchmark_metadata.json` i walidacja w loaderze benchmarków. | Kryteria zgodności per benchmark, źródła literaturowe/empiryczne i raport wersyjny. |
@@ -246,10 +246,9 @@ roadmapy jako obietnicy nowych funkcji na tym etapie.
 
 **MVP istnieje:**
 
-- `RovingOddballTask` jako dedykowany protokół zadania referencyjnego.
-- Aliasy `get_task` dla wariantów nazwy `roving_oddball`.
-- Konfiguracje healthy/disorder/lesion: `roving_oddball_healthy`, `roving_oddball_disorder_gaba`, `roving_oddball_lesion_hippocampus`.
-- Testy reprodukowalności sekwencji oraz ładowania konfiguracji scenariuszy.
+- `brain_core/experiments/protocols.py` zawiera `RovingOddballTask` jako dedykowany protokół zadania referencyjnego oraz aliasy `get_task` dla wariantów nazwy `roving_oddball`.
+- Konfiguracje healthy/disorder/lesion istnieją w `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml` i `configs/roving_oddball_lesion_hippocampus.yaml`.
+- tests/test_task_protocols_and_engine.py zawiera testy reprodukowalności sekwencji oraz ładowania konfiguracji scenariuszy.
 
 **Pozostały zakres:**
 
