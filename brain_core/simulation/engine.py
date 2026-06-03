@@ -445,11 +445,11 @@ def run_experiment(
         benchmark_metadata=benchmark_bundle.metadata_payload(),
     )
     analysis_report = _attach_task_activation_section(analysis_report, task_activation)
-    if str(config.task.get("name", "")) in {"roving_oddball", "roving-oddball"}:
+    if str(config.task.get("name") or "") in {"roving_oddball", "roving-oddball"}:
         analysis_report.payload["roving_oddball"] = build_roving_oddball_report(
             trial_results,
             profile_id=str(
-                config.clinical_profile.get("id", config.output.get("label", "run"))
+                config.clinical_profile.get("id") or config.output.get("label") or "run"
             ),
         )
     snn_comparison = _run_local_snn_comparison(
