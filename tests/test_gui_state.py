@@ -10,10 +10,6 @@ from brain_model.gui_forms import RULE_FIELDS
 from brain_model.gui_state import GuiState
 from brain_model.oscillators import WilsonCowanParams
 from brain_model.params import BrainParams
-from brain_model.plasticity import (
-    ConnectivityAdaptationConfig,
-    PlasticityRuleConfig,
-)
 
 ROOT = Path(__file__).resolve().parents[1]
 QT_APP_PATH = ROOT / "brain_model" / "qt_app.py"
@@ -29,7 +25,11 @@ def _qt_sections_tree() -> ast.Module:
 def _find_assignment_value(tree: ast.Module, name: str) -> ast.expr:
     """Znajdź wartość przypisaną do zmiennej o podanej nazwie (obsługuje Assign i AnnAssign)."""
     for node in tree.body:
-        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == name:
+        if (
+            isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id == name
+        ):
             if node.value is not None:
                 return node.value
         elif isinstance(node, ast.Assign):
@@ -47,15 +47,15 @@ def _qt_control_bindings() -> dict[str, list[tuple[str, str, str]]]:
         raise AssertionError("CONTROL_BINDINGS nie jest literałem słownika.")
 
     bindings: dict[str, list[tuple[str, str, str]]] = {}
-    for key_node, value_node in zip(assignment.value.keys, assignment.value.values):
+    for key_node, group_node in zip(value_node.keys, value_node.values):
         if not isinstance(key_node, ast.Constant) or not isinstance(
             key_node.value, str
         ):
             raise AssertionError("Nazwa grupy mapowania nie jest stałym tekstem.")
-        if not isinstance(value_node, ast.Tuple):
+        if not isinstance(group_node, ast.Tuple):
             raise AssertionError("Grupa mapowania nie jest stałą krotką.")
         group_bindings: list[tuple[str, str, str]] = []
-        for element in value_node.elts:
+        for element in group_node.elts:
             if not isinstance(element, ast.Call) or len(element.args) != 3:
                 raise AssertionError(
                     "Mapowanie kontrolki nie jest wywołaniem ControlBinding."

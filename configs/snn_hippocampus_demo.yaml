@@ -48,3 +48,14 @@ snn:
       neurons: 800
       coupling_gain: 0.20
       notes_pl: "Lokalny obwód hipokampa sprzężony z proxy regionu HIP."
+clinical_profile:
+  id: hippocampal_lesion
+  display_name: Demo SNN hipokampa
+  mechanism: Lokalny obwód SNN regionu HIP testuje sprzężenie hipokampa z modelem masowym.
+  affected_regions:
+    - HIP
+  cognitive_functions:
+    - pamięć epizodyczna
+    - detekcja nowości
+  expected_effects:
+    snn_coupling: sprzężenie closed-loop dla HIP

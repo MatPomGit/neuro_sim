@@ -84,6 +84,7 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0020 | proposed | Oś czasu zdarzeń symulacji | [`docs/adr/0020-os-czasu-zdarzen-symulacji.md`](adr/0020-os-czasu-zdarzen-symulacji.md) | `BACKLOG.md` P0 / 2 |
 | ADR-0021 | proposed | Formalny kontrakt I/O dla współsymulacji neural-mass i SNN | `docs/architecture_decision_records.md` | `BACKLOG.md` P3 / 11, `docs/todo.md` Etap 6 |
 | ADR-0022 | proposed | Progi interpretacyjne profili klinicznych | [`docs/adr/0022-progi-interpretacyjne-profili-klinicznych.md`](adr/0022-progi-interpretacyjne-profili-klinicznych.md) | `BACKLOG.md` P1 / 7 |
+| ADR-0023 | proposed | Konfiguracje YAML i panele wyników Qt oparte na silniku | [`docs/adr/0023-konfiguracje-yaml-i-panele-qt-silnika.md`](adr/0023-konfiguracje-yaml-i-panele-qt-silnika.md) | — |
 
 ## Procedura dodawania kolejnego ADR
 

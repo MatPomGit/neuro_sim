@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-import time as pytime
 from dataclasses import replace
 from typing import Any
 
@@ -11,16 +9,16 @@ import numpy as np
 from PySide6.QtCore import QObject, Signal, Slot
 
 from brain_core.simulation.config_loader import load_config_from_string
+from brain_core.simulation.config_schema import ExperimentConfig
 from brain_core.simulation.engine import run_experiment
 
 from .gui_state import GuiState
-from .io import build_output_dir, save_run
-from .model import CognitiveBrainModel
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
+from .qt_config import load_scenario_yaml_document
 
-RunPayload = tuple[str, str, Any, Any, Any, Any, Any, Any, Any]
-BatchPayload = tuple[list[dict[str, float | int]], Any, Any, Any, Any, Any, Any]
+RunPayload = tuple[str, str, Any, Any, Any, Any, Any, Any, Any, Any, Any]
+BatchPayload = tuple[list[dict[str, float | int]], dict[str, Any]]
 
 
 class SimulationWorker(QObject):
@@ -62,41 +60,27 @@ def run_simulation(
     progress_callback: Any,
     warning_callback: Any,
 ) -> RunPayload:
-    """Wykonaj pojedynczą symulację albo batch na podstawie stanu GUI."""
+    """Wykonaj pojedynczą symulację albo batch przez silnik `brain_core`."""
     T, seed, dt = read_scalar_params(state)
     brain_params = replace(state.brain_params, dt=dt)
     oscillator_params = state.oscillator_params
     validate_parameters(T, dt, brain_params, oscillator_params)
 
-    start = pytime.perf_counter()
     if state.command == "run":
-        model, time, activity, diagnostics, oscillations, behavior = (
-            run_single_experiment(
-                state, T, seed, dt, brain_params, oscillator_params, progress_callback
-            )
+        result = run_single_experiment(
+            state, T, seed, dt, brain_params, oscillator_params, progress_callback
         )
-        summary_text = summarize_metrics([extract_metrics(diagnostics, behavior)])
+        summary_text = summarize_metrics(
+            [extract_metrics(result["diagnostics"], result["behavior"])]
+        )
     else:
-        runs, model, time, activity, diagnostics, oscillations, behavior = run_batch(
+        runs, result = run_batch(
             state, T, brain_params, oscillator_params, progress_callback
         )
         summary_text = summarize_metrics(runs)
-    elapsed = pytime.perf_counter() - start
-
-    save_info = None
-    if state.save_results:
-        save_info = save_results_if_requested(
-            state,
-            seed,
-            elapsed,
-            model,
-            time,
-            activity,
-            diagnostics,
-            oscillations,
-            behavior,
-            warning_callback,
-        )
+    save_info = result.get("save_info")
+    if state.save_results and save_info is None:
+        warning_callback("Silnik nie zwrócił informacji o zapisanych wynikach.")
 
     message = "Symulacja zakończona."
     if save_info:
@@ -105,12 +89,14 @@ def run_simulation(
         message,
         summary_text,
         save_info,
-        model,
-        time,
-        activity,
-        diagnostics,
-        oscillations,
-        behavior,
+        result["model"],
+        result["time"],
+        result["activity"],
+        result["diagnostics"],
+        result["oscillations"],
+        result["behavior"],
+        result.get("event_timeline", []),
+        result.get("clinical_profile", {}),
     )
 
 
@@ -157,16 +143,26 @@ def validate_parameters(
         raise ValueError("oscillator_noise nie może być ujemny.")
 
 
-def run_single_experiment(
+def build_engine_config(
     state: GuiState,
     T: float,
     seed: int,
     dt: float,
     brain_params: BrainParams,
     oscillator_params: WilsonCowanParams,
-    progress_callback: Any,
-) -> tuple[Any, Any, Any, Any, Any, Any]:
-    """Uruchom pojedynczy eksperyment przez warstwę `brain_core`."""
+) -> ExperimentConfig:
+    """Zbuduj konfigurację silnika z YAML albo minimalnego dokumentu generowanego przez GUI."""
+    if state.scenario_config_path:
+        raw_config = load_scenario_yaml_document(state.scenario_config_path)
+        raw_config.setdefault("task", {})["duration"] = T
+        raw_config["timestep"] = dt
+        raw_config["seed"] = seed
+        raw_config.setdefault("output", {})["save_results"] = state.save_results
+        cfg = load_config_from_string(
+            _dump_json_compatible(raw_config), format_hint="json"
+        )
+        return cfg
+
     config_doc = {
         "model": {
             "noise": brain_params.noise,
@@ -183,59 +179,36 @@ def run_single_experiment(
         "timestep": dt,
         "seed": seed,
         "task": {"scenario": state.scenario, "duration": T},
-        "output": {"save_results": False, "label": "gui", "output_dir": "outputs"},
+        "output": {
+            "save_results": state.save_results,
+            "label": "gui",
+            "output_dir": "outputs",
+        },
     }
-    cfg = load_config_from_string(json.dumps(config_doc), format_hint="json")
-    result = run_experiment(cfg, progress_callback=progress_callback)
-    return (
-        result["model"],
-        result["time"],
-        result["activity"],
-        result["diagnostics"],
-        result["oscillations"],
-        result["behavior"],
+    return load_config_from_string(
+        _dump_json_compatible(config_doc), format_hint="json"
     )
 
 
-def save_results_if_requested(
+def _dump_json_compatible(config_doc: dict[str, Any]) -> str:
+    """Serializuj dokument konfiguracji do JSON bez logiki eksperymentalnej GUI."""
+    import json
+
+    return json.dumps(config_doc, ensure_ascii=False)
+
+
+def run_single_experiment(
     state: GuiState,
+    T: float,
     seed: int,
-    elapsed: float,
-    model: Any,
-    time: Any,
-    activity: Any,
-    diagnostics: Any,
-    oscillations: Any,
-    behavior: Any,
-    warning_callback: Any,
-) -> Any:
-    """Zapisz wyniki symulacji, a problem raportuj jako ostrzeżenie użytkowe."""
-    try:
-        out_dir = build_output_dir(state.scenario, "gui")
-        return save_run(
-            out_dir,
-            time,
-            activity,
-            diagnostics,
-            oscillations,
-            extra_metadata={
-                "behavior": {
-                    "decision": [str(value) for value in behavior["decision"]],
-                    "latency": behavior["latency"].tolist(),
-                    "confidence": behavior["confidence"].tolist(),
-                    "decision_score": behavior["decision_score"].tolist(),
-                    "decision_event": behavior["decision_event"].astype(int).tolist(),
-                }
-            },
-            model_params=model.p,
-            oscillator_params=model.oscillator_bank.params,
-            scenario=oscillations.get("metadata"),
-            seed=seed,
-            duration_s=elapsed,
-        )
-    except Exception as exc:
-        warning_callback(f"Nie udało się zapisać wyników symulacji: {exc}")
-        return None
+    dt: float,
+    brain_params: BrainParams,
+    oscillator_params: WilsonCowanParams,
+    progress_callback: Any,
+) -> dict[str, Any]:
+    """Uruchom pojedynczy eksperyment przez warstwę `brain_core`."""
+    cfg = build_engine_config(state, T, seed, dt, brain_params, oscillator_params)
+    return run_experiment(cfg, progress_callback=progress_callback)
 
 
 def extract_metrics(
@@ -281,7 +254,7 @@ def run_batch(
     oscillator_params: WilsonCowanParams,
     progress_callback: Any,
 ) -> BatchPayload:
-    """Wykonaj serię symulacji dla seedów, scenariuszy i perturbacji."""
+    """Wykonaj serię symulacji, delegując każde uruchomienie do silnika."""
     seeds = [int(value) for value in parse_list(state.batch_seeds)]
     if not seeds:
         raise ValueError("Lista seedów serii (batch_seeds) nie może być pusta.")
@@ -293,18 +266,21 @@ def run_batch(
     total_runs = base_total + perturb_total if sens_params else base_total
     completed = 0
     metrics: list[dict[str, float | int]] = []
-    last: tuple[Any, Any, Any, Any, Any, Any] | None = None
+    last_result: dict[str, Any] | None = None
     for scenario in scenarios:
         for seed in seeds:
-            model = CognitiveBrainModel(
-                params=base_params,
-                oscillator_params=oscillator_params,
-                seed=seed,
-                stimulus=scenario,
+            run_state = replace(state, scenario=scenario, seed=str(seed))
+            result = run_single_experiment(
+                run_state,
+                T,
+                seed,
+                base_params.dt,
+                base_params,
+                oscillator_params,
+                None,
             )
-            time, activity, diagnostics, oscillations, behavior = model.simulate(T=T)
-            metrics.append(extract_metrics(diagnostics, behavior))
-            last = model, time, activity, diagnostics, oscillations, behavior
+            metrics.append(extract_metrics(result["diagnostics"], result["behavior"]))
+            last_result = result
             completed += 1
             progress_callback(completed / total_runs)
             for parameter_name in sens_params:
@@ -316,16 +292,20 @@ def run_batch(
                         base_params,
                         **{parameter_name: base_value * (1.0 + sign * delta)},
                     )
-                    model = CognitiveBrainModel(
-                        params=perturbed,
-                        oscillator_params=oscillator_params,
-                        seed=seed,
-                        stimulus=scenario,
+                    result = run_single_experiment(
+                        run_state,
+                        T,
+                        seed,
+                        perturbed.dt,
+                        perturbed,
+                        oscillator_params,
+                        None,
                     )
-                    _, _, diag_p, _, beh_p = model.simulate(T=T)
-                    metrics.append(extract_metrics(diag_p, beh_p))
+                    metrics.append(
+                        extract_metrics(result["diagnostics"], result["behavior"])
+                    )
                     completed += 1
                     progress_callback(completed / total_runs)
-    if last is None:
+    if last_result is None:
         raise ValueError("Batch nie wygenerował żadnych przebiegów.")
-    return metrics, *last
+    return metrics, last_result
