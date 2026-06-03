@@ -521,6 +521,41 @@ def run_experiment(
     }
 
 
+def _classify_roving_profile_group(profile_id: str, result: dict[str, Any]) -> str:
+    """Klasyfikuje profil roving oddball do grupy healthy/disorder/lesion.
+
+    Parameters
+    ----------
+    profile_id:
+        Techniczny identyfikator profilu klinicznego.
+    result:
+        Wynik uruchomienia eksperymentu zawierający metadane profilu i patologię.
+
+    Returns
+    -------
+    str
+        Jedna z grup porównawczych: ``healthy``, ``disorder`` albo ``lesion``.
+    """
+    profile = result.get("clinical_profile") or {}
+    profile_text = " ".join(
+        str(value).lower()
+        for value in (
+            profile_id,
+            profile.get("id", ""),
+            profile.get("mechanism", ""),
+            profile.get("display_name", ""),
+        )
+    )
+    pathology = (result.get("analysis_report") or {}).get("clinical_profile") or {}
+    pathology_text = str(pathology.get("pathology_scenario", "")).lower()
+    combined_text = f"{profile_text} {pathology_text}"
+    if "lesion" in combined_text or "uszkod" in combined_text:
+        return "lesion"
+    if "healthy" in combined_text or "zdrow" in combined_text:
+        return "healthy"
+    return "disorder"
+
+
 def _build_roving_profile_comparison(
     *,
     seed: int,
@@ -546,6 +581,10 @@ def _build_roving_profile_comparison(
         roving_report = build_roving_oddball_report(
             result.get("trial_results") or [],
             profile_id=profile_id,
+        )
+        roving_report["profile_group"] = _classify_roving_profile_group(
+            profile_id,
+            result,
         )
         profiles.append(roving_report)
         signatures.append(roving_report.get("sequence_signature") or [])

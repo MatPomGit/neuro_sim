@@ -297,8 +297,11 @@ def test_roving_oddball_profiles_share_seed_and_sequence() -> Any:
         "gaba_dysregulation",
         "hippocampal_lesion",
     }
+    profile_groups = {profile["profile_group"] for profile in comparison["profiles"]}
+    assert profile_groups == {"healthy", "disorder", "lesion"}
     for profile in comparison["profiles"]:
         assert {
+            "profile_group",
             "mean_surprise_index",
             "habituation_rate",
             "mean_readaptation_latency",

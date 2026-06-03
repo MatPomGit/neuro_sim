@@ -79,6 +79,7 @@ batch = run_task_across_clinical_profiles(
 ```
 
 Wynik `batch["roving_profile_comparison"]` zawiera flagi `same_seed` i
-`same_sequence` oraz agregaty `mean_surprise_index`, `habituation_rate` i
+`same_sequence`, grupę porównawczą `profile_group` (`healthy`, `disorder` albo
+`lesion`) oraz agregaty `mean_surprise_index`, `habituation_rate` i
 `mean_readaptation_latency` dla każdego profilu. Jeżeli `same_sequence` ma wartość
 `False`, porównanie profili nie powinno być interpretowane jako czysty efekt profilu.
