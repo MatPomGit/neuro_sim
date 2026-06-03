@@ -2,7 +2,7 @@
 
 ## 1. Status dokumentu
 
-**Stan na dzień:** 2026-06-02
+**Stan na dzień:** 2026-06-03
 **Zakres:** kierunek rozwoju aplikacji, kamienie milowe i zależności między strumieniami prac.
 **Relacja do backlogu:** `BACKLOG.md` pozostaje operacyjną listą zadań, statusów i artefaktów. Ten dokument opisuje szerszą kolejność rozwoju oraz kryteria przejścia między etapami.
 
@@ -236,7 +236,7 @@ roadmapy jako obietnicy nowych funkcji na tym etapie.
 
 **Horyzont:** równolegle z końcówką Etapu 2 / przed pełną biblioteką kliniczną
 **Priorytet:** P1/P2
-**Status:** `partial`
+**Status:** częściowo zrealizowany (`partial`)
 
 **Cele:**
 
@@ -244,32 +244,28 @@ roadmapy jako obietnicy nowych funkcji na tym etapie.
 - Rozwinąć istniejący `roving_oddball` jako zadanie referencyjne dla predykcji, nowości, habituacji i readaptacji.
 - Zapewnić te same sekwencje bodźców dla profili healthy/disorder/lesion.
 
-**MVP istnieje:**
+**Zrealizowane artefakty:**
 
-- `brain_core/experiments/protocols.py` zawiera `RovingOddballTask` jako dedykowany protokół zadania referencyjnego oraz aliasy `get_task` dla wariantów nazwy `roving_oddball`.
-- Konfiguracje healthy/disorder/lesion istnieją w `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml` i `configs/roving_oddball_lesion_hippocampus.yaml`.
-- tests/test_task_protocols_and_engine.py zawiera testy reprodukowalności sekwencji oraz ładowania konfiguracji scenariuszy.
+- `RovingOddballTask` jako dedykowany protokół zadania referencyjnego w `brain_core/experiments/protocols.py`.
+- Aliasy `get_task` dla wariantów nazwy `roving_oddball`.
+- Konfiguracje scenariuszy healthy/disorder/lesion:
+  - `configs/roving_oddball_healthy.yaml`,
+  - `configs/roving_oddball_disorder_gaba.yaml`,
+  - `configs/roving_oddball_lesion_hippocampus.yaml`.
+- Testy reprodukowalności sekwencji oraz ładowania konfiguracji scenariuszy w `tests/test_task_protocols_and_engine.py`.
 
-**Pozostały zakres:**
+**Braki do domknięcia:**
 
-- Dokumentacja użytkowa: przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”.
-- Dokumentacja użytkowa: przykładowe uruchomienie scenariuszy healthy/disorder/lesion.
-- Dokumentacja użytkowa: interpretacja raportu i metryk habituacji/readaptacji.
+- Przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”.
+- Pełny raport porównawczy healthy/disorder/lesion.
+- Walidacja metryk habituacji/readaptacji, w tym testy regresji dla zwalidowanych progów interpretacyjnych.
 
 **Zakres docelowy i dalszy:**
 
 - utrzymanie wspólnego API tasków dla `stroop`, `go_nogo`, `n_back` i `roving_oddball`,
-- rozszerzanie generatora sekwencji standard/deviant o parametry runów, jitter i kontrolę seeda bez naruszania istniejącej reprodukowalności,
-- walidacja metryk: novelty/surprise index, tempo habituacji, latencja readaptacji, różnice E/I i neuromodulacyjne,
-- timeline trial-by-trial,
-- spójne konfiguracje `roving_oddball_healthy`, `roving_oddball_disorder_*`, `roving_oddball_lesion_*`,
-- raport healthy vs disorder vs lesion.
-
-**Artefakty docelowe do uzupełnienia:**
-
-- przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”,
-- przykładowe uruchomienie scenariuszy healthy vs disorder vs lesion z istniejących konfiguracji,
-- interpretacja raportu oraz testy regresji zwalidowanych metryk habituacji/readaptacji.
+- timeline trial-by-trial z interpretacją mechanizmu profilu klinicznego,
+- raport healthy vs disorder vs lesion oparty na istniejących konfiguracjach,
+- walidacja metryk: novelty/surprise index, tempo habituacji, latencja readaptacji, różnice E/I i neuromodulacyjne.
 
 **Kryteria ukończenia:**
 
