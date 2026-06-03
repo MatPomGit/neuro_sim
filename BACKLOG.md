@@ -33,7 +33,7 @@ Na dzień 2026-06-02 status nie jest prognozą wdrożenia, tylko krótką oceną
 
 | Funkcja | Status | MVP istnieje | Pozostały zakres |
 | --- | --- | --- | --- |
-| `roving_oddball` | `partial` | Generator sekwencji, aliasy taska, konfiguracje healthy/disorder/lesion i testy reprodukowalności. | Dokumentacja użytkowa, przykład uruchomienia, interpretacja raportu oraz walidacja metryk habituacji/readaptacji. |
+| `roving_oddball` | `partial` | Artefakty MVP istnieją w `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml` i `configs/roving_oddball_lesion_hippocampus.yaml`; obejmują generator sekwencji, aliasy taska i testy reprodukowalności. | Dokumentacja użytkowa: przewodnik dydaktyczny, przykład uruchomienia, interpretacja raportu oraz walidacja metryk habituacji/readaptacji. |
 | Clinical profiles | `partial` | Katalog `configs/clinical_profiles/*.yaml`, integracja ze schematem konfiguracji, lesion i scenariuszami porównawczymi. | Interpretacje dydaktyczne, progi jakościowe różnic, raport amplitude-latency-mechanism i walidacja względem benchmarków. |
 | Timeline | `partial` | `event_timeline` w `brain_core/simulation/events.py` integrowany przez silnik i raporty. | Jednolity format dla wszystkich symulacji, widok trial-by-trial, eksport HTML/PDF i powiązanie zdarzeń z wykresami. |
 | Benchmark metadata | `partial` | `data/validation/benchmark_metadata.json` oraz walidacja metadanych w `brain_core/analysis/benchmark_loader.py`. | Jawne kryteria zgodności dla każdego benchmarku, źródła literaturowe/empiryczne i raport wersyjny. |
@@ -48,7 +48,7 @@ odróżnić działający artefakt od kompletnego zakresu badawczego.
 
 | Milestone | Status | Główne pliki | Testy | Pozostałe ograniczenia |
 | --- | --- | --- | --- | --- |
-| Taski poznawcze `stroop`, `go_nogo`, `n_back`, `roving_oddball` | `partial` | [`brain_core/experiments/protocols.py`](brain_core/experiments/protocols.py), [`brain_model/stimuli.py`](brain_model/stimuli.py), [`configs/stroop.yaml`](configs/stroop.yaml), [`configs/go_nogo.yaml`](configs/go_nogo.yaml), [`configs/n_back.yaml`](configs/n_back.yaml), [`configs/roving_oddball_healthy.yaml`](configs/roving_oddball_healthy.yaml), [`configs/roving_oddball_disorder_gaba.yaml`](configs/roving_oddball_disorder_gaba.yaml), [`configs/roving_oddball_lesion_hippocampus.yaml`](configs/roving_oddball_lesion_hippocampus.yaml) | [`tests/test_task_protocols_and_engine.py`](tests/test_task_protocols_and_engine.py), [`tests/test_task_stimulus_player.py`](tests/test_task_stimulus_player.py) | Dostępne są podstawowe protokoły i konfiguracje demonstracyjne; `roving_oddball` istnieje jako MVP, a najbliższe braki obejmują dokumentację użytkową (przewodnik dydaktyczny, przykładowe uruchomienie, interpretacja raportu) oraz walidację kliniczną wzorców. |
+| Taski poznawcze `stroop`, `go_nogo`, `n_back`, `roving_oddball` | `partial` | [`brain_core/experiments/protocols.py`](brain_core/experiments/protocols.py), [`brain_model/stimuli.py`](brain_model/stimuli.py), [`configs/stroop.yaml`](configs/stroop.yaml), [`configs/go_nogo.yaml`](configs/go_nogo.yaml), [`configs/n_back.yaml`](configs/n_back.yaml), [`configs/roving_oddball_healthy.yaml`](configs/roving_oddball_healthy.yaml), [`configs/roving_oddball_disorder_gaba.yaml`](configs/roving_oddball_disorder_gaba.yaml), [`configs/roving_oddball_lesion_hippocampus.yaml`](configs/roving_oddball_lesion_hippocampus.yaml) | [`tests/test_task_protocols_and_engine.py`](tests/test_task_protocols_and_engine.py), [`tests/test_task_stimulus_player.py`](tests/test_task_stimulus_player.py) | Dostępne są podstawowe protokoły i konfiguracje demonstracyjne; artefakty MVP `roving_oddball` już istnieją, a następne kroki dokumentacji użytkowej obejmują przewodnik dydaktyczny, przykładowe uruchomienie i interpretację raportu oraz walidację kliniczną wzorców. |
 | Moduł uszkodzeń `lesions.py` | `partial` | [`brain_core/experiments/lesions.py`](brain_core/experiments/lesions.py), [`brain_model/scenarios/library.py`](brain_model/scenarios/library.py), [`brain_model/scenarios/types.py`](brain_model/scenarios/types.py) | [`tests/test_lesions.py`](tests/test_lesions.py), [`tests/test_task_protocols_and_engine.py`](tests/test_task_protocols_and_engine.py) | Obecny zakres wspiera scenariusze ogniskowe/sieciowe i integrację z taskami, ale katalog profili klinicznych, interpretacje dydaktyczne oraz raport różnic region-czas-funkcja pozostają niepełne. |
 | Raport benchmarkowy | `partial` | [`brain_core/analysis/reports.py`](brain_core/analysis/reports.py), [`brain_core/analysis/benchmark_loader.py`](brain_core/analysis/benchmark_loader.py), [`brain_core/simulation/engine.py`](brain_core/simulation/engine.py), [`data/validation/eeg_target.csv`](data/validation/eeg_target.csv), [`data/validation/fmri_target.csv`](data/validation/fmri_target.csv), [`data/validation/behavior_target.csv`](data/validation/behavior_target.csv) | [`tests/test_observation_and_analysis.py`](tests/test_observation_and_analysis.py), [`tests/test_signal_metrics_modules.py`](tests/test_signal_metrics_modules.py) | Raport potrafi agregować metryki i porównania referencyjne, ale nie zastępuje pełnego raportu dydaktycznego z kompletną osią trial-by-trial, wykresami i interpretacją profili z `docs/todo.md`. |
 | Metryki analityczne EEG/BOLD/zachowanie | `partial` | [`brain_core/analysis/signal_metrics.py`](brain_core/analysis/signal_metrics.py), [`brain_core/analysis/spectral.py`](brain_core/analysis/spectral.py), [`brain_core/analysis/phase_locking.py`](brain_core/analysis/phase_locking.py), [`brain_core/analysis/connectivity.py`](brain_core/analysis/connectivity.py), [`brain_core/analysis/information_flow.py`](brain_core/analysis/information_flow.py), [`brain_core/physiology/eeg_forward_model.py`](brain_core/physiology/eeg_forward_model.py), [`brain_core/physiology/bold_hrf.py`](brain_core/physiology/bold_hrf.py), [`brain_core/physiology/neurovascular_coupling.py`](brain_core/physiology/neurovascular_coupling.py) | [`tests/test_signal_metrics_modules.py`](tests/test_signal_metrics_modules.py), [`tests/test_observation_and_analysis.py`](tests/test_observation_and_analysis.py) | Dostępne są metryki sygnałowe i fasada kompatybilności, ale integracja z raportami EEG/BOLD, wykresami, progami jakości i porównaniami wielu profili nadal wymaga domknięcia. |
@@ -296,7 +296,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 - Zadania uwagowe, pamięciowe, decyzyjne, emocjonalne.
 - Parametryzacja trudności i rodzaju bodźca.
 - Metryki behawioralne i neuronalne.
-- Uzupełnienie dokumentacji użytkowej dla istniejących artefaktów MVP `roving_oddball`.
+- Dokumentacja użytkowa dla istniejących artefaktów MVP `roving_oddball`: przewodnik dydaktyczny, przykładowe uruchomienie i interpretacja raportu.
 
 **Deliverables:**
 - Biblioteka tasków v1.
@@ -308,12 +308,12 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 
 ---
 
-### 8A. Implementacja roving oddball task (priorytet P1/P2)
+### 8A. Rozwój i dokumentacja roving oddball task (priorytet P1/P2)
 **Status:** `partial`
 
 **Artefakty implementacyjne:** `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml`, `configs/roving_oddball_lesion_hippocampus.yaml`, `tests/test_task_protocols_and_engine.py`.
 
-**Cel:** dostarczenie referencyjnego zadania do testów predykcji, nowości i adaptacji.
+**Cel:** utrzymanie istniejącego zadania referencyjnego do testów predykcji, nowości i adaptacji oraz doprecyzowanie dokumentacji użytkowej.
 
 **MVP istnieje:**
 - Generator sekwencji bodźców z parametrami:

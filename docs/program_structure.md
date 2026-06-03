@@ -41,7 +41,7 @@ modułów.
 
 | Funkcja | Status | MVP istnieje | Pozostały zakres strukturalny |
 | --- | --- | --- | --- |
-| `roving_oddball` | `partial` | `brain_core/experiments/protocols.py` oraz konfiguracje `configs/roving_oddball_*.yaml`. | Utrzymać rozwój w istniejącym protokole, konfiguracjach i raportach; bez nowej warstwy architektonicznej. |
+| `roving_oddball` | `partial` | `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml`, `configs/roving_oddball_lesion_hippocampus.yaml`. | Artefakty MVP już istnieją; utrzymać rozwój w tych ścieżkach i istniejących raportach, bez nowej warstwy architektonicznej. |
 | Clinical profiles | `partial` | `configs/clinical_profiles/*.yaml`, `brain_core/simulation/config_schema.py`, `brain_core/experiments/lesions.py`, `brain_model/scenarios/`. | Rozszerzać metadane i interpretacje w istniejącym katalogu profili oraz raportach porównawczych. |
 | Timeline | `partial` | `brain_core/simulation/events.py`, `brain_core/simulation/engine.py`, `brain_core/analysis/reports.py`. | Rozbudować raport trial-by-trial w istniejących modułach raportowania i eksportu. |
 | Benchmark metadata | `partial` | `data/validation/benchmark_metadata.json` i `brain_core/analysis/benchmark_loader.py`. | Uzupełniać kryteria zgodności i źródła w danych walidacyjnych oraz loaderze benchmarków. |
@@ -274,7 +274,7 @@ Oczekiwane zmiany strukturalne powinny pozostać minimalne:
 3. utrzymać scenariusze clinical/lesion w `brain_model/scenarios/` oraz `brain_core/experiments/lesions.py`,
 4. aktualizować ADR tylko wtedy, gdy zmieni się granica odpowiedzialności modułów lub strategia konfiguracji/I/O.
 
-Następne kroki mają charakter dokumentacji użytkowej i doprecyzowania istniejących artefaktów, a nie nowych warstw architektonicznych:
+Następne kroki mają charakter dokumentacji użytkowej i doprecyzowania istniejących artefaktów MVP, a nie nowych warstw architektonicznych:
 
 1. przygotować przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”,
 2. dodać przykładowe uruchomienie scenariuszy healthy/disorder/lesion z istniejących konfiguracji,
