@@ -415,7 +415,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 
 **Cel:** powiązanie mechanizmów mikro z zachowaniem makro.
 
-**MVP istnieje:** istnieje demo `snn_hippocampus_demo` z jednym
+**MVP istnieje:** istnieje pilotaż `snn_hippocampus_demo` z jednym
 obwodem HIP oraz raportem `snn_comparison`, które dokumentują kontrakt
 wymiany sygnałów i porównanie raportowe bez pełnego sprzężenia zwrotnego.
 
@@ -427,18 +427,18 @@ wymiany sygnałów i porównanie raportowe bez pełnego sprzężenia zwrotnego.
 - [`brain_core/analysis/reports.py`](brain_core/analysis/reports.py)
 
 **Zakres prac:**
-- Integracja 1–2 obwodów spiking (np. hipokamp, PFC-BG).
+- Przejść z porównania raportowego do sprzężenia zwrotnego wpływającego na
+  trajektorię neural-mass w trakcie symulacji.
 - Synchronizacja kroków czasowych z warstwą neural mass.
 - Porównanie jakościowe efektów.
 
 **Pozostały zakres:**
-- Przejść z porównania raportowego do sprzężenia zwrotnego wpływającego na
-  trajektorię neural-mass w trakcie symulacji.
 - Udokumentować synchronizację kroków czasowych i porównanie jakościowe efektów.
-- Po pełnym feedback-loop dla jednego obwodu dodać zadania wdrożenia backendów:
-  - NEST
-  - NEURON
-  - Arbor
+- Po pełnym feedback-loop dla jednego obwodu dodać osobne zadania wdrożenia
+  backendów jako kolejny etap:
+  - Backend NEST dla dużych sieci SNN.
+  - Backend NEURON/NetPyNE dla modeli biofizycznych.
+  - Backend Arbor dla symulacji wielkoskalowych/HPC.
 
 ---
 
