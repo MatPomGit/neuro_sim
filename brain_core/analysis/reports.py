@@ -432,12 +432,13 @@ def build_roving_oddball_report(
         }
 
     surprise_values = [
-        float(result.get("surprise_index", 0.0)) for result in trial_results
+        float(val) if (val := result.get("surprise_index")) is not None else 0.0
+        for result in trial_results
     ]
     readaptation_values = [
-        float(result.get("readaptation_latency", 0.0))
+        float(val)
         for result in trial_results
-        if float(result.get("readaptation_latency", 0.0)) > 0.0
+        if (val := result.get("readaptation_latency")) is not None and float(val) > 0.0
     ]
     habituation_deltas: list[float] = []
     previous_by_run: dict[int, float] = {}
