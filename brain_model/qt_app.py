@@ -40,7 +40,12 @@ from .qt_config import (
     load_config,
     save_config,
 )
-from .qt_results import QtPlotPanel, apply_run_result
+from .qt_results import (
+    ClinicalProfilePanel,
+    EventTimelinePanel,
+    QtPlotPanel,
+    apply_run_result,
+)
 from .qt_runner import SimulationWorker
 from .qt_sections import QtSections
 from .qt_styles import apply_qt_styles
@@ -174,6 +179,7 @@ class BrainModelQtWindow(QMainWindow):
             {
                 "start_simulation": self.start_simulation,
                 "show_status": self.show_status,
+                "show_clinical_profile": self.show_clinical_profile,
             },
         )
         self._build_menu()
@@ -213,8 +219,12 @@ class BrainModelQtWindow(QMainWindow):
         self.setCentralWidget(self.tabs)
         config_tab = QWidget()
         plots_tab = QWidget()
+        timeline_tab = QWidget()
+        clinical_tab = QWidget()
         self.tabs.addTab(config_tab, "Konfiguracja")
         self.tabs.addTab(plots_tab, "Wykresy")
+        self.tabs.addTab(timeline_tab, "Oś czasu zdarzeń")
+        self.tabs.addTab(clinical_tab, "Profil kliniczny")
 
         root = QVBoxLayout(config_tab)
         header = QLabel("Laboratorium symulacji modelu poznawczego")
@@ -269,6 +279,14 @@ class BrainModelQtWindow(QMainWindow):
         plots_layout = QVBoxLayout(plots_tab)
         self.plot_panel = QtPlotPanel()
         plots_layout.addWidget(self.plot_panel)
+
+        timeline_layout = QVBoxLayout(timeline_tab)
+        self.event_timeline_panel = EventTimelinePanel()
+        timeline_layout.addWidget(self.event_timeline_panel)
+
+        clinical_layout = QVBoxLayout(clinical_tab)
+        self.clinical_profile_panel = ClinicalProfilePanel()
+        clinical_layout.addWidget(self.clinical_profile_panel)
 
     def open_brain_params_dialog(self) -> None:
         """Otwórz okno ustawień globalnych parametrów modelu poznawczego."""
@@ -327,8 +345,14 @@ class BrainModelQtWindow(QMainWindow):
         self.status_label.setText("Przywrócono wartości domyślne.")
         self.progress.setValue(0)
         self.summary_label.setText("")
+        self.event_timeline_panel.set_events([])
+        self.clinical_profile_panel.set_profile({})
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
+
+    def show_clinical_profile(self, profile: dict[str, Any]) -> None:
+        """Pokaż podgląd profilu klinicznego odczytanego z konfiguracji YAML."""
+        self.clinical_profile_panel.set_profile(profile)
 
     def show_status(self, message: str) -> None:
         """Pokaż neutralny komunikat statusu użytkownika w głównym oknie."""
@@ -371,7 +395,7 @@ class BrainModelQtWindow(QMainWindow):
 
     def on_simulation_result(self, payload: object) -> None:
         """Przenieś wynik symulacji do etykiet statusu i panelu wykresów."""
-        if not isinstance(payload, tuple) or len(payload) != 9:
+        if not isinstance(payload, tuple) or len(payload) < 9:
             self.on_simulation_error("Worker zwrócił niepoprawny wynik symulacji.")
             return
         result = payload
@@ -380,6 +404,9 @@ class BrainModelQtWindow(QMainWindow):
         self.status_label.setText(str(result[0]))
         self.summary_label.setText(str(result[1]))
         self.progress.setValue(100)
+        if len(result) >= 11:
+            self.event_timeline_panel.set_events(result[9])
+            self.clinical_profile_panel.set_profile(result[10])
         self.tabs.setCurrentIndex(1 if has_plots else 0)
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)

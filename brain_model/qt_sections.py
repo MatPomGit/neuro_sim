@@ -23,6 +23,12 @@ from PySide6.QtWidgets import (
 
 from .gui_forms import COMMAND_LABELS, COMMAND_VALUES, PARAMETER_DESCRIPTIONS
 from .gui_state import GuiState
+from .qt_config import (
+    label_for_scenario_yaml_path,
+    load_scenario_yaml_config,
+    scenario_yaml_path_for_label,
+    scenario_yaml_preset_labels,
+)
 from .scenarios import get_scenario, list_scenarios
 
 DEFAULT_PLOTS = {
@@ -158,6 +164,7 @@ def write_combo_box(control: QComboBox, value: object) -> None:
 
 CONTROL_BINDINGS: dict[str, tuple[ControlBinding, ...]] = {
     "quick_start": (
+        ControlBinding("scenario_config_path", "scenario_config_combo", "combo_box"),
         ControlBinding("scenario", "scenario_combo", "combo_box"),
         ControlBinding("T", "T_edit", "line_edit"),
         ControlBinding("save_results", "save_results_check", "check_box"),
@@ -219,6 +226,20 @@ class QtSections:
         )
         hint.setObjectName("hintLabel")
         layout.addRow(hint)
+
+        self.scenario_config_combo = QComboBox()
+        self.scenario_config_combo.addItems(scenario_yaml_preset_labels())
+        self.scenario_config_combo.setCurrentText(
+            label_for_scenario_yaml_path(self.state.scenario_config_path)
+        )
+        self.scenario_config_combo.setToolTip(
+            "Gotowa konfiguracja YAML ładowana przez silnik brain_core."
+        )
+        layout.addRow("konfiguracja YAML", self.scenario_config_combo)
+
+        apply_yaml_button = QPushButton("Zastosuj konfigurację YAML")
+        apply_yaml_button.clicked.connect(self.apply_scenario_yaml_config)
+        layout.addRow(apply_yaml_button)
 
         self.scenario_combo = QComboBox()
         self.scenario_combo.addItems(list_scenarios())
@@ -365,6 +386,8 @@ class QtSections:
             value = read_combo_box(control)
             if binding.state_field == "command":
                 return COMMAND_VALUES.get(value, value)
+            if binding.state_field == "scenario_config_path":
+                return str(scenario_yaml_path_for_label(value))
             return value
         raise ValueError(f"Nieobsługiwany typ kontrolki: {binding.control_kind}")
 
@@ -381,6 +404,8 @@ class QtSections:
         value = getattr(self.state, binding.state_field)
         if binding.state_field == "command":
             value = COMMAND_LABELS.get(value, value)
+        if binding.state_field == "scenario_config_path":
+            value = label_for_scenario_yaml_path(str(value))
         if binding.control_kind == "line_edit":
             write_line_edit(control, value)
             return
@@ -400,7 +425,9 @@ class QtSections:
 
         for binding in CONTROL_BINDINGS[group_name]:
             if hasattr(self, binding.control_name):
-                setattr(self.state, binding.state_field, self._read_bound_control(binding))
+                setattr(
+                    self.state, binding.state_field, self._read_bound_control(binding)
+                )
 
     def _sync_controls_from_binding_group(self, group_name: str) -> None:
         """Przepisz wartości jednej grupy pól stanu GUI do kontrolek Qt.
@@ -467,6 +494,35 @@ class QtSections:
         self.sync_plot_selection_controls_from_state()
         self.sync_plot_preset_from_checks(mark_custom=False)
         self.refresh_scenario_details()
+
+    def apply_scenario_yaml_config(self) -> None:
+        """Wczytaj wybraną konfigurację YAML i przepisz jej bezpieczne pola do GUI."""
+        selected_path = scenario_yaml_path_for_label(
+            self.scenario_config_combo.currentText()
+        )
+        config = load_scenario_yaml_config(selected_path)
+        scenario_id = str(config.task.get("scenario", self.state.scenario))
+        if scenario_id in list_scenarios():
+            write_combo_box(self.scenario_combo, scenario_id)
+        write_line_edit(self.T_edit, config.task.get("duration", self.state.T))
+        write_line_edit(self.dt_edit, config.timestep)
+        write_line_edit(self.seed_edit, config.seed)
+        write_check_box(self.auto_dt_check, False)
+        write_check_box(
+            self.save_results_check, config.output.get("save_results", False)
+        )
+        self.state.scenario_config_path = str(selected_path)
+        self.state.T = read_line_edit(self.T_edit)
+        self.state.dt = read_line_edit(self.dt_edit)
+        self.state.seed = read_line_edit(self.seed_edit)
+        self.state.auto_dt = read_check_box(self.auto_dt_check)
+        self.state.save_results = read_check_box(self.save_results_check)
+        profile_callback = self.callbacks.get("show_clinical_profile")
+        if profile_callback is not None:
+            profile_callback(dict(config.clinical_profile))
+        status_callback = self.callbacks.get("show_status")
+        if status_callback is not None:
+            status_callback("Zastosowano konfigurację YAML scenariusza.")
 
     def refresh_scenario_details(self) -> None:
         """Odśwież opis aktualnie wybranego scenariusza."""

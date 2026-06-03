@@ -21,3 +21,13 @@ output:
   save_results: false
   label: roving_oddball_healthy
   output_dir: outputs
+clinical_profile:
+  id: healthy_v1
+  display_name: Zdrowy profil bazowy v1
+  mechanism: Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.
+  affected_regions: []
+  cognitive_functions:
+    - kontrola poznawcza
+    - uwaga
+    - pamięć robocza
+  expected_effects: {}
