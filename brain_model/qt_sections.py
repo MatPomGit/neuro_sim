@@ -235,6 +235,9 @@ class QtSections:
         self.scenario_config_combo.setToolTip(
             "Gotowa konfiguracja YAML ładowana przez silnik brain_core."
         )
+        self.scenario_config_combo.currentTextChanged.connect(
+            lambda _text: self.apply_scenario_yaml_config()
+        )
         layout.addRow("konfiguracja YAML", self.scenario_config_combo)
 
         apply_yaml_button = QPushButton("Zastosuj konfigurację YAML")
@@ -245,7 +248,7 @@ class QtSections:
         self.scenario_combo.addItems(list_scenarios())
         self.scenario_combo.setCurrentText(self.state.scenario)
         self.scenario_combo.setToolTip(PARAMETER_DESCRIPTIONS["scenario"])
-        self.scenario_combo.currentTextChanged.connect(self.refresh_scenario_details)
+        self.scenario_combo.currentTextChanged.connect(self.on_scenario_changed)
         layout.addRow("scenariusz", self.scenario_combo)
 
         self.T_edit = QLineEdit(self.state.T)
@@ -524,18 +527,38 @@ class QtSections:
         if status_callback is not None:
             status_callback("Zastosowano konfigurację YAML scenariusza.")
 
+    def on_scenario_changed(self, _scenario_id: str) -> None:
+        """Odśwież opis i automatyczny czas po zmianie scenariusza.
+
+        Parameters
+        ----------
+        _scenario_id:
+            Identyfikator scenariusza przekazany przez sygnał Qt. Wartość jest
+            odczytywana bezpośrednio z kontrolki, aby zachować spójność z
+            ręcznym i programowym wyborem scenariusza.
+        """
+
+        self.refresh_scenario_details()
+        self.apply_suggested_duration(show_status=False)
+
     def refresh_scenario_details(self) -> None:
         """Odśwież opis aktualnie wybranego scenariusza."""
         scenario = get_scenario(self.scenario_combo.currentText())
         self.scenario_details_label.setText(f"{scenario.name}: {scenario.description}")
 
-    def apply_suggested_duration(self) -> None:
-        """Ustaw czas symulacji zgodnie z podpowiedzią wybranego scenariusza."""
+    def apply_suggested_duration(self, show_status: bool = True) -> None:
+        """Ustaw czas symulacji zgodnie z podpowiedzią wybranego scenariusza.
+
+        Parameters
+        ----------
+        show_status:
+            Gdy `True`, pokaż komunikat statusu po ręcznym użyciu przycisku.
+        """
         current_scenario_id = self.scenario_combo.currentText()
         scenario = get_scenario(current_scenario_id)
         if scenario.duration_hint is None:
             status_callback = self.callbacks.get("show_status")
-            if status_callback is not None:
+            if show_status and status_callback is not None:
                 status_callback("Wybrany scenariusz nie ma sugerowanego czasu.")
             return
         write_line_edit(self.T_edit, scenario.duration_hint)
@@ -544,7 +567,7 @@ class QtSections:
         self.state.T = read_line_edit(self.T_edit)
         self.state.dt = read_line_edit(self.dt_edit)
         status_callback = self.callbacks.get("show_status")
-        if status_callback is not None:
+        if show_status and status_callback is not None:
             status_callback("Ustawiono sugerowany czas scenariusza.")
 
     def toggle_advanced_options(self, checked: bool) -> None:

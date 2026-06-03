@@ -154,7 +154,9 @@ def build_engine_config(
     """Zbuduj konfigurację silnika z YAML albo minimalnego dokumentu generowanego przez GUI."""
     if state.scenario_config_path:
         raw_config = load_scenario_yaml_document(state.scenario_config_path)
-        raw_config.setdefault("task", {})["duration"] = T
+        task_config = raw_config.setdefault("task", {})
+        task_config["scenario"] = state.scenario
+        task_config["duration"] = T
         raw_config["timestep"] = dt
         raw_config["seed"] = seed
         raw_config.setdefault("output", {})["save_results"] = state.save_results
