@@ -55,9 +55,7 @@ def _classify_clinical_difference(
     """
     thresholds = dict(DEFAULT_CLINICAL_SEVERITY_THRESHOLDS)
     if severity_thresholds:
-        thresholds.update(
-            {key: float(v) for key, v in severity_thresholds.items()}
-        )
+        thresholds.update({key: float(v) for key, v in severity_thresholds.items()})
 
     if value >= thresholds["large"]:
         return "duża różnica"
@@ -228,7 +226,15 @@ class AnalysisReport:
             lines.append(
                 f"- **regiony SNN**: {', '.join(snn_comparison.get('regions') or [])}"
             )
-            lines.append(f"- **tryb SNN**: {snn_comparison.get('mode', 'n/a')}")
+            lines.append(
+                f"- **żądany tryb SNN**: "
+                f"{snn_comparison.get('requested_mode', 'n/a')}"
+            )
+            computed_modes = snn_comparison.get("computed_modes") or []
+            lines.append(
+                f"- **policzone warianty**: "
+                f"{', '.join(computed_modes) if computed_modes else 'n/a'}"
+            )
             lines.append(f"- **sync_dt [s]**: {snn_comparison.get('sync_dt_s', 'n/a')}")
             lines.append(
                 f"- **maksymalna amplituda sprzężenia**: "
@@ -446,7 +452,11 @@ class AnalysisReport:
                     "value": str(snn_comparison.get("status_pl", "n/a")),
                 }
             )
-            for metadata_name in ("mode", "sync_dt_s", "max_feedback_amplitude"):
+            for metadata_name in (
+                "requested_mode",
+                "sync_dt_s",
+                "max_feedback_amplitude",
+            ):
                 rows.append(
                     {
                         "section": "snn_comparison",
@@ -454,6 +464,13 @@ class AnalysisReport:
                         "value": str(snn_comparison.get(metadata_name, "n/a")),
                     }
                 )
+            rows.append(
+                {
+                    "section": "snn_comparison",
+                    "metric": "computed_modes",
+                    "value": ",".join(snn_comparison.get("computed_modes") or []),
+                }
+            )
             mode_metrics = snn_comparison.get("mode_metrics") or {}
             if mode_metrics:
                 for mode_name, regions in mode_metrics.items():

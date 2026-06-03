@@ -37,7 +37,7 @@ Na dzień 2026-06-02 status nie jest prognozą wdrożenia, tylko krótką oceną
 | Clinical profiles | `partial` | Katalog `configs/clinical_profiles/*.yaml`, integracja ze schematem konfiguracji, lesion i scenariuszami porównawczymi. | Interpretacje dydaktyczne, progi jakościowe różnic, raport amplitude-latency-mechanism i walidacja względem benchmarków. |
 | Timeline | `partial` | `event_timeline` w `brain_core/simulation/events.py` jest integrowany z silnikiem w `brain_core/simulation/engine.py` oraz raportami, a jego działanie weryfikują testy w `tests/test_task_protocols_and_engine.py`. | Jednolity format dla wszystkich symulacji, widok trial-by-trial, filtrowanie zdarzeń, grupowanie per trial, eksport HTML/PDF, linkowanie zdarzeń z wykresami i objaśnienia per profil kliniczny. |
 | Benchmark metadata | `partial` | `data/validation/benchmark_metadata.json` oraz walidacja metadanych w `brain_core/analysis/benchmark_loader.py`. | Jawne kryteria zgodności dla każdego benchmarku, źródła literaturowe/empiryczne i raport wersyjny. |
-| SNN demo | `partial` | `configs/snn_hippocampus_demo.yaml`, adapter NM↔SNN, silnik wieloskalowy i opis demo. | Pełne sprzężenie zwrotne wpływające na trajektorię neural-mass, synchronizacja kroków i backendy NEST/NEURON/Arbor. |
+| SNN demo | `partial` | `closed_loop` jest istniejącym MVP: `configs/snn_hippocampus_demo.yaml`, `brain_core/simulation/engine.py`, `brain_core/simulation/signal_adapter.py`, `brain_core/simulation/multiscale_engine.py` i opis demo. | Walidacja stabilności closed-loop, porównanie kosztu `report_only` vs `closed_loop`, pełniejszy backend biologiczny oraz integracja NEST/NEURON/Arbor. |
 
 ### Zrealizowane milestone’y
 
@@ -417,29 +417,35 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 **Cel:** powiązanie mechanizmów mikro z zachowaniem makro.
 
 **MVP istnieje:** istnieje pilotaż `snn_hippocampus_demo` z jednym
-obwodem HIP oraz raportem `snn_comparison`, które dokumentują kontrakt
-wymiany sygnałów i porównanie raportowe bez pełnego sprzężenia zwrotnego.
+obwodem HIP; tryb `closed_loop` jest działającym MVP obok wariantu
+`report_only`. Raport `snn_comparison` dokumentuje kontrakt wymiany sygnałów,
+tryb żądany oraz faktycznie policzone warianty porównawcze.
 
 **Artefakty implementacyjne:**
 - [`configs/snn_hippocampus_demo.yaml`](configs/snn_hippocampus_demo.yaml)
 - [`docs/snn_cosimulation_demo.md`](docs/snn_cosimulation_demo.md)
+- [`brain_core/simulation/engine.py`](brain_core/simulation/engine.py)
 - [`brain_core/simulation/signal_adapter.py`](brain_core/simulation/signal_adapter.py)
 - [`brain_core/simulation/multiscale_engine.py`](brain_core/simulation/multiscale_engine.py)
 - [`brain_core/analysis/reports.py`](brain_core/analysis/reports.py)
 
 **Zakres prac:**
-- Przejść z porównania raportowego do sprzężenia zwrotnego wpływającego na
-  trajektorię neural-mass w trakcie symulacji.
-- Synchronizacja kroków czasowych z warstwą neural mass.
-- Porównanie jakościowe efektów.
+- Walidacja stabilności wariantu `closed_loop` w dłuższych i bardziej
+  zróżnicowanych scenariuszach.
+- Porównanie kosztu obliczeniowego `report_only` vs `closed_loop`.
+- Pełniejszy backend biologiczny oraz integracja NEST/NEURON/Arbor.
+
+**Akceptacja:**
+- Raport pokazuje osobno baseline, report-only SNN i closed-loop SNN wraz z
+  długościami sygnałów i amplitudą feedbacku.
 
 **Pozostały zakres:**
-- Udokumentować synchronizację kroków czasowych i porównanie jakościowe efektów.
-- Po pełnym feedback-loop dla jednego obwodu dodać osobne zadania wdrożenia
-  backendów jako kolejny etap:
-  - Backend NEST dla dużych sieci SNN.
-  - Backend NEURON/NetPyNE dla modeli biofizycznych.
-  - Backend Arbor dla symulacji wielkoskalowych/HPC.
+- Zweryfikować stabilność `closed_loop` w dłuższych scenariuszach i przy
+  różnych profilach klinicznych.
+- Porównać koszt obliczeniowy `report_only` vs `closed_loop` na tym samym
+  zadaniu, ziarnie i czasie symulacji.
+- Rozwinąć pełniejszy backend biologiczny oraz integrację NEST, NEURON/PyNE i
+  Arbor dla większych modeli.
 
 ---
 
