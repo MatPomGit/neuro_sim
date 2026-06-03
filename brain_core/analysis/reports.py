@@ -68,9 +68,10 @@ def _classify_clinical_difference(
 
 def _describe_observed_direction(signed_difference: float) -> str:
     """Opisuje kierunek zmiany aktywności względem profilu referencyjnego."""
-    if signed_difference > 0.0:
+    tol = 1e-7
+    if signed_difference > tol:
         return "wzrost aktywności"
-    if signed_difference < 0.0:
+    if signed_difference < -tol:
         return "spadek aktywności"
     return "bez zmian aktywności"
 
