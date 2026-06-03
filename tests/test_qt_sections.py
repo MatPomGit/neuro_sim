@@ -136,6 +136,26 @@ def _omitted_gui_state_fields() -> set[str]:
     }
 
 
+def test_write_bound_control_blocks_signals_during_programmatic_sync() -> None:
+    """Programowa synchronizacja kontrolek blokuje sygnały i przywraca ich stan."""
+    from unittest.mock import MagicMock
+    from brain_model.qt_sections import ControlBinding, QtSections
+    from brain_model.gui_state import GuiState
+
+    state = GuiState(seed="42")
+    sections = QtSections(state, {})
+    mock_control = MagicMock()
+    mock_control.blockSignals.return_value = False
+    sections.seed_edit = mock_control
+
+    binding = ControlBinding("seed", "seed_edit", "line_edit")
+    sections._write_bound_control(binding)
+
+    mock_control.blockSignals.assert_any_call(True)
+    mock_control.blockSignals.assert_any_call(False)
+    mock_control.setText.assert_called_once_with("42")
+
+
 def test_gui_state_fields_are_bound_or_consciously_omitted() -> None:
     """Każde pole `GuiState` ma mapowanie kontrolki albo jawne uzasadnienie pominięcia."""
     gui_state_fields = {field.name for field in fields(GuiState)}
