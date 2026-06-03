@@ -437,7 +437,7 @@ wymiany sygnałów i porównanie raportowe bez pełnego sprzężenia zwrotnego.
 - Po pełnym feedback-loop dla jednego obwodu dodać osobne zadania wdrożenia
   backendów jako kolejny etap:
   - Backend NEST dla dużych sieci SNN.
-  - Backend NEURON/NetPyNE dla modeli biokomórkowych.
+  - Backend NEURON/NetPyNE dla modeli biofizycznych.
   - Backend Arbor dla symulacji wielkoskalowych/HPC.
 
 ---
