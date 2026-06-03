@@ -140,8 +140,8 @@ class CouplingSignalAdapter:
         ValueError
             Gdy wzmocnienie lub amplituda są niepoprawne.
         """
-        if max_abs_amplitude <= 0:
-            raise ValueError("max_abs_amplitude musi być > 0")
+        if not np.isfinite(max_abs_amplitude) or max_abs_amplitude <= 0:
+            raise ValueError("max_abs_amplitude musi być skończoną liczbą > 0")
 
         regional_activity = self.spike_summary_to_regional_activity(
             snn_output=snn_output,
