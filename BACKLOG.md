@@ -33,8 +33,8 @@ Na dzień 2026-06-02 status nie jest prognozą wdrożenia, tylko krótką oceną
 
 | Funkcja | Status | MVP istnieje | Pozostały zakres |
 | --- | --- | --- | --- |
-| `roving_oddball` | `partial` | Artefakty MVP istnieją w `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml` i `configs/roving_oddball_lesion_hippocampus.yaml`; obejmują generator sekwencji, aliasy taska i testy reprodukowalności. | Dokumentacja użytkowa: przewodnik dydaktyczny, przykład uruchomienia, interpretacja raportu oraz walidacja metryk habituacji/readaptacji. |
-| Clinical profiles | `partial` | Katalog `configs/clinical_profiles/*.yaml`, integracja ze schematem konfiguracji, lesion i scenariuszami porównawczymi. | Interpretacje dydaktyczne, progi jakościowe różnic, raport amplitude-latency-mechanism i walidacja względem benchmarków. |
+| `roving_oddball` | `partial` | Artefakty MVP istnieją w `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml`, `configs/roving_oddball_lesion_hippocampus.yaml` i `docs/roving_oddball_guide.md`; obejmują generator sekwencji, aliasy taska, testy reprodukowalności i przewodnik dydaktyczny. | Walidacja metryk habituacji/readaptacji, porównanie profili healthy/disorder/lesion oraz raport amplitude-latency-mechanism. |
+| Clinical profiles | `partial` | Katalog `configs/clinical_profiles/*.yaml`, integracja z `brain_core/simulation/config_schema.py`, raportowanie w `brain_core/analysis/reports.py`, lesion i scenariusze porównawcze; obejmuje progi jakościowe różnic i podstawowe komentarze dydaktyczne. | Walidacja profili względem benchmarków, kalibracja progów oraz raport specyficzny dla `roving_oddball` amplitude-latency-mechanism. |
 | Timeline | `partial` | `event_timeline` w `brain_core/simulation/events.py` jest integrowany z silnikiem w `brain_core/simulation/engine.py` oraz raportami, a jego działanie weryfikują testy w `tests/test_task_protocols_and_engine.py`. | Jednolity format dla wszystkich symulacji, widok trial-by-trial, filtrowanie zdarzeń, grupowanie per trial, eksport HTML/PDF, linkowanie zdarzeń z wykresami i objaśnienia per profil kliniczny. |
 | Benchmark metadata | `partial` | `data/validation/benchmark_metadata.json` oraz walidacja metadanych w `brain_core/analysis/benchmark_loader.py`. | Jawne kryteria zgodności dla każdego benchmarku, źródła literaturowe/empiryczne i raport wersyjny. |
 | SNN demo | `partial` | `configs/snn_hippocampus_demo.yaml`, adapter NM↔SNN, silnik wieloskalowy i opis demo. | Pełne sprzężenie zwrotne wpływające na trajektorię neural-mass, synchronizacja kroków i backendy NEST/NEURON/Arbor. |
@@ -48,7 +48,7 @@ odróżnić działający artefakt od kompletnego zakresu badawczego.
 
 | Milestone | Status | Główne pliki | Testy | Pozostałe ograniczenia |
 | --- | --- | --- | --- | --- |
-| Taski poznawcze `stroop`, `go_nogo`, `n_back`, `roving_oddball` | `partial` | [`brain_core/experiments/protocols.py`](brain_core/experiments/protocols.py), [`brain_model/stimuli.py`](brain_model/stimuli.py), [`configs/stroop.yaml`](configs/stroop.yaml), [`configs/go_nogo.yaml`](configs/go_nogo.yaml), [`configs/n_back.yaml`](configs/n_back.yaml), [`configs/roving_oddball_healthy.yaml`](configs/roving_oddball_healthy.yaml), [`configs/roving_oddball_disorder_gaba.yaml`](configs/roving_oddball_disorder_gaba.yaml), [`configs/roving_oddball_lesion_hippocampus.yaml`](configs/roving_oddball_lesion_hippocampus.yaml) | [`tests/test_task_protocols_and_engine.py`](tests/test_task_protocols_and_engine.py), [`tests/test_task_stimulus_player.py`](tests/test_task_stimulus_player.py) | Dostępne są podstawowe protokoły i konfiguracje demonstracyjne; artefakty MVP `roving_oddball` już istnieją, a następne kroki dokumentacji użytkowej obejmują przewodnik dydaktyczny, przykładowe uruchomienie i interpretację raportu oraz walidację kliniczną wzorców. |
+| Taski poznawcze `stroop`, `go_nogo`, `n_back`, `roving_oddball` | `partial` | [`brain_core/experiments/protocols.py`](brain_core/experiments/protocols.py), [`brain_model/stimuli.py`](brain_model/stimuli.py), [`configs/stroop.yaml`](configs/stroop.yaml), [`configs/go_nogo.yaml`](configs/go_nogo.yaml), [`configs/n_back.yaml`](configs/n_back.yaml), [`configs/roving_oddball_healthy.yaml`](configs/roving_oddball_healthy.yaml), [`configs/roving_oddball_disorder_gaba.yaml`](configs/roving_oddball_disorder_gaba.yaml), [`configs/roving_oddball_lesion_hippocampus.yaml`](configs/roving_oddball_lesion_hippocampus.yaml) | [`tests/test_task_protocols_and_engine.py`](tests/test_task_protocols_and_engine.py), [`tests/test_task_stimulus_player.py`](tests/test_task_stimulus_player.py) | Dostępne są podstawowe protokoły, konfiguracje demonstracyjne i przewodnik dydaktyczny `roving_oddball`; dalszy zakres obejmuje walidację metryk habituacji/readaptacji, porównanie profili healthy/disorder/lesion oraz raport amplitude-latency-mechanism. |
 | Moduł uszkodzeń `lesions.py` | `partial` | [`brain_core/experiments/lesions.py`](brain_core/experiments/lesions.py), [`brain_model/scenarios/library.py`](brain_model/scenarios/library.py), [`brain_model/scenarios/types.py`](brain_model/scenarios/types.py) | [`tests/test_lesions.py`](tests/test_lesions.py), [`tests/test_task_protocols_and_engine.py`](tests/test_task_protocols_and_engine.py) | Obecny zakres wspiera scenariusze ogniskowe/sieciowe i integrację z taskami, ale katalog profili klinicznych, interpretacje dydaktyczne oraz raport różnic region-czas-funkcja pozostają niepełne. |
 | Raport benchmarkowy | `partial` | [`brain_core/analysis/reports.py`](brain_core/analysis/reports.py), [`brain_core/analysis/benchmark_loader.py`](brain_core/analysis/benchmark_loader.py), [`brain_core/simulation/engine.py`](brain_core/simulation/engine.py), [`data/validation/eeg_target.csv`](data/validation/eeg_target.csv), [`data/validation/fmri_target.csv`](data/validation/fmri_target.csv), [`data/validation/behavior_target.csv`](data/validation/behavior_target.csv) | [`tests/test_observation_and_analysis.py`](tests/test_observation_and_analysis.py), [`tests/test_signal_metrics_modules.py`](tests/test_signal_metrics_modules.py) | Raport potrafi agregować metryki i porównania referencyjne, ale nie zastępuje pełnego raportu dydaktycznego z kompletną osią trial-by-trial, wykresami i interpretacją profili z `docs/todo.md`. |
 | Metryki analityczne EEG/BOLD/zachowanie | `partial` | [`brain_core/analysis/signal_metrics.py`](brain_core/analysis/signal_metrics.py), [`brain_core/analysis/spectral.py`](brain_core/analysis/spectral.py), [`brain_core/analysis/phase_locking.py`](brain_core/analysis/phase_locking.py), [`brain_core/analysis/connectivity.py`](brain_core/analysis/connectivity.py), [`brain_core/analysis/information_flow.py`](brain_core/analysis/information_flow.py), [`brain_core/physiology/eeg_forward_model.py`](brain_core/physiology/eeg_forward_model.py), [`brain_core/physiology/bold_hrf.py`](brain_core/physiology/bold_hrf.py), [`brain_core/physiology/neurovascular_coupling.py`](brain_core/physiology/neurovascular_coupling.py) | [`tests/test_signal_metrics_modules.py`](tests/test_signal_metrics_modules.py), [`tests/test_observation_and_analysis.py`](tests/test_observation_and_analysis.py) | Dostępne są metryki sygnałowe i fasada kompatybilności, ale integracja z raportami EEG/BOLD, wykresami, progami jakości i porównaniami wielu profili nadal wymaga domknięcia. |
@@ -65,9 +65,9 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 4. **Konektom z opóźnieniami P1** — Status: `partial`. potwierdzić co najmniej dwa eksperymenty oparte na `brain_core/anatomy/*`, `brain_core/networks/*` i danych `data/connectomes/*`; uzupełnić mapowanie poznawcze regionów.
 5. **Stabilizacja neural mass P1** — Status: `partial`. zweryfikować scenariusze >50 regionów dla `brain_core/populations/wilson_cowan.py`, doprecyzować zakresy parametrów i sanity checks.
 6. **Neuromodulacja P1** — Status: `partial`. domknąć spójne API profili DA/5-HT/ACh/NA/GABA/glutaminian oraz dodać raport pre/post pokazujący różnice czasowo-przestrzenne.
-7. **Scenariusze healthy/disorder/lesion P1** — Status: `partial`. rozbudować katalog profili klinicznych i uszkodzeń, a następnie rozszerzyć automatyczny raport różnic o region, czas, funkcję poznawczą i komentarz dydaktyczny.
+7. **Scenariusze healthy/disorder/lesion P1** — Status: `partial`. istniejący katalog profili klinicznych i uszkodzeń zawiera progi jakościowe różnic oraz podstawowe komentarze dydaktyczne; priorytetem pozostaje walidacja profili względem benchmarków, kalibracja progów i raport specyficzny dla `roving_oddball` amplitude-latency-mechanism.
 8. **Biblioteka tasków P2** — Status: `partial`. ujednolicić istniejące protokoły `stroop`, `go_nogo`, `n_back` i API w `brain_core/experiments/protocols.py`; przygotować wspólne szablony raportów per task.
-9. **Roving oddball P2** — Status: `partial`. istniejący pakiet MVP obejmuje generator sekwencji, konfiguracje healthy/disorder/lesion i testy reprodukowalności; priorytetem pozostaje dokumentacja użytkowa: przewodnik dydaktyczny, przykładowe uruchomienie oraz interpretacja raportu i metryk habituacji/novelty/readaptacji.
+9. **Roving oddball P2** — Status: `partial`. istniejący pakiet MVP obejmuje generator sekwencji, konfiguracje healthy/disorder/lesion, testy reprodukowalności i przewodnik dydaktyczny; priorytetem pozostaje walidacja metryk habituacji/readaptacji, porównanie profili healthy/disorder/lesion oraz raport amplitude-latency-mechanism.
 10. **Raporty EEG/BOLD P2** — Status: `partial`. połączyć metryki z `brain_core/analysis/*` i `brain_core/physiology/*` w raportach z wykresami, interpretacją i porównaniem profili.
 11. **Migracja desktopowego GUI na PySide6 P2** — Status: `partial`. domknąć przejście nowych
     przepływów desktopowych z `tkinter`/`TkAgg` na PySide6/Qt, zachowując
@@ -245,7 +245,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 ### 7. Scenariusze porównawcze healthy vs disorder vs lesion
 **Status:** `partial`
 
-**Artefakty implementacyjne:** `configs/clinical_profiles/*.yaml`, `brain_core/simulation/config_schema.py`, `brain_core/simulation/engine.py`, `brain_core/analysis/reports.py`, `brain_core/experiments/lesions.py`, `brain_model/scenarios/library.py`, `brain_model/scenarios/types.py`, `tests/test_lesions.py`, `tests/test_task_protocols_and_engine.py`.
+**Artefakty implementacyjne:** `configs/clinical_profiles/*.yaml`, `brain_core/simulation/config_schema.py`, `brain_core/analysis/reports.py`, `brain_core/simulation/engine.py`, `brain_core/experiments/lesions.py`, `brain_model/scenarios/library.py`, `brain_model/scenarios/types.py`, `tests/test_lesions.py`, `tests/test_task_protocols_and_engine.py`.
 
 **Cel:** realizacja kluczowej wartości edukacyjnej i psychiatrycznej.
 
@@ -253,6 +253,8 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 - Katalog `configs/clinical_profiles/*.yaml` zawiera profile healthy, disorder i lesion.
 - `brain_core/simulation/config_schema.py` i `brain_core/simulation/engine.py` obsługują profil kliniczny w konfiguracji.
 - `brain_core/experiments/lesions.py` oraz `brain_model/scenarios/` wspierają scenariusze porównawcze na poziomie MVP.
+- `brain_core/analysis/reports.py` wspiera podstawowe komentarze dydaktyczne w raporcie porównawczym.
+- Profile zawierają progi jakościowe różnic potrzebne do interpretacji wyników porównawczych.
 
 **Zakres prac:**
 - Zestaw profili zaburzeń (np. deficyt dopaminy, dysregulacja GABA, serotonin imbalance).
@@ -273,13 +275,12 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 
 **Akceptacja:**
 - Co najmniej 3 profile kliniczne + 2 typy lesion, każdy z interpretacją dydaktyczną.
+- Każdy profil clinical ma `expected_direction`, `primary_metric`, `severity_level` i komentarz w raporcie porównawczym.
 
 **Pozostały zakres:**
-- Rozszerzyć istniejący katalog profili klinicznych v1.
-- Dodać interpretacje dydaktyczne dla każdego profilu (np. poprzez rozszerzenie schematu w config_schema.py).
-- Zdefiniować progi jakościowe różnic.
-- Dodać raport amplitude-latency-mechanism dla roving oddball.
 - Zweryfikować profile względem benchmarków.
+- Skalibrować progi jakościowe różnic.
+- Dodać raport specyficzny dla `roving_oddball` amplitude-latency-mechanism.
 
 ---
 
@@ -296,7 +297,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 - Zadania uwagowe, pamięciowe, decyzyjne, emocjonalne.
 - Parametryzacja trudności i rodzaju bodźca.
 - Metryki behawioralne i neuronalne.
-- Dokumentacja użytkowa dla istniejących artefaktów MVP `roving_oddball`: przewodnik dydaktyczny, przykładowe uruchomienie i interpretacja raportu.
+- Dalsza walidacja istniejących artefaktów MVP `roving_oddball`: metryki habituacji/readaptacji, porównanie profili healthy/disorder/lesion oraz raport amplitude-latency-mechanism.
 
 **Deliverables:**
 - Biblioteka tasków v1.
@@ -304,16 +305,16 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 
 **Pozostały zakres:**
 - Ujednolicić bibliotekę tasków v1 oraz szablony raportów per task.
-- Uzupełnić istniejący pakiet `roving_oddball` o dokumentację użytkową: przewodnik dydaktyczny, przykładowe uruchomienie oraz interpretację raportu i metryk habituacji/readaptacji.
+- Uzupełnić istniejący pakiet `roving_oddball` o walidację metryk habituacji/readaptacji, porównanie profili healthy/disorder/lesion oraz raport amplitude-latency-mechanism.
 
 ---
 
 ### 8A. Rozwój i dokumentacja roving oddball task (priorytet P1/P2)
 **Status:** `partial`
 
-**Artefakty implementacyjne:** `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml`, `configs/roving_oddball_lesion_hippocampus.yaml`, `tests/test_task_protocols_and_engine.py`.
+**Artefakty implementacyjne:** `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml`, `configs/roving_oddball_lesion_hippocampus.yaml`, `docs/roving_oddball_guide.md`, `tests/test_task_protocols_and_engine.py`.
 
-**Cel:** utrzymanie istniejącego zadania referencyjnego do testów predykcji, nowości i adaptacji oraz doprecyzowanie dokumentacji użytkowej.
+**Cel:** utrzymanie istniejącego zadania referencyjnego do testów predykcji, nowości i adaptacji oraz domknięcie walidacji porównań profili.
 
 **MVP istnieje:**
 - Generator sekwencji bodźców z parametrami:
@@ -330,16 +331,17 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
   - `habituation_level`,
   - `readaptation_latency`.
 - Testy reprodukowalności sekwencji i ładowania konfiguracji scenariuszy.
+- Przewodnik dydaktyczny `docs/roving_oddball_guide.md`: „Roving Oddball — od bodźca do interpretacji”.
 
 **Pozostały zakres:**
-- Dokumentacja użytkowa: przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”.
-- Dokumentacja użytkowa: przykładowe uruchomienie scenariuszy healthy vs disorder vs lesion z istniejących konfiguracji.
-- Dokumentacja użytkowa: interpretacja raportu amplitude-latency-mechanism, różnic E/I i metryk habituacji/readaptacji.
+- Walidacja metryk habituacji/readaptacji.
+- Porównanie profili healthy/disorder/lesion.
+- Raport amplitude-latency-mechanism.
 
 **Deliverables do uzupełnienia:**
-- Przewodnik dydaktyczny „Roving Oddball — od bodźca do interpretacji”.
-- Przykładowe uruchomienie healthy vs disorder vs lesion.
-- Interpretacja raportu i testy regresji zwalidowanych metryk habituacji/readaptacji oraz porównań profili.
+- Testy regresji zwalidowanych metryk habituacji/readaptacji.
+- Porównanie profili healthy/disorder/lesion.
+- Raport amplitude-latency-mechanism.
 
 **Akceptacja:**
 - Ten sam seed i konfiguracja odtwarzają identyczną sekwencję bodźców.
