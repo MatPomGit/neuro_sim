@@ -362,7 +362,7 @@ class AnalysisReport:
                     "value": str(roving_profile_comparison.get("same_sequence", "n/a")),
                 }
             )
-            for profile in roving_profile_comparison.get("profiles", []):
+            for profile in (roving_profile_comparison.get("profiles") or []):
                 profile_id = profile.get("profile_id", "n/a")
                 for metric in (
                     "mean_surprise_index",
