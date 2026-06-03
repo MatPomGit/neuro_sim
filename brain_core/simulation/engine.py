@@ -649,7 +649,7 @@ def run_task_across_clinical_profiles(
         "runs": runs,
         "clinical_difference_report": difference_report.payload,
     }
-    if str(base_config.task.get("name", "")) in {"roving_oddball", "roving-oddball"}:
+    if str(base_config.task.get("name") or "") in {"roving_oddball", "roving-oddball"}:
         roving_profile_comparison = _build_roving_profile_comparison(
             seed=base_config.seed,
             runs=runs,
