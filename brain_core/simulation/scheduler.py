@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 import numpy as np
 
 from .state import SimulationState
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SimulationModule(Protocol):
@@ -135,8 +138,43 @@ class TaskStimulusPlayer:
         if regional_input is None:
             regional_input = stimulus.payload.get("regional_input", {})
         return {
-            region: float(amplitude) for region, amplitude in regional_input.items()
+            region: TaskStimulusPlayer._safe_regional_amplitude(region, amplitude)
+            for region, amplitude in regional_input.items()
         }
+
+    @staticmethod
+    def _safe_regional_amplitude(region: str, raw_value: Any) -> float:
+        """Bezpiecznie zamienia wartość wejścia regionalnego na ``float``.
+
+        Parameters
+        ----------
+        region:
+            Nazwa regionu, dla którego konwertowana jest amplituda wejścia.
+        raw_value:
+            Surowa wartość amplitudy pochodząca z konfiguracji bodźca.
+
+        Returns
+        -------
+        float
+            Skonwertowana amplituda albo ``0.0``, gdy wartość jest pusta lub
+            nie da się jej poprawnie zamienić na liczbę zmiennoprzecinkową.
+        """
+        if raw_value is None:
+            LOGGER.warning(
+                "Pominięto pustą amplitudę wejścia regionalnego dla regionu %s.",
+                region,
+            )
+            return 0.0
+
+        try:
+            return float(raw_value)
+        except (TypeError, ValueError):
+            LOGGER.warning(
+                "Pominięto niepoprawną amplitudę wejścia regionalnego dla regionu %s: %r.",
+                region,
+                raw_value,
+            )
+            return 0.0
 
 
 @dataclass(slots=True)
