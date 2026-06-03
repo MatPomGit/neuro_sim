@@ -247,6 +247,11 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 
 **Artefakty implementacyjne:** `configs/clinical_profiles/*.yaml`, `brain_core/simulation/config_schema.py`, `brain_core/analysis/reports.py`, `brain_core/simulation/engine.py`, `brain_core/experiments/lesions.py`, `brain_model/scenarios/library.py`, `brain_model/scenarios/types.py`, `tests/test_lesions.py`, `tests/test_task_protocols_and_engine.py`.
 
+**Artefakty MVP profili klinicznych:**
+- `configs/clinical_profiles/*.yaml` — wersjonowane profile kliniczne.
+- `brain_core/simulation/config_schema.py` — schemat i integracja profilu klinicznego w konfiguracji.
+- `brain_core/analysis/reports.py` — komentarze dydaktyczne i raport porównawczy.
+
 **Cel:** realizacja kluczowej wartości edukacyjnej i psychiatrycznej.
 
 **MVP istnieje:**
@@ -255,6 +260,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 - `brain_core/experiments/lesions.py` oraz `brain_model/scenarios/` wspierają scenariusze porównawcze na poziomie MVP.
 - `brain_core/analysis/reports.py` wspiera podstawowe komentarze dydaktyczne w raporcie porównawczym.
 - Profile zawierają progi jakościowe różnic potrzebne do interpretacji wyników porównawczych.
+- Podstawowe komentarze dydaktyczne i progi jakościowe różnic są traktowane jako istniejący zakres MVP, a nie jako pozostała praca.
 
 **Zakres prac:**
 - Zestaw profili zaburzeń (np. deficyt dopaminy, dysregulacja GABA, serotonin imbalance).
@@ -279,7 +285,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 
 **Pozostały zakres:**
 - Zweryfikować profile względem benchmarków.
-- Skalibrować progi jakościowe różnic.
+- Skalibrować progi jakościowe różnic względem wyników referencyjnych.
 - Dodać raport specyficzny dla `roving_oddball` amplitude-latency-mechanism.
 
 ---
