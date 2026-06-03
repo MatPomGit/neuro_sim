@@ -455,10 +455,10 @@ def build_roving_oddball_report(
 
     sequence_signature = [
         {
-            "trial_id": int(result.get("trial_id", index)),
-            "condition": str(result.get("condition", "n/a")),
-            "tone_hz": result.get("tone_hz", "n/a"),
-            "is_new_standard": bool(result.get("is_new_standard", False)),
+            "trial_id": int(val) if (val := result.get("trial_id")) is not None else index,
+            "condition": str(val) if (val := result.get("condition")) is not None else "n/a",
+            "tone_hz": result.get("tone_hz") if result.get("tone_hz") is not None else "n/a",
+            "is_new_standard": bool(result.get("is_new_standard")),
         }
         for index, result in enumerate(trial_results)
     ]
