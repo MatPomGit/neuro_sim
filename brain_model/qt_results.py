@@ -38,6 +38,53 @@ from .qt_plotting import QtPlotPanel
 from .scenarios import get_scenario
 
 
+def _extract_tones(
+    roving_report: dict[str, Any],
+    condition: str | None = None,
+    is_new_standard: bool | None = None,
+) -> str:
+    """Wypisz unikalne tony z sygnatury sekwencji raportu roving oddball.
+
+    Parameters
+    ----------
+    roving_report:
+        Sekcja `roving_oddball` raportu analitycznego zwrócona przez silnik.
+    condition:
+        Opcjonalny warunek triala, np. `standard` albo `deviant`.
+    is_new_standard:
+        Opcjonalny filtr triali oznaczonych jako nowy standard po dewiancie.
+
+    Returns
+    -------
+    str
+        Lista maksymalnie czterech unikalnych tonów w Hz albo `n/a`, gdy raport
+        nie zawiera pasujących danych.
+    """
+
+    signature = roving_report.get("sequence_signature", [])
+    if not isinstance(signature, list):
+        return "n/a"
+
+    tones: list[Any] = []
+    for item in signature:
+        if not isinstance(item, dict):
+            continue
+        if condition is not None and item.get("condition") != condition:
+            continue
+        if (
+            is_new_standard is not None
+            and item.get("is_new_standard") is not is_new_standard
+        ):
+            continue
+        tone_hz = item.get("tone_hz", "n/a")
+        if tone_hz not in tones:
+            tones.append(tone_hz)
+
+    if not tones:
+        return "n/a"
+    return ", ".join(f"{tone} Hz" for tone in tones[:4])
+
+
 def apply_run_result(
     plot_panel: QtPlotPanel, state: GuiState, payload: tuple[Any, ...]
 ) -> bool:
