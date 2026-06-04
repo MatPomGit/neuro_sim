@@ -757,21 +757,25 @@ def draw_diagnostics(ax: Any, time: Any, diagnostics: Any) -> Any:
     axes = fig.subplots(2, 1, sharex=True)
     theoretical_ax, neuromodulator_ax = axes
 
-    theoretical_ax.plot(time, diagnostics["prediction_error"], label="błąd predykcji")
-    theoretical_ax.plot(
-        time, diagnostics["gw_ignition"], label="zapłon global workspace"
-    )
-    theoretical_ax.plot(
-        time, diagnostics["dopamine_delta"], label="błąd predykcji nagrody"
-    )
+    for key, label in [
+        ('prediction_error', 'błąd predykcji'),
+        ('gw_ignition', 'zapłon global workspace'),
+        ('dopamine_delta', 'błąd predykcji nagrody'),
+    ]:
+        if diagnostics and key in diagnostics:
+            theoretical_ax.plot(time, diagnostics[key], label=label)
 
-    neuromodulator_ax.plot(time, diagnostics["noradrenaline"], label="noradrenalina")
-    neuromodulator_ax.plot(time, diagnostics["acetylcholine"], label="acetylocholina")
-    neuromodulator_ax.plot(time, diagnostics["serotonin"], label="serotonina")
-    neuromodulator_ax.plot(time, diagnostics["gaba"], label="gaba")
-    neuromodulator_ax.plot(time, diagnostics["glutamate"], label="glutaminian")
-    neuromodulator_ax.plot(time, diagnostics["endorphins"], label="endorfiny")
-    neuromodulator_ax.plot(time, diagnostics["cortisol"], label="kortyzol")
+    for key, label in [
+        ('noradrenaline', 'noradrenalina'),
+        ('acetylcholine', 'acetylocholina'),
+        ('serotonin', 'serotonina'),
+        ('gaba', 'gaba'),
+        ('glutamate', 'glutaminian'),
+        ('endorphins', 'endorfiny'),
+        ('cortisol', 'kortyzol'),
+    ]:
+        if diagnostics and key in diagnostics:
+            neuromodulator_ax.plot(time, diagnostics[key], label=label)
 
     theoretical_ax.set_ylabel("Wartość")
     theoretical_ax.set_title("Zmienne teoretyczne modelu")
