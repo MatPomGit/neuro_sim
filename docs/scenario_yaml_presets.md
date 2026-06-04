@@ -11,6 +11,10 @@ nie konstruuje sekwencji bodźców poza silnikiem symulacji.
 | Roving oddball — zaburzenie GABA | `configs/roving_oddball_disorder_gaba.yaml` | Porównanie wpływu obniżonej inhibicji GABA na szum, stabilność uwagi i odpowiedź na dewiant. |
 | Roving oddball — lezja hipokampa | `configs/roving_oddball_lesion_hippocampus.yaml` | Pokazanie, jak słabsza integracja epizodyczna wpływa na wykrywanie nowości oraz readaptację. |
 | SNN — demo hipokampa | `configs/snn_hippocampus_demo.yaml` | Demonstracja sprzężenia lokalnego obwodu SNN regionu HIP z modelem masowym w trybie closed-loop. |
+| Stroop — osłabienie DLPFC | `configs/scenario_yaml_stroop_dlpfc.yaml` | Lekcja konfliktu poznawczego z osłabioną kontrolą wykonawczą i komunikacją DLPFC–ACC. |
+| Go/No-Go — dysregulacja GABA | `configs/scenario_yaml_go_nogo_gaba.yaml` | Lekcja hamowania reakcji w przeciążeniu sensorycznym z obniżoną inhibicją GABA. |
+| N-back — deficyt dopaminowy | `configs/scenario_yaml_n_back_dopamine.yaml` | Lekcja pamięci roboczej 2-back z kontekstem uczenia nagrody i słabszą modulacją wartościującą. |
+| Stres i regeneracja — serotonina | `configs/scenario_yaml_stress_recovery_serotonin.yaml` | Lekcja epizodu stresu, wygaszania pobudzenia i ostrożniejszego progu decyzji przy zaburzeniu serotoninowym. |
 
 ## Zasady utrzymania
 

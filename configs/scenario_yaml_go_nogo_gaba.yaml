@@ -1,0 +1,40 @@
+model:
+  noise: 0.035
+  decision_threshold: 0.62
+integrator:
+  method: euler
+timestep: 0.005
+seed: 32
+task:
+  name: go_nogo
+  scenario: sensory-overload
+  duration: 30.0
+pathology:
+  enabled: true
+  scenario: reduced_gaba
+  mutations: []
+output:
+  save_results: false
+  label: scenario_yaml_go_nogo_gaba
+  output_dir: outputs
+clinical_profile:
+  id: gaba_dysregulation
+  display_name: Dysregulacja GABA w Go/No-Go
+  mechanism: Obniżona inhibicja zwiększa szum i utrudnia zatrzymanie reakcji w warunkach przeciążenia sensorycznego.
+  affected_regions:
+    - PFC
+    - ATT
+    - MOT
+  cognitive_functions:
+    - hamowanie reakcji
+    - stabilność uwagi
+    - kontrola motoryczna
+  expected_direction: higher_activity
+  primary_metric: mean_abs_difference
+  severity_level:
+    small: 0.0
+    medium: 0.02
+    large: 0.05
+  expected_effects:
+    noise: wyższy poziom szumu aktywacji
+    pathology_scenario: reduced_gaba

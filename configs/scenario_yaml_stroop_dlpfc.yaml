@@ -1,0 +1,38 @@
+model:
+  gw_threshold: 0.68
+  learning_rate_semantic: 0.0025
+integrator:
+  method: euler
+timestep: 0.005
+seed: 31
+task:
+  name: stroop
+  scenario: task-switching
+  duration: 30.0
+pathology:
+  enabled: true
+  scenario: dlpfc_weakening
+  mutations: []
+output:
+  save_results: false
+  label: scenario_yaml_stroop_dlpfc
+  output_dir: outputs
+clinical_profile:
+  id: dlpfc_weakening
+  display_name: Osłabienie DLPFC
+  mechanism: Niższa kontrola wykonawcza i słabsza komunikacja DLPFC–ACC podczas monitorowania konfliktu.
+  affected_regions:
+    - DLPFC
+    - ACC
+    - EXEC
+  cognitive_functions:
+    - kontrola wykonawcza
+    - monitorowanie konfliktu
+  expected_direction: lower_activity
+  primary_metric: mean_abs_difference
+  severity_level:
+    small: 0.0
+    medium: 0.02
+    large: 0.05
+  expected_effects:
+    pathology_scenario: dlpfc_weakening

@@ -30,6 +30,13 @@ SCENARIO_YAML_PRESETS: tuple[tuple[str, Path], ...] = (
         Path("configs/roving_oddball_lesion_hippocampus.yaml"),
     ),
     ("SNN — demo hipokampa", Path("configs/snn_hippocampus_demo.yaml")),
+    ("Stroop — osłabienie DLPFC", Path("configs/scenario_yaml_stroop_dlpfc.yaml")),
+    ("Go/No-Go — dysregulacja GABA", Path("configs/scenario_yaml_go_nogo_gaba.yaml")),
+    ("N-back — deficyt dopaminowy", Path("configs/scenario_yaml_n_back_dopamine.yaml")),
+    (
+        "Stres i regeneracja — serotonina",
+        Path("configs/scenario_yaml_stress_recovery_serotonin.yaml"),
+    ),
 )
 
 SCENARIO_YAML_DESCRIPTIONS: dict[str, str] = {
@@ -49,6 +56,22 @@ SCENARIO_YAML_DESCRIPTIONS: dict[str, str] = {
     "SNN — demo hipokampa": (
         "Demo sprzężenia lokalnego obwodu SNN regionu HIP z modelem masowym; "
         "użyj go do sprawdzenia zamkniętej pętli hipokampa zamiast lekcji roving oddball."
+    ),
+    "Stroop — osłabienie DLPFC": (
+        "Lekcja konfliktu poznawczego Stroop z profilem osłabienia DLPFC; "
+        "pomaga obserwować słabszą kontrolę wykonawczą i komunikację DLPFC–ACC."
+    ),
+    "Go/No-Go — dysregulacja GABA": (
+        "Wariant hamowania reakcji w przeciążeniu sensorycznym. Pokazuje, jak "
+        "obniżona inhibicja GABA zwiększa szum i utrudnia stabilną odpowiedź No-Go."
+    ),
+    "N-back — deficyt dopaminowy": (
+        "Zadanie pamięci roboczej 2-back połączone z kontekstem uczenia nagrody; "
+        "służy do omówienia słabszej modulacji wartościującej i decyzji."
+    ),
+    "Stres i regeneracja — serotonina": (
+        "Scenariusz epizodu stresu oraz wygaszania pobudzenia z profilem "
+        "zaburzonej równowagi serotoninowej i ostrożniejszym progiem decyzji."
     ),
 }
 

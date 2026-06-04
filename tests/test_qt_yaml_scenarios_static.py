@@ -42,6 +42,10 @@ def test_qt_config_exposes_required_yaml_scenario_presets() -> None:
     assert "configs/roving_oddball_disorder_gaba.yaml" in preset_paths
     assert "configs/roving_oddball_lesion_hippocampus.yaml" in preset_paths
     assert "configs/snn_hippocampus_demo.yaml" in preset_paths
+    assert "configs/scenario_yaml_stroop_dlpfc.yaml" in preset_paths
+    assert "configs/scenario_yaml_go_nogo_gaba.yaml" in preset_paths
+    assert "configs/scenario_yaml_n_back_dopamine.yaml" in preset_paths
+    assert "configs/scenario_yaml_stress_recovery_serotonin.yaml" in preset_paths
 
 
 def test_yaml_presets_validate_and_include_clinical_profile_fields() -> None:
@@ -177,6 +181,10 @@ def test_qt_yaml_presets_have_user_facing_descriptions() -> None:
     assert "Profil referencyjny bez patologii" in config_source
     assert "obniżoną inhibicją GABA" in config_source
     assert "uszkodzenia hipokampa" in config_source
+    assert "osłabienia DLPFC" in config_source
+    assert "hamowania reakcji" in config_source
+    assert "deficyt dopaminowy" in config_source
+    assert "równowagi serotoninowej" in config_source
 
 
 def test_teacher_panel_does_not_import_task_protocols() -> None:
