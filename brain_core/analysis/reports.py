@@ -466,6 +466,12 @@ class AnalysisReport:
                 f"- **policzone warianty**: "
                 f"{', '.join(computed_modes) if computed_modes else 'n/a'}"
             )
+            if snn_comparison.get("requested_mode") == "report_only":
+                lines.append(
+                    "- **uwaga porównawcza**: "
+                    "closed_loop_snn jest dodatkowym wariantem porównawczym liczonym "
+                    "także wtedy, gdy żądany tryb SNN to report_only."
+                )
             lines.append(f"- **sync_dt [s]**: {snn_comparison.get('sync_dt_s', 'n/a')}")
             lines.append(
                 f"- **maksymalna amplituda sprzężenia**: "

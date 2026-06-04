@@ -440,6 +440,9 @@ def _run_local_snn_comparison(
             1.0,
         )
 
+    requested_mode = str(config.snn.get("mode", "report_only"))
+    computed_modes = ["baseline", "report_only_snn", "closed_loop_snn"]
+
     closed_loop_activity, feedback_drive = _simulate_closed_loop_snn_activity(
         config=config,
         region_names=region_names,
@@ -450,8 +453,6 @@ def _run_local_snn_comparison(
         raise ValueError("Sygnał sprzężenia closed_loop_snn nie pasuje do baseline")
 
     region_differences: dict[str, dict[str, float]] = {}
-    requested_mode = str(config.snn.get("mode", "report_only"))
-    computed_modes = ["baseline", "report_only_snn", "closed_loop_snn"]
     mode_metrics: dict[str, dict[str, dict[str, float]]] = {
         mode_name: {} for mode_name in computed_modes
     }

@@ -6,7 +6,7 @@ Model nie symuluje pojedynczych neuronów. Reprezentuje aktywność modułów po
 
 ## Aktualny stan i najbliższe prace
 
-Stan projektu na dzień 2026-06-02 jest opisany w `BACKLOG.md`. Backlog rozróżnia statusy `done`, `partial` i `planned`, wskazuje istniejące artefakty implementacyjne dla priorytetów P0–P2 oraz opisuje pozostały zakres dla pozycji częściowo zrealizowanych. Artefakty MVP `roving_oddball` już istnieją w `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml` i `configs/roving_oddball_lesion_hippocampus.yaml`.
+Stan projektu na dzień 2026-06-03 jest opisany w `BACKLOG.md`. Backlog rozróżnia statusy `done`, `partial` i `planned`, wskazuje istniejące artefakty implementacyjne dla priorytetów P0–P2 oraz opisuje pozostały zakres dla pozycji częściowo zrealizowanych. Artefakty MVP `roving_oddball` już istnieją w `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml`, `configs/roving_oddball_lesion_hippocampus.yaml` i `docs/roving_oddball_guide.md`.
 
 Najbliższe zaplanowane prace obejmują:
 
