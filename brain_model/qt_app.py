@@ -43,7 +43,9 @@ from .qt_config import (
 from .qt_results import (
     ClinicalProfilePanel,
     EventTimelinePanel,
+    ObservationPanel,
     QtPlotPanel,
+    RovingOddballQuestionsPanel,
     apply_run_result,
 )
 from .qt_runner import SimulationWorker
@@ -221,10 +223,14 @@ class BrainModelQtWindow(QMainWindow):
         plots_tab = QWidget()
         timeline_tab = QWidget()
         clinical_tab = QWidget()
+        observation_tab = QWidget()
+        questions_tab = QWidget()
         self.tabs.addTab(config_tab, "Konfiguracja")
         self.tabs.addTab(plots_tab, "Wykresy")
         self.tabs.addTab(timeline_tab, "Oś czasu zdarzeń")
         self.tabs.addTab(clinical_tab, "Profil kliniczny")
+        self.tabs.addTab(observation_tab, "Co obserwujesz?")
+        self.tabs.addTab(questions_tab, "Pytania kontrolne")
 
         root = QVBoxLayout(config_tab)
         header = QLabel("Laboratorium symulacji modelu poznawczego")
@@ -288,6 +294,14 @@ class BrainModelQtWindow(QMainWindow):
         self.clinical_profile_panel = ClinicalProfilePanel()
         clinical_layout.addWidget(self.clinical_profile_panel)
 
+        observation_layout = QVBoxLayout(observation_tab)
+        self.observation_panel = ObservationPanel()
+        observation_layout.addWidget(self.observation_panel)
+
+        questions_layout = QVBoxLayout(questions_tab)
+        self.roving_questions_panel = RovingOddballQuestionsPanel()
+        questions_layout.addWidget(self.roving_questions_panel)
+
     def open_brain_params_dialog(self) -> None:
         """Otwórz okno ustawień globalnych parametrów modelu poznawczego."""
         self.sections.sync_state_from_controls()
@@ -347,6 +361,8 @@ class BrainModelQtWindow(QMainWindow):
         self.summary_label.setText("")
         self.event_timeline_panel.set_events([])
         self.clinical_profile_panel.set_profile({})
+        self.observation_panel.set_context([], {}, {})
+        self.roving_questions_panel.set_report({})
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
 
@@ -407,6 +423,9 @@ class BrainModelQtWindow(QMainWindow):
         if len(result) >= 11:
             self.event_timeline_panel.set_events(result[9])
             self.clinical_profile_panel.set_profile(result[10])
+        if len(result) >= 12:
+            self.observation_panel.set_context(result[9], result[10], result[11])
+            self.roving_questions_panel.set_report(result[11])
         self.tabs.setCurrentIndex(1 if has_plots else 0)
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)

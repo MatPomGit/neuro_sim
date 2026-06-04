@@ -262,3 +262,159 @@ class ClinicalProfilePanel(QWidget):
             if isinstance(value, list):
                 value = ", ".join(str(item) for item in value) or "brak"
             label.setText(str(value))
+
+
+class ObservationPanel(QWidget):
+    """Panel nauczyciela „Co obserwujesz?” oparty wyłącznie na wynikach silnika."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Utwórz panel syntetyzujący oś czasu, profil kliniczny i raport roving oddball."""
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        group = QGroupBox("Co obserwujesz?")
+        group_layout = QVBoxLayout(group)
+        hint = QLabel(
+            "Wskazówki są budowane z `event_timeline`, `clinical_profile` oraz "
+            "sekcji `roving_oddball` raportu zwróconego przez run_experiment()."
+        )
+        hint.setWordWrap(True)
+        group_layout.addWidget(hint)
+        self.summary_label = QLabel("Uruchom symulację, aby zobaczyć obserwacje.")
+        self.summary_label.setWordWrap(True)
+        group_layout.addWidget(self.summary_label)
+        layout.addWidget(group)
+        layout.addStretch(1)
+
+    def set_context(
+        self,
+        events: list[dict[str, Any]],
+        clinical_profile: dict[str, Any],
+        analysis_report: dict[str, Any],
+    ) -> None:
+        """Zaktualizuj obserwacje nauczyciela na podstawie gotowych artefaktów.
+
+        Parameters
+        ----------
+        events:
+            Oś czasu zdarzeń zwrócona przez silnik w polu `event_timeline`.
+        clinical_profile:
+            Profil kliniczny odczytany z YAML albo wyniku `run_experiment()`.
+        analysis_report:
+            Raport analityczny zwrócony przez silnik, bez odtwarzania logiki tasków.
+        """
+        roving_report = analysis_report.get("roving_oddball", {})
+        observations = self._build_observations(events, clinical_profile, roving_report)
+        self.summary_label.setText("\n".join(f"• {item}" for item in observations))
+
+    def _build_observations(
+        self,
+        events: list[dict[str, Any]],
+        clinical_profile: dict[str, Any],
+        roving_report: dict[str, Any],
+    ) -> list[str]:
+        """Zbuduj krótkie polskie obserwacje z gotowych wyników eksperymentu."""
+        observations: list[str] = []
+        if events:
+            event_types = sorted(
+                {str(event.get("event_type", "n/a")) for event in events}
+            )
+            observations.append(
+                f"Oś czasu zawiera {len(events)} zdarzeń: {', '.join(event_types)}."
+            )
+        else:
+            observations.append("Oś czasu zdarzeń jest pusta dla bieżącego wyniku.")
+
+        profile_name = clinical_profile.get("display_name") or clinical_profile.get(
+            "id"
+        )
+        if profile_name:
+            mechanism = clinical_profile.get("mechanism", "brak opisu mechanizmu")
+            observations.append(
+                f"Profil kliniczny: {profile_name}; mechanizm: {mechanism}"
+            )
+
+        if roving_report:
+            observations.append(
+                "Roving oddball: standardy={standard}, dewianty={deviant}, "
+                "nowe standardy={new_standard}.".format(
+                    standard=roving_report.get("standard_count", "n/a"),
+                    deviant=roving_report.get("deviant_count", "n/a"),
+                    new_standard=roving_report.get("new_standard_count", "n/a"),
+                )
+            )
+            observations.append(
+                "Habituacja={habituation}, średnia latencja readaptacji={latency}.".format(
+                    habituation=roving_report.get("habituation_rate", "n/a"),
+                    latency=roving_report.get("mean_readaptation_latency", "n/a"),
+                )
+            )
+        return observations
+
+
+class RovingOddballQuestionsPanel(QWidget):
+    """Panel pytań kontrolnych dla lekcji roving oddball z odpowiedziami z raportu."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Utwórz tabelę pytań o standard, dewiant, habituację i readaptację."""
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        hint = QLabel(
+            "Pytania kontrolne korzystają z gotowej sekcji `roving_oddball` raportu; "
+            "GUI nie rekonstruuje sekwencji bodźców ani reguł protokołu."
+        )
+        hint.setWordWrap(True)
+        layout.addWidget(hint)
+        self.table = QTableWidget(0, 2)
+        self.table.setHorizontalHeaderLabels(["pytanie", "odpowiedź z raportu"])
+        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        layout.addWidget(self.table, 1)
+        self.set_report({})
+
+    def set_report(self, analysis_report: dict[str, Any]) -> None:
+        """Odśwież odpowiedzi kontrolne na podstawie raportu `run_experiment()`.
+
+        Parameters
+        ----------
+        analysis_report:
+            Raport analityczny zwrócony przez silnik symulacji.
+        """
+        roving_report = analysis_report.get("roving_oddball", {})
+        rows = self._question_rows(roving_report)
+        self.table.setRowCount(len(rows))
+        for row, (question, answer) in enumerate(rows):
+            for column, value in enumerate((question, answer)):
+                item = QTableWidgetItem(value)
+                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                self.table.setItem(row, column, item)
+        self.table.resizeColumnsToContents()
+
+    def _question_rows(self, roving_report: dict[str, Any]) -> list[tuple[str, str]]:
+        """Zwróć stały zestaw pytań z odpowiedziami wypełnionymi metrykami raportu."""
+        if not roving_report:
+            return [
+                (
+                    "Co jest standardem, dewiantem, habituacją i readaptacją?",
+                    "Uruchom lekcję roving oddball, aby wypełnić odpowiedzi.",
+                )
+            ]
+        return [
+            (
+                "Który bodziec pełni rolę standardu?",
+                f"Raport zliczył {roving_report.get('standard_count', 'n/a')} standardów.",
+            ),
+            (
+                "Który bodziec jest dewiantem?",
+                f"Raport zliczył {roving_report.get('deviant_count', 'n/a')} dewiantów.",
+            ),
+            (
+                "Po czym rozpoznasz habituację?",
+                f"Tempo habituacji w raporcie: {roving_report.get('habituation_rate', 'n/a')}.",
+            ),
+            (
+                "Po czym rozpoznasz readaptację po zmianie standardu?",
+                "Nowe standardy={new_standard}; średnia latencja readaptacji={latency}.".format(
+                    new_standard=roving_report.get("new_standard_count", "n/a"),
+                    latency=roving_report.get("mean_readaptation_latency", "n/a"),
+                ),
+            ),
+        ]

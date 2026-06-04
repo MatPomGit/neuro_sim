@@ -63,6 +63,22 @@ def test_qt_sections_load_yaml_config_instead_of_recreating_task_logic() -> None
     assert "TaskStimulusPlayer" not in source
 
 
+def test_qt_sections_expose_ready_lessons_as_yaml_presets() -> None:
+    """Szybki start pozwala wybrać lekcję bez dopisywania logiki tasków do GUI."""
+    source = _source(QT_SECTIONS_PATH)
+    lesson_source = _function_source(QT_SECTIONS_PATH, "apply_ready_lesson")
+
+    assert "READY_LESSON_PRESETS" in source
+    assert "roving_oddball_intro" in source
+    assert "gaba_disorder_comparison" in source
+    assert "hippocampal_lesion_comparison" in source
+    assert "self.ready_lesson_combo" in source
+    assert (
+        "write_combo_box(self.scenario_config_combo, lesson_config_label)"
+        in lesson_source
+    )
+
+
 def test_qt_runner_delegates_execution_to_brain_core_engine_only() -> None:
     """Worker GUI buduje konfigurację i deleguje wykonanie do `run_experiment`."""
     source = _source(QT_RUNNER_PATH)
@@ -88,3 +104,22 @@ def test_qt_results_have_event_timeline_filter_and_clinical_profile_panel() -> N
     assert "mechanism" in source
     assert "affected_regions" in source
     assert "cognitive_functions" in source
+
+
+def test_qt_results_have_teacher_observation_and_roving_questions_panels() -> None:
+    """Panel nauczyciela bazuje na osi czasu, profilu i raporcie roving oddball."""
+    source = _source(QT_RESULTS_PATH)
+
+    assert "class ObservationPanel" in source
+    assert "Co obserwujesz?" in source
+    assert "event_timeline" in source
+    assert "clinical_profile" in source
+    assert (
+        "analysis_report.get('roving_oddball', {})" in source
+        or 'analysis_report.get("roving_oddball", {})' in source
+    )
+    assert "class RovingOddballQuestionsPanel" in source
+    assert "standard" in source
+    assert "dewiant" in source
+    assert "habituację" in source
+    assert "readaptację" in source
