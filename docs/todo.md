@@ -1,6 +1,6 @@
 # Plan rozwoju biologicznego i wieloskalowego
 
-## Status dokumentu na dzień 2026-06-03
+## Status dokumentu na dzień 2026-06-04
 
 Ten dokument zachowuje szerszy, koncepcyjny plan rozwoju biologicznego modelu. Aktualny stan repozytorium i najbliższe zaplanowane prace są utrzymywane w `BACKLOG.md`, a rzeczywista struktura katalogów jest opisana w `docs/program_structure.md`.
 
@@ -8,7 +8,7 @@ Najbliższy zakres operacyjny obejmuje:
 
 1. domknięcie walidowalnej konfiguracji eksperymentów, osi czasu raportów i baseline `healthy_v1`,
 2. stabilizację konektomu z opóźnieniami, neural mass, neuromodulacji oraz scenariuszy healthy/disorder/lesion,
-3. ujednolicenie biblioteki tasków i rozwijanie referencyjnego `roving_oddball` ponad istniejące MVP,
+3. walidację i dydaktyczne sklejenie referencyjnego `roving_oddball` ponad istniejące MVP,
 4. spięcie metryk EEG/BOLD z raportami interpretacyjnymi,
 5. aktualizację dokumentacji, docstringów, type hints i instrukcji uruchamiania scenariuszy.
 
@@ -33,7 +33,7 @@ dydaktyczny `docs/roving_oddball_guide.md` są dostępne w aktualnym repozytoriu
 **Pozostały zakres:** walidacja metryk habituacji/readaptacji, porównanie
 profili healthy/disorder/lesion oraz raport amplitude-latency-mechanism.
 
-### Clinical profiles
+### Progi clinical profiles
 
 **Status:** `partial`
 
@@ -67,14 +67,15 @@ kompletność tych metadanych.
 **Pozostały zakres:** kryteria zgodności per benchmark, źródła
 literaturowe/empiryczne i raport wersyjny zgodności jakościowej.
 
-### SNN demo
+### `closed_loop` SNN
 
 **Status:** `partial`
 
 **MVP istnieje:** `configs/snn_hippocampus_demo.yaml` oraz
 `docs/snn_cosimulation_demo.md` opisują pilotaż neural-mass + lokalny obwód SNN
 z adapterem sygnałów, porównaniem raportowym oraz działającym wariantem
-`closed_loop`.
+`closed_loop`; aktualny status dotyczy walidacji tego trybu, a nie
+dopiero jego wdrożenia.
 
 **Pozostały zakres:** walidacja stabilności `closed_loop`, porównanie kosztu
 `report_only` vs `closed_loop`, pełniejsza synchronizacja kroków czasowych

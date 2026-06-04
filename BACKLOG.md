@@ -9,7 +9,7 @@ Backlog jest uporządkowany według priorytetów (P0–P3) i gotowości wdrożen
 
 ---
 
-## Stan na dzień 2026-06-03
+## Stan na dzień 2026-06-04
 
 Backlog opisuje zarówno prace przyszłe, jak i obszary już częściowo zaimplementowane. Statusy oznaczają:
 - `done` — zakres pozycji jest domknięty zgodnie z kryteriami akceptacji,
@@ -18,7 +18,7 @@ Backlog opisuje zarówno prace przyszłe, jak i obszary już częściowo zaimple
 
 Najważniejsze istniejące fundamenty obejmują moduły eksperymentów, uszkodzeń i raportowania, m.in. `brain_core/experiments/protocols.py`, `brain_core/experiments/lesions.py` oraz `brain_core/analysis/reports.py`. Dla pozycji P0–P2 wskazano poniżej konkretne artefakty, aby oddzielić zakres już obecny w repozytorium od pozostałych prac.
 
-Na dzień 2026-06-03 status nie jest prognozą wdrożenia, tylko krótką oceną rzeczywistego stanu repozytorium na podstawie powyższych definicji.
+Na dzień 2026-06-04 status nie jest prognozą wdrożenia, tylko krótką oceną rzeczywistego stanu repozytorium na podstawie powyższych definicji.
 
 ### Najbliższe krytyczne ryzyka
 

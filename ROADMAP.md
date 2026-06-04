@@ -2,11 +2,11 @@
 
 ## 1. Status dokumentu
 
-**Stan na dzień:** 2026-06-03
+**Stan na dzień:** 2026-06-04
 **Zakres:** kierunek rozwoju aplikacji, kamienie milowe i zależności między strumieniami prac.
 **Relacja do backlogu:** `BACKLOG.md` pozostaje operacyjną listą zadań, statusów i artefaktów. Ten dokument opisuje szerszą kolejność rozwoju oraz kryteria przejścia między etapami.
 
-Roadmapa zakłada rozwój iteracyjny: ponieważ kluczowe artefakty MVP już istnieją, najbliższy akcent przesuwa się z ich wdrażania na walidację, spójne sklejenie interpretacji dydaktycznej oraz dopięcie raportów porównawczych. Dopiero po tym należy rozszerzać warstwę biologiczną, kliniczną, platformową oraz hybrydy mikro-makro.
+Roadmapa zakłada rozwój iteracyjny: ponieważ kluczowe artefakty MVP już istnieją, najbliższy akcent nie jest położony na samo wdrażanie kolejnych artefaktów MVP, lecz na walidację, sklejenie interpretacji dydaktycznej i dopięcie raportów porównawczych. Dopiero po tym należy rozszerzać warstwę biologiczną, kliniczną, platformową oraz hybrydy mikro-makro.
 
 ---
 
@@ -51,7 +51,7 @@ Docelowy użytkownik powinien móc:
 
 ---
 
-## 4. Stan wyjściowy po przeglądzie 2026-06-03
+## 4. Stan wyjściowy po przeglądzie 2026-06-04
 
 Repozytorium posiada już fundamenty potrzebne do rozwoju roadmapy:
 
@@ -63,7 +63,7 @@ Repozytorium posiada już fundamenty potrzebne do rozwoju roadmapy:
 - `brain_model/` — model poznawczy, scenariusze, GUI, IO, raporty i wizualizacje,
 - `configs/`, `data/`, `tests/` — przykładowe konfiguracje, dane atlasu/konektomu/walidacji oraz testy regresyjne.
 
-Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych:
+Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych dotyczą teraz walidacji i interpretacji, a nie samego tworzenia artefaktów MVP:
 
 1. jeden spójny schemat konfiguracji dla wszystkich eksperymentów,
 2. pełny raport timeline trial-by-trial,
