@@ -38,8 +38,8 @@ SCENARIO_YAML_DESCRIPTIONS: dict[str, str] = {
         "identyfikację standardów, dewiantów, habituacji i readaptacji."
     ),
     "Roving oddball — zaburzenie GABA": (
-        "Ten wariant modeluje profil z obniżoną inhibicją GABA i służy "
-        "do porównania, jak większy "
+        "Ten wariant modeluje profil z obniżoną inhibicją GABA i służy do "
+        "porównania, jak większy "
         "szum oraz niestabilność kontroli przedczołowej zmieniają odpowiedź na dewiant."
     ),
     "Roving oddball — lezja hipokampa": (
