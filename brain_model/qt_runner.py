@@ -17,7 +17,7 @@ from .oscillators import WilsonCowanParams
 from .params import BrainParams
 from .qt_config import load_scenario_yaml_document
 
-RunPayload = tuple[str, str, Any, Any, Any, Any, Any, Any, Any, Any, Any]
+RunPayload = tuple[str, str, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]
 BatchPayload = tuple[list[dict[str, float | int]], dict[str, Any]]
 
 
@@ -97,6 +97,7 @@ def run_simulation(
         result["behavior"],
         result.get("event_timeline", []),
         result.get("clinical_profile", {}),
+        result.get("analysis_report", {}),
     )
 
 

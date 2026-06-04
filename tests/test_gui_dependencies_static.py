@@ -11,6 +11,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 PYPROJECT_PATH = REPO_ROOT / "pyproject.toml"
 REQUIREMENTS_PATH = REPO_ROOT / "requirements.txt"
 ENVIRONMENT_PATH = REPO_ROOT / "environment.yml"
+TEACHER_PANEL_PATHS = (
+    REPO_ROOT / "brain_model" / "qt_results.py",
+    REPO_ROOT / "brain_model" / "qt_sections.py",
+)
 
 
 def _dependency_name(requirement: str) -> str:
@@ -33,3 +37,11 @@ def test_pyside6_is_declared_in_environment_files() -> None:
 
     assert re.search(r"^PySide6\s*>=\s*6\.6", requirements, flags=re.MULTILINE)
     assert re.search(r"^\s*-\s*pyside6\s*>=\s*6\.6", environment, flags=re.MULTILINE)
+
+
+def test_teacher_panels_do_not_import_task_protocols() -> None:
+    """Panel nauczyciela nie importuje protokołów tasków z warstwy `brain_core`."""
+    for path in TEACHER_PANEL_PATHS:
+        source = path.read_text(encoding="utf-8")
+
+        assert "brain_core.experiments.protocols" not in source
