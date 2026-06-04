@@ -38,6 +38,9 @@ else:
     QWidget = Any
 
 
+_qt_widgets_loaded = False
+
+
 from .gui_forms import COMMAND_LABELS, COMMAND_VALUES, PARAMETER_DESCRIPTIONS
 from .gui_state import GuiState
 from .qt_config import (
