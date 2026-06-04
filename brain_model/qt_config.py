@@ -38,11 +38,12 @@ SCENARIO_YAML_DESCRIPTIONS: dict[str, str] = {
         "identyfikację standardów, dewiantów, habituacji i readaptacji."
     ),
     "Roving oddball — zaburzenie GABA": (
-        "Ten wariant obniża inhibicję GABA i służy do porównania, jak większy "
-        "szum oraz niestabilność kontroli przedczołowej zmieniają odpowiedź na dewiant."
+        "Ten wariant modeluje profil z obniżoną inhibicją GABA i służy do "
+        "porównania, jak większy szum oraz niestabilność kontroli przedczołowej "
+        "zmieniają odpowiedź na dewiant."
     ),
     "Roving oddball — lezja hipokampa": (
-        "Ten wariant modeluje uszkodzenie hipokampa i pokazuje, jak słabsza "
+        "Ten wariant modeluje skutki uszkodzenia hipokampa i pokazuje, jak słabsza "
         "integracja epizodyczna wpływa na wykrywanie nowości oraz readaptację."
     ),
     "SNN — demo hipokampa": (
@@ -106,7 +107,8 @@ def scenario_yaml_description_for_label(label: str) -> str:
     """
 
     return SCENARIO_YAML_DESCRIPTIONS.get(
-        label, "Niestandardowa konfiguracja YAML wskazana przez użytkownika."
+        label,
+        "Własna konfiguracja YAML; sprawdź pola task, pathology i clinical_profile.",
     )
 
 

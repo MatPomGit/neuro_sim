@@ -277,7 +277,8 @@ class QtSections:
         self.scenario_config_description_label.setToolTip(
             "Opis wyjaśnia, po co wybrać dany plik YAML i czym różni się od innych."
         )
-        layout.addRow(self.scenario_config_description_label)
+        self.scenario_config_description = self.scenario_config_description_label
+        layout.addRow("po co ten wybór", self.scenario_config_description_label)
 
         apply_yaml_button = QPushButton("Zastosuj konfigurację YAML")
         apply_yaml_button.clicked.connect(self.apply_scenario_yaml_config)
@@ -337,6 +338,7 @@ class QtSections:
             self.apply_scenario_yaml_config()
             return
         write_combo_box(self.scenario_config_combo, lesson_config_label)
+        self.refresh_scenario_config_description()
 
     def build_advanced_options_section(self) -> QWidget:
         """Zbuduj sekcję „Opcje zaawansowane” z parametrami technicznymi."""
@@ -577,6 +579,7 @@ class QtSections:
 
     def apply_scenario_yaml_config(self) -> None:
         """Wczytaj wybraną konfigurację YAML i przepisz jej bezpieczne pola do GUI."""
+        self.refresh_scenario_config_description()
         selected_path = scenario_yaml_path_for_label(
             self.scenario_config_combo.currentText()
         )
@@ -618,6 +621,10 @@ class QtSections:
 
         self.refresh_scenario_details()
         self.apply_suggested_duration(show_status=False)
+
+    def refresh_scenario_yaml_description(self) -> None:
+        """Przestarzała nazwa. Użyj `refresh_scenario_config_description()`."""
+        self.refresh_scenario_config_description()
 
     def refresh_scenario_details(self) -> None:
         """Odśwież opis aktualnie wybranego scenariusza."""

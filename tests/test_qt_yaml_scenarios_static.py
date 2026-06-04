@@ -163,3 +163,34 @@ def test_qt_results_have_teacher_observation_and_roving_questions_panels() -> No
     assert "dewiant" in source
     assert "habituację" in source
     assert "readaptację" in source
+
+
+def test_qt_yaml_presets_have_user_facing_descriptions() -> None:
+    """GUI opisuje po polsku cel każdego wyboru gotowej konfiguracji YAML."""
+    config_source = _source(QT_CONFIG_PATH)
+    sections_source = _source(QT_SECTIONS_PATH)
+
+    assert "SCENARIO_YAML_DESCRIPTIONS" in config_source
+    assert "scenario_yaml_description_for_label" in config_source
+    assert "self.scenario_config_description" in sections_source
+    assert "po co ten wybór" in sections_source
+    assert "Profil referencyjny bez patologii" in config_source
+    assert "obniżoną inhibicją GABA" in config_source
+    assert "uszkodzenia hipokampa" in config_source
+
+
+def test_teacher_panel_does_not_import_task_protocols() -> None:
+    """Panel nauczyciela nie importuje protokołów tasków ani logiki brain_core."""
+    tree = ast.parse(QT_RESULTS_PATH.read_text(encoding="utf-8"))
+    imports = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imports.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module is not None:
+            imports.append(node.module)
+
+    assert "brain_core.experiments.protocols" not in imports
+    assert all(not item.startswith("brain_core.experiments") for item in imports)
+    source = _source(QT_RESULTS_PATH)
+    assert "sequence_signature" in source
+    assert "run_experiment()" in source
