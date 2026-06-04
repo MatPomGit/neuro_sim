@@ -623,7 +623,7 @@ class QtSections:
         self.apply_suggested_duration(show_status=False)
 
     def refresh_scenario_yaml_description(self) -> None:
-        """Zachowaj zgodność wsteczną z wcześniejszą nazwą helpera."""
+        """Przestarzała nazwa. Użyj `refresh_scenario_config_description()`."""
         self.refresh_scenario_config_description()
 
     def refresh_scenario_details(self) -> None:
