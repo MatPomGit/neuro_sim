@@ -9,7 +9,9 @@ from textwrap import fill
 from typing import Any
 
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 
+from .scenarios.types import CHANNELS, StimulusScenario
 from .stimuli import build_stimulus_fn
 
 SVG_ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets" / "svg"
@@ -412,32 +414,69 @@ def _style_lines(ax: Any) -> None:
         line.set_picker(6)
 
 
-def draw_activity(ax: Any, time: Any, activity: Any, names: Any, idx: Any) -> Any:
-    """Opis funkcji draw_activity."""
-    selected = [
-        "VIS",
-        "AUD",
-        "SAL",
-        "ATT",
-        "PHON",
-        "VSWM",
-        "EXEC",
-        "EPIS",
-        "SEM",
-        "HIP",
-        "VAL",
-        "MOT",
-        "DMN",
-        "GW",
-    ]
+ACTIVITY_MODULE_LABELS = [
+    "VIS",
+    "AUD",
+    "SAL",
+    "ATT",
+    "PHON",
+    "VSWM",
+    "EXEC",
+    "EPIS",
+    "SEM",
+    "HIP",
+    "VAL",
+    "MOT",
+    "DMN",
+    "GW",
+]
 
-    for name in selected:
-        ax.plot(time, activity[:, idx[name]], label=name)
 
+def _draw_activity_lines(
+    ax: Axes, time: Any, activity: Any, idx: dict[str, int]
+) -> dict[Any, Any]:
+    """Narysuj linie aktywacji i zwróć mapowanie wpisów legendy na sygnały."""
+    lines_by_label: dict[str, Any] = {}
+    for name in ACTIVITY_MODULE_LABELS:
+        (line,) = ax.plot(time, activity[:, idx[name]], label=name)
+        lines_by_label[name] = line
+
+    legend = ax.legend(ncol=4, fontsize=9)
+    legend_map: dict[Any, Any] = {}
+    if legend is None:
+        return legend_map
+
+    for legend_line, legend_text in zip(legend.get_lines(), legend.get_texts()):
+        label = legend_text.get_text()
+        if label in lines_by_label:
+            legend_line.set_picker(6)
+            legend_line.set_alpha(1.0)
+            legend_map[legend_line] = lines_by_label[label]
+    return legend_map
+
+
+def _connect_activity_legend_picker(fig: Any, legend_map: dict[Any, Any]) -> None:
+    """Podłącz przełączanie widoczności linii przez kliknięcie wpisu legendy."""
+
+    def on_pick(event: Any) -> None:
+        legend_line = event.artist
+        line = legend_map.get(legend_line)
+        if line is None:
+            return
+
+        is_visible = not line.get_visible()
+        line.set_visible(is_visible)
+        legend_line.set_alpha(1.0 if is_visible else 0.25)
+        fig.canvas.draw_idle()
+
+    fig.canvas.mpl_connect("pick_event", on_pick)
+
+
+def _style_activity_axis(ax: Axes) -> None:
+    """Ustaw wspólne etykiety i opis osi aktywacji modułów poznawczych."""
     ax.set_xlabel("Czas symulacji [s]")
     ax.set_ylabel("Aktywacja modułu [0-1]")
     ax.set_title("Mezoskopowa dynamika procesów poznawczych")
-    ax.legend(ncol=4, fontsize=9)
     _add_interpretation_box(
         ax.figure,
         "Co widzisz: każda linia to jeden moduł poznawczy, a skala 0-1 mówi, jak silnie "
@@ -446,8 +485,102 @@ def draw_activity(ax: Any, time: Any, activity: Any, names: Any, idx: Any) -> An
         "modułów, czas utrzymywania aktywacji i relacja z bodźcami scenariusza. Najpierw "
         "sprawdź, który moduł dominuje, kiedy się włącza i czy szybko wygasa.",
     )
+
+
+def draw_activity(ax: Any, time: Any, activity: Any, names: Any, idx: Any) -> Any:
+    """Opis funkcji draw_activity."""
+    legend_map = _draw_activity_lines(ax, time, activity, idx)
+    _style_activity_axis(ax)
+    _connect_activity_legend_picker(ax.figure, legend_map)
     _style_lines(ax)
     return [ax]
+
+
+def draw_activity_with_stimulus_channels(
+    ax: Axes,
+    time: Any,
+    activity: Any,
+    names: list[str],
+    idx: dict[str, int],
+    scenario: StimulusScenario,
+) -> list[Axes]:
+    """Narysuj aktywacje modułów wraz z kanałami bodźców scenariusza.
+
+    Parameters
+    ----------
+    ax:
+        Tymczasowa oś utworzona przez panel Qt; funkcja usuwa ją i zastępuje
+        układem dwóch osi we wspólnej figurze.
+    time:
+        Sekwencja znaczników czasu symulacji w sekundach.
+    activity:
+        Macierz aktywacji modułów o kształcie ``(czas, moduł)``.
+    names:
+        Nazwy modułów modelu, zachowane dla zgodności z innymi funkcjami
+        rysującymi.
+    idx:
+        Mapowanie nazwy modułu na indeks kolumny w macierzy aktywacji.
+    scenario:
+        Scenariusz bodźców używany do odtworzenia kanałów wejściowych.
+
+    Returns
+    -------
+    list[Axes]
+        Lista zawierająca górną oś aktywacji i dolną oś kanałów bodźców.
+    """
+    del names
+    fig = ax.figure
+    ax.remove()
+    activity_ax, stimulus_ax = fig.subplots(
+        2, 1, sharex=True, gridspec_kw={"height_ratios": [5, 1]}
+    )
+
+    legend_map = _draw_activity_lines(activity_ax, time, activity, idx)
+    _style_activity_axis(activity_ax)
+    _style_lines(activity_ax)
+    _connect_activity_legend_picker(fig, legend_map)
+
+    draw_scenario_channels(stimulus_ax, time, scenario)
+
+    time_start = float(time[0])
+    time_end = float(time[-1])
+
+    def synchronize_stimulus_xlim(changed_ax: Axes) -> None:
+        stimulus_ax.set_xlim(changed_ax.get_xlim())
+        fig.canvas.draw_idle()
+
+    def on_scroll(event: Any) -> None:
+        if event.inaxes is not activity_ax and event.inaxes is not activity_ax.xaxis:
+            return
+        if event.xdata is None:
+            return
+
+        left, right = activity_ax.get_xlim()
+        width = right - left
+        if width <= 0:
+            return
+
+        event_step = getattr(event, "step", 0)
+        scale_factor = 0.8 if event.button == "up" or event_step > 0 else 1.25
+        new_width = min(time_end - time_start, max(width * scale_factor, 1e-9))
+        cursor_ratio = (float(event.xdata) - left) / width
+        new_left = float(event.xdata) - cursor_ratio * new_width
+        new_right = new_left + new_width
+
+        if new_left < time_start:
+            new_left = time_start
+            new_right = time_start + new_width
+        if new_right > time_end:
+            new_right = time_end
+            new_left = time_end - new_width
+
+        activity_ax.set_xlim(new_left, new_right)
+        stimulus_ax.set_xlim(new_left, new_right)
+        fig.canvas.draw_idle()
+
+    activity_ax.callbacks.connect("xlim_changed", synchronize_stimulus_xlim)
+    fig.canvas.mpl_connect("scroll_event", on_scroll)
+    return [activity_ax, stimulus_ax]
 
 
 def draw_simulated_brain_activity(
@@ -757,10 +890,7 @@ def draw_eeg_modules(
 def draw_scenario_channels(ax: Any, time: Any, scenario: Any) -> Any:
     """Opis funkcji draw_scenario_channels."""
     stim = build_stimulus_fn(scenario)
-    series = {
-        k: []
-        for k in ["visual", "auditory", "task_cue", "threat", "reward", "interoceptive"]
-    }
+    series = {k: [] for k in CHANNELS}
     for t in time:
         u = stim(float(t))
         for k in series:
