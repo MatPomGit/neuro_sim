@@ -551,7 +551,7 @@ def draw_activity_with_stimulus_channels(
         fig.canvas.draw_idle()
 
     def on_scroll(event: Any) -> None:
-        if event.inaxes is not activity_ax and event.inaxes is not activity_ax.xaxis:
+        if event.inaxes not in (activity_ax, activity_ax.xaxis, stimulus_ax, stimulus_ax.xaxis):
             return
         if event.xdata is None:
             return
