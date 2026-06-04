@@ -76,8 +76,8 @@ def _extract_tones(
             and item.get("is_new_standard") is not is_new_standard
         ):
             continue
-        tone_hz = item.get("tone_hz", "n/a")
-        if tone_hz not in tones:
+        tone_hz = item.get("tone_hz")
+        if tone_hz is not None and tone_hz != "n/a" and tone_hz not in tones:
             tones.append(tone_hz)
 
     if not tones:
