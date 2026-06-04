@@ -357,7 +357,7 @@ def _resolve_validation_compliance_rows(
         tę sekcję, funkcja zwraca ją bez ponownego odczytu rejestru.
     """
     existing_rows = payload.get("validation_compliance")
-    if existing_rows:
+    if existing_rows is not None:
         return list(existing_rows)
 
     benchmark_metadata = payload.get("benchmark_metadata")
