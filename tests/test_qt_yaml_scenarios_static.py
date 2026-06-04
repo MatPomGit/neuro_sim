@@ -99,6 +99,8 @@ def test_qt_sections_describe_each_yaml_configuration() -> None:
     assert all(SCENARIO_YAML_DESCRIPTIONS[label] for label in preset_labels)
     assert "self.scenario_config_description_label" in source
     assert "scenario_yaml_description_for_label(selected_label)" in description_source
+    assert "scenario_yaml_path_for_label(selected_label)" in description_source
+    assert "Plik YAML" in description_source
 
 
 def test_advanced_batch_scenarios_are_not_a_duplicate_quick_start_choice() -> None:
@@ -111,6 +113,7 @@ def test_advanced_batch_scenarios_are_not_a_duplicate_quick_start_choice() -> No
     assert "scenariusze serii (batch)" in advanced_source
     assert "Tylko dla trybu serii" in advanced_source
     assert "Nie zmienia pojedynczego scenariusza z sekcji Szybki start" in source
+    assert "To nie jest drugi wybór scenariusza" in advanced_source
 
 
 def test_teacher_panels_do_not_import_task_protocols() -> None:
