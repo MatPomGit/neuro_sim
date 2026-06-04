@@ -37,6 +37,9 @@ class QtPlotPanel(QTabWidget):
         draw_func: Callable[..., Any],
         *args: Any,
         figsize: tuple[float, float] = (11, 6),
+        controls_factory: (
+            Callable[[FigureCanvasQTAgg, list[Any]], QWidget | None] | None
+        ) = None,
         **kwargs: Any,
     ) -> None:
         """Dodaj zakładkę z figurą utworzoną przez niezależną funkcję rysującą."""
@@ -53,6 +56,10 @@ class QtPlotPanel(QTabWidget):
         _attach_line_tooltips(fig, axes)
         toolbar = NavigationToolbar2QT(canvas, container)
         layout.addWidget(toolbar)
+        if controls_factory is not None:
+            controls_widget = controls_factory(canvas, list(axes))
+            if controls_widget is not None:
+                layout.addWidget(controls_widget)
         layout.addWidget(canvas)
         canvas.draw()
 

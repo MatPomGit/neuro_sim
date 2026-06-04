@@ -99,7 +99,49 @@ def test_draw_behavior_uses_two_axes_and_decision_time_annotations() -> None:
     )
     assert "window_ax.set_xlim(0.0, 1.0)" in source
     assert 'f"t={float(decision_time):.2f} s"' in source
-    assert "target_ax.annotate(" in source
+    assert "full_ax.annotate(" in source
+    assert "window_ax.annotate(" in source
     assert "_style_lines(full_ax)" in source
     assert "_style_lines(window_ax)" in source
     assert "return [full_ax, window_ax]" in source
+
+
+def test_activity_plot_combines_activation_and_stimulus_channels() -> None:
+    """Sprawdź statycznie układ aktywacji z kanałami bodźców i przewijaniem."""
+    source = PLOTTING_PATH.read_text(encoding="utf-8")
+
+    assert "def draw_activity_with_stimulus_channels" in source
+    assert "fig.subplots(" in source
+    assert "sharex=True" in source
+    assert 'gridspec_kw={"height_ratios": [5, 1]}' in source
+    assert 'activity_ax.callbacks.connect("xlim_changed"' in source
+    assert 'fig.canvas.mpl_connect("scroll_event"' in source
+    assert "CHANNELS" in source
+    assert "build_stimulus_fn(scenario)" in source
+
+
+def test_activity_plot_has_legend_visibility_selector() -> None:
+    """Sprawdź statycznie przełączanie sygnałów aktywacji przez legendę."""
+    source = PLOTTING_PATH.read_text(encoding="utf-8")
+
+    assert "legend_line.set_picker" in source
+    assert "line.set_visible(is_visible)" in source
+    assert "legend_line.set_alpha" in source
+    assert 'fig.canvas.mpl_connect("pick_event"' in source
+
+
+def test_qt_activity_controls_and_scenario_are_bound() -> None:
+    """Sprawdź statycznie kontrolki osi Y i przekazanie scenariusza aktywacji."""
+    plotting_source = QT_PLOTTING_PATH.read_text(encoding="utf-8")
+    results_source = QT_RESULTS_PATH.read_text(encoding="utf-8")
+
+    assert "controls_factory" in plotting_source
+    assert "draw_activity_with_stimulus_channels" in results_source
+    assert "get_scenario(state.scenario)" in results_source
+    assert "controls_factory=_create_activity_controls" in results_source
+    assert 'QPushButton("Autoskaluj Y aktywacji")' in results_source
+    assert 'QPushButton("Skala Y: liniowa")' in results_source
+    assert 'scale_button.setText("Skala Y: logarytmiczna")' in results_source
+    assert "activity_axis.relim()" in results_source
+    assert "activity_axis.autoscale_view(scalex=False, scaley=True)" in results_source
+    assert "QMessageBox.warning" in results_source
