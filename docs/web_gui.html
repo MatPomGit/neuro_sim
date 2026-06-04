@@ -88,6 +88,7 @@
       margin-top: 12px;
     }
     .plot { width: 100%; height: 430px; border-top: 1px solid var(--line); margin-top: 14px; padding-top: 10px; }
+    #behaviorPlot { height: 620px; }
     .small { color: var(--muted); font-size: 12px; margin-top: 10px; }
     .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 12px; }
     .toolbar button { padding: 8px 10px; font-size: 12px; }
@@ -225,7 +226,7 @@
     <div class="tabs">
       <button class="tab active" data-target="activityPlot">Aktywacje</button>
       <button class="tab" data-target="diagPlot">Diagnostyka</button>
-      <button class="tab" data-target="behaviorPlot">Behavior</button>
+      <button class="tab" data-target="behaviorPlot">Zachowanie</button>
       <button class="tab" data-target="eegPlot">EEG</button>
       <button class="tab" data-target="bandPlot">Pasma</button>
       <button class="tab" data-target="brainHeatPlot">Mapa</button>
@@ -607,7 +608,7 @@ const plotCheckboxIds = ["plot_activity","plot_diagnostics","plot_behavior","plo
 const plotDivIds = ["activityPlot", "diagPlot", "behaviorPlot", "eegPlot", "bandPlot", "brainHeatPlot", "brainProjPlot", "region2dPlot", "weightsPlot", "deltasPlot", "scenarioChannelsPlot", "scenarioTimelinePlot"];
 const plotKeyById = {plot_activity: "activity", plot_diagnostics: "diagnostics", plot_behavior: "behavior", plot_eeg: "eeg", plot_bands: "band_power", plot_simulated_brain_activity: "simulated_brain_activity", plot_brain_region_projections: "brain_region_projections", plot_region_activity_2d: "region_activity_2d", plot_weight_trajectories: "weight_trajectories", plot_weight_deltas: "weight_deltas", plot_scenario_channels: "scenario_channels", plot_scenario_timeline: "scenario_timeline"};
 const plotIdByKey = Object.fromEntries(Object.entries(plotKeyById).map(([id, key]) => [key, id]));
-const plotTitles = {activityPlot: "Aktywacje", diagPlot: "Diagnostyka", behaviorPlot: "Behavior", eegPlot: "EEG", bandPlot: "Pasma", brainHeatPlot: "Mapa aktywności", brainProjPlot: "Rzuty SVG", region2dPlot: "Regiony 2D", weightsPlot: "Wagi", deltasPlot: "Przyrosty wag", scenarioChannelsPlot: "Kanały bodźców", scenarioTimelinePlot: "Oś czasu"};
+const plotTitles = {activityPlot: "Aktywacje", diagPlot: "Diagnostyka", behaviorPlot: "Zachowanie", eegPlot: "EEG", bandPlot: "Pasma", brainHeatPlot: "Mapa aktywności", brainProjPlot: "Rzuty SVG", region2dPlot: "Regiony 2D", weightsPlot: "Wagi", deltasPlot: "Przyrosty wag", scenarioChannelsPlot: "Kanały bodźców", scenarioTimelinePlot: "Oś czasu"};
 
 async function applyGuiDefaults() {
   try {
@@ -907,6 +908,77 @@ function makeLayout(title, ytitle) {
     plot_bgcolor: "white"
   };
 }
+
+function makeBehaviorPlot(time, behavior) {
+  const fullTraces = Object.entries(behavior || {}).map(([name, arr]) => ({
+    x: time,
+    y: arr,
+    mode: name === "decision_event" ? "markers" : "lines",
+    name
+  }));
+  const limitIndex = time.findIndex(t => t > 1.0);
+  const endIdx = limitIndex === -1 ? time.length : limitIndex;
+  const windowTime = time.slice(0, endIdx);
+  const windowTraces = Object.entries(behavior || {}).map(([name, arr]) => ({
+    x: windowTime,
+    y: arr.slice(0, endIdx),
+    mode: name === "decision_event" ? "markers" : "lines",
+    name: name + " (0–1 s)",
+    xaxis: "x2",
+    yaxis: "y2",
+    showlegend: false
+  }));
+  const decisionEvents = behavior?.decision_event || [];
+  const annotations = [];
+  for (let index = 0; index < decisionEvents.length; index += 1) {
+    if (!decisionEvents[index] || index >= time.length) continue;
+    const decisionTime = Number(time[index]);
+    if (isNaN(decisionTime)) continue;
+    const decisionValue = Number(decisionEvents[index]);
+    const text = "t=" + decisionTime.toFixed(2) + " s";
+    annotations.push({
+      x: decisionTime,
+      y: decisionValue,
+      text,
+      xref: "x",
+      yref: "y",
+      showarrow: true,
+      arrowhead: 2,
+      ax: 0,
+      ay: -24,
+      font: {size: 11, color: "#7f1d1d"},
+      arrowcolor: "#7f1d1d"
+    });
+    if (decisionTime >= 0.0 && decisionTime <= 1.0) {
+      annotations.push({
+        x: decisionTime,
+        y: decisionValue,
+        text,
+        xref: "x2",
+        yref: "y2",
+        showarrow: true,
+        arrowhead: 2,
+        ax: 0,
+        ay: -24,
+        font: {size: 11, color: "#7f1d1d"},
+        arrowcolor: "#7f1d1d"
+      });
+    }
+  }
+  const layout = makeLayout("Przebiegi decyzyjne i markery decyzji", "wartość");
+  layout.margin = { l: 52, r: 20, t: 54, b: 54 };
+  layout.xaxis = { title: "czas [s]", zeroline: false, domain: [0, 1], anchor: "y" };
+  layout.yaxis = { title: "wartość", zeroline: false, domain: [0.44, 1.0], anchor: "x" };
+  layout.xaxis2 = { title: "czas [s]", zeroline: false, range: [0, 1], domain: [0, 1], anchor: "y2" };
+  layout.yaxis2 = { title: "wartość", zeroline: false, domain: [0.0, 0.30], anchor: "x2" };
+  layout.annotations = [
+    {text: "Pełny przebieg", x: 0, y: 1.08, xref: "paper", yref: "paper", showarrow: false, xanchor: "left", font: {size: 12}},
+    {text: "Wycinek 0–1 s", x: 0, y: 0.35, xref: "paper", yref: "paper", showarrow: false, xanchor: "left", font: {size: 12}},
+    ...annotations
+  ];
+  return {traces: [...fullTraces, ...windowTraces], layout};
+}
+
 function drawResults(res) {
   const plots = selectedPlots();
   const time = res.time;
@@ -917,7 +989,6 @@ function drawResults(res) {
     return { x: time, y: res.activity.map(row => row[j]), mode: "lines", name };
   });
   const diagTraces = Object.entries(res.diagnostics).map(([name, arr]) => ({ x: time, y: arr, mode: "lines", name }));
-  const behaviorTraces = Object.entries(res.behavior || {}).map(([name, arr]) => ({ x: time, y: arr, mode: name === "decision_event" ? "markers" : "lines", name }));
   const eegSelected = ["HIP", "EPIS", "VIS", "AUD", "EXEC", "ATT", "SEM", "GW"];
   const eegTraces = eegSelected.map(name => {
     const j = names.indexOf(name);
@@ -974,8 +1045,10 @@ function drawResults(res) {
   else Plotly.purge("activityPlot");
   if (plots.diagnostics) Plotly.newPlot("diagPlot", diagTraces, makeLayout("Zmienne diagnostyczne i neuromodulacyjne", "wartość"), {responsive: true});
   else Plotly.purge("diagPlot");
-  if (plots.behavior) Plotly.newPlot("behaviorPlot", behaviorTraces, makeLayout("Przebiegi decyzyjne i markery decyzji", "wartość"), {responsive: true});
-  else Plotly.purge("behaviorPlot");
+  if (plots.behavior) {
+    const behaviorPlot = makeBehaviorPlot(time, res.behavior || {});
+    Plotly.newPlot("behaviorPlot", behaviorPlot.traces, behaviorPlot.layout, {responsive: true});
+  } else Plotly.purge("behaviorPlot");
   if (plots.eeg) Plotly.newPlot("eegPlot", eegTraces, makeLayout("Sygnały EEG aproksymowane jako E-I", "E-I"), {responsive: true});
   else Plotly.purge("eegPlot");
   if (plots.bands) Plotly.newPlot("bandPlot", bandTraces, makeLayout("Moc pasm oscylacyjnych", "moc"), {responsive: true});

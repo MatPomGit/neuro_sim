@@ -8,6 +8,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 PLOTTING_PATH = REPO_ROOT / "brain_model" / "plotting.py"
 QT_PLOTTING_PATH = REPO_ROOT / "brain_model" / "qt_plotting.py"
 QT_RESULTS_PATH = REPO_ROOT / "brain_model" / "qt_results.py"
+WEB_GUI_PATH = REPO_ROOT / "docs" / "web_gui.html"
 
 
 def test_plotting_module_does_not_import_tk_matplotlib_backend() -> None:
@@ -104,6 +105,31 @@ def test_draw_behavior_uses_two_axes_and_decision_time_annotations() -> None:
     assert "_style_lines(full_ax)" in source
     assert "_style_lines(window_ax)" in source
     assert "return [full_ax, window_ax]" in source
+
+
+def test_web_behavior_plot_uses_full_and_one_second_panels() -> None:
+    """Sprawdź, że webowy wykres zachowania ma pełny panel i wycinek 0-1 s."""
+    source = WEB_GUI_PATH.read_text(encoding="utf-8")
+
+    assert "function makeBehaviorPlot(time, behavior)" in source
+    assert (
+        'layout.xaxis2 = { title: "czas [s]", zeroline: false, range: [0, 1]' in source
+    )
+    assert (
+        'layout.yaxis = { title: "wartość", zeroline: false, domain: [0.44, 1.0]'
+        in source
+    )
+    assert (
+        'layout.yaxis2 = { title: "wartość", zeroline: false, domain: [0.0, 0.30]'
+        in source
+    )
+    assert "const text = `t=${decisionTime.toFixed(2)} s`;" in source
+    assert 'xref: "x2"' in source
+    assert (
+        'Plotly.newPlot("behaviorPlot", behaviorPlot.traces, behaviorPlot.layout'
+        in source
+    )
+    assert "#behaviorPlot { height: 620px; }" in source
 
 
 def test_activity_plot_combines_activation_and_stimulus_channels() -> None:
