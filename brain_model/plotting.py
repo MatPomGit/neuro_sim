@@ -438,8 +438,9 @@ def _draw_activity_lines(
     """Narysuj linie aktywacji i zwróć mapowanie wpisów legendy na sygnały."""
     lines_by_label: dict[str, Any] = {}
     for name in ACTIVITY_MODULE_LABELS:
-        (line,) = ax.plot(time, activity[:, idx[name]], label=name)
-        lines_by_label[name] = line
+        if name in idx:
+            (line,) = ax.plot(time, activity[:, idx[name]], label=name)
+            lines_by_label[name] = line
 
     legend = ax.legend(ncol=4, fontsize=9)
     legend_map: dict[Any, Any] = {}
