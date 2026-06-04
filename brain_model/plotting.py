@@ -951,17 +951,25 @@ def draw_scenario_timeline(ax: Any, time: Any, scenario: Any) -> Any:
 
 
 def draw_behavior(ax: Any, time: Any, behavior: Any) -> Any:
-    """Opis funkcji draw_behavior."""
-    ax.plot(time, behavior["decision_score"], label="decision score", color="#1f77b4")
-    ax.plot(
+    """Narysuj pełne i powiększone przebiegi decyzyjne modelu."""
+    fig = ax.figure
+    ax.remove()
+    axes = fig.subplots(2, 1, sharex=False, gridspec_kw={"height_ratios": [3, 1]})
+    full_ax, window_ax = axes
+
+    full_ax.plot(
+        time, behavior["decision_score"], label="decision score", color="#1f77b4"
+    )
+    full_ax.plot(
         time, behavior["confidence"], label="confidence", color="#2ca02c", alpha=0.9
     )
-    ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.5)
+    full_ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.5)
 
-    decision_times = time[behavior["decision_event"]]
-    decision_scores = behavior["decision_score"][behavior["decision_event"]]
+    decision_mask = behavior["decision_event"]
+    decision_times = time[decision_mask]
+    decision_scores = behavior["decision_score"][decision_mask]
     if len(decision_times):
-        ax.scatter(
+        full_ax.scatter(
             decision_times,
             decision_scores,
             marker="o",
@@ -969,13 +977,73 @@ def draw_behavior(ax: Any, time: Any, behavior: Any) -> Any:
             label="decision event",
             zorder=3,
         )
+        for decision_time, decision_score in zip(decision_times, decision_scores):
+            full_ax.annotate(
+                f"t={float(decision_time):.2f} s",
+                xy=(decision_time, decision_score),
+                xytext=(0, 8),
+                textcoords="offset points",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+                color="#7f1d1d",
+            )
 
-    ax.set_xlabel("Czas symulacji [s]")
-    ax.set_ylabel("Skala decyzyjna")
-    ax.set_title("Przebiegi decyzyjne i punkty decyzji")
-    ax.legend()
+    time_window_mask = (time >= 0.0) & (time <= 1.0)
+    window_ax.plot(
+        time[time_window_mask],
+        behavior["decision_score"][time_window_mask],
+        label="decision score",
+        color="#1f77b4",
+    )
+    window_ax.plot(
+        time[time_window_mask],
+        behavior["confidence"][time_window_mask],
+        label="confidence",
+        color="#2ca02c",
+        alpha=0.9,
+    )
+    window_ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.5)
+
+    window_decision_mask = decision_mask & time_window_mask
+    window_decision_times = time[window_decision_mask]
+    window_decision_scores = behavior["decision_score"][window_decision_mask]
+    if len(window_decision_times):
+        window_ax.scatter(
+            window_decision_times,
+            window_decision_scores,
+            marker="o",
+            color="#d62728",
+            label="decision event",
+            zorder=3,
+        )
+        for decision_time, decision_score in zip(
+            window_decision_times, window_decision_scores
+        ):
+            window_ax.annotate(
+                f"t={float(decision_time):.2f} s",
+                xy=(decision_time, decision_score),
+                xytext=(0, 8),
+                textcoords="offset points",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+                color="#7f1d1d",
+            )
+
+    full_ax.set_xlabel("Czas symulacji [s]")
+    full_ax.set_ylabel("Skala decyzyjna")
+    full_ax.set_title("Przebiegi decyzyjne i punkty decyzji")
+    full_ax.legend()
+
+    window_ax.set_xlabel("Czas symulacji [s]")
+    window_ax.set_ylabel("Skala decyzyjna")
+    window_ax.set_title("Wycinek decyzji 0–1 s")
+    window_ax.set_xlim(0.0, 1.0)
+    window_ax.legend()
+
     _add_interpretation_box(
-        ax.figure,
+        fig,
         "Co widzisz: wynik decyzji pokazuje kierunek i siłę preferowanej odpowiedzi, "
         "a pewność mówi, "
         "jak stabilna jest ta odpowiedź. Dla osoby początkującej najważniejsze są "
@@ -984,8 +1052,9 @@ def draw_behavior(ax: Any, time: Any, behavior: Any) -> Any:
         "kluczowe są przekroczenia "
         "progu, oscylacje przed decyzją i zależność od bodźców lub faz scenariusza.",
     )
-    _style_lines(ax)
-    return [ax]
+    _style_lines(full_ax)
+    _style_lines(window_ax)
+    return [full_ax, window_ax]
 
 
 def draw_band_power(ax: Any, time: Any, oscillations: Any) -> Any:

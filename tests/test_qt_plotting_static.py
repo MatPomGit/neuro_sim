@@ -89,6 +89,23 @@ def test_plot_interpretations_are_accessible_to_mixed_audiences() -> None:
     assert "kluczowe" in source
 
 
+def test_draw_behavior_uses_two_axes_and_decision_time_annotations() -> None:
+    """Sprawdź, że wykres zachowania ma pełny panel i wycinek decyzji 0-1 s."""
+    source = PLOTTING_PATH.read_text(encoding="utf-8")
+
+    assert (
+        'axes = fig.subplots(2, 1, sharex=False, gridspec_kw={"height_ratios": [3, 1]})'
+        in source
+    )
+    assert "window_ax.set_xlim(0.0, 1.0)" in source
+    assert 'f"t={float(decision_time):.2f} s"' in source
+    assert "full_ax.annotate(" in source
+    assert "window_ax.annotate(" in source
+    assert "_style_lines(full_ax)" in source
+    assert "_style_lines(window_ax)" in source
+    assert "return [full_ax, window_ax]" in source
+
+
 def test_activity_plot_combines_activation_and_stimulus_channels() -> None:
     """Sprawdź statycznie układ aktywacji z kanałami bodźców i przewijaniem."""
     source = PLOTTING_PATH.read_text(encoding="utf-8")

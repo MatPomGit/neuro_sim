@@ -179,7 +179,7 @@ def add_selected_plots_to_panel(
         has_plots = True
     if state.plots.get("behavior", False):
         plot_panel.add_plot(
-            "Zachowanie", draw_behavior, time, behavior, figsize=(11, 5)
+            "Zachowanie", draw_behavior, time, behavior, figsize=(11, 7)
         )
         has_plots = True
     if state.plots.get("eeg", False):
