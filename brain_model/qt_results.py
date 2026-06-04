@@ -367,6 +367,7 @@ class RovingOddballQuestionsPanel(QWidget):
         self.table = QTableWidget(0, 2)
         self.table.setHorizontalHeaderLabels(["pytanie", "odpowiedź z raportu"])
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.table, 1)
         self.set_report({})
 
