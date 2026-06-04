@@ -5,7 +5,11 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from brain_model.qt_config import SCENARIO_YAML_PRESETS, load_scenario_yaml_config
+from brain_model.qt_config import (
+    SCENARIO_YAML_DESCRIPTIONS,
+    SCENARIO_YAML_PRESETS,
+    load_scenario_yaml_config,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 QT_CONFIG_PATH = REPO_ROOT / "brain_model" / "qt_config.py"
@@ -77,6 +81,42 @@ def test_qt_sections_expose_ready_lessons_as_yaml_presets() -> None:
         "write_combo_box(self.scenario_config_combo, lesson_config_label)"
         in lesson_source
     )
+
+
+def test_qt_sections_describe_each_yaml_configuration() -> None:
+    """GUI wyjaśnia użytkownikowi cel i różnice każdego presetu YAML."""
+    source = _source(QT_SECTIONS_PATH)
+    description_source = _function_source(
+        QT_SECTIONS_PATH, "refresh_scenario_config_description"
+    )
+    preset_labels = {label for label, _path in SCENARIO_YAML_PRESETS}
+
+    assert set(SCENARIO_YAML_DESCRIPTIONS) == preset_labels
+    assert all(SCENARIO_YAML_DESCRIPTIONS[label] for label in preset_labels)
+    assert "self.scenario_config_description_label" in source
+    assert "scenario_yaml_description_for_label(selected_label)" in description_source
+
+
+def test_advanced_batch_scenarios_are_not_a_duplicate_quick_start_choice() -> None:
+    """Opcje zaawansowane opisują scenariusze serii jako pole trybu batch."""
+    source = _source(QT_SECTIONS_PATH)
+    advanced_source = _function_source(
+        QT_SECTIONS_PATH, "build_advanced_options_section"
+    )
+
+    assert "scenariusze serii (batch)" in advanced_source
+    assert "Tylko dla trybu serii" in advanced_source
+    assert "Nie zmienia pojedynczego scenariusza z sekcji Szybki start" in source
+
+
+def test_teacher_panels_do_not_import_task_protocols() -> None:
+    """Panele nauczyciela nie importują protokołów tasków z brain_core."""
+    source = _source(QT_RESULTS_PATH)
+
+    assert "brain_core.experiments.protocols" not in source
+    assert "from brain_core.experiments" not in source
+    assert "get_task" not in source
+    assert "TaskStimulusPlayer" not in source
 
 
 def test_qt_runner_delegates_execution_to_brain_core_engine_only() -> None:

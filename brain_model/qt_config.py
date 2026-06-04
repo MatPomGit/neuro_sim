@@ -34,20 +34,21 @@ SCENARIO_YAML_PRESETS: tuple[tuple[str, Path], ...] = (
 
 SCENARIO_YAML_DESCRIPTIONS: dict[str, str] = {
     "Roving oddball — zdrowy": (
-        "Profil referencyjny bez patologii. Użyj go jako punktu odniesienia "
-        "dla liczby standardów, dewiantów, habituacji i readaptacji."
+        "Profil referencyjny bez patologii. Wybierz go, aby zobaczyć bazową "
+        "identyfikację standardów, dewiantów, habituacji i readaptacji."
     ),
     "Roving oddball — zaburzenie GABA": (
-        "Wariant z obniżoną inhibicją GABA. Wybierz go, aby porównać wpływ "
-        "większego szumu i słabszej stabilności uwagi względem profilu zdrowego."
+        "Ten wariant modeluje profil z obniżoną inhibicją GABA i służy "
+        "do porównania, jak większy "
+        "szum oraz niestabilność kontroli przedczołowej zmieniają odpowiedź na dewiant."
     ),
     "Roving oddball — lezja hipokampa": (
-        "Wariant uszkodzenia hipokampa. Pomaga obserwować, jak słabsza pamięć "
-        "epizodyczna zmienia detekcję nowości i readaptację po zmianie standardu."
+        "Ten wariant modeluje skutki uszkodzenia hipokampa i pokazuje, jak słabsza "
+        "integracja epizodyczna wpływa na wykrywanie nowości oraz readaptację."
     ),
     "SNN — demo hipokampa": (
-        "Krótki pokaz współsymulacji SNN dla hipokampa. Wybierz go, gdy chcesz "
-        "sprawdzić przepływ demonstracyjny zamiast lekcji roving oddball."
+        "Demo sprzężenia lokalnego obwodu SNN regionu HIP z modelem masowym; "
+        "użyj go do sprawdzenia zamkniętej pętli hipokampa zamiast lekcji roving oddball."
     ),
 }
 
@@ -92,22 +93,21 @@ def scenario_yaml_preset_labels() -> list[str]:
 
 
 def scenario_yaml_description_for_label(label: str) -> str:
-    """Zwróć polski opis celu gotowej konfiguracji YAML.
+    """Zwróć polski opis konfiguracji YAML widoczny w szybkim starcie GUI.
 
     Parameters
     ----------
     label:
-        Etykieta konfiguracji prezentowana w GUI.
+        Etykieta konfiguracji YAML wybrana przez użytkownika w GUI.
 
     Returns
     -------
     str
-        Opis pomagający użytkownikowi wybrać właściwy wariant eksperymentu.
+        Krótki opis celu dydaktycznego i różnic względem pozostałych presetów.
     """
 
     return SCENARIO_YAML_DESCRIPTIONS.get(
-        label,
-        "Własna konfiguracja YAML; sprawdź pola task, pathology i clinical_profile.",
+        label, "Niestandardowa konfiguracja YAML wskazana przez użytkownika."
     )
 
 

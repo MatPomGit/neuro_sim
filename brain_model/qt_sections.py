@@ -271,11 +271,14 @@ class QtSections:
         )
         layout.addRow("konfiguracja YAML", self.scenario_config_combo)
 
-        self.scenario_config_description = QLabel("")
-        self.scenario_config_description.setWordWrap(True)
-        self.scenario_config_description.setObjectName("hintLabel")
-        layout.addRow("po co ten wybór", self.scenario_config_description)
-        self.refresh_scenario_yaml_description()
+        self.scenario_config_description_label = QLabel("")
+        self.scenario_config_description_label.setObjectName("hintLabel")
+        self.scenario_config_description_label.setWordWrap(True)
+        self.scenario_config_description_label.setToolTip(
+            "Opis wyjaśnia, po co wybrać dany plik YAML i czym różni się od innych."
+        )
+        self.scenario_config_description = self.scenario_config_description_label
+        layout.addRow("po co ten wybór", self.scenario_config_description_label)
 
         apply_yaml_button = QPushButton("Zastosuj konfigurację YAML")
         apply_yaml_button.clicked.connect(self.apply_scenario_yaml_config)
@@ -309,7 +312,7 @@ class QtSections:
         )
         layout.addRow(self.scenario_details_label)
         self.refresh_scenario_details()
-        self.refresh_scenario_yaml_description()
+        self.refresh_scenario_config_description()
         return group
 
     def apply_ready_lesson(self) -> None:
@@ -335,7 +338,7 @@ class QtSections:
             self.apply_scenario_yaml_config()
             return
         write_combo_box(self.scenario_config_combo, lesson_config_label)
-        self.refresh_scenario_yaml_description()
+        self.refresh_scenario_config_description()
 
     def build_advanced_options_section(self) -> QWidget:
         """Zbuduj sekcję „Opcje zaawansowane” z parametrami technicznymi."""
@@ -360,8 +363,8 @@ class QtSections:
         self.batch_seeds_edit = QLineEdit(self.state.batch_seeds)
         self.batch_scenarios_edit = QLineEdit(self.state.batch_scenarios)
         self.batch_scenarios_edit.setToolTip(
-            "To pole nie jest drugim wyborem scenariusza. Dotyczy tylko trybu serii "
-            "i przyjmuje listę identyfikatorów uruchamianych w batchu."
+            "Tylko dla trybu serii: lista identyfikatorów scenariuszy do wielu "
+            "uruchomień. Nie zmienia pojedynczego scenariusza z sekcji Szybki start."
         )
         self.sensitivity_edit = QLineEdit(self.state.sensitivity_params)
         self.sensitivity_delta_edit = QLineEdit(self.state.sensitivity_delta)
@@ -371,14 +374,7 @@ class QtSections:
         form.addRow(self.auto_dt_check)
         form.addRow("tryb uruchomienia", self.command_combo)
         form.addRow("ziarna serii", self.batch_seeds_edit)
-        form.addRow("scenariusze serii", self.batch_scenarios_edit)
-        batch_hint = QLabel(
-            "Pole „scenariusze serii” nie powiela szybkiego startu: działa tylko "
-            "dla trybu uruchomienia serii i pozwala podać wiele scenariuszy."
-        )
-        batch_hint.setWordWrap(True)
-        batch_hint.setObjectName("hintLabel")
-        form.addRow(batch_hint)
+        form.addRow("scenariusze serii (batch)", self.batch_scenarios_edit)
         form.addRow("parametry wrażliwości", self.sensitivity_edit)
         form.addRow("delta wrażliwości", self.sensitivity_delta_edit)
         outer.addWidget(self.advanced_group)
@@ -579,11 +575,11 @@ class QtSections:
         self.sync_plot_selection_controls_from_state()
         self.sync_plot_preset_from_checks(mark_custom=False)
         self.refresh_scenario_details()
-        self.refresh_scenario_yaml_description()
+        self.refresh_scenario_config_description()
 
     def apply_scenario_yaml_config(self) -> None:
         """Wczytaj wybraną konfigurację YAML i przepisz jej bezpieczne pola do GUI."""
-        self.refresh_scenario_yaml_description()
+        self.refresh_scenario_config_description()
         selected_path = scenario_yaml_path_for_label(
             self.scenario_config_combo.currentText()
         )
@@ -604,6 +600,7 @@ class QtSections:
         self.state.seed = read_line_edit(self.seed_edit)
         self.state.auto_dt = read_check_box(self.auto_dt_check)
         self.state.save_results = read_check_box(self.save_results_check)
+        self.refresh_scenario_config_description()
         profile_callback = self.callbacks.get("show_clinical_profile")
         if profile_callback is not None:
             profile_callback(dict(config.clinical_profile))
@@ -626,17 +623,19 @@ class QtSections:
         self.apply_suggested_duration(show_status=False)
 
     def refresh_scenario_yaml_description(self) -> None:
-        """Odśwież opis wybranej konfiguracji YAML w sekcji szybkiego startu."""
-        if hasattr(self, "scenario_config_description"):
-            description = scenario_yaml_description_for_label(
-                self.scenario_config_combo.currentText()
-            )
-            self.scenario_config_description.setText(description)
+        """Zachowaj zgodność wsteczną z wcześniejszą nazwą helpera."""
+        self.refresh_scenario_config_description()
 
     def refresh_scenario_details(self) -> None:
         """Odśwież opis aktualnie wybranego scenariusza."""
         scenario = get_scenario(self.scenario_combo.currentText())
         self.scenario_details_label.setText(f"{scenario.name}: {scenario.description}")
+
+    def refresh_scenario_config_description(self) -> None:
+        """Odśwież opis celu i różnic wybranej konfiguracji YAML."""
+        selected_label = self.scenario_config_combo.currentText()
+        description = scenario_yaml_description_for_label(selected_label)
+        self.scenario_config_description_label.setText(description)
 
     def apply_suggested_duration(self, show_status: bool = True) -> None:
         """Ustaw czas symulacji zgodnie z podpowiedzią wybranego scenariusza.

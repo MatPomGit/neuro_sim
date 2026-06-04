@@ -90,7 +90,10 @@ def test_qt_advanced_controls_are_bound_to_gui_state() -> None:
     for binding in expected_bindings:
         assert binding in source
     assert 'form.addRow("ziarna serii", self.batch_seeds_edit)' in source
-    assert 'form.addRow("scenariusze serii", self.batch_scenarios_edit)' in source
+    assert (
+        'form.addRow("scenariusze serii (batch)", self.batch_scenarios_edit)' in source
+    )
+    assert "Tylko dla trybu serii" in source
     assert 'form.addRow("parametry wrażliwości", self.sensitivity_edit)' in source
     assert 'form.addRow("delta wrażliwości", self.sensitivity_delta_edit)' in source
 
