@@ -9,7 +9,10 @@ from PySide6.QtWidgets import (
     QComboBox,
     QFormLayout,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
+    QMessageBox,
+    QPushButton,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -18,7 +21,7 @@ from PySide6.QtWidgets import (
 
 from .gui_state import GuiState
 from .plotting import (
-    draw_activity,
+    draw_activity_with_stimulus_channels,
     draw_band_power,
     draw_behavior,
     draw_brain_region_projections,
@@ -46,6 +49,71 @@ def apply_run_result(
     )
 
 
+def _get_min_positive_activity_value(activity_axis: Any) -> float | None:
+    """Zwróć minimalną dodatnią wartość spośród widocznych sygnałów aktywacji."""
+    import numpy as np
+    min_val = None
+    for line in activity_axis.get_lines():
+        if not line.get_visible():
+            continue
+        ydata = np.asarray(line.get_ydata())
+        pos_ydata = ydata[ydata > 0]
+        if pos_ydata.size > 0:
+            local_min = float(pos_ydata.min())
+            if min_val is None or local_min < min_val:
+                min_val = local_min
+    return min_val
+
+
+def _create_activity_controls(canvas: Any, axes: list[Any]) -> QWidget:
+    """Utwórz polskie kontrolki autoskalowania i skali Y dla wykresu aktywacji."""
+    activity_axis = axes[0]
+    controls = QWidget()
+    layout = QHBoxLayout(controls)
+    layout.setContentsMargins(6, 4, 6, 4)
+
+    autoscale_button = QPushButton("Autoskaluj Y aktywacji")
+    scale_button = QPushButton("Skala Y: liniowa")
+
+    def autoscale_activity_y() -> None:
+        current_xlim = activity_axis.get_xlim()
+        activity_axis.relim()
+        activity_axis.autoscale_view(scalex=False, scaley=True)
+        activity_axis.set_xlim(current_xlim)
+        canvas.draw_idle()
+
+    def toggle_activity_y_scale() -> None:
+        current_xlim = activity_axis.get_xlim()
+        if activity_axis.get_yscale() == "linear":
+            min_positive = _get_min_positive_activity_value(activity_axis)
+            if min_positive is None:
+                QMessageBox.warning(
+                    controls,
+                    "Skala logarytmiczna",
+                    "Nie można włączyć skali logarytmicznej: "
+                    "brak dodatnich wartości aktywacji.",
+                )
+                return
+            activity_axis.set_ylim(bottom=min_positive * 0.5)
+            activity_axis.set_ylim(bottom=safe_minimum * 0.5)
+            activity_axis.set_yscale("log")
+            scale_button.setText("Skala Y: logarytmiczna")
+        else:
+            activity_axis.set_yscale("linear")
+            scale_button.setText("Skala Y: liniowa")
+            activity_axis.relim()
+            activity_axis.autoscale_view(scalex=False, scaley=True)
+        activity_axis.set_xlim(current_xlim)
+        canvas.draw_idle()
+
+    autoscale_button.clicked.connect(autoscale_activity_y)
+    scale_button.clicked.connect(toggle_activity_y_scale)
+    layout.addWidget(autoscale_button)
+    layout.addWidget(scale_button)
+    layout.addStretch(1)
+    return controls
+
+
 def add_selected_plots_to_panel(
     plot_panel: QtPlotPanel,
     state: GuiState,
@@ -61,12 +129,14 @@ def add_selected_plots_to_panel(
     if state.plots.get("activity", False):
         plot_panel.add_plot(
             "Aktywacje",
-            draw_activity,
+            draw_activity_with_stimulus_channels,
             time,
             activity,
             model.names,
             model.idx,
+            get_scenario(state.scenario),
             figsize=(11, 7),
+            controls_factory=_create_activity_controls,
         )
         has_plots = True
     if state.plots.get("simulated_brain_activity", False):
