@@ -388,8 +388,16 @@ class ObservationPanel(QWidget):
             event_types = sorted(
                 {str(event.get("event_type", "n/a")) for event in events}
             )
+            first_event = events[0]
             observations.append(
                 f"Oś czasu zawiera {len(events)} zdarzeń: {', '.join(event_types)}."
+            )
+            observations.append(
+                "Pierwsze zdarzenie: {label} około {time} s — {description}".format(
+                    label=first_event.get("label_pl", "n/a"),
+                    time=first_event.get("time_s", "n/a"),
+                    description=first_event.get("description_pl", "brak opisu"),
+                )
             )
         else:
             observations.append("Oś czasu zdarzeń jest pusta dla bieżącego wyniku.")
@@ -399,11 +407,19 @@ class ObservationPanel(QWidget):
         )
         if profile_name:
             mechanism = clinical_profile.get("mechanism", "brak opisu mechanizmu")
+            functions = clinical_profile.get("cognitive_functions", [])
+            if isinstance(functions, list):
+                functions_text = ", ".join(str(item) for item in functions) or "brak"
+            else:
+                functions_text = str(functions)
             observations.append(
                 f"Profil kliniczny: {profile_name}; mechanizm: {mechanism}"
             )
+            observations.append(f"Powiązane funkcje poznawcze: {functions_text}.")
 
         if roving_report:
+            standard_tones = self._tones_for_condition(roving_report, "standard")
+            deviant_tones = self._tones_for_condition(roving_report, "deviant")
             observations.append(
                 "Roving oddball: standardy={standard}, dewianty={deviant}, "
                 "nowe standardy={new_standard}.".format(
@@ -413,12 +429,53 @@ class ObservationPanel(QWidget):
                 )
             )
             observations.append(
+                (
+                    "W raporcie standardy mają tony {standard_tones}, "
+                    "a dewianty {deviant_tones}."
+                ).format(
+                    standard_tones=standard_tones,
+                    deviant_tones=deviant_tones,
+                )
+            )
+            observations.append(
                 "Habituacja={habituation}, średnia latencja readaptacji={latency}.".format(
                     habituation=roving_report.get("habituation_rate", "n/a"),
                     latency=roving_report.get("mean_readaptation_latency", "n/a"),
                 )
             )
         return observations
+
+    def _tones_for_condition(
+        self, roving_report: dict[str, Any], condition: str
+    ) -> str:
+        """Wypisz tony z gotowej sygnatury sekwencji dla wskazanego warunku.
+
+        Parameters
+        ----------
+        roving_report:
+            Sekcja `roving_oddball` raportu analitycznego zwrócona przez silnik.
+        condition:
+            Warunek triala, np. `standard` albo `deviant`.
+
+        Returns
+        -------
+        str
+            Lista tonów w Hz albo `n/a`, jeśli raport nie zawiera sygnatury.
+        """
+
+        signature = roving_report.get("sequence_signature", [])
+        if not isinstance(signature, list):
+            return "n/a"
+        tones = []
+        for item in signature:
+            if not isinstance(item, dict) or item.get("condition") != condition:
+                continue
+            tone_hz = item.get("tone_hz", "n/a")
+            if tone_hz not in tones:
+                tones.append(tone_hz)
+        if not tones:
+            return "n/a"
+        return ", ".join(f"{tone} Hz" for tone in tones[:4])
 
 
 class RovingOddballQuestionsPanel(QWidget):
@@ -469,24 +526,102 @@ class RovingOddballQuestionsPanel(QWidget):
                     "Uruchom lekcję roving oddball, aby wypełnić odpowiedzi.",
                 )
             ]
+        standard_tones = self._tones_for_condition(roving_report, "standard")
+        deviant_tones = self._tones_for_condition(roving_report, "deviant")
+        new_standard_tones = self._new_standard_tones(roving_report)
         return [
             (
                 "Który bodziec pełni rolę standardu?",
-                f"Raport zliczył {roving_report.get('standard_count', 'n/a')} standardów.",
+                (
+                    "Standard to powtarzany ton raportowany jako {tones}; "
+                    "liczba triali: {count}."
+                ).format(
+                    tones=standard_tones,
+                    count=roving_report.get("standard_count", "n/a"),
+                ),
             ),
             (
                 "Który bodziec jest dewiantem?",
-                f"Raport zliczył {roving_report.get('deviant_count', 'n/a')} dewiantów.",
+                (
+                    "Dewiant to ton oznaczony warunkiem deviant: {tones}; "
+                    "liczba triali: {count}."
+                ).format(
+                    tones=deviant_tones,
+                    count=roving_report.get("deviant_count", "n/a"),
+                ),
             ),
             (
                 "Po czym rozpoznasz habituację?",
-                f"Tempo habituacji w raporcie: {roving_report.get('habituation_rate', 'n/a')}.",
+                "Po dodatnim tempie narastania habituation_level; raport: {rate}.".format(
+                    rate=roving_report.get("habituation_rate", "n/a")
+                ),
             ),
             (
                 "Po czym rozpoznasz readaptację po zmianie standardu?",
-                "Nowe standardy={new_standard}; średnia latencja readaptacji={latency}.".format(
+                "Nowe standardy={new_standard}; tony={tones}; średnia latencja={latency}.".format(
                     new_standard=roving_report.get("new_standard_count", "n/a"),
+                    tones=new_standard_tones,
                     latency=roving_report.get("mean_readaptation_latency", "n/a"),
                 ),
             ),
         ]
+
+    def _tones_for_condition(
+        self, roving_report: dict[str, Any], condition: str
+    ) -> str:
+        """Wypisz tony z gotowej sygnatury sekwencji dla warunku kontrolnego.
+
+        Parameters
+        ----------
+        roving_report:
+            Sekcja `roving_oddball` raportu analitycznego zwrócona przez silnik.
+        condition:
+            Warunek triala, np. `standard` albo `deviant`.
+
+        Returns
+        -------
+        str
+            Lista unikalnych tonów w Hz albo `n/a`, gdy raport nie zawiera danych.
+        """
+
+        signature = roving_report.get("sequence_signature", [])
+        if not isinstance(signature, list):
+            return "n/a"
+        tones = []
+        for item in signature:
+            if not isinstance(item, dict) or item.get("condition") != condition:
+                continue
+            tone_hz = item.get("tone_hz", "n/a")
+            if tone_hz not in tones:
+                tones.append(tone_hz)
+        if not tones:
+            return "n/a"
+        return ", ".join(f"{tone} Hz" for tone in tones[:4])
+
+    def _new_standard_tones(self, roving_report: dict[str, Any]) -> str:
+        """Wypisz tony oznaczone przez raport jako nowe standardy po dewiancie.
+
+        Parameters
+        ----------
+        roving_report:
+            Sekcja `roving_oddball` raportu analitycznego zwrócona przez silnik.
+
+        Returns
+        -------
+        str
+            Lista tonów nowych standardów albo `n/a`, gdy brak takich triali.
+        """
+
+        signature = roving_report.get("sequence_signature", [])
+        if not isinstance(signature, list):
+            return "n/a"
+        tones = []
+        for item in signature:
+            if not isinstance(item, dict) or not item.get("is_new_standard"):
+                continue
+            tone_hz = item.get("tone_hz", "n/a")
+            if tone_hz not in tones:
+                tones.append(tone_hz)
+        if not tones:
+            return "n/a"
+        return ", ".join(f"{tone} Hz" for tone in tones[:4])
