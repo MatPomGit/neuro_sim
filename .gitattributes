@@ -1,0 +1,20 @@
+# Wszystkie pliki tekstowe są normalizowane do LF w repozytorium
+* text=auto
+
+# Skrypty wsadowe Windows zawsze będą miały CRLF lokalnie
+*.bat eol=crlf
+
+# Skrypty powłoki Unix zawsze będą miały LF lokalnie
+*.sh eol=lf
+
+# Aby odświeżyć i ujednolicić wszystkie pliki zgodnie z nowymi regułami, należy użyć
+# git add --renormalize .
+
+# Możesz sprawdzić, jakie końce linii są obecnie stosowane dla poszczególnych plików
+# w indeksie oraz w folderze roboczym, używając polecenia:
+# git ls-files --eol
+
+# Wynik pokaże status końców linii
+# w indeksie (i/),
+# folderze roboczym (w/)
+# oraz zastosowane atrybuty (attr/)

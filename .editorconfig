@@ -1,0 +1,30 @@
+# Informuje edytor, że jest to najwyższy plik konfiguracyjny
+root = true
+
+# Ustawienia dla wszystkich plików
+# [*]
+# end_of_line = lf
+
+### Dlaczego warto to zrobić?
+
+# 1.  **Rozwiązanie problemów lokalnych:**
+# Plik `.gitattributes` dba o to, co trafia do zdalnego repozytorium,
+# ale nie zawsze zmienia końce linii w istniejących kopiach roboczych na systemie Windows [3].
+# `.editorconfig` zapewnia, że każda nowa linia i każdy nowy plik tworzony przez programistę
+# będzie miał format **LF** (lub inny wybrany).
+
+# 2.  **Zgodność z linterami:**
+# Narzędzia takie jak ESLint czy Prettier mogą zgłaszać błędy,
+# gdy wykryją znaki **CR** (Carriage Return) w systemie Windows [1].
+# Wymuszenie `end_of_line = lf` w edytorze pozwala uniknąć tych komunikatów.
+
+
+# 3.  **Niezależność od edytora:**
+# `.editorconfig` jest formatem niezależnym od konkretnego programu,
+# co pozwala na zachowanie spójności formatowania w całym zespole,
+# nawet jeśli programiści korzystają z różnych narzędzi.
+
+# **Podsumowując:** Podczas gdy Git (poprzez `.gitattributes`) pełni rolę "strażnika" repozytorium, 
+# `.editorconfig` działa prewencyjnie, dbając o to, by pliki były poprawnie sformatowane 
+# już w momencie ich zapisywania na dysku.
+

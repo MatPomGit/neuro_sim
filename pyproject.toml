@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neuro-sim"
-version = "0.1.0"
+version = "0.1.1"
 description = "Mezoskopowy model dynamiki procesów poznawczych z oscylatorami Wilsona-Cowana"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
