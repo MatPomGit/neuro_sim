@@ -418,8 +418,8 @@ class ObservationPanel(QWidget):
             observations.append(f"Powiązane funkcje poznawcze: {functions_text}.")
 
         if roving_report:
-            standard_tones = self._tones_for_condition(roving_report, "standard")
-            deviant_tones = self._tones_for_condition(roving_report, "deviant")
+            standard_tones = _extract_tones(roving_report, condition="standard")
+            deviant_tones = _extract_tones(roving_report, condition="deviant")
             observations.append(
                 "Roving oddball: standardy={standard}, dewianty={deviant}, "
                 "nowe standardy={new_standard}.".format(
