@@ -495,7 +495,6 @@ def _run_local_snn_comparison(
         "neural_mass_regions": list(region_names),
         "requested_mode": requested_mode,
         "computed_modes": computed_modes,
-        "comparison_note_pl": comparison_note_pl,
         "sync_dt_s": float(config.snn["sync_dt"]),
         "max_feedback_amplitude": float(config.snn.get("max_feedback_amplitude", 0.15)),
         "input_rate_unit": str(config.snn.get("input_rate_unit", "Hz")),
