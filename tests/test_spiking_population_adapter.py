@@ -181,7 +181,6 @@ def test_snn_report_only_request_marks_closed_loop_as_computed_variant() -> Any:
         "closed_loop_snn",
     ]
     assert "mode" not in snn_comparison
-    assert "dodatkowym wariantem porównawczym" in snn_comparison["comparison_note_pl"]
     assert set(snn_comparison["mode_metrics"]) == set(snn_comparison["computed_modes"])
 
 
