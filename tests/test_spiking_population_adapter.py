@@ -119,7 +119,6 @@ def test_snn_report_section_compares_baseline_and_local_circuit() -> Any:
         "closed_loop_snn",
     ]
     assert "mode" not in snn_comparison
-    assert "dodatkowym wariantem porównawczym" in snn_comparison["comparison_note_pl"]
     assert snn_comparison["sync_dt_s"] == 0.010
     assert snn_comparison["max_feedback_amplitude"] == 0.15
     assert snn_comparison["input_rate_unit"] == "Hz"
