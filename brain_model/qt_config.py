@@ -32,6 +32,25 @@ SCENARIO_YAML_PRESETS: tuple[tuple[str, Path], ...] = (
     ("SNN — demo hipokampa", Path("configs/snn_hippocampus_demo.yaml")),
 )
 
+SCENARIO_YAML_DESCRIPTIONS: dict[str, str] = {
+    "Roving oddball — zdrowy": (
+        "Profil referencyjny bez patologii. Wybierz go, aby zobaczyć bazową "
+        "identyfikację standardów, dewiantów, habituacji i readaptacji."
+    ),
+    "Roving oddball — zaburzenie GABA": (
+        "Ten wariant obniża inhibicję GABA i służy do porównania, jak większy "
+        "szum oraz niestabilność kontroli przedczołowej zmieniają odpowiedź na dewiant."
+    ),
+    "Roving oddball — lezja hipokampa": (
+        "Ten wariant modeluje uszkodzenie hipokampa i pokazuje, jak słabsza "
+        "integracja epizodyczna wpływa na wykrywanie nowości oraz readaptację."
+    ),
+    "SNN — demo hipokampa": (
+        "Demo sprzężenia lokalnego obwodu SNN regionu HIP z modelem masowym; "
+        "użyj go do sprawdzenia zamkniętej pętli hipokampa zamiast lekcji roving oddball."
+    ),
+}
+
 
 def editable_dataclass_values(
     instance: Any, exclude: set[str] | None = None
@@ -70,6 +89,25 @@ def dataclass_with_updates(instance: TDataclass, updates: Any) -> TDataclass:
 def scenario_yaml_preset_labels() -> list[str]:
     """Zwróć polskie etykiety gotowych konfiguracji YAML dostępnych w GUI."""
     return [label for label, _path in SCENARIO_YAML_PRESETS]
+
+
+def scenario_yaml_description_for_label(label: str) -> str:
+    """Zwróć polski opis konfiguracji YAML widoczny w szybkim starcie GUI.
+
+    Parameters
+    ----------
+    label:
+        Etykieta konfiguracji YAML wybrana przez użytkownika w GUI.
+
+    Returns
+    -------
+    str
+        Krótki opis celu dydaktycznego i różnic względem pozostałych presetów.
+    """
+
+    return SCENARIO_YAML_DESCRIPTIONS.get(
+        label, "Niestandardowa konfiguracja YAML wskazana przez użytkownika."
+    )
 
 
 def default_scenario_yaml_path() -> str:
