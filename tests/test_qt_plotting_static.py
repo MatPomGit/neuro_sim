@@ -99,8 +99,7 @@ def test_draw_behavior_uses_two_axes_and_decision_time_annotations() -> None:
     )
     assert "window_ax.set_xlim(0.0, 1.0)" in source
     assert 'f"t={float(decision_time):.2f} s"' in source
-    assert "full_ax.annotate(" in source
-    assert "window_ax.annotate(" in source
+    assert "target_ax.annotate(" in source
     assert "_style_lines(full_ax)" in source
     assert "_style_lines(window_ax)" in source
     assert "return [full_ax, window_ax]" in source
