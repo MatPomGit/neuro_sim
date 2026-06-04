@@ -107,7 +107,8 @@ def scenario_yaml_description_for_label(label: str) -> str:
     """
 
     return SCENARIO_YAML_DESCRIPTIONS.get(
-        label, "Niestandardowa konfiguracja YAML wskazana przez użytkownika."
+        label,
+        "Własna konfiguracja YAML; sprawdź pola task, pathology i clinical_profile.",
     )
 
 
