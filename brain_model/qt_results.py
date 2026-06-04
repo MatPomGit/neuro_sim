@@ -52,6 +52,7 @@ def apply_run_result(
 def _get_min_positive_activity_value(activity_axis: Any) -> float | None:
     """Zwróć minimalną dodatnią wartość spośród widocznych sygnałów aktywacji."""
     import numpy as np
+
     min_val = None
     for line in activity_axis.get_lines():
         if not line.get_visible():
@@ -95,7 +96,6 @@ def _create_activity_controls(canvas: Any, axes: list[Any]) -> QWidget:
                 )
                 return
             activity_axis.set_ylim(bottom=min_positive * 0.5)
-            activity_axis.set_ylim(bottom=safe_minimum * 0.5)
             activity_axis.set_yscale("log")
             scale_button.setText("Skala Y: logarytmiczna")
         else:
