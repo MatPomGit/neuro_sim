@@ -202,6 +202,24 @@ PLOT_LABELS = {
     "scenario_timeline": "oś czasu scenariusza (fazy i zdarzenia)",
 }
 
+READY_LESSON_PRESETS: tuple[tuple[str, str, str], ...] = (
+    (
+        "roving_oddball_intro",
+        "roving_oddball_intro — wprowadzenie do standardu i dewiantu",
+        "Roving oddball — zdrowy",
+    ),
+    (
+        "gaba_disorder_comparison",
+        "gaba_disorder_comparison — porównanie zaburzenia GABA",
+        "Roving oddball — zaburzenie GABA",
+    ),
+    (
+        "hippocampal_lesion_comparison",
+        "hippocampal_lesion_comparison — porównanie lezji hipokampa",
+        "Roving oddball — lezja hipokampa",
+    ),
+)
+
 
 class QtSections:
     """Buduje sekcje formularza i synchronizuje je ze stanem GUI."""
@@ -226,6 +244,18 @@ class QtSections:
         )
         hint.setObjectName("hintLabel")
         layout.addRow(hint)
+
+        self.ready_lesson_combo = QComboBox()
+        for lesson_id, lesson_label, _config_label in READY_LESSON_PRESETS:
+            self.ready_lesson_combo.addItem(lesson_label, lesson_id)
+        self.ready_lesson_combo.setCurrentIndex(-1)
+        self.ready_lesson_combo.setToolTip(
+            "Gotowa lekcja wybiera wyłącznie istniejącą konfigurację YAML."
+        )
+        self.ready_lesson_combo.currentTextChanged.connect(
+            lambda _text: self.apply_ready_lesson()
+        )
+        layout.addRow("gotowa lekcja", self.ready_lesson_combo)
 
         self.scenario_config_combo = QComboBox()
         self.scenario_config_combo.addItems(scenario_yaml_preset_labels())
@@ -273,6 +303,30 @@ class QtSections:
         layout.addRow(self.scenario_details_label)
         self.refresh_scenario_details()
         return group
+
+    def apply_ready_lesson(self) -> None:
+        """Wybierz konfigurację YAML przypisaną do gotowej lekcji dydaktycznej.
+
+        Gotowa lekcja nie zawiera logiki tasku; jest jedynie mapowaniem
+        identyfikatora lekcji na preset YAML wykonywany później przez silnik.
+        """
+        if not hasattr(self, "scenario_config_combo"):
+            return
+        selected_label = self.ready_lesson_combo.currentText()
+        lesson_config_label = next(
+            (
+                config_label
+                for _lesson_id, lesson_label, config_label in READY_LESSON_PRESETS
+                if lesson_label == selected_label
+            ),
+            "",
+        )
+        if not lesson_config_label:
+            return
+        if self.scenario_config_combo.currentText() == lesson_config_label:
+            self.apply_scenario_yaml_config()
+            return
+        write_combo_box(self.scenario_config_combo, lesson_config_label)
 
     def build_advanced_options_section(self) -> QWidget:
         """Zbuduj sekcję „Opcje zaawansowane” z parametrami technicznymi."""
@@ -419,7 +473,9 @@ class QtSections:
             elif binding.control_kind == "combo_box":
                 write_combo_box(control, value)
             else:
-                raise ValueError(f"Nieobsługiwany typ kontrolki: {binding.control_kind}")
+                raise ValueError(
+                    f"Nieobsługiwany typ kontrolki: {binding.control_kind}"
+                )
         finally:
             control.blockSignals(signals_were_blocked)
 
