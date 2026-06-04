@@ -551,7 +551,12 @@ def draw_activity_with_stimulus_channels(
         fig.canvas.draw_idle()
 
     def on_scroll(event: Any) -> None:
-        if event.inaxes not in (activity_ax, activity_ax.xaxis, stimulus_ax, stimulus_ax.xaxis):
+        if event.inaxes not in (
+            activity_ax,
+            activity_ax.xaxis,
+            stimulus_ax,
+            stimulus_ax.xaxis,
+        ):
             return
         if event.xdata is None:
             return
@@ -730,32 +735,64 @@ def draw_region_activity_2d(
 
 
 def draw_diagnostics(ax: Any, time: Any, diagnostics: Any) -> Any:
-    """Opis funkcji draw_diagnostics."""
-    ax.plot(time, diagnostics["prediction_error"], label="błąd predykcji")
-    ax.plot(time, diagnostics["gw_ignition"], label="global workspace ignition")
-    ax.plot(time, diagnostics["dopamine_delta"], label="błąd predykcji nagrody")
-    ax.plot(time, diagnostics["noradrenaline"], label="noradrenalina")
-    ax.plot(time, diagnostics["acetylcholine"], label="acetylocholina")
-    ax.plot(time, diagnostics["serotonin"], label="serotonina")
-    ax.plot(time, diagnostics["gaba"], label="gaba")
-    ax.plot(time, diagnostics["glutamate"], label="glutaminian")
-    ax.plot(time, diagnostics["endorphins"], label="endorfiny")
-    ax.plot(time, diagnostics["cortisol"], label="kortyzol")
+    """Narysuj diagnostykę modelu w dwóch panelach ze wspólną osią czasu.
 
-    ax.set_xlabel("Czas symulacji [s]")
-    ax.set_ylabel("Wartość")
-    ax.set_title("Zmienne obliczeniowe i neuromodulacyjne")
-    ax.legend()
-    _add_interpretation_box(
-        ax.figure,
-        "Co widzisz: linie pokazują zmienne pomocnicze modelu, np. błąd predykcji, zapłon "
-        "global workspace i neuromodulatory. Dla osoby początkującej kluczowe są wspólne piki, "
-        "bo oznaczają momenty zaskoczenia, stresu albo silnej zmiany stanu. Dla specjalisty ważne "
-        "są zależności czasowe: czy noradrenalina/kortyzol rosną po błędzie, a GABA/glutaminian "
-        "stabilizują pobudzenie. Nie interpretuj pojedynczej linii w oderwaniu od reszty.",
+    Parameters
+    ----------
+    ax:
+        Tymczasowa oś utworzona przez panel Qt albo funkcję pomocniczą; zostaje
+        usunięta, aby figura mogła zawierać dwa pionowe panele.
+    time:
+        Wektor czasu symulacji w sekundach.
+    diagnostics:
+        Słownik serii diagnostycznych modelu.
+
+    Returns
+    -------
+    list[Any]
+        Lista osi: panel zmiennych teoretycznych i panel neuromodulatorów.
+    """
+    fig = ax.figure
+    ax.remove()
+    axes = fig.subplots(2, 1, sharex=True)
+    theoretical_ax, neuromodulator_ax = axes
+
+    theoretical_ax.plot(time, diagnostics["prediction_error"], label="błąd predykcji")
+    theoretical_ax.plot(
+        time, diagnostics["gw_ignition"], label="zapłon global workspace"
     )
-    _style_lines(ax)
-    return [ax]
+    theoretical_ax.plot(
+        time, diagnostics["dopamine_delta"], label="błąd predykcji nagrody"
+    )
+
+    neuromodulator_ax.plot(time, diagnostics["noradrenaline"], label="noradrenalina")
+    neuromodulator_ax.plot(time, diagnostics["acetylcholine"], label="acetylocholina")
+    neuromodulator_ax.plot(time, diagnostics["serotonin"], label="serotonina")
+    neuromodulator_ax.plot(time, diagnostics["gaba"], label="gaba")
+    neuromodulator_ax.plot(time, diagnostics["glutamate"], label="glutaminian")
+    neuromodulator_ax.plot(time, diagnostics["endorphins"], label="endorfiny")
+    neuromodulator_ax.plot(time, diagnostics["cortisol"], label="kortyzol")
+
+    theoretical_ax.set_ylabel("Wartość")
+    theoretical_ax.set_title("Zmienne teoretyczne modelu")
+    theoretical_ax.legend()
+    neuromodulator_ax.set_xlabel("Czas symulacji [s]")
+    neuromodulator_ax.set_ylabel("Wartość")
+    neuromodulator_ax.set_title("Neuromodulatory mózgowe")
+    neuromodulator_ax.legend()
+    _add_interpretation_box(
+        fig,
+        "Co widzisz: diagnostyka jest rozdzielona na dwa pionowe panele ze wspólną osią czasu. "
+        "Górny panel pokazuje wyłącznie zmienne teoretyczne modelu: błąd predykcji, zapłon "
+        "global workspace i błąd predykcji nagrody. Dolny panel pokazuje wyłącznie "
+        "neuromodulatory mózgowe. Dla osoby początkującej kluczowe jest porównanie momentów "
+        "pików między panelami, bo pozwala odróżnić obliczeniowe zaskoczenie od reakcji "
+        "neuromodulacyjnej. Dla specjalisty ważne są zależności czasowe: czy noradrenalina "
+        "i kortyzol rosną po błędzie, a GABA/glutaminian stabilizują pobudzenie.",
+    )
+    for current_ax in axes:
+        _style_lines(current_ax)
+    return list(axes)
 
 
 def draw_weight_trajectories(ax: Any, time: Any, diagnostics: Any) -> Any:
