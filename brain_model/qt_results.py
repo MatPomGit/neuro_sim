@@ -49,17 +49,20 @@ def apply_run_result(
     )
 
 
-def _iter_visible_positive_activity_values(activity_axis: Any) -> list[float]:
-    """Zwróć dodatnie wartości widocznych sygnałów aktywacji do skali logarytmicznej."""
-    positive_values: list[float] = []
+def _get_min_positive_activity_value(activity_axis: Any) -> float | None:
+    """Zwróć minimalną dodatnią wartość spośród widocznych sygnałów aktywacji."""
+    import numpy as np
+    min_val = None
     for line in activity_axis.get_lines():
         if not line.get_visible():
             continue
-        for value in line.get_ydata():
-            numeric_value = float(value)
-            if numeric_value > 0:
-                positive_values.append(numeric_value)
-    return positive_values
+        ydata = np.asarray(line.get_ydata())
+        pos_ydata = ydata[ydata > 0]
+        if pos_ydata.size > 0:
+            local_min = float(pos_ydata.min())
+            if min_val is None or local_min < min_val:
+                min_val = local_min
+    return min_val
 
 
 def _create_activity_controls(canvas: Any, axes: list[Any]) -> QWidget:
