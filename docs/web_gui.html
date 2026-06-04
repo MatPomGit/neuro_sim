@@ -916,12 +916,14 @@ function makeBehaviorPlot(time, behavior) {
     mode: name === "decision_event" ? "markers" : "lines",
     name
   }));
-  const timeWindowMask = time.map(value => value >= 0.0 && value <= 1.0);
+  const limitIndex = time.findIndex(t => t > 1.0);
+  const endIdx = limitIndex === -1 ? time.length : limitIndex;
+  const windowTime = time.slice(0, endIdx);
   const windowTraces = Object.entries(behavior || {}).map(([name, arr]) => ({
-    x: time.filter((_, index) => timeWindowMask[index]),
-    y: arr.filter((_, index) => timeWindowMask[index]),
+    x: windowTime,
+    y: arr.slice(0, endIdx),
     mode: name === "decision_event" ? "markers" : "lines",
-    name: `${name} (0–1 s)`,
+    name: name + " (0–1 s)",
     xaxis: "x2",
     yaxis: "y2",
     showlegend: false
