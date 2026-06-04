@@ -931,10 +931,11 @@ function makeBehaviorPlot(time, behavior) {
   const decisionEvents = behavior?.decision_event || [];
   const annotations = [];
   for (let index = 0; index < decisionEvents.length; index += 1) {
-    if (!decisionEvents[index]) continue;
+    if (!decisionEvents[index] || index >= time.length) continue;
     const decisionTime = Number(time[index]);
+    if (isNaN(decisionTime)) continue;
     const decisionValue = Number(decisionEvents[index]);
-    const text = `t=${decisionTime.toFixed(2)} s`;
+    const text = "t=" + decisionTime.toFixed(2) + " s";
     annotations.push({
       x: decisionTime,
       y: decisionValue,
