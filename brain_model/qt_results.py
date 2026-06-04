@@ -370,15 +370,16 @@ class RovingOddballQuestionsPanel(QWidget):
         layout.addWidget(self.table, 1)
         self.set_report({})
 
-    def set_report(self, analysis_report: dict[str, Any]) -> None:
-        """Odśwież odpowiedzi kontrolne na podstawie raportu `run_experiment()`.
+    def set_report(self, analysis_report: dict[str, Any] | None) -> None:
+        """Odśwież odpowiedzi kontrolne na podstawie raportu run_experiment().
 
         Parameters
         ----------
         analysis_report:
             Raport analityczny zwrócony przez silnik symulacji.
         """
-        roving_report = analysis_report.get("roving_oddball", {})
+        safe_report = analysis_report or {}
+        roving_report = safe_report.get("roving_oddball", {})
         rows = self._question_rows(roving_report)
         self.table.setRowCount(len(rows))
         for row, (question, answer) in enumerate(rows):
