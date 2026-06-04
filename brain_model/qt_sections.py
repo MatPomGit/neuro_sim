@@ -3,23 +3,43 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Literal
+from importlib import import_module
+from typing import TYPE_CHECKING, Any, Literal
 
-from PySide6.QtWidgets import (
-    QButtonGroup,
-    QCheckBox,
-    QComboBox,
-    QFormLayout,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QRadioButton,
-    QToolButton,
-    QVBoxLayout,
-    QWidget,
-)
+if TYPE_CHECKING:
+    from PySide6.QtWidgets import (
+        QButtonGroup,
+        QCheckBox,
+        QComboBox,
+        QFormLayout,
+        QGroupBox,
+        QHBoxLayout,
+        QLabel,
+        QLineEdit,
+        QPushButton,
+        QRadioButton,
+        QToolButton,
+        QVBoxLayout,
+        QWidget,
+    )
+else:
+    QButtonGroup = Any
+    QCheckBox = Any
+    QComboBox = Any
+    QFormLayout = Any
+    QGroupBox = Any
+    QHBoxLayout = Any
+    QLabel = Any
+    QLineEdit = Any
+    QPushButton = Any
+    QRadioButton = Any
+    QToolButton = Any
+    QVBoxLayout = Any
+    QWidget = Any
+
+
+_qt_widgets_loaded = False
+
 
 from .gui_forms import COMMAND_LABELS, COMMAND_VALUES, PARAMETER_DESCRIPTIONS
 from .gui_state import GuiState
@@ -31,6 +51,35 @@ from .qt_config import (
     scenario_yaml_preset_labels,
 )
 from .scenarios import get_scenario, list_scenarios
+
+
+def _ensure_qt_widgets_loaded() -> None:
+    """Załaduj klasy Qt dopiero przy budowaniu rzeczywistych widżetów.
+
+    Import PySide6 może wymagać bibliotek systemowych, np. `libGL.so.1`.
+    Testy statyczne i test synchronizacji stanu importują jedynie lekkie helpery,
+    więc nie powinny blokować się na zależnościach graficznych środowiska CI.
+    """
+
+    global QButtonGroup, QCheckBox, QComboBox, QFormLayout, QGroupBox, QHBoxLayout
+    global QLabel, QLineEdit, QPushButton, QRadioButton, QToolButton, QVBoxLayout
+    global QWidget
+
+    qt_widgets = import_module("PySide6.QtWidgets")
+    QButtonGroup = qt_widgets.QButtonGroup
+    QCheckBox = qt_widgets.QCheckBox
+    QComboBox = qt_widgets.QComboBox
+    QFormLayout = qt_widgets.QFormLayout
+    QGroupBox = qt_widgets.QGroupBox
+    QHBoxLayout = qt_widgets.QHBoxLayout
+    QLabel = qt_widgets.QLabel
+    QLineEdit = qt_widgets.QLineEdit
+    QPushButton = qt_widgets.QPushButton
+    QRadioButton = qt_widgets.QRadioButton
+    QToolButton = qt_widgets.QToolButton
+    QVBoxLayout = qt_widgets.QVBoxLayout
+    QWidget = qt_widgets.QWidget
+
 
 DEFAULT_PLOTS = {
     "activity": True,
@@ -238,6 +287,7 @@ class QtSections:
 
     def build_quick_start_section(self) -> QGroupBox:
         """Zbuduj sekcję „Szybki start” z minimalnymi decyzjami użytkownika."""
+        _ensure_qt_widgets_loaded()
         group = QGroupBox("Szybki start")
         layout = QFormLayout(group)
         hint = QLabel(
@@ -342,6 +392,7 @@ class QtSections:
 
     def build_advanced_options_section(self) -> QWidget:
         """Zbuduj sekcję „Opcje zaawansowane” z parametrami technicznymi."""
+        _ensure_qt_widgets_loaded()
         container = QWidget()
         outer = QVBoxLayout(container)
         self.advanced_toggle = QCheckBox("Pokaż opcje zaawansowane")
@@ -384,6 +435,7 @@ class QtSections:
 
     def build_results_and_plots_section(self) -> QGroupBox:
         """Zbuduj sekcję „Wyniki i wykresy” z presetami i zwijanymi szczegółami."""
+        _ensure_qt_widgets_loaded()
         group = QGroupBox("Wyniki i wykresy")
         layout = QVBoxLayout(group)
         if not self.state.plots:

@@ -1,0 +1,39 @@
+model:
+  decision_threshold: 0.72
+  confidence_gain: 1.55
+integrator:
+  method: euler
+timestep: 0.005
+seed: 34
+task:
+  name: stroop
+  scenario: stress-recovery
+  duration: 40.0
+pathology:
+  enabled: true
+  scenario: null
+  mutations: []
+output:
+  save_results: false
+  label: scenario_yaml_stress_recovery_serotonin
+  output_dir: outputs
+clinical_profile:
+  id: serotonin_imbalance
+  display_name: Zaburzenie równowagi serotoninowej
+  mechanism: Słabsza stabilizacja nastroju i kontroli awersyjnej podnosi próg decyzji podczas epizodu stresu i wygaszania pobudzenia.
+  affected_regions:
+    - DMN
+    - SAL
+    - EXEC
+  cognitive_functions:
+    - regulacja emocji
+    - elastyczność poznawcza
+    - kontrola konfliktu
+  expected_direction: higher_activity
+  primary_metric: mean_abs_difference
+  severity_level:
+    small: 0.0
+    medium: 0.02
+    large: 0.05
+  expected_effects:
+    decision_threshold: ostrożniejsze przełączanie decyzji
