@@ -248,6 +248,7 @@ class QtSections:
         self.ready_lesson_combo = QComboBox()
         for lesson_id, lesson_label, _config_label in READY_LESSON_PRESETS:
             self.ready_lesson_combo.addItem(lesson_label, lesson_id)
+        self.ready_lesson_combo.setCurrentIndex(-1)
         self.ready_lesson_combo.setToolTip(
             "Gotowa lekcja wybiera wyłącznie istniejącą konfigurację YAML."
         )
