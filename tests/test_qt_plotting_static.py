@@ -145,3 +145,46 @@ def test_qt_activity_controls_and_scenario_are_bound() -> None:
     assert "activity_axis.relim()" in results_source
     assert "activity_axis.autoscale_view(scalex=False, scaley=True)" in results_source
     assert "QMessageBox.warning" in results_source
+
+
+def test_diagnostics_plot_uses_two_shared_panels_with_separated_series() -> None:
+    """Sprawdź statycznie podział diagnostyki na dwa panele ze wspólną osią X."""
+    source = PLOTTING_PATH.read_text(encoding="utf-8")
+    function_source = source.split("def draw_diagnostics", maxsplit=1)[1].split(
+        "def draw_weight_trajectories", maxsplit=1
+    )[0]
+
+    theoretical_keys = [
+        'diagnostics["prediction_error"]',
+        'diagnostics["gw_ignition"]',
+        'diagnostics["dopamine_delta"]',
+    ]
+    neuromodulator_keys = [
+        'diagnostics["noradrenaline"]',
+        'diagnostics["acetylcholine"]',
+        'diagnostics["serotonin"]',
+        'diagnostics["gaba"]',
+        'diagnostics["glutamate"]',
+        'diagnostics["endorphins"]',
+        'diagnostics["cortisol"]',
+    ]
+
+    assert "ax.remove()" in function_source
+    assert "axes = fig.subplots(2, 1, sharex=True)" in function_source
+    assert "theoretical_ax, neuromodulator_ax = axes" in function_source
+    assert 'theoretical_ax.set_title("Zmienne teoretyczne modelu")' in function_source
+    assert 'neuromodulator_ax.set_title("Neuromodulatory mózgowe")' in function_source
+    assert 'neuromodulator_ax.set_xlabel("Czas symulacji [s]")' in function_source
+    assert "return list(axes)" in function_source
+
+    theoretical_block = function_source.split("neuromodulator_ax.plot", maxsplit=1)[0]
+    neuromodulator_block = function_source.split("neuromodulator_ax.plot", maxsplit=1)[
+        1
+    ]
+
+    for theoretical_key in theoretical_keys:
+        assert theoretical_key in theoretical_block
+        assert theoretical_key not in neuromodulator_block
+    for neuromodulator_key in neuromodulator_keys:
+        assert neuromodulator_key in neuromodulator_block
+        assert neuromodulator_key not in theoretical_block
