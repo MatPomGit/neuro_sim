@@ -262,7 +262,10 @@ def test_report_marks_benchmark_origin_in_markdown() -> Any:
 
 
 def test_validation_registry_benchmarks_are_reported() -> Any:
-    """Każdy benchmark z metadanych ma wpis w rejestrze i raport zgodności."""
+    """Każdy benchmark z pliku metadanych ma wpis w rejestrze i raporcie."""
+    import json
+    from pathlib import Path
+
     from brain_core.analysis.benchmark_loader import load_reference_benchmark_bundle
     from brain_core.analysis.reports import (
         build_analysis_report,
@@ -270,6 +273,9 @@ def test_validation_registry_benchmarks_are_reported() -> Any:
     )
 
     bundle = load_reference_benchmark_bundle()
+    metadata_from_file = json.loads(
+        Path("data/validation/benchmark_metadata.json").read_text(encoding="utf-8")
+    )
     registry = load_validation_registry()
 
     report = build_analysis_report(
@@ -284,8 +290,9 @@ def test_validation_registry_benchmarks_are_reported() -> Any:
         item["benchmark"] for item in report.payload["validation_compliance"]
     }
 
-    assert set(bundle.metadata) <= set(registry)
-    assert reported_benchmarks == set(bundle.metadata)
+    assert set(metadata_from_file) == set(bundle.metadata)
+    assert set(metadata_from_file) <= set(registry)
+    assert reported_benchmarks == set(metadata_from_file)
     assert "## Zgodność walidacyjna" in markdown
     for benchmark_name, metadata in bundle.metadata_payload().items():
         assert f"| {benchmark_name} | {metadata['level']} |" in markdown

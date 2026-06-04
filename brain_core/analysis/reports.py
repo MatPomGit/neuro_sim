@@ -268,7 +268,11 @@ def _summarize_last_comparison(benchmark_name: str, comparison: dict[str, Any]) 
         sorted(name for name in benchmark_metrics if name not in preferred_order)
     )
     return "; ".join(
-        f"{metric_name}={value:.4f}" if isinstance(value, (float, np.floating)) else f"{metric_name}={value}"
+        (
+            f"{metric_name}={value:.4f}"
+            if isinstance(value, (float, np.floating))
+            else f"{metric_name}={value}"
+        )
         for metric_name in ordered_names
         if (value := benchmark_metrics[metric_name]) is not None
     )
@@ -335,6 +339,37 @@ def collect_validation_compliance(
     return entries
 
 
+def _resolve_validation_compliance_rows(
+    payload: dict[str, Any],
+) -> list[dict[str, str]]:
+    """Zwróć wiersze zgodności walidacyjnej dla aktualnego payloadu raportu.
+
+    Parameters
+    ----------
+    payload:
+        Dane raportu zawierające opcjonalne sekcje ``benchmark_metadata``,
+        ``comparison`` i ``validation_compliance``.
+
+    Returns
+    -------
+    list[dict[str, str]]
+        Gotowe wiersze sekcji „Zgodność walidacyjna”. Jeśli payload zawiera już
+        tę sekcję, funkcja zwraca ją bez ponownego odczytu rejestru.
+    """
+    existing_rows = payload.get("validation_compliance")
+    if existing_rows is not None:
+        return list(existing_rows)
+
+    benchmark_metadata = payload.get("benchmark_metadata")
+    if not benchmark_metadata:
+        return []
+
+    return collect_validation_compliance(
+        benchmark_metadata=benchmark_metadata,
+        comparison=payload.get("comparison", {}),
+    )
+
+
 @dataclass
 class AnalysisReport:
     """
@@ -363,7 +398,7 @@ class AnalysisReport:
         metrics = self.payload.get("metrics", {})
         compare = self.payload.get("comparison", {})
         benchmark_metadata = self.payload.get("benchmark_metadata", {})
-        validation_compliance = self.payload.get("validation_compliance", [])
+        validation_compliance = _resolve_validation_compliance_rows(self.payload)
         lines = ["# Raport analizy", "", "## Metryki"]
         for name, value in metrics.items():
             lines.append(f"- **{name}**: {value}")
@@ -628,7 +663,7 @@ class AnalysisReport:
                         "value": str(value),
                     }
                 )
-        for item in self.payload.get("validation_compliance", []):
+        for item in _resolve_validation_compliance_rows(self.payload):
             benchmark_name = item.get("benchmark", "n/a")
             for metric_name in (
                 "level",
