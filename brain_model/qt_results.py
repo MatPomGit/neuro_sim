@@ -85,8 +85,8 @@ def _create_activity_controls(canvas: Any, axes: list[Any]) -> QWidget:
     def toggle_activity_y_scale() -> None:
         current_xlim = activity_axis.get_xlim()
         if activity_axis.get_yscale() == "linear":
-            positive_values = _iter_visible_positive_activity_values(activity_axis)
-            if not positive_values:
+            min_positive = _get_min_positive_activity_value(activity_axis)
+            if min_positive is None:
                 QMessageBox.warning(
                     controls,
                     "Skala logarytmiczna",
@@ -94,7 +94,7 @@ def _create_activity_controls(canvas: Any, axes: list[Any]) -> QWidget:
                     "brak dodatnich wartości aktywacji.",
                 )
                 return
-            safe_minimum = min(positive_values)
+            activity_axis.set_ylim(bottom=min_positive * 0.5)
             activity_axis.set_ylim(bottom=safe_minimum * 0.5)
             activity_axis.set_yscale("log")
             scale_button.setText("Skala Y: logarytmiczna")
