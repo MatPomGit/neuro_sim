@@ -526,9 +526,9 @@ class RovingOddballQuestionsPanel(QWidget):
                     "Uruchom lekcję roving oddball, aby wypełnić odpowiedzi.",
                 )
             ]
-        standard_tones = self._tones_for_condition(roving_report, "standard")
-        deviant_tones = self._tones_for_condition(roving_report, "deviant")
-        new_standard_tones = self._new_standard_tones(roving_report)
+        standard_tones = _extract_tones(roving_report, condition="standard")
+        deviant_tones = _extract_tones(roving_report, condition="deviant")
+        new_standard_tones = _extract_tones(roving_report, is_new_standard=True)
         return [
             (
                 "Który bodziec pełni rolę standardu?",
