@@ -6,6 +6,17 @@ from dataclasses import dataclass
 from importlib import import_module
 from typing import TYPE_CHECKING, Any, Literal
 
+from .gui_forms import COMMAND_LABELS, COMMAND_VALUES, PARAMETER_DESCRIPTIONS
+from .gui_state import GuiState
+from .qt_config import (
+    label_for_scenario_yaml_path,
+    load_scenario_yaml_config,
+    scenario_yaml_description_for_label,
+    scenario_yaml_path_for_label,
+    scenario_yaml_preset_labels,
+)
+from .scenarios import get_scenario, list_scenarios
+
 if TYPE_CHECKING:
     from PySide6.QtWidgets import (
         QButtonGroup,
@@ -39,18 +50,6 @@ else:
 
 
 _qt_widgets_loaded = False
-
-
-from .gui_forms import COMMAND_LABELS, COMMAND_VALUES, PARAMETER_DESCRIPTIONS
-from .gui_state import GuiState
-from .qt_config import (
-    label_for_scenario_yaml_path,
-    load_scenario_yaml_config,
-    scenario_yaml_description_for_label,
-    scenario_yaml_path_for_label,
-    scenario_yaml_preset_labels,
-)
-from .scenarios import get_scenario, list_scenarios
 
 
 def _ensure_qt_widgets_loaded() -> None:
@@ -417,6 +416,12 @@ class QtSections:
             "Tylko dla trybu serii: lista identyfikatorów scenariuszy do wielu "
             "uruchomień. Nie zmienia pojedynczego scenariusza z sekcji Szybki start."
         )
+        self.batch_scenarios_hint_label = QLabel(
+            "To nie jest drugi wybór scenariusza: pole działa wyłącznie w trybie "
+            "serii i pozwala porównać kilka scenariuszy w jednym uruchomieniu batch."
+        )
+        self.batch_scenarios_hint_label.setObjectName("hintLabel")
+        self.batch_scenarios_hint_label.setWordWrap(True)
         self.sensitivity_edit = QLineEdit(self.state.sensitivity_params)
         self.sensitivity_delta_edit = QLineEdit(self.state.sensitivity_delta)
 
@@ -426,6 +431,7 @@ class QtSections:
         form.addRow("tryb uruchomienia", self.command_combo)
         form.addRow("ziarna serii", self.batch_seeds_edit)
         form.addRow("scenariusze serii (batch)", self.batch_scenarios_edit)
+        form.addRow("", self.batch_scenarios_hint_label)
         form.addRow("parametry wrażliwości", self.sensitivity_edit)
         form.addRow("delta wrażliwości", self.sensitivity_delta_edit)
         outer.addWidget(self.advanced_group)
@@ -684,10 +690,13 @@ class QtSections:
         self.scenario_details_label.setText(f"{scenario.name}: {scenario.description}")
 
     def refresh_scenario_config_description(self) -> None:
-        """Odśwież opis celu i różnic wybranej konfiguracji YAML."""
+        """Odśwież opis celu, różnic i pliku wybranej konfiguracji YAML."""
         selected_label = self.scenario_config_combo.currentText()
         description = scenario_yaml_description_for_label(selected_label)
-        self.scenario_config_description_label.setText(description)
+        selected_path = scenario_yaml_path_for_label(selected_label)
+        self.scenario_config_description_label.setText(
+            f"{description}\nPlik YAML: {selected_path}"
+        )
 
     def apply_suggested_duration(self, show_status: bool = True) -> None:
         """Ustaw czas symulacji zgodnie z podpowiedzią wybranego scenariusza.
