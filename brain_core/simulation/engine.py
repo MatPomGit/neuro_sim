@@ -442,10 +442,6 @@ def _run_local_snn_comparison(
 
     requested_mode = str(config.snn.get("mode", "report_only"))
     computed_modes = ["baseline", "report_only_snn", "closed_loop_snn"]
-    comparison_note_pl = (
-        "closed_loop_snn jest dodatkowym wariantem porównawczym liczonym "
-        "także wtedy, gdy żądany tryb SNN to report_only."
-    )
 
     closed_loop_activity, feedback_drive = _simulate_closed_loop_snn_activity(
         config=config,
