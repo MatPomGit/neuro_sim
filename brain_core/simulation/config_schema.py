@@ -566,6 +566,13 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
 def _validate_analysis_config(cfg: ExperimentConfig) -> None:
     """Waliduje wybór zestawów analiz uruchamianych po symulacji."""
     sets_val = _require_list(cfg.analysis.get("sets", []), "analysis.sets")
+    sets_val = [
+        _require_non_empty_string(set_name, f"analysis.sets[{idx}]")
+        for idx, set_name in enumerate(sets_val)
+    ]
+    if len(sets_val) != len(set(sets_val)):
+        raise ConfigValidationError("analysis.sets musi zawierać unikalne nazwy")
+
     allowed = {"spectral", "phase_locking", "connectivity", "information_flow"}
     unknown = [name for name in sets_val if name not in allowed]
     if unknown:

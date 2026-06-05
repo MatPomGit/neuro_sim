@@ -146,6 +146,41 @@ output:
     assert yaml_cfg.task["duration"] == json_cfg.task["duration"] == 1.0
 
 
+def test_invalid_analysis_set_type_reports_field_path() -> None:
+    """Błędny typ nazwy analizy ma wskazywać konkretny element listy."""
+    payload = _valid_config_payload()
+    payload["analysis"]["sets"] = ["spectral", 123]
+
+    with pytest.raises(
+        ConfigValidationError, match=r"analysis\.sets\[1\] musi być niepustym tekstem"
+    ):
+        validate_config(payload)
+
+
+@pytest.mark.parametrize(
+    "config_path",
+    [
+        "configs/default.yaml",
+        "configs/cognitive_demo.yaml",
+        "configs/roving_oddball_healthy.yaml",
+        "configs/roving_oddball_lesion_hippocampus.yaml",
+        "configs/roving_oddball_disorder_gaba.yaml",
+        "configs/multi_region_delay_demo.yaml",
+        "configs/multi_region_delay_extended.yaml",
+        "configs/snn_hippocampus_demo.yaml",
+    ],
+)
+def test_target_schema_examples_are_loadable(config_path: str) -> None:
+    """Przykładowe konfiguracje mają przechodzić docelowy schemat walidacji."""
+    from pathlib import Path
+    root_dir = Path(__file__).parent.parent
+    cfg = load_config(root_dir / config_path)
+
+    assert cfg.seed == cfg.rng_seed
+    assert cfg.task["duration"] > 0.0
+    assert isinstance(cfg.analysis["sets"], list)
+
+
 def test_reproducibility_with_same_seed() -> None:
     """Ten sam seed ma zachować deterministyczne wyniki trial-level."""
     payload = _valid_config_payload()
