@@ -65,7 +65,8 @@ def _draw_wrapped_text_page(
         Opcjonalna stopka z informacją o źródle artefaktów.
     """
 
-    fig, axis = plt.subplots(figsize=A4_FIGSIZE)
+    fig = Figure(figsize=A4_FIGSIZE)
+    axis = fig.add_subplot(111)
     axis.axis("off")
     y_position = TEXT_TOP
     axis.text(
