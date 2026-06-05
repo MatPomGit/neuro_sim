@@ -3,10 +3,47 @@ integrator:
   method: euler
 timestep: 0.005
 seed: 13
+rng_seed: 13
 task:
   name: stroop
   scenario: stroop
   duration: 30.0
+stimulus:
+  scenario: stroop
+  source: task
+brain_profile:
+  id: default
+  description: Bazowy profil parametrów modelu.
+clinical_profile:
+  id: healthy_v1
+  display_name: Zdrowy profil bazowy v1
+  mechanism: Brak jawnie modelowanej patologii klinicznej.
+  affected_regions: []
+  cognitive_functions: []
+  expected_effects: {}
+  expected_direction: stable_reference
+  primary_metric: mean_abs_difference
+  severity_level:
+    small: 0.0
+    medium: 0.02
+    large: 0.05
+connectome:
+  atlas: default_regions
+  weights: data/connectomes/weights.csv
+  fiber_lengths: data/connectomes/fiber_lengths.csv
+pathology:
+  enabled: false
+  scenario: null
+  mutations: []
+snn:
+  enabled: false
+  circuits: []
+analysis:
+  sets:
+  - spectral
+  - phase_locking
+  - connectivity
+  - information_flow
 output:
   save_results: false
   label: stroop

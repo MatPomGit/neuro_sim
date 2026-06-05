@@ -5,31 +5,31 @@ integrator:
   method: euler
 timestep: 0.005
 seed: 33
+rng_seed: 33
 task:
   name: n_back
   n: 2
   scenario: reward-learning
   duration: 30.0
-pathology:
-  enabled: true
-  scenario: null
-  mutations: []
-output:
-  save_results: false
-  label: scenario_yaml_n_back_dopamine
-  output_dir: outputs
+stimulus:
+  scenario: reward-learning
+  source: task
+brain_profile:
+  id: default
+  description: Bazowy profil parametrów modelu.
 clinical_profile:
   id: dopamine_deficit
   display_name: Deficyt dopaminowy w n-back
-  mechanism: Obniżona modulacja nagrody i uczenia ze wzmocnieniem osłabia aktualizację wartości podczas obciążenia pamięci roboczej.
+  mechanism: Obniżona modulacja nagrody i uczenia ze wzmocnieniem osłabia aktualizację
+    wartości podczas obciążenia pamięci roboczej.
   affected_regions:
-    - VAL
-    - EXEC
-    - VSWM
+  - VAL
+  - EXEC
+  - VSWM
   cognitive_functions:
-    - pamięć robocza
-    - uczenie ze wzmocnieniem
-    - podejmowanie decyzji
+  - pamięć robocza
+  - uczenie ze wzmocnieniem
+  - podejmowanie decyzji
   expected_direction: lower_activity
   primary_metric: mean_abs_difference
   severity_level:
@@ -38,3 +38,24 @@ clinical_profile:
     large: 0.05
   expected_effects:
     learning_rate_value: niższe tempo aktualizacji wartości
+connectome:
+  atlas: default_regions
+  weights: data/connectomes/weights.csv
+  fiber_lengths: data/connectomes/fiber_lengths.csv
+pathology:
+  enabled: true
+  scenario: null
+  mutations: []
+snn:
+  enabled: false
+  circuits: []
+analysis:
+  sets:
+  - spectral
+  - phase_locking
+  - connectivity
+  - information_flow
+output:
+  save_results: false
+  label: scenario_yaml_n_back_dopamine
+  output_dir: outputs
