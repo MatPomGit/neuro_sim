@@ -39,6 +39,12 @@ clinical_profile:
     small: 0.0
     medium: 0.02
     large: 0.05
+  amplitude_latency_mechanism:
+    expected_amplitude_direction: lower_contextual_amplitude
+    expected_readaptation_direction: longer_readaptation
+    qualitative_threshold: 0.05
+    mechanism_comment: Lezja hipokampa ogranicza kontekst epizodyczny, dlatego raport akcentuje słabszą integrację nowego standardu i readaptację.
+    educational_comment: Różnice traktuj jako ilustrację roli pamięci epizodycznej w przewidywaniu sensorycznym, nie jako marker diagnostyczny.
 connectome:
   atlas: default_regions
   weights: data/connectomes/weights.csv

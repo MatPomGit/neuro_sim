@@ -650,6 +650,7 @@ def run_experiment(
             profile_id=str(
                 config.clinical_profile.get("id") or config.output.get("label") or "run"
             ),
+            clinical_profile=config.clinical_profile,
         )
     snn_comparison = _run_local_snn_comparison(
         config=config,
@@ -755,6 +756,85 @@ def _classify_roving_profile_group(profile_id: str, result: dict[str, Any]) -> s
     return "disorder"
 
 
+def _build_roving_profile_pair_comparisons(
+    profiles: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    """Buduje dydaktyczne porównania profili roving oddball względem zdrowego.
+
+    Parameters
+    ----------
+    profiles:
+        Agregaty profili zawierające sekcję ``amplitude_latency_mechanism``.
+
+    Returns
+    -------
+    list[dict[str, object]]
+        Lista porównań z oczekiwanym kierunkiem, obserwowaną różnicą, progiem
+        jakościowym i komentarzem po polsku.
+    """
+    if not profiles:
+        return []
+    reference = next(
+        (profile for profile in profiles if profile.get("profile_group") == "healthy"),
+        profiles[0],
+    )
+    reference_mechanism = (
+        reference.get("amplitude_latency_mechanism")
+        if isinstance(reference.get("amplitude_latency_mechanism"), dict)
+        else {}
+    )
+    reference_amplitude = float(reference_mechanism.get("response_amplitude", 0.0))
+    reference_latency = float(reference.get("mean_readaptation_latency", 0.0))
+    comparisons: list[dict[str, object]] = []
+    for profile in profiles:
+        if profile is reference:
+            continue
+        mechanism = (
+            profile.get("amplitude_latency_mechanism")
+            if isinstance(profile.get("amplitude_latency_mechanism"), dict)
+            else {}
+        )
+        amplitude_difference = round(
+            float(mechanism.get("response_amplitude", 0.0)) - reference_amplitude,
+            6,
+        )
+        readaptation_difference = round(
+            float(profile.get("mean_readaptation_latency", 0.0)) - reference_latency,
+            6,
+        )
+        threshold = float(mechanism.get("qualitative_threshold", 0.05))
+        if (
+            abs(amplitude_difference) >= threshold
+            or abs(readaptation_difference) >= threshold
+        ):
+            threshold_result = "przekroczony próg jakościowy"
+        else:
+            threshold_result = "poniżej progu jakościowego"
+        comparisons.append(
+            {
+                "reference_profile_id": reference.get("profile_id", "healthy_v1"),
+                "profile_id": profile.get("profile_id", "n/a"),
+                "profile_group": profile.get("profile_group", "n/a"),
+                "expected_amplitude_direction": mechanism.get(
+                    "expected_amplitude_direction", "stable_reference"
+                ),
+                "expected_readaptation_direction": mechanism.get(
+                    "expected_readaptation_direction", "stable_reference"
+                ),
+                "observed_amplitude_difference": amplitude_difference,
+                "observed_readaptation_difference": readaptation_difference,
+                "qualitative_threshold": threshold,
+                "threshold_result": threshold_result,
+                "educational_comment": mechanism.get(
+                    "educational_comment",
+                    "Porównanie pokazuje kierunek różnicy w symulacji względem "
+                    "profilu zdrowego; nie zastępuje walidacji empirycznej.",
+                ),
+            }
+        )
+    return comparisons
+
+
 def _build_roving_profile_comparison(
     *,
     seed: int,
@@ -780,6 +860,7 @@ def _build_roving_profile_comparison(
         roving_report = build_roving_oddball_report(
             result.get("trial_results") or [],
             profile_id=profile_id,
+            clinical_profile=result.get("clinical_profile") or {},
         )
         roving_report["profile_group"] = _classify_roving_profile_group(
             profile_id,
@@ -795,6 +876,7 @@ def _build_roving_profile_comparison(
         "same_seed": True,
         "same_sequence": same_sequence,
         "profiles": profiles,
+        "comparisons": _build_roving_profile_pair_comparisons(profiles),
     }
 
 

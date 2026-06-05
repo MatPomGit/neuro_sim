@@ -167,6 +167,102 @@ def _trial_group_markdown_lines(event_timeline: list[dict[str, Any]]) -> list[st
     return lines
 
 
+def _mean_regional_response_amplitude(trial_results: list[dict[str, Any]]) -> float:
+    """Liczy prosty proxy amplitudy odpowiedzi z wejść regionalnych triali.
+
+    Parameters
+    ----------
+    trial_results:
+        Lista wyników triali z polem ``regional_input`` zapisanym przez silnik.
+
+    Returns
+    -------
+    float
+        Średnia z wartości bezwzględnych wejść regionalnych. Wartość jest
+        raportowym proxy amplitudy odpowiedzi, a nie empiryczną amplitudą ERP.
+    """
+    amplitudes: list[float] = []
+    for result in trial_results:
+        regional_input = result.get("regional_input") or {}
+        if not isinstance(regional_input, dict) or not regional_input:
+            continue
+        amplitudes.append(
+            float(np.mean([abs(float(value)) for value in regional_input.values()]))
+        )
+    return round(float(np.mean(amplitudes)), 6) if amplitudes else 0.0
+
+
+def _roving_mechanism_metadata(profile: dict[str, Any] | None) -> dict[str, Any]:
+    """Zwraca zwalidowane metadane mechanizmu amplituda-latencja dla profilu."""
+    if not isinstance(profile, dict):
+        return {}
+    metadata = profile.get("amplitude_latency_mechanism")
+    return dict(metadata) if isinstance(metadata, dict) else {}
+
+
+def _build_amplitude_latency_mechanism_section(
+    *,
+    trial_results: list[dict[str, Any]],
+    summary: dict[str, object],
+    clinical_profile: dict[str, Any] | None,
+) -> dict[str, object]:
+    """Buduje sekcję łączącą amplitudę, readaptację i komentarz mechanizmu.
+
+    Parameters
+    ----------
+    trial_results:
+        Wyniki triali roving oddball.
+    summary:
+        Agregaty sekwencji wyliczone w ``build_roving_oddball_report``.
+    clinical_profile:
+        Metadane profilu klinicznego z konfiguracji.
+
+    Returns
+    -------
+    dict[str, object]
+        Sekcja raportu ``amplitude_latency_mechanism`` dla scenariusza
+        ``roving_oddball``.
+    """
+    clinical_profile = clinical_profile or {}
+    standard_trials: list[dict[str, Any]] = []
+    deviant_trials: list[dict[str, Any]] = []
+    for result in trial_results:
+        condition = result.get("condition")
+        if condition == "standard":
+            standard_trials.append(result)
+        elif condition == "deviant":
+            deviant_trials.append(result)
+    standard_amplitude = _mean_regional_response_amplitude(standard_trials)
+    deviant_amplitude = _mean_regional_response_amplitude(deviant_trials)
+    response_amplitude = _mean_regional_response_amplitude(trial_results)
+    metadata = _roving_mechanism_metadata(clinical_profile)
+    return {
+        "profile_id": clinical_profile.get("id", summary.get("profile_id", "n/a")),
+        "response_amplitude": response_amplitude,
+        "standard_response_amplitude": standard_amplitude,
+        "deviant_response_amplitude": deviant_amplitude,
+        "deviant_standard_amplitude_difference": round(
+            deviant_amplitude - standard_amplitude, 6
+        ),
+        "mean_readaptation_latency": summary.get("mean_readaptation_latency", 0.0),
+        "expected_amplitude_direction": metadata.get(
+            "expected_amplitude_direction", "stable_reference"
+        ),
+        "expected_readaptation_direction": metadata.get(
+            "expected_readaptation_direction", "stable_reference"
+        ),
+        "qualitative_threshold": float(metadata.get("qualitative_threshold", 0.05)),
+        "mechanism_comment": metadata.get(
+            "mechanism_comment", clinical_profile.get("mechanism", "n/a")
+        ),
+        "educational_comment": metadata.get(
+            "educational_comment",
+            "Sekcja łączy proxy amplitudy odpowiedzi z latencją readaptacji; "
+            "interpretuj ją jako opis dydaktyczny modelu, nie diagnozę kliniczną.",
+        ),
+    }
+
+
 def _classify_clinical_difference(
     value: float,
     severity_thresholds: dict[str, Any] | None,
@@ -756,6 +852,38 @@ class AnalysisReport:
                 f"- **latency readaptacji**: "
                 f"{roving_report.get('mean_readaptation_latency', 'n/a')}"
             )
+            mechanism = roving_report.get("amplitude_latency_mechanism") or {}
+            if mechanism:
+                lines.extend(["", "### Amplituda-latencja-mechanizm"])
+                lines.append(f"- **profil**: {mechanism.get('profile_id', 'n/a')}")
+                lines.append(
+                    f"- **amplituda odpowiedzi proxy**: "
+                    f"{mechanism.get('response_amplitude', 'n/a')}"
+                )
+                lines.append(
+                    f"- **różnica amplitudy dewiant-standard**: "
+                    f"{mechanism.get('deviant_standard_amplitude_difference', 'n/a')}"
+                )
+                lines.append(
+                    f"- **średnia latencja readaptacji**: "
+                    f"{mechanism.get('mean_readaptation_latency', 'n/a')}"
+                )
+                lines.append(
+                    f"- **oczekiwany kierunek amplitudy**: "
+                    f"{mechanism.get('expected_amplitude_direction', 'n/a')}"
+                )
+                lines.append(
+                    f"- **oczekiwany kierunek readaptacji**: "
+                    f"{mechanism.get('expected_readaptation_direction', 'n/a')}"
+                )
+                lines.append(
+                    f"- **komentarz mechanizmu**: "
+                    f"{mechanism.get('mechanism_comment', 'n/a')}"
+                )
+                lines.append(
+                    f"- **komentarz dydaktyczny**: "
+                    f"{mechanism.get('educational_comment', 'n/a')}"
+                )
 
         roving_profile_comparison = self.payload.get("roving_profile_comparison")
         if roving_profile_comparison:
@@ -783,6 +911,49 @@ class AnalysisReport:
                     f"  - latency readaptacji: "
                     f"{profile.get('mean_readaptation_latency', 'n/a')}"
                 )
+                mechanism = profile.get("amplitude_latency_mechanism") or {}
+                if mechanism:
+                    lines.append(
+                        f"  - amplituda odpowiedzi proxy: "
+                        f"{mechanism.get('response_amplitude', 'n/a')}"
+                    )
+                    lines.append(
+                        f"  - mechanizm profilu: "
+                        f"{mechanism.get('mechanism_comment', 'n/a')}"
+                    )
+            comparisons = roving_profile_comparison.get("comparisons") or []
+            if comparisons:
+                lines.extend(["", "### Porównanie healthy/disorder/lesion"])
+                for item in comparisons:
+                    lines.append(
+                        f"- **{item.get('reference_profile_id', 'healthy_v1')} → "
+                        f"{item.get('profile_id', 'n/a')}** "
+                        f"({item.get('profile_group', 'n/a')})"
+                    )
+                    lines.append(
+                        f"  - oczekiwany kierunek amplitudy: "
+                        f"{item.get('expected_amplitude_direction', 'n/a')}"
+                    )
+                    lines.append(
+                        f"  - oczekiwany kierunek readaptacji: "
+                        f"{item.get('expected_readaptation_direction', 'n/a')}"
+                    )
+                    lines.append(
+                        f"  - obserwowana różnica amplitudy: "
+                        f"{item.get('observed_amplitude_difference', 'n/a')}"
+                    )
+                    lines.append(
+                        f"  - obserwowana różnica readaptacji: "
+                        f"{item.get('observed_readaptation_difference', 'n/a')}"
+                    )
+                    lines.append(
+                        f"  - próg jakościowy: {item.get('qualitative_threshold', 'n/a')} "
+                        f"({item.get('threshold_result', 'n/a')})"
+                    )
+                    lines.append(
+                        f"  - komentarz dydaktyczny: "
+                        f"{item.get('educational_comment', 'n/a')}"
+                    )
 
         clinical_differences = self.payload.get("clinical_differences", [])
         if clinical_differences:
@@ -993,6 +1164,15 @@ class AnalysisReport:
                         "value": str(roving_report.get(metric, "n/a")),
                     }
                 )
+            mechanism = roving_report.get("amplitude_latency_mechanism") or {}
+            for metric, value in mechanism.items():
+                rows.append(
+                    {
+                        "section": "amplitude_latency_mechanism",
+                        "metric": str(metric),
+                        "value": str(value),
+                    }
+                )
 
         roving_profile_comparison = self.payload.get("roving_profile_comparison")
         if roving_profile_comparison:
@@ -1031,6 +1211,25 @@ class AnalysisReport:
                             "value": str(profile.get(metric, "n/a")),
                         }
                     )
+                mechanism = profile.get("amplitude_latency_mechanism") or {}
+                for metric, value in mechanism.items():
+                    rows.append(
+                        {
+                            "section": "roving_profile_comparison",
+                            "metric": f"{profile_id}_{metric}",
+                            "value": str(value),
+                        }
+                    )
+            for item in roving_profile_comparison.get("comparisons") or []:
+                profile_id = item.get("profile_id", "n/a")
+                for metric, value in item.items():
+                    rows.append(
+                        {
+                            "section": "roving_profile_pair_comparison",
+                            "metric": f"{profile_id}_{metric}",
+                            "value": str(value),
+                        }
+                    )
 
         for item in self.payload.get("clinical_differences", []):
             profile_id = item.get("profile_id", "n/a")
@@ -1061,6 +1260,7 @@ def build_roving_oddball_report(
     trial_results: list[dict[str, Any]],
     *,
     profile_id: str | None = None,
+    clinical_profile: dict[str, Any] | None = None,
 ) -> dict[str, object]:
     """Agreguje metryki sekwencji roving oddball z wyników triali.
 
@@ -1073,6 +1273,9 @@ def build_roving_oddball_report(
     profile_id:
         Opcjonalny identyfikator profilu klinicznego dodawany do raportu
         porównawczego.
+    clinical_profile:
+        Opcjonalne metadane profilu klinicznego używane do sekcji
+        ``amplitude_latency_mechanism``.
 
     Returns
     -------
@@ -1090,6 +1293,11 @@ def build_roving_oddball_report(
             "habituation_rate": 0.0,
             "mean_readaptation_latency": 0.0,
             "sequence_signature": [],
+            "amplitude_latency_mechanism": _build_amplitude_latency_mechanism_section(
+                trial_results=[],
+                summary={"profile_id": profile_id, "mean_readaptation_latency": 0.0},
+                clinical_profile=clinical_profile,
+            ),
         }
 
     surprise_values = [
@@ -1153,6 +1361,11 @@ def build_roving_oddball_report(
     }
     if profile_id is not None:
         summary["profile_id"] = profile_id
+    summary["amplitude_latency_mechanism"] = _build_amplitude_latency_mechanism_section(
+        trial_results=trial_results,
+        summary=summary,
+        clinical_profile=clinical_profile,
+    )
     return summary
 
 

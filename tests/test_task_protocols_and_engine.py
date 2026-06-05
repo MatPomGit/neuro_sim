@@ -11,8 +11,12 @@ from brain_core.experiments.protocols import (
     StroopTask,
     get_task,
 )
+from brain_core.simulation.config_loader import load_config
 from brain_core.simulation.config_schema import ExperimentConfig
-from brain_core.simulation.engine import run_experiment
+from brain_core.simulation.engine import (
+    run_experiment,
+    run_task_across_clinical_profiles,
+)
 
 
 def test_tasks_generate_deterministic_stimuli() -> Any:
@@ -112,6 +116,49 @@ def test_roving_oddball_sequence_aliases_and_metrics() -> Any:
         assert {"surprise_index", "habituation_level", "readaptation_latency"}.issubset(
             stimulus.payload
         )
+
+
+def test_roving_oddball_metrics_have_stable_sequence_definitions() -> Any:
+    """Sprawdza deterministyczną sekwencję, habituację i reset po zmianie standardu."""
+    task = RovingOddballTask(
+        n_runs=3,
+        run_length_min=3,
+        run_length_max=3,
+        deviant_probability=1.0,
+        inter_stimulus_interval=0.5,
+        jitter=0.0,
+    )
+
+    first_sequence = task.generate_stimuli(seed=5, duration_s=10.0)
+    second_sequence = task.generate_stimuli(seed=5, duration_s=10.0)
+
+    assert first_sequence == second_sequence
+    assert [stimulus.condition for stimulus in first_sequence] == [
+        "standard",
+        "standard",
+        "standard",
+        "deviant",
+        "standard",
+        "standard",
+        "standard",
+        "deviant",
+        "standard",
+        "standard",
+        "standard",
+    ]
+    first_run_habituation = [
+        stimulus.payload["habituation_level"]
+        for stimulus in first_sequence
+        if stimulus.payload["run_index"] == 0 and stimulus.condition == "standard"
+    ]
+    assert first_run_habituation == pytest.approx([0.333333, 0.666667, 1.0])
+
+    new_standard = first_sequence[4]
+    assert new_standard.payload["is_new_standard"] is True
+    assert new_standard.payload["tone_hz"] == first_sequence[3].payload["tone_hz"]
+    assert new_standard.payload["habituation_level"] == pytest.approx(0.333333)
+    assert new_standard.payload["readaptation_latency"] == 2
+    assert first_sequence[6].payload["readaptation_latency"] == 0
 
 
 def test_roving_oddball_trial_results_include_metrics() -> Any:
@@ -263,6 +310,70 @@ def test_roving_oddball_report_contains_conditions_and_habituation_metrics() -> 
     assert "nowy standard" in markdown
     assert "tempo habituacji" in markdown
     assert "latency readaptacji" in markdown
+
+
+def test_roving_oddball_report_contains_amplitude_latency_mechanism_section() -> Any:
+    """Raport roving oddball zawiera sekcję amplituda-latencja-mechanizm."""
+    cfg = load_config("configs/roving_oddball_healthy.yaml")
+
+    result = run_experiment(cfg)
+    roving_report = result["analysis_report"]["roving_oddball"]
+    mechanism = roving_report["amplitude_latency_mechanism"]
+    markdown = AnalysisReport(result["analysis_report"]).to_markdown()
+
+    assert mechanism["profile_id"] == "healthy_v1"
+    assert mechanism["response_amplitude"] > 0.0
+    assert mechanism["expected_amplitude_direction"] == "stable_reference"
+    assert "### Amplituda-latencja-mechanizm" in markdown
+    assert "amplituda odpowiedzi proxy" in markdown
+    assert "komentarz mechanizmu" in markdown
+
+
+def test_roving_oddball_profile_comparison_reports_direction_threshold_and_comment() -> (
+    Any
+):
+    """Porównanie profili zawiera kierunek, różnicę, próg i polski komentarz."""
+    healthy = load_config("configs/roving_oddball_healthy.yaml")
+    disorder = load_config("configs/roving_oddball_disorder_gaba.yaml")
+    lesion = load_config("configs/roving_oddball_lesion_hippocampus.yaml")
+
+    batch = run_task_across_clinical_profiles(
+        healthy,
+        [
+            {
+                "clinical_profile": healthy.clinical_profile,
+                "pathology": healthy.pathology,
+            },
+            {
+                "clinical_profile": disorder.clinical_profile,
+                "pathology": disorder.pathology,
+            },
+            {
+                "clinical_profile": lesion.clinical_profile,
+                "pathology": lesion.pathology,
+            },
+        ],
+    )
+
+    comparison = batch["roving_profile_comparison"]
+    markdown = AnalysisReport({"roving_profile_comparison": comparison}).to_markdown()
+
+    assert comparison["same_seed"] is True
+    assert comparison["same_sequence"] is True
+    assert {item["profile_group"] for item in comparison["profiles"]} == {
+        "healthy",
+        "disorder",
+        "lesion",
+    }
+    assert len(comparison["comparisons"]) == 2
+    for item in comparison["comparisons"]:
+        assert item["expected_amplitude_direction"]
+        assert "observed_amplitude_difference" in item
+        assert item["qualitative_threshold"] == pytest.approx(0.05)
+        assert item["educational_comment"]
+    assert "### Porównanie healthy/disorder/lesion" in markdown
+    assert "próg jakościowy" in markdown
+    assert "komentarz dydaktyczny" in markdown
 
 
 def test_roving_oddball_event_timeline_has_trials_order_and_polish_labels() -> Any:
