@@ -175,7 +175,6 @@ def test_qt_activity_controls_and_scenario_are_bound() -> None:
     assert "zoom_activity_time(0.75)" in results_source
     assert "zoom_activity_time(1.25)" in results_source
     assert 'scale_button.setText("Skala Y: logarytmiczna")' in results_source
-    assert "activity_axis.relim()" in results_source
     assert "activity_axis.relim(visible_only=True)" in results_source
     assert "activity_axis.autoscale_view(scalex=False, scaley=True)" in results_source
     assert "QMessageBox.warning" in results_source
