@@ -66,10 +66,12 @@ def test_brain_projection_uses_svg_background_and_dynamic_limits() -> None:
     """Sprawdź, że rzuty SVG mają kontury tła i zakres z danych SVG."""
     source = PLOTTING_PATH.read_text(encoding="utf-8")
 
+    assert "def _plot_svg_underlay_background" in source
     assert "def _plot_svg_region_background" in source
     assert "def _set_svg_data_limits" in source
+    assert "_plot_svg_underlay_background(ax, underlay_shapes)" in source
     assert "_plot_svg_region_background(ax, shapes)" in source
-    assert "_set_svg_data_limits(ax, shapes)" in source
+    assert "_set_svg_data_limits(ax, shapes, underlay_shapes)" in source
 
 
 def test_eeg_modules_are_vertically_offset() -> None:

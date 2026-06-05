@@ -1,6 +1,10 @@
 from dataclasses import dataclass, field
 
-from .plasticity import ConnectivityAdaptationConfig, PlasticityRuleConfig
+from .plasticity import (
+    ConnectivityAdaptationConfig,
+    HebbianRuleConfig,
+    PlasticityRuleConfig,
+)
 
 
 @dataclass
@@ -20,14 +24,35 @@ class BrainParams:
     decision_threshold: float = 0.62
     confidence_gain: float = 1.8
 
-    semantic_rule: PlasticityRuleConfig = field(default_factory=lambda: PlasticityRuleConfig(
-        enabled=True,
-        learning_rate=0.004,
-        decay=0.001,
-    ))
-    value_rule: PlasticityRuleConfig = field(default_factory=lambda: PlasticityRuleConfig(
-        enabled=True,
-        learning_rate=0.02,
-        decay=0.0,
-    ))
-    connectivity_adaptation: ConnectivityAdaptationConfig = field(default_factory=ConnectivityAdaptationConfig)
+    semantic_rule: PlasticityRuleConfig = field(
+        default_factory=lambda: PlasticityRuleConfig(
+            enabled=True,
+            learning_rate=0.004,
+            decay=0.001,
+        )
+    )
+    value_rule: PlasticityRuleConfig = field(
+        default_factory=lambda: PlasticityRuleConfig(
+            enabled=True,
+            learning_rate=0.02,
+            decay=0.0,
+        )
+    )
+    connectivity_adaptation: ConnectivityAdaptationConfig = field(
+        default_factory=lambda: ConnectivityAdaptationConfig(
+            enabled=True,
+            pairs=(
+                ("HIP", "SEM"),
+                ("ATT", "EXEC"),
+                ("SAL", "GW"),
+            ),
+            hebbian=HebbianRuleConfig(
+                enabled=True,
+                learning_rate=0.001,
+                clip_update=0.002,
+            ),
+            decay=0.0001,
+            clip_min=-1.0,
+            clip_max=1.0,
+        )
+    )
