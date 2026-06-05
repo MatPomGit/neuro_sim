@@ -35,12 +35,16 @@ class BenchmarkMetadata:
     level:
         Poziom benchmarku: ``synthetic``, ``educational``,
         ``literature-inspired`` albo ``empirical``.
+    compliance_criteria:
+        Jawne kryteria zgodności używane przy interpretacji porównań z tym
+        benchmarkiem; pochodzą z metadanych, bez wartości domyślnych w kodzie.
     """
 
     source: str
     scope: str
     limitations: str
     level: str
+    compliance_criteria: str
 
     @property
     def comparison_origin_pl(self) -> str:
@@ -63,14 +67,15 @@ class BenchmarkMetadata:
         Returns
         -------
         dict[str, str]
-            Słownik z polami ``source``, ``scope``, ``limitations``, ``level``
-            i ``comparison_origin_pl``.
+            Słownik z polami ``source``, ``scope``, ``limitations``, ``level``,
+            ``compliance_criteria`` i ``comparison_origin_pl``.
         """
         return {
             "source": self.source,
             "scope": self.scope,
             "limitations": self.limitations,
             "level": self.level,
+            "compliance_criteria": self.compliance_criteria,
             "comparison_origin_pl": self.comparison_origin_pl,
         }
 
@@ -189,6 +194,9 @@ def _build_metadata(
     scope = _validate_text_field(benchmark_name, metadata, "scope")
     limitations = _validate_text_field(benchmark_name, metadata, "limitations")
     level = _validate_text_field(benchmark_name, metadata, "level")
+    compliance_criteria = _validate_text_field(
+        benchmark_name, metadata, "compliance_criteria"
+    )
     if level not in ALLOWED_BENCHMARK_LEVELS:
         allowed = ", ".join(sorted(ALLOWED_BENCHMARK_LEVELS))
         raise BenchmarkValidationError(
@@ -200,6 +208,7 @@ def _build_metadata(
         scope=scope,
         limitations=limitations,
         level=level,
+        compliance_criteria=compliance_criteria,
     )
 
 

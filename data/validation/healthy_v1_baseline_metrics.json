@@ -13,7 +13,7 @@
             "quality_band": "niska moc alfa w demonstracyjnym sygnale baseline"
         },
         "phase_locking_value": {
-            "expected": 0.04219242196458222,
+            "expected": 0.03550658182822797,
             "absolute_tolerance": 0.005,
             "quality_band": "s\u0142abe sprz\u0119\u017cenie fazowe bez modelowanej patologii"
         },

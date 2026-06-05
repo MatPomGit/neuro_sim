@@ -121,3 +121,13 @@ def test_reference_scenarios_and_pathology_config_validation() -> Any:
     )
     assert cfg.pathology["enabled"] is True
     assert cfg.pathology["scenario"] == "hippocampal_lesion"
+
+
+def test_reference_lesion_scenarios_cover_region_atrophy_and_disconnection() -> Any:
+    """Scenariusze clinical obejmują co najmniej dwa typy uszkodzeń."""
+    scenarios = pathology_scenarios()
+    hippocampal_kinds = {mutation.kind for mutation in scenarios["hippocampal_lesion"]}
+    dlpfc_kinds = {mutation.kind for mutation in scenarios["dlpfc_weakening"]}
+
+    assert "lesion" in hippocampal_kinds
+    assert {"atrophy", "disconnection"}.issubset(dlpfc_kinds)

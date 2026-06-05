@@ -572,6 +572,38 @@ def _simulate_task_trials(
     return state.metrics.get("trial_events", []), trial_results
 
 
+def _build_stimulus_sequence_signature(
+    trial_results: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Zbuduj stabilny podpis sekwencji bodźców do porównań profili.
+
+    Parameters
+    ----------
+    trial_results:
+        Wyniki triali zawierające identyfikator, warunek oraz opcjonalne pola
+        bodźcowe zapisane przez protokół zadania.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Minimalna lista pól determinujących sekwencję bodźców, bez wyników modelu
+        i bez metadanych profilu klinicznego.
+    """
+    signature_fields = (
+        "trial_id",
+        "condition",
+        "tone_hz",
+        "previous_standard_hz",
+        "run_index",
+        "repetition_index",
+        "is_new_standard",
+    )
+    return [
+        {field: trial[field] for field in signature_fields if field in trial}
+        for trial in trial_results
+    ]
+
+
 def run_experiment(
     config: ExperimentConfig,
     progress_callback: Callable[[float], None] | None = None,
@@ -603,6 +635,7 @@ def run_experiment(
     elapsed = pytime.perf_counter() - start
 
     trial_events, trial_results = _simulate_task_trials(config)
+    stimulus_sequence_signature = _build_stimulus_sequence_signature(trial_results)
     task_activation = _build_task_activation_summary(
         str(config.task.get("name", "stroop")), trial_events
     )
@@ -671,6 +704,7 @@ def run_experiment(
         region_names=list(model.names),
     )
     analysis_report.payload["event_timeline"] = event_timeline
+    analysis_report.payload["stimulus_sequence_signature"] = stimulus_sequence_signature
     analysis_report.payload["clinical_profile"] = dict(config.clinical_profile)
 
     save_info: dict[str, Any] | None = None
@@ -711,6 +745,7 @@ def run_experiment(
         "behavior": behavior,
         "trial_events": trial_events,
         "trial_results": trial_results,
+        "stimulus_sequence_signature": stimulus_sequence_signature,
         "event_timeline": event_timeline,
         "analysis_report": analysis_report.payload,
         "task_activation": task_activation,
@@ -1008,11 +1043,22 @@ def run_task_across_clinical_profiles(
             profile_run_config, progress_callback=progress_callback
         )
 
+    sequence_signatures = [
+        result.get("stimulus_sequence_signature") or [] for result in runs.values()
+    ]
+    reference_signature = sequence_signatures[0] if sequence_signatures else []
+    same_stimulus_sequence = all(
+        signature == reference_signature for signature in sequence_signatures
+    )
+
     reference_id = "healthy_v1" if "healthy_v1" in runs else next(iter(runs))
     compared = {key: value for key, value in runs.items() if key != reference_id}
     difference_report = build_clinical_difference_report(runs[reference_id], compared)
     batch_report: dict[str, Any] = {
         "seed": base_config.seed,
+        "same_seed": True,
+        "same_stimulus_sequence": same_stimulus_sequence,
+        "stimulus_sequence_signature": reference_signature,
         "task": dict(base_config.task),
         "reference_profile_id": reference_id,
         "runs": runs,
