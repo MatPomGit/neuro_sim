@@ -69,18 +69,18 @@ def _group_event_timeline_by_trial(
             trial_key,
             {
                 "trial_id": trial_id,
-                "condition": event.get("condition", "n/a"),
+                "condition": event.get("condition") or "n/a",
                 "stimulus": None,
                 "response": None,
                 "correctness": None,
                 "activity_changes": [],
                 "mechanism_comments": [],
-                "first_time_s": event.get("time_s", 0.0),
+                "first_time_s": event.get("time_s", 0.0) or 0.0,
             },
         )
-        group["condition"] = event.get("condition", group["condition"])
+        group["condition"] = event.get("condition") or group["condition"]
         group["first_time_s"] = min(
-            float(group["first_time_s"]), float(event.get("time_s", 0.0))
+            float(group["first_time_s"]), float(event.get("time_s", 0.0) or 0.0)
         )
         event_type = str(event.get("event_type", ""))
         if event_type == "stimulus_onset":
