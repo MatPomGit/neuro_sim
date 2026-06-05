@@ -756,6 +756,37 @@ def _classify_roving_profile_group(profile_id: str, result: dict[str, Any]) -> s
     return "disorder"
 
 
+def _describe_roving_signed_difference(
+    value: float,
+    *,
+    positive_label: str,
+    negative_label: str,
+) -> str:
+    """Opisuje znak różnicy profilu względem wariantu zdrowego.
+
+    Parameters
+    ----------
+    value:
+        Różnica metryki liczona jako profil badany minus profil zdrowy.
+    positive_label:
+        Polska etykieta dla wartości dodatniej.
+    negative_label:
+        Polska etykieta dla wartości ujemnej.
+
+    Returns
+    -------
+    str
+        Stabilny opis kierunku obserwowanej różnicy używany w raporcie
+        dydaktycznym healthy/disorder/lesion.
+    """
+    tolerance = 1e-7
+    if value > tolerance:
+        return positive_label
+    if value < -tolerance:
+        return negative_label
+    return "bez obserwowanej różnicy"
+
+
 def _build_roving_profile_pair_comparisons(
     profiles: list[dict[str, object]],
 ) -> list[dict[str, object]]:
@@ -810,6 +841,21 @@ def _build_roving_profile_pair_comparisons(
             threshold_result = "przekroczony próg jakościowy"
         else:
             threshold_result = "poniżej progu jakościowego"
+        observed_amplitude_direction = _describe_roving_signed_difference(
+            amplitude_difference,
+            positive_label="wyższa amplituda proxy niż w profilu zdrowym",
+            negative_label="niższa amplituda proxy niż w profilu zdrowym",
+        )
+        observed_readaptation_direction = _describe_roving_signed_difference(
+            readaptation_difference,
+            positive_label="dłuższa readaptacja niż w profilu zdrowym",
+            negative_label="krótsza readaptacja niż w profilu zdrowym",
+        )
+        observed_difference_comment = (
+            f"Obserwacja: {observed_amplitude_direction}; "
+            f"{observed_readaptation_direction}. "
+            f"Wynik jakościowy: {threshold_result}."
+        )
         comparisons.append(
             {
                 "reference_profile_id": reference.get("profile_id", "healthy_v1"),
@@ -823,8 +869,11 @@ def _build_roving_profile_pair_comparisons(
                 ),
                 "observed_amplitude_difference": amplitude_difference,
                 "observed_readaptation_difference": readaptation_difference,
+                "observed_amplitude_direction": observed_amplitude_direction,
+                "observed_readaptation_direction": observed_readaptation_direction,
                 "qualitative_threshold": threshold,
                 "threshold_result": threshold_result,
+                "observed_difference_comment": observed_difference_comment,
                 "educational_comment": mechanism.get(
                     "educational_comment",
                     "Porównanie pokazuje kierunek różnicy w symulacji względem "

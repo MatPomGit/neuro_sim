@@ -311,7 +311,10 @@ Wynik `batch["roving_profile_comparison"]` zawiera:
   `amplitude_latency_mechanism` dla każdego profilu;
 - `comparisons` — porównania względem profilu zdrowego zawierające oczekiwany
   kierunek, obserwowaną różnicę amplitudy i readaptacji, próg jakościowy oraz
-  polski komentarz dydaktyczny.
+  polski komentarz dydaktyczny;
+- `observed_difference_comment` — krótki polski opis, czy profil badany ma wyższą
+  lub niższą amplitudę proxy oraz dłuższą lub krótszą readaptację względem
+  wariantu zdrowego.
 
 ### Reguła interpretacyjna
 

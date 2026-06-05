@@ -369,9 +369,11 @@ def test_roving_oddball_profile_comparison_reports_direction_threshold_and_comme
     for item in comparison["comparisons"]:
         assert item["expected_amplitude_direction"]
         assert "observed_amplitude_difference" in item
+        assert item["observed_difference_comment"].startswith("Obserwacja:")
         assert item["qualitative_threshold"] == pytest.approx(0.05)
         assert item["educational_comment"]
     assert "### Porównanie healthy/disorder/lesion" in markdown
+    assert "kierunek obserwowany" in markdown
     assert "próg jakościowy" in markdown
     assert "komentarz dydaktyczny" in markdown
 
