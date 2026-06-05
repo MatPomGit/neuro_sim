@@ -127,15 +127,15 @@ def _trial_group_markdown_lines(event_timeline: list[dict[str, Any]]) -> list[st
         mechanism_comments = group.get("mechanism_comments") or []
         lines.append(
             "  - **bodziec**: "
-            f"{stimulus.get('description_pl', 'brak zapisanego bodźca')}"
+            f"{stimulus.get('description_pl') or 'brak zapisanego bodźca'}"
         )
         lines.append(
             "  - **odpowiedź**: "
-            f"{response.get('description_pl', 'brak zapisanej odpowiedzi')}"
+            f"{response.get('description_pl') or 'brak zapisanej odpowiedzi'}"
         )
         lines.append(
             "  - **błąd/poprawność**: "
-            f"{correctness.get('description_pl', 'brak oceny poprawności')}"
+            f"{correctness.get('description_pl') or 'brak oceny poprawności'}"
         )
         if activity_changes:
             lines.append(
