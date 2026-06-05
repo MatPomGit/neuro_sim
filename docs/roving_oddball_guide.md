@@ -242,7 +242,9 @@ oddball**. Sekcja agreguje:
 3. tempo habituacji (`habituation_rate`), liczone jako średni dodatni przyrost
    `habituation_level` między kolejnymi standardami tego samego runu;
 4. latency readaptacji (`mean_readaptation_latency`), liczone jako średnia
-   dodatnich wartości `readaptation_latency`.
+   dodatnich wartości `readaptation_latency`;
+5. sekcję `amplitude_latency_mechanism`, która łączy proxy amplitudy odpowiedzi,
+   latencję/readaptację oraz komentarz mechanizmu profilu klinicznego.
 
 ### Interpretacja agregatów
 
@@ -254,6 +256,39 @@ oddball**. Sekcja agreguje:
 | `mean_surprise_index` | Jak dużo zaskoczenia było średnio w sekwencji? | Wyższa wartość zwykle oznacza większy udział lub wagę dewiantów. | Nie jest zwalidowaną amplitudą MMN/P300. |
 | `habituation_rate` | Jak szybko narastała przewidywalność w runach? | Dodatnia wartość potwierdza narastanie `habituation_level`. | Nie dowodzi rzeczywistej adaptacji neuronalnej bez walidacji. |
 | `mean_readaptation_latency` | Jak długi był średni okres ponownego dopasowania? | Ułatwia porównanie sekwencji i profili w symulacji. | Nie jest klinicznym czasem reakcji pacjenta. |
+
+### Raport `amplitude_latency_mechanism`
+
+Sekcja **Amplituda-latencja-mechanizm** jest raportem dydaktycznym dla
+`roving_oddball`. Łączy trzy warstwy interpretacji:
+
+1. **amplituda odpowiedzi proxy** — średnia wartość bezwzględna wejść regionalnych
+   zapisanych w trialach; to techniczny wskaźnik odpowiedzi modelu, a nie
+   empiryczna amplituda ERP;
+2. **latencja/readaptacja** — `mean_readaptation_latency`, czyli średnia dodatnich
+   wartości `readaptation_latency` po dewiancie i na początku nowego standardu;
+3. **komentarz mechanizmu** — opis z `clinical_profile.amplitude_latency_mechanism`,
+   który wyjaśnia oczekiwany kierunek amplitudy i readaptacji dla profilu.
+
+Konfiguracje referencyjne zawierają tylko pola potrzebne do raportu i walidacji:
+
+| Pole | Rola w raporcie |
+| --- | --- |
+| `expected_amplitude_direction` | Oczekiwany kierunek amplitudy proxy względem profilu zdrowego. |
+| `expected_readaptation_direction` | Oczekiwany kierunek readaptacji względem profilu zdrowego. |
+| `qualitative_threshold` | Próg jakościowy używany przy porównaniu profili. |
+| `mechanism_comment` | Polski komentarz mechanizmu profilu klinicznego. |
+| `educational_comment` | Krótki komentarz dydaktyczny pokazany w raporcie. |
+
+Ograniczenia interpretacyjne:
+
+- amplituda proxy wynika z wejść regionalnych silnika, dlatego nie jest
+  zwalidowaną miarą MMN, P300 ani amplitudy EEG;
+- readaptacja jest deterministyczną metryką sekwencji, a nie klinicznym czasem
+  reakcji pacjenta;
+- komentarz mechanizmu opisuje hipotezę modelu, a nie rozpoznanie medyczne;
+- porównanie ma sens tylko przy tym samym seedzie, tej samej sekwencji triali i
+  jawnie zapisanej konfiguracji profilu.
 
 ## 9. Porównanie profili
 
@@ -272,8 +307,11 @@ Wynik `batch["roving_profile_comparison"]` zawiera:
 - `profiles` — listę agregatów dla profili;
 - `profile_group` — etykietę `healthy`, `disorder` albo `lesion` dla każdego
   profilu;
-- `mean_surprise_index`, `habituation_rate` i `mean_readaptation_latency` dla
-  każdego profilu.
+- `mean_surprise_index`, `habituation_rate`, `mean_readaptation_latency` i
+  `amplitude_latency_mechanism` dla każdego profilu;
+- `comparisons` — porównania względem profilu zdrowego zawierające oczekiwany
+  kierunek, obserwowaną różnicę amplitudy i readaptacji, próg jakościowy oraz
+  polski komentarz dydaktyczny.
 
 ### Reguła interpretacyjna
 

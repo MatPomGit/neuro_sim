@@ -32,6 +32,7 @@ ALLOWED_CLINICAL_PROFILE_KEYS = {
     "expected_direction",
     "severity_level",
     "primary_metric",
+    "amplitude_latency_mechanism",
 }
 
 REQUIRED_CONFIG_SECTIONS = (
@@ -109,6 +110,16 @@ class ExperimentConfig:
             "expected_direction": "stable_reference",
             "severity_level": {"small": 0.0, "medium": 0.02, "large": 0.05},
             "primary_metric": "mean_abs_difference",
+            "amplitude_latency_mechanism": {
+                "expected_amplitude_direction": "stable_reference",
+                "expected_readaptation_direction": "stable_reference",
+                "qualitative_threshold": 0.05,
+                "mechanism_comment": "Profil referencyjny bez patologii.",
+                "educational_comment": (
+                    "Punkt odniesienia do porównań amplitudy proxy i latencji "
+                    "readaptacji."
+                ),
+            },
         }
     )
     connectome: dict[str, Any] = field(
@@ -381,6 +392,83 @@ def _validate_connectome_config(cfg: ExperimentConfig) -> None:
             )
 
 
+def _validate_amplitude_latency_mechanism_config(
+    profile: dict[str, Any],
+) -> dict[str, Any]:
+    """Waliduje opis mechanizmu amplituda-latencja dla raportu roving oddball.
+
+    Parameters
+    ----------
+    profile:
+        Sekcja ``clinical_profile`` po podstawowej walidacji pól tekstowych.
+
+    Returns
+    -------
+    dict[str, Any]
+        Znormalizowane metadane sekcji raportowej.
+
+    Raises
+    ------
+    ConfigValidationError
+        Gdy sekcja ma niepoprawny typ, brakuje wymaganych pól albo próg nie
+        jest dodatnią liczbą.
+    """
+    mechanism = profile.get("amplitude_latency_mechanism")
+    if mechanism is None:
+        mechanism = {
+            "expected_amplitude_direction": profile.get(
+                "expected_direction", "stable_reference"
+            ),
+            "expected_readaptation_direction": "stable_reference",
+            "qualitative_threshold": 0.05,
+            "mechanism_comment": profile.get("mechanism", "n/a"),
+            "educational_comment": (
+                "Brak dedykowanego opisu w konfiguracji; raport używa ogólnego "
+                "mechanizmu profilu klinicznego."
+            ),
+        }
+    if not isinstance(mechanism, dict):
+        raise ConfigValidationError(
+            "clinical_profile.amplitude_latency_mechanism musi być obiektem"
+        )
+
+    required_text_keys = (
+        "expected_amplitude_direction",
+        "expected_readaptation_direction",
+        "mechanism_comment",
+        "educational_comment",
+    )
+    normalized = dict(mechanism)
+    for text_key in required_text_keys:
+        if text_key not in normalized:
+            raise ConfigValidationError(
+                f"Brak pola clinical_profile.amplitude_latency_mechanism.{text_key}"
+            )
+        value = normalized[text_key]
+        if not isinstance(value, str) or not value.strip():
+            raise ConfigValidationError(
+                "clinical_profile.amplitude_latency_mechanism."
+                f"{text_key} musi być tekstem"
+            )
+        normalized[text_key] = value.strip()
+
+    if "qualitative_threshold" not in normalized:
+        raise ConfigValidationError(
+            "Brak pola clinical_profile.amplitude_latency_mechanism."
+            "qualitative_threshold"
+        )
+    normalized["qualitative_threshold"] = _require_number(
+        normalized["qualitative_threshold"],
+        "clinical_profile.amplitude_latency_mechanism.qualitative_threshold",
+    )
+    if normalized["qualitative_threshold"] < 0.0:
+        raise ConfigValidationError(
+            "clinical_profile.amplitude_latency_mechanism.qualitative_threshold "
+            "musi być >= 0"
+        )
+    return normalized
+
+
 def _validate_pathology_config(cfg: ExperimentConfig) -> None:
     """Waliduje konfigurację patologii i mutacji stanu symulacji."""
     if "enabled" not in cfg.pathology:
@@ -496,6 +584,9 @@ def _validate_clinical_profile_config(cfg: ExperimentConfig) -> None:
     cfg.clinical_profile["expected_direction"] = expected_direction.strip()
     cfg.clinical_profile["primary_metric"] = str(primary_metric)
     cfg.clinical_profile["severity_level"] = dict(severity_level)
+    cfg.clinical_profile["amplitude_latency_mechanism"] = (
+        _validate_amplitude_latency_mechanism_config(cfg.clinical_profile)
+    )
 
 
 def _validate_snn_config(cfg: ExperimentConfig) -> None:

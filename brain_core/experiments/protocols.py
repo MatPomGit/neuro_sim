@@ -351,7 +351,23 @@ class NBackTask:
 
 
 class RovingOddballTask:
-    """Zadanie roving oddball generujące przebieg standard-dewiant-nowy standard."""
+    """Zadanie roving oddball generujące przebieg standard-dewiant-nowy standard.
+
+    Metryki trial-level są celowo proste i deterministyczne, aby raport można
+    było odtworzyć z samej konfiguracji, seeda i sekwencji bodźców:
+
+    - ``surprise_index``: znormalizowany wskaźnik zaskoczenia bodźcem.
+      Standardy mają wartość ``0.0``; dewiant ma dodatnią wartość z zakresu
+      ``[0.0, 1.0]`` zależną od jawnego prawdopodobieństwa dewiantu.
+    - ``habituation_level``: pozycja standardu w bieżącym runie, liczona jako
+      ``(repetition_index + 1) / run_length``. Wartość narasta monotonicznie
+      od pierwszego do ostatniego standardu runu i resetuje się po zmianie
+      standardu.
+    - ``readaptation_latency``: liczba kroków pozostałych do pełnego dopasowania
+      po dewiancie albo ``0`` bez aktywnej readaptacji. Dla dewiantu jest równa
+      długości poprzedniego runu; dla kolejnych standardów po zmianie tonu
+      maleje deterministycznie do ``0``.
+    """
 
     name: str = "roving_oddball"
 
@@ -391,7 +407,14 @@ class RovingOddballTask:
         self.jitter: float = jitter
 
     def generate_stimuli(self, seed: int, duration_s: float) -> list[TrialStimulus]:
-        """Generuje deterministyczną sekwencję standardów, dewiantów i nowych standardów."""
+        """Generuje deterministyczną sekwencję standardów, dewiantów i nowych standardów.
+
+        ``surprise_index`` pozostaje zerowy dla standardów i dodatni dla
+        dewiantów, ``habituation_level`` narasta wyłącznie wewnątrz aktualnego
+        runu, a ``readaptation_latency`` opisuje krótką fazę ponownego
+        dopasowania po zmianie standardu. Te definicje są stabilnym kontraktem
+        raportowym, a nie zwalidowanymi markerami klinicznymi EEG.
+        """
         tones = (440, 494, 523, 587, 659, 698)
         state = seed
         current_tone_idx = seed % len(tones)
@@ -409,6 +432,8 @@ class RovingOddballTask:
                 if onset >= duration_s:
                     return trials
                 habituation_level = round((repetition_idx + 1) / run_length, 6)
+                # Po dewiancie pierwszy standard nowego runu ma najwyższą
+                # latencję readaptacji, a ostatni standard runu wraca do 0.
                 readaptation_latency = (
                     max(0, run_length - repetition_idx - 1) if previous_deviant else 0
                 )
@@ -439,6 +464,8 @@ class RovingOddballTask:
             deviant_idx = (current_tone_idx + 1 + (state % (len(tones) - 1))) % len(
                 tones
             )
+            # Dewiant ma dodatni surprise_index; im mniej prawdopodobny dewiant,
+            # tym większy wskaźnik, z ograniczeniem do zakresu [0.0, 1.0].
             surprise_index = round(1.0 - self.deviant_probability + 0.5, 6)
             payload = {
                 "tone_hz": tones[deviant_idx],

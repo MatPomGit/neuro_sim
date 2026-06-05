@@ -36,6 +36,12 @@ clinical_profile:
     small: 0.0
     medium: 0.02
     large: 0.05
+  amplitude_latency_mechanism:
+    expected_amplitude_direction: stable_reference
+    expected_readaptation_direction: stable_reference
+    qualitative_threshold: 0.05
+    mechanism_comment: Profil zdrowy stanowi punkt odniesienia dla amplitudy proxy i latencji readaptacji.
+    educational_comment: Wariant zdrowy opisuje bazową odpowiedź modelu; różnice innych profili interpretuj względem tej samej sekwencji i seeda.
 connectome:
   atlas: default_regions
   weights: data/connectomes/weights.csv
