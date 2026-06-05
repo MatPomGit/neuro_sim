@@ -366,7 +366,8 @@ class RovingOddballTask:
     - ``readaptation_latency``: liczba kroków pozostałych do pełnego dopasowania
       po dewiancie albo ``0`` bez aktywnej readaptacji. Dla dewiantu jest równa
       długości poprzedniego runu; dla kolejnych standardów po zmianie tonu
-      maleje deterministycznie do ``0``.
+      maleje deterministycznie do ``0``. Metryka opisuje latencję readaptacji
+      sekwencji bodźców, a nie czas reakcji osoby badanej.
     """
 
     name: str = "roving_oddball"

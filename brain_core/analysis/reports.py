@@ -947,6 +947,10 @@ class AnalysisReport:
                         f"{item.get('observed_readaptation_difference', 'n/a')}"
                     )
                     lines.append(
+                        f"  - kierunek obserwowany: "
+                        f"{item.get('observed_difference_comment', 'n/a')}"
+                    )
+                    lines.append(
                         f"  - próg jakościowy: {item.get('qualitative_threshold', 'n/a')} "
                         f"({item.get('threshold_result', 'n/a')})"
                     )
