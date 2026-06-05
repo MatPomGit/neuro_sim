@@ -449,7 +449,7 @@ def _trial_contexts(trial_events: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Buduje przedziały czasowe triali do przypisania zdarzeń diagnostycznych."""
     contexts: list[dict[str, Any]] = []
     for event in trial_events:
-        onset_s = float(event.get("onset_s", 0.0))
+        onset_s = float(event.get("onset_s", 0.0) or 0.0)
         duration_s = float(event.get("duration_s", 0.0) or 0.0)
         contexts.append(
             {
