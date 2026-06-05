@@ -1,22 +1,29 @@
-import numpy as np
-import matplotlib.pyplot as plt
 from dataclasses import dataclass
 from typing import Any
 
-"""
-Interpretacja modułów jest następująca. VIS, AUD i INT reprezentują wejścia sensoryczne i interoceptywne.
-SAL wykrywa istotność bodźca, zwłaszcza gdy pojawia się błąd predykcji lub zagrożenie. ATT wzmacnia precyzję sygnałów,
-czyli decyduje, które błędy predykcji są silniej przetwarzane. PHON, VSWM, EXEC i EPIS odpowiadają odpowiednio
-pętli fonologicznej, szkicownikowi wzrokowo-przestrzennemu, centralnemu systemowi wykonawczemu i buforowi epizodycznemu.
-SEM i HIP modelują pamięć semantyczną oraz hipokampalne wiązanie epizodów. VAL koduje oczekiwaną wartość/nagrodę.
-DMN konkuruje z kontrolą zadaniową. GW oznacza globalną dostępność reprezentacji.
+import matplotlib.pyplot as plt
+import numpy as np
 
-W praktyce model powinien pokazać, że po pojawieniu się bodźca wzrokowego wzrasta aktywacja VIS, potem ATT, VSWM i EXEC.
-Po bodźcu słuchowym aktywuje się AUD, PHON i LANG. Bodziec zagrażający powinien podnieść SAL, INT, noradrenalinę
-i chwilowo wzmocnić GW. Nagroda zwiększa sygnał dopaminowy i aktualizuje VAL.
+"""
+Interpretacja modułów jest następująca. VIS, AUD i INT reprezentują wejścia
+sensoryczne i interoceptywne. SAL wykrywa istotność bodźca, zwłaszcza gdy
+pojawia się błąd predykcji lub zagrożenie. ATT wzmacnia precyzję sygnałów,
+czyli decyduje, które błędy predykcji są silniej przetwarzane. PHON, VSWM,
+EXEC i EPIS odpowiadają odpowiednio pętli fonologicznej, szkicownikowi
+wzrokowo-przestrzennemu, centralnemu systemowi wykonawczemu i buforowi
+epizodycznemu. SEM i HIP modelują pamięć semantyczną oraz hipokampalne
+wiązanie epizodów. VAL koduje oczekiwaną wartość/nagrodę. DMN konkuruje z
+kontrolą zadaniową. GW oznacza globalną dostępność reprezentacji.
+
+W praktyce model powinien pokazać, że po pojawieniu się bodźca wzrokowego
+wzrasta aktywacja VIS, potem ATT, VSWM i EXEC. Po bodźcu słuchowym aktywuje
+się AUD, PHON i LANG. Bodziec zagrażający powinien podnieść SAL, INT,
+noradrenalinę i chwilowo wzmocnić GW. Nagroda zwiększa sygnał dopaminowy i
+aktualizuje VAL.
 """
 
-def sigmoid(z: Any, beta: Any=4.0) -> Any:
+
+def sigmoid(z: Any, beta: Any = 4.0) -> Any:
     """Opis funkcji sigmoid."""
     return 1.0 / (1.0 + np.exp(-beta * z))
 
@@ -24,6 +31,7 @@ def sigmoid(z: Any, beta: Any=4.0) -> Any:
 @dataclass
 class BrainParams:
     """Opis klasy BrainParams."""
+
     dt: float = 0.01
     noise: float = 0.015
     gw_threshold: float = 0.62
@@ -62,30 +70,46 @@ class CognitiveBrainModel:
         self.rng: np.random.Generator = np.random.default_rng(seed)
 
         self.names: list[str] = [
-            "VIS", "AUD", "INT", "SAL", "ATT", "PHON", "VSWM", "EXEC",
-            "EPIS", "SEM", "HIP", "VAL", "MOT", "DMN", "LANG", "GW"
+            "VIS",
+            "AUD",
+            "INT",
+            "SAL",
+            "ATT",
+            "PHON",
+            "VSWM",
+            "EXEC",
+            "EPIS",
+            "SEM",
+            "HIP",
+            "VAL",
+            "MOT",
+            "DMN",
+            "LANG",
+            "GW",
         ]
         self.idx: dict[str, int] = {name: i for i, name in enumerate(self.names)}
         self.n: int = len(self.names)
 
-        self.tau: np.ndarray = np.array([
-            0.08,  # VIS
-            0.08,  # AUD
-            0.12,  # INT
-            0.10,  # SAL
-            0.15,  # ATT
-            0.25,  # PHON
-            0.25,  # VSWM
-            0.30,  # EXEC
-            0.35,  # EPIS
-            0.80,  # SEM
-            0.45,  # HIP
-            0.40,  # VAL
-            0.18,  # MOT
-            0.60,  # DMN
-            0.30,  # LANG
-            0.12,  # GW
-        ])
+        self.tau: np.ndarray = np.array(
+            [
+                0.08,  # VIS
+                0.08,  # AUD
+                0.12,  # INT
+                0.10,  # SAL
+                0.15,  # ATT
+                0.25,  # PHON
+                0.25,  # VSWM
+                0.30,  # EXEC
+                0.35,  # EPIS
+                0.80,  # SEM
+                0.45,  # HIP
+                0.40,  # VAL
+                0.18,  # MOT
+                0.60,  # DMN
+                0.30,  # LANG
+                0.12,  # GW
+            ]
+        )
 
         self.W: np.ndarray = np.zeros((self.n, self.n))
         self._build_connectivity()
@@ -248,8 +272,7 @@ class CognitiveBrainModel:
         recurrent = self.W @ x
 
         target = sigmoid(
-            recurrent + external + error_drive + global_broadcast - 0.35,
-            beta=3.5
+            recurrent + external + error_drive + global_broadcast - 0.35, beta=3.5
         )
 
         dx = (-x + target) / self.tau
@@ -278,7 +301,7 @@ class CognitiveBrainModel:
 
         return x_next, diagnostics
 
-    def simulate(self, T: Any=45.0) -> Any:
+    def simulate(self, T: Any = 45.0) -> Any:
         """Opis funkcji simulate."""
         steps = int(T / self.p.dt)
         time = np.arange(steps) * self.p.dt
@@ -307,8 +330,20 @@ class CognitiveBrainModel:
     def plot(self, time: Any, X: Any, D: Any) -> Any:
         """Opis funkcji plot."""
         selected = [
-            "VIS", "AUD", "SAL", "ATT", "PHON", "VSWM",
-            "EXEC", "EPIS", "SEM", "HIP", "VAL", "MOT", "DMN", "GW"
+            "VIS",
+            "AUD",
+            "SAL",
+            "ATT",
+            "PHON",
+            "VSWM",
+            "EXEC",
+            "EPIS",
+            "SEM",
+            "HIP",
+            "VAL",
+            "MOT",
+            "DMN",
+            "GW",
         ]
 
         plt.figure(figsize=(14, 8))

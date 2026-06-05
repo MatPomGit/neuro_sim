@@ -4,8 +4,8 @@
     "config_path": "configs/roving_oddball_healthy.yaml",
     "scenario": "roving_oddball",
     "seed": 21,
-    "source": "Deterministyczne uruchomienie edukacyjnej konfiguracji baseline w repozytorium; artefakt nie pochodzi z danych uczestnik\u00f3w.",
-    "limitations": "Progi s\u0142u\u017c\u0105 do regresji technicznej i jako\u015bciowej stabilno\u015bci symulacji. Nie s\u0105 normami klinicznymi ani kryteriami diagnostycznymi.",
+    "source": "Deterministyczne uruchomienie edukacyjnej konfiguracji baseline w repozytorium; artefakt nie pochodzi z danych uczestników.",
+    "limitations": "Progi służą do regresji technicznej i jakościowej stabilności symulacji. Nie są normami klinicznymi ani kryteriami diagnostycznymi.",
     "metrics": {
         "band_power_alpha": {
             "expected": 5.163498755248209e-05,
@@ -13,24 +13,24 @@
             "quality_band": "niska moc alfa w demonstracyjnym sygnale baseline"
         },
         "phase_locking_value": {
-            "expected": 0.04219242196458222,
+            "expected": 0.03550658182822797,
             "absolute_tolerance": 0.005,
-            "quality_band": "s\u0142abe sprz\u0119\u017cenie fazowe bez modelowanej patologii"
+            "quality_band": "słabe sprzężenie fazowe bez modelowanej patologii"
         },
         "connectivity_abs_mean": {
             "expected": 0.13332192067961846,
             "absolute_tolerance": 0.02,
-            "quality_band": "umiarkowana syntetyczna sp\u00f3jno\u015b\u0107 mi\u0119dzy regionami"
+            "quality_band": "umiarkowana syntetyczna spójność między regionami"
         },
         "behavior_mean": {
             "expected": 0.8979078418525496,
             "absolute_tolerance": 0.02,
-            "quality_band": "wysoka \u015brednia poprawno\u015b\u0107 w zadaniu edukacyjnym"
+            "quality_band": "wysoka średnia poprawność w zadaniu edukacyjnym"
         },
         "fmri_mean": {
             "expected": 0.5977634615063755,
             "absolute_tolerance": 0.02,
-            "quality_band": "stabilna \u015brednia aktywno\u015b\u0107 proxy fMRI"
+            "quality_band": "stabilna średnia aktywność proxy fMRI"
         }
     }
 }

@@ -32,7 +32,9 @@ class NeuromodulationConfig:
     update_rate: float = 0.15
 
 
-def create_region_state(region_names: list[str], default_level: float = 0.5) -> dict[str, NeuromodulationState]:
+def create_region_state(
+    region_names: list[str], default_level: float = 0.5
+) -> dict[str, NeuromodulationState]:
     """Tworzy początkowy stan neuromodulacji dla listy regionów."""
     return {
         region: NeuromodulationState(
@@ -65,12 +67,24 @@ def update_region_state(
     """Aktualizuje stan neuromodulacji regionu na podstawie sygnałów wejściowych."""
     cfg = config or NeuromodulationConfig()
     target_dopamine = dopamine_effect(reward_prediction_error, current.dopamine)
-    target_noradrenaline = noradrenaline_effect(prediction_error, threat_signal, current.noradrenaline)
-    target_ach = acetylcholine_effect(attention_drive, novelty_drive, current.acetylcholine)
-    target_serotonin = serotonin_effect(threat_signal, satiety_signal, current.serotonin)
-    target_gaba, target_glu = gaba_glutamate_effect(inhibition_drive, excitation_drive, current.gaba, current.glutamate)
-    target_cortisol = cortisol_effect(threat_signal, prediction_error, target_serotonin, current.cortisol)
-    target_adrenaline = adrenaline_effect(threat_signal, arousal_signal, target_noradrenaline, current.adrenaline)
+    target_noradrenaline = noradrenaline_effect(
+        prediction_error, threat_signal, current.noradrenaline
+    )
+    target_ach = acetylcholine_effect(
+        attention_drive, novelty_drive, current.acetylcholine
+    )
+    target_serotonin = serotonin_effect(
+        threat_signal, satiety_signal, current.serotonin
+    )
+    target_gaba, target_glu = gaba_glutamate_effect(
+        inhibition_drive, excitation_drive, current.gaba, current.glutamate
+    )
+    target_cortisol = cortisol_effect(
+        threat_signal, prediction_error, target_serotonin, current.cortisol
+    )
+    target_adrenaline = adrenaline_effect(
+        threat_signal, arousal_signal, target_noradrenaline, current.adrenaline
+    )
 
     a = max(0.0, min(1.0, cfg.update_rate))
     return NeuromodulationState(

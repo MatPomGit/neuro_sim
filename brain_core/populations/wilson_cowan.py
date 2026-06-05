@@ -22,6 +22,7 @@ class RegionWilsonCowanParams:
         threshold_E (float): Próg E.
         threshold_I (float): Próg I.
     """
+
     tau_E: float = 0.02
     tau_I: float = 0.01
     w_EE: float = 12.0
@@ -32,7 +33,6 @@ class RegionWilsonCowanParams:
     gain_I: float = 1.0
     threshold_E: float = 0.0
     threshold_I: float = 0.0
-
 
 
 class RegionWilsonCowanModel:
@@ -53,9 +53,13 @@ class RegionWilsonCowanModel:
         parameter_name: str,
     ) -> np.ndarray:
         """Buduje wektor wartości parametru w kolejności regionów."""
-        return np.array([getattr(params[r], parameter_name) for r in region_names], dtype=float)
+        return np.array(
+            [getattr(params[r], parameter_name) for r in region_names], dtype=float
+        )
 
-    def __init__(self, region_names: list[str], params: dict[str, RegionWilsonCowanParams]) -> None:
+    def __init__(
+        self, region_names: list[str], params: dict[str, RegionWilsonCowanParams]
+    ) -> None:
         """
         Inicjalizuje model Wilsona-Cowana.
 
@@ -77,14 +81,30 @@ class RegionWilsonCowanModel:
         n = len(region_names)
         self.E: np.ndarray = np.zeros(n, dtype=float)
         self.I: np.ndarray = np.zeros(n, dtype=float)
-        self._tau_E_values: np.ndarray = self._parameter_vector(region_names, params, "tau_E")
-        self._tau_I_values: np.ndarray = self._parameter_vector(region_names, params, "tau_I")
-        self._w_EE_values: np.ndarray = self._parameter_vector(region_names, params, "w_EE")
-        self._w_EI_values: np.ndarray = self._parameter_vector(region_names, params, "w_EI")
-        self._w_IE_values: np.ndarray = self._parameter_vector(region_names, params, "w_IE")
-        self._w_II_values: np.ndarray = self._parameter_vector(region_names, params, "w_II")
-        self._gain_E_values: np.ndarray = self._parameter_vector(region_names, params, "gain_E")
-        self._gain_I_values: np.ndarray = self._parameter_vector(region_names, params, "gain_I")
+        self._tau_E_values: np.ndarray = self._parameter_vector(
+            region_names, params, "tau_E"
+        )
+        self._tau_I_values: np.ndarray = self._parameter_vector(
+            region_names, params, "tau_I"
+        )
+        self._w_EE_values: np.ndarray = self._parameter_vector(
+            region_names, params, "w_EE"
+        )
+        self._w_EI_values: np.ndarray = self._parameter_vector(
+            region_names, params, "w_EI"
+        )
+        self._w_IE_values: np.ndarray = self._parameter_vector(
+            region_names, params, "w_IE"
+        )
+        self._w_II_values: np.ndarray = self._parameter_vector(
+            region_names, params, "w_II"
+        )
+        self._gain_E_values: np.ndarray = self._parameter_vector(
+            region_names, params, "gain_E"
+        )
+        self._gain_I_values: np.ndarray = self._parameter_vector(
+            region_names, params, "gain_I"
+        )
         self._threshold_E_values: np.ndarray = self._parameter_vector(
             region_names, params, "threshold_E"
         )
@@ -155,7 +175,6 @@ class RegionWilsonCowanModel:
         """Zwraca wektor: progi populacji I dla regionów."""
         return self._threshold_I_values
 
-
     @staticmethod
     def _sigmoid(x: np.ndarray, gain: np.ndarray, threshold: np.ndarray) -> np.ndarray:
         """
@@ -170,7 +189,6 @@ class RegionWilsonCowanModel:
             np.ndarray: Wynik funkcji sigmoidalnej.
         """
         return 1.0 / (1.0 + np.exp(-gain * (x - threshold)))
-
 
     @staticmethod
     def neuromodulation_vector(neuromodulators: dict[str, np.ndarray]) -> np.ndarray:
@@ -196,14 +214,13 @@ class RegionWilsonCowanModel:
             ]
         )
 
-
     def step(
         self,
         dt: float,
         external_e: np.ndarray,
         external_i: np.ndarray,
         neuromodulators: dict[str, np.ndarray] | None = None,
-        rng: np.random.Generator | None = None
+        rng: np.random.Generator | None = None,
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         Wykonuje krok symulacji modelu Wilsona-Cowana.
@@ -224,7 +241,9 @@ class RegionWilsonCowanModel:
         if dt <= 0:
             raise ValueError("dt musi być > 0")
         if external_e.shape != self.E.shape or external_i.shape != self.I.shape:
-            raise ValueError("external_e/external_i muszą pasować rozmiarem do regionów")
+            raise ValueError(
+                "external_e/external_i muszą pasować rozmiarem do regionów"
+            )
 
         tau_E = self._tau_E
         tau_I = self._tau_I
@@ -249,17 +268,34 @@ class RegionWilsonCowanModel:
             da, na, ach, ser, gaba, glu, cort, adr = [nvec[:, i] for i in range(8)]
             gain_E = gain_E * (1.0 + 0.35 * ach + 0.20 * da + 0.25 * na - 0.15 * ser)
             gain_I = gain_I * (1.0 + 0.30 * gaba + 0.10 * cort)
-            threshold_E = threshold_E - 0.25 * glu + 0.20 * gaba - 0.10 * ach + 0.10 * cort
+            threshold_E = (
+                threshold_E - 0.25 * glu + 0.20 * gaba - 0.10 * ach + 0.10 * cort
+            )
             threshold_I = threshold_I - 0.15 * glu + 0.15 * ser + 0.10 * adr
             w_EI = w_EI * (1.0 + 0.4 * gaba)
             w_IE = w_IE * (1.0 + 0.35 * glu)
-            external_e = external_e + 0.08 * da + 0.10 * na + 0.07 * ach - 0.07 * ser + 0.06 * adr
+            external_e = (
+                external_e
+                + 0.08 * da
+                + 0.10 * na
+                + 0.07 * ach
+                - 0.07 * ser
+                + 0.06 * adr
+            )
             external_i = external_i + 0.10 * gaba - 0.05 * glu + 0.04 * cort
-            tau_E = np.maximum(1e-5, tau_E * (1.0 - 0.20 * ach + 0.08 * ser + 0.08 * cort))
-            tau_I = np.maximum(1e-5, tau_I * (1.0 - 0.15 * gaba + 0.05 * glu + 0.05 * adr))
-            noise_scale = np.maximum(0.0, 0.03 + 0.05 * na + 0.03 * adr + 0.02 * da - 0.05 * gaba)
+            tau_E = np.maximum(
+                1e-5, tau_E * (1.0 - 0.20 * ach + 0.08 * ser + 0.08 * cort)
+            )
+            tau_I = np.maximum(
+                1e-5, tau_I * (1.0 - 0.15 * gaba + 0.05 * glu + 0.05 * adr)
+            )
+            noise_scale = np.maximum(
+                0.0, 0.03 + 0.05 * na + 0.03 * adr + 0.02 * da - 0.05 * gaba
+            )
             rng_to_use = rng if rng is not None else np.random.default_rng()
-            external_e = external_e + rng_to_use.normal(0.0, noise_scale, size=self.E.shape)
+            external_e = external_e + rng_to_use.normal(
+                0.0, noise_scale, size=self.E.shape
+            )
 
         input_E = w_EE * self.E - w_EI * self.I + external_e
         input_I = w_IE * self.E - w_II * self.I + external_i

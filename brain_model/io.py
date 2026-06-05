@@ -24,15 +24,16 @@ def _to_jsonable(value: Any) -> Any:
 def _git_commit_hash() -> str | None:
     """Opis funkcji _git_commit_hash."""
     try:
-        return (
-            subprocess.check_output(["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL)
-            .strip()
-        )
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
     except Exception:
         return None
 
 
-def build_output_dir(scenario: str, label: str | None = None, root: str | Path = "outputs") -> Path:
+def build_output_dir(
+    scenario: str, label: str | None = None, root: str | Path = "outputs"
+) -> Path:
     """Opis funkcji build_output_dir."""
     stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     safe_scenario = (scenario or "scenario").replace("/", "-").replace(" ", "-")
@@ -92,7 +93,9 @@ def save_run(
         "scenario": _to_jsonable(scenario),
         "oscillator_config": {
             "module_bands": _to_jsonable(oscillations.get("module_bands")),
-            "frequency": _to_jsonable(np.asarray(oscillations.get("frequency", [])).tolist()),
+            "frequency": _to_jsonable(
+                np.asarray(oscillations.get("frequency", [])).tolist()
+            ),
         },
     }
     if diagnostics_nested:
@@ -100,11 +103,15 @@ def save_run(
     if model_params:
         for attr in ("semantic_rule", "value_rule", "connectivity_adaptation"):
             if hasattr(model_params, attr):
-                metadata["model_params"][attr] = _to_jsonable(getattr(model_params, attr))
+                metadata["model_params"][attr] = _to_jsonable(
+                    getattr(model_params, attr)
+                )
     if extra_metadata:
         metadata["extra"] = _to_jsonable(extra_metadata)
 
-    meta_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+    meta_path.write_text(
+        json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return {"output_dir": str(out), "npz": str(npz_path), "metadata": str(meta_path)}
 
 
@@ -138,8 +145,12 @@ def load_run(output_dir: str | Path) -> dict:
 
     metadata = json.loads(meta_path.read_text(encoding="utf-8"))
     diagnostics.update(metadata.get("diagnostics_nested", {}))
-    oscillations["module_bands"] = metadata.get("oscillator_config", {}).get("module_bands", [])
-    oscillations["frequency"] = np.asarray(metadata.get("oscillator_config", {}).get("frequency", []), dtype=float)
+    oscillations["module_bands"] = metadata.get("oscillator_config", {}).get(
+        "module_bands", []
+    )
+    oscillations["frequency"] = np.asarray(
+        metadata.get("oscillator_config", {}).get("frequency", []), dtype=float
+    )
 
     return {
         "time": time,

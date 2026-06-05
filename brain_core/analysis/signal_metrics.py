@@ -6,10 +6,12 @@ import numpy as np
 
 from .connectivity import compute_connectivity
 from .phase_locking import compute_phase_locking
-from .spectral import BAND_LIMITS, compute_band_powers
+from .spectral import compute_band_powers
 
 
-def band_powers(signal: np.ndarray, fs: float, bands: dict[str, tuple[float, float]] | None = None) -> dict[str, float]:
+def band_powers(
+    signal: np.ndarray, fs: float, bands: dict[str, tuple[float, float]] | None = None
+) -> dict[str, float]:
     """
     Zwraca podsumowanie energii pasm dla kompatybilności wstecznej.
 

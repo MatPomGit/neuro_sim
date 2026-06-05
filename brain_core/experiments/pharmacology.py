@@ -20,6 +20,7 @@ class PharmacologyIntervention:
         cortisol_shift (float): Przesunięcie kortyzolu.
         adrenaline_shift (float): Przesunięcie adrenaliny.
     """
+
     dopamine_shift: float = 0.0
     noradrenaline_shift: float = 0.0
     acetylcholine_shift: float = 0.0
@@ -39,6 +40,7 @@ class PharmacologyIntervention:
         Returns:
             NeuromodulationState: Stan po interwencji.
         """
+
         def c(x: float) -> float:
             """Ogranicza poziom neuromodulatora do zakresu [0, 1]."""
             return min(1.0, max(0.0, x))
@@ -65,6 +67,8 @@ def comparison_scenarios() -> dict[str, PharmacologyIntervention]:
     return {
         "baseline": PharmacologyIntervention(),
         "high_ach": PharmacologyIntervention(acetylcholine_shift=0.35),
-        "high_na": PharmacologyIntervention(noradrenaline_shift=0.35, adrenaline_shift=0.10),
+        "high_na": PharmacologyIntervention(
+            noradrenaline_shift=0.35, adrenaline_shift=0.10
+        ),
         "low_gaba": PharmacologyIntervention(gaba_shift=-0.30, glutamate_shift=0.10),
     }

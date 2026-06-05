@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """CLI uruchamiające eksperyment symulacyjny z pliku konfiguracji."""
+
+from __future__ import annotations
 
 import argparse
 from typing import Any
@@ -11,8 +11,12 @@ from .engine import run_experiment
 
 def main() -> None:
     """Parsuje argumenty CLI, uruchamia eksperyment i wypisuje podsumowanie."""
-    parser = argparse.ArgumentParser(description="Uruchom eksperyment z pliku konfiguracji YAML/JSON.")
-    parser.add_argument("--config", required=True, help="Ścieżka do pliku konfiguracyjnego")
+    parser = argparse.ArgumentParser(
+        description="Uruchom eksperyment z pliku konfiguracji YAML/JSON."
+    )
+    parser.add_argument(
+        "--config", required=True, help="Ścieżka do pliku konfiguracyjnego"
+    )
     args = parser.parse_args()
 
     cfg = load_config(args.config)

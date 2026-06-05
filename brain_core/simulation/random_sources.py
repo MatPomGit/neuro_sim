@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 """Zarządzanie deterministycznymi źródłami losowości dla komponentów symulacji."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 
 import numpy as np
-
 
 
 @dataclass(slots=True)
@@ -21,6 +20,7 @@ class RandomSources:
         _root (np.random.SeedSequence): Bazowa sekwencja seedów.
         _streams (dict[str, np.random.Generator]): Słownik generatorów.
     """
+
     seed: int
     _root: np.random.SeedSequence = field(init=False)
     _streams: dict[str, np.random.Generator] = field(default_factory=dict, init=False)

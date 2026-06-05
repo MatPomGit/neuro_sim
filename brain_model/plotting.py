@@ -143,7 +143,10 @@ def _split_svg_path_coordinates(
     d_attr: str, *, x_offset: float = 0.0, y_offset: float = 0.0
 ) -> tuple[list[float], list[float]]:
     """Zamień liczby ze ścieżki SVG na bezpiecznie sparowane współrzędne x/y."""
-    numbers = [float(v) for v in re.findall(r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?", d_attr)]
+    numbers = [
+        float(v)
+        for v in re.findall(r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?", d_attr)
+    ]
     coordinate_count = len(numbers) - (len(numbers) % 2)
     paired_numbers = numbers[:coordinate_count]
     xs = [x + x_offset for x in paired_numbers[0::2]]

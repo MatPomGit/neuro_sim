@@ -26,7 +26,9 @@ class PlasticityTracker:
     weight_history: list[np.ndarray] = field(default_factory=list)
     metrics_history: list[dict[str, float]] = field(default_factory=list)
 
-    def record(self, weights: np.ndarray, dW_fast: np.ndarray, dW_slow: np.ndarray) -> None:
+    def record(
+        self, weights: np.ndarray, dW_fast: np.ndarray, dW_slow: np.ndarray
+    ) -> None:
         """Zapisuje kopię wag oraz normy szybkiej i wolnej aktualizacji."""
         self.weight_history.append(weights.copy())
         self.metrics_history.append(
@@ -54,9 +56,12 @@ def update_weights_two_timescales(
     if weights.ndim != 2:
         raise ValueError("weights must be a 2D array")
     if len(post_activity) != weights.shape[0] or len(pre_activity) != weights.shape[1]:
+        post_activity_length = len(post_activity)
+        pre_activity_length = len(pre_activity)
         raise ValueError(
-            f"Shape mismatch: weights is {weights.shape}, but post_activity has length {len(post_activity)} "
-            f"and pre_activity has length {len(pre_activity)}"
+            f"Shape mismatch: weights is {weights.shape}, "
+            f"but post_activity has length {post_activity_length} "
+            f"and pre_activity has length {pre_activity_length}"
         )
     hebbian_drive = np.outer(post_activity, pre_activity)
     dW_fast = config.eta * neuromod * hebbian_drive - config.decay_lambda * weights

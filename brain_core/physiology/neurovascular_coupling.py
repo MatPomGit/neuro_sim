@@ -5,10 +5,8 @@ from __future__ import annotations
 import numpy as np
 
 
-
 def neural_drive_from_activity(
-    activity: np.ndarray,
-    baseline: float = 0.0
+    activity: np.ndarray, baseline: float = 0.0
 ) -> np.ndarray:
     """
     Przekształca aktywność neuronalną na nieujemny napęd naczyniowy.

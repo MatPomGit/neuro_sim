@@ -23,7 +23,9 @@ class BrainModelGUI(GuiConfigMixin, GuiRunnerMixin, GuiLayoutMixin, tk.Tk):
     def __init__(self) -> None:
         """Utwórz stan aplikacji, formularze i elementy okna głównego."""
         super().__init__()
-        self.title(f"konfiguracja symulacji Cognitive Brain Model — wersja {APP_VERSION}")
+        self.title(
+            f"konfiguracja symulacji Cognitive Brain Model — wersja {APP_VERSION}"
+        )
         self.geometry("1180x780")
         self.minsize(940, 660)
         configure_styles(self)

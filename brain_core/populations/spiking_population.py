@@ -5,7 +5,6 @@ from dataclasses import dataclass
 import numpy as np
 
 
-
 @dataclass(frozen=True, slots=True)
 class NeuralMassToSNNInput:
     """
@@ -16,10 +15,10 @@ class NeuralMassToSNNInput:
         inhibitory_drive_hz (np.ndarray): Pobudzenie hamujące [Hz].
         sync_dt (float): Krok synchronizacji [s].
     """
+
     excitatory_drive_hz: np.ndarray
     inhibitory_drive_hz: np.ndarray
     sync_dt: float
-
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,10 +31,10 @@ class SNNToNeuralMassOutput:
         mean_membrane_potential_mv (np.ndarray): Średni potencjał błonowy [mV].
         sync_dt (float): Krok synchronizacji [s].
     """
+
     firing_rate_hz: np.ndarray
     mean_membrane_potential_mv: np.ndarray
     sync_dt: float
-
 
 
 class Brian2SpikingPopulationAdapter:
@@ -89,9 +88,13 @@ class Brian2SpikingPopulationAdapter:
 
         # Deterministyczny backend startowy: szybka aproksymacja transferu NM -> SNN.
         # W kolejnym kroku można podmienić wnętrze na pełny obiekt brian2.Network.
-        target_rate = np.clip(signal.excitatory_drive_hz - 0.5 * signal.inhibitory_drive_hz, 0.0, 200.0)
+        target_rate = np.clip(
+            signal.excitatory_drive_hz - 0.5 * signal.inhibitory_drive_hz, 0.0, 200.0
+        )
         alpha = min(1.0, signal.sync_dt / max(self.dt, 1e-9))
-        self._firing_rate_hz = (1.0 - alpha) * self._firing_rate_hz + alpha * target_rate
+        self._firing_rate_hz = (
+            1.0 - alpha
+        ) * self._firing_rate_hz + alpha * target_rate
         self._membrane_mv = -70.0 + 0.15 * self._firing_rate_hz
 
         return SNNToNeuralMassOutput(
@@ -105,9 +108,18 @@ class Brian2SpikingPopulationAdapter:
         if signal is None:
             raise ValueError("signal nie może być None")
         expected = (len(self.region_names),)
-        if signal.excitatory_drive_hz.shape != expected or signal.inhibitory_drive_hz.shape != expected:
-            raise ValueError("Rozmiar wejścia kontraktu NM->SNN nie pasuje do region_names")
+        if (
+            signal.excitatory_drive_hz.shape != expected
+            or signal.inhibitory_drive_hz.shape != expected
+        ):
+            raise ValueError(
+                "Rozmiar wejścia kontraktu NM->SNN nie pasuje do region_names"
+            )
         if signal.sync_dt <= 0:
             raise ValueError("sync_dt musi być > 0")
-        if not np.all(np.isfinite(signal.excitatory_drive_hz)) or not np.all(np.isfinite(signal.inhibitory_drive_hz)):
-            raise ValueError("Sygnały wejściowe muszą zawierać wyłącznie skończone wartości")
+        if not np.all(np.isfinite(signal.excitatory_drive_hz)) or not np.all(
+            np.isfinite(signal.inhibitory_drive_hz)
+        ):
+            raise ValueError(
+                "Sygnały wejściowe muszą zawierać wyłącznie skończone wartości"
+            )

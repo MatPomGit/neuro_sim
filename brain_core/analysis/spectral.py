@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 import numpy as np
 
-
 BAND_LIMITS = {
     "delta": (1.0, 4.0),
     "theta": (4.0, 8.0),
@@ -25,6 +24,7 @@ class SpectralMetricResult:
         series (dict[str, np.ndarray]): Słownik z seriami spektralnymi.
         summary (dict[str, float]): Słownik z podsumowaniem energii w pasmach.
     """
+
     series: dict[str, np.ndarray]
     summary: dict[str, float]
 
@@ -81,6 +81,10 @@ def compute_band_powers(
         summary[name] = float(np.sum(values))
 
     return SpectralMetricResult(
-        series={"frequencies": freqs, "power_spectrum": spectrum, "band_values": band_series},
+        series={
+            "frequencies": freqs,
+            "power_spectrum": spectrum,
+            "band_values": band_series,
+        },
         summary=summary,
     )

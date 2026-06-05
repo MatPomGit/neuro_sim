@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Definicja mutowalnego stanu globalnego używanego przez symulację."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any

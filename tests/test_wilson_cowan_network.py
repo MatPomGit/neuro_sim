@@ -4,7 +4,10 @@ import numpy as np
 
 from brain_core.networks.delays import DelayBuffer, delayed_coupling
 from brain_core.networks.structural_network import StructuralNetwork
-from brain_core.populations.wilson_cowan import RegionWilsonCowanModel, RegionWilsonCowanParams
+from brain_core.populations.wilson_cowan import (
+    RegionWilsonCowanModel,
+    RegionWilsonCowanParams,
+)
 
 
 def test_delayed_coupling_formula() -> Any:
@@ -28,7 +31,9 @@ def test_region_wilson_cowan_step_shapes() -> Any:
     params = {r: RegionWilsonCowanParams() for r in regions}
     model = RegionWilsonCowanModel(region_names=regions, params=params)
 
-    e, i = model.step(0.001, external_e=np.array([0.5, 0.1]), external_i=np.array([0.2, 0.3]))
+    e, i = model.step(
+        0.001, external_e=np.array([0.5, 0.1]), external_i=np.array([0.2, 0.3])
+    )
     assert e.shape == (2,)
     assert i.shape == (2,)
     assert np.all((e >= 0) & (e <= 1))

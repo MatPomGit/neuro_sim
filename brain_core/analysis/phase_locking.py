@@ -16,11 +16,14 @@ class PhaseLockingMetricResult:
         series (dict[str, np.ndarray]): Słownik z seriami metryk fazowych.
         summary (dict[str, float]): Słownik z podsumowującymi statystykami.
     """
+
     series: dict[str, np.ndarray]
     summary: dict[str, float]
 
 
-def compute_phase_locking(signal_a: np.ndarray, signal_b: np.ndarray) -> PhaseLockingMetricResult:
+def compute_phase_locking(
+    signal_a: np.ndarray, signal_b: np.ndarray
+) -> PhaseLockingMetricResult:
     """
     Liczy PLV dla dwóch sygnałów oraz zwraca serię różnic faz.
 
@@ -46,4 +49,6 @@ def compute_phase_locking(signal_a: np.ndarray, signal_b: np.ndarray) -> PhaseLo
     phase_b = np.angle(np.fft.fft(b))
     phase_diff = phase_a - phase_b
     plv = float(np.abs(np.mean(np.exp(1j * phase_diff))))
-    return PhaseLockingMetricResult(series={"phase_diff": phase_diff}, summary={"plv": plv})
+    return PhaseLockingMetricResult(
+        series={"phase_diff": phase_diff}, summary={"plv": plv}
+    )

@@ -3,7 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple
 
-CHANNELS: Tuple[str, ...] = ("visual", "auditory", "task_cue", "threat", "reward", "interoceptive")
+CHANNELS: Tuple[str, ...] = (
+    "visual",
+    "auditory",
+    "task_cue",
+    "threat",
+    "reward",
+    "interoceptive",
+)
 SCENARIO_SCHEMA_VERSION = "1.0"
 
 
@@ -65,7 +72,10 @@ class StimulusScenario:
 
     def normalized_channels(self) -> Dict[str, ChannelProfile]:
         """Zwraca wszystkie znane kanały, uzupełniając brakujące profilem domyślnym."""
-        return {channel: self.channels.get(channel, ChannelProfile()) for channel in CHANNELS}
+        return {
+            channel: self.channels.get(channel, ChannelProfile())
+            for channel in CHANNELS
+        }
 
     def to_metadata(self) -> Dict[str, Any]:
         """Buduje słownik metadanych scenariusza zapisywany w raportach i wynikach."""

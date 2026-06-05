@@ -1,8 +1,9 @@
-import numpy as np
 from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
 
 from .activations import sigmoid
-from typing import Any
 
 
 @dataclass
@@ -55,20 +56,17 @@ DEFAULT_MODULE_BANDS = {
     "EPIS": "theta",
     "PHON": "theta",
     "VSWM": "theta",
-
     # Alfa: hamowanie i bramkowanie sensoryczne.
     "VIS": "alpha",
     "AUD": "alpha",
     "INT": "alpha",
     "DMN": "alpha",
-
     # Beta: kontrola wykonawcza, utrzymanie nastawienia zadaniowego.
     "EXEC": "beta",
     "ATT": "beta",
     "SAL": "beta",
     "MOT": "beta",
     "LANG": "beta",
-
     # Gamma: lokalne wiązanie cech i reprezentacji.
     "SEM": "gamma",
     "VAL": "gamma",
@@ -88,7 +86,13 @@ class WilsonCowanOscillatorBank:
     Sygnał EEG modułu jest aproksymowany jako E - I.
     """
 
-    def __init__(self, module_names: list[str], connectivity: np.ndarray, band_map: dict[str, str] | None = None, params: WilsonCowanParams | None = None) -> None:
+    def __init__(
+        self,
+        module_names: list[str],
+        connectivity: np.ndarray,
+        band_map: dict[str, str] | None = None,
+        params: WilsonCowanParams | None = None,
+    ) -> None:
         """Inicjalizuje bank oscylatorów Wilsona-Cowana dla podanych modułów."""
         self.module_names: list[str] = list(module_names)
         self.idx: dict[str, int] = {name: i for i, name in enumerate(self.module_names)}
@@ -97,12 +101,20 @@ class WilsonCowanOscillatorBank:
         self.band_map: dict[str, str] = band_map or DEFAULT_MODULE_BANDS
         self.params: WilsonCowanParams = params or WilsonCowanParams()
 
-        self.module_bands: list[str] = [self.band_map.get(name, "beta") for name in self.module_names]
-        self.frequency: np.ndarray = np.array([BAND_FREQUENCIES[b] for b in self.module_bands], dtype=float)
-        self.tau_e: np.ndarray = np.array([BAND_TIME_CONSTANTS[b][0] for b in self.module_bands], dtype=float)
-        self.tau_i: np.ndarray = np.array([BAND_TIME_CONSTANTS[b][1] for b in self.module_bands], dtype=float)
+        self.module_bands: list[str] = [
+            self.band_map.get(name, "beta") for name in self.module_names
+        ]
+        self.frequency: np.ndarray = np.array(
+            [BAND_FREQUENCIES[b] for b in self.module_bands], dtype=float
+        )
+        self.tau_e: np.ndarray = np.array(
+            [BAND_TIME_CONSTANTS[b][0] for b in self.module_bands], dtype=float
+        )
+        self.tau_i: np.ndarray = np.array(
+            [BAND_TIME_CONSTANTS[b][1] for b in self.module_bands], dtype=float
+        )
 
-    def initial_state(self, rng: Any=None) -> Any:
+    def initial_state(self, rng: Any = None) -> Any:
         """Opis funkcji initial_state."""
         rng = rng or np.random.default_rng()
         state = np.zeros((self.n, 3), dtype=float)
@@ -112,44 +124,54 @@ class WilsonCowanOscillatorBank:
         state[:, :2] = np.clip(state[:, :2], 0.0, 1.0)
         return state
 
-    def step(self, state: Any, cognitive_activity: Any, dt: Any, rng: Any=None) -> Any:
+    def step(
+        self, state: Any, cognitive_activity: Any, dt: Any, rng: Any = None
+    ) -> Any:
         """Opis funkcji step."""
         rng = rng or np.random.default_rng()
         p = self.params
 
-        E = state[:, 0]
-        I = state[:, 1]
+        excitatory_activity = state[:, 0]
+        inhibitory_activity = state[:, 1]
         phi = state[:, 2]
 
         # Międzymodułowe sprzężenie oscylatorów wynika z macierzy funkcjonalnej W.
         # Używamy dodatniej części macierzy, aby uniknąć niestabilnego wzmacniania hamowania.
         positive_coupling = np.maximum(self.connectivity, 0.0)
-        network_drive = positive_coupling @ E
+        network_drive = positive_coupling @ excitatory_activity
 
         rhythmic_drive = p.phase_drive_gain * np.sin(phi)
         cognitive_drive = p.cognitive_drive_gain * cognitive_activity
         coupled_drive = p.coupling_gain * network_drive
 
         input_e = (
-            p.w_ee * E
-            - p.w_ei * I
+            p.w_ee * excitatory_activity
+            - p.w_ei * inhibitory_activity
             + cognitive_drive
             + coupled_drive
             + rhythmic_drive
             + p.baseline_e
         )
         input_i = (
-            p.w_ie * E
-            - p.w_ii * I
+            p.w_ie * excitatory_activity
+            - p.w_ii * inhibitory_activity
             + 0.45 * cognitive_drive
             + p.baseline_i
         )
 
-        dE = (-E + sigmoid(input_e, beta=1.0)) / self.tau_e
-        dI = (-I + sigmoid(input_i, beta=1.0)) / self.tau_i
+        dE = (-excitatory_activity + sigmoid(input_e, beta=1.0)) / self.tau_e
+        dI = (-inhibitory_activity + sigmoid(input_i, beta=1.0)) / self.tau_i
 
-        E_next = E + dt * dE + np.sqrt(dt) * p.oscillator_noise * rng.normal(size=self.n)
-        I_next = I + dt * dI + np.sqrt(dt) * p.oscillator_noise * rng.normal(size=self.n)
+        E_next = (
+            excitatory_activity
+            + dt * dE
+            + np.sqrt(dt) * p.oscillator_noise * rng.normal(size=self.n)
+        )
+        I_next = (
+            inhibitory_activity
+            + dt * dI
+            + np.sqrt(dt) * p.oscillator_noise * rng.normal(size=self.n)
+        )
         phi_next = phi + 2.0 * np.pi * self.frequency * dt
 
         next_state = np.empty_like(state)

@@ -35,14 +35,18 @@ class GuiRunnerMixin:
                 else float(self.dt_var.get())
             )
         except ValueError as exc:
-            raise ValueError("Niepoprawny czas symulacji, seed lub krok czasowy dt.") from exc
+            raise ValueError(
+                "Niepoprawny czas symulacji, seed lub krok czasowy dt."
+            ) from exc
 
         if T <= 0:
             raise ValueError("Czas symulacji T musi być większy od zera.")
         if dt <= 0:
             raise ValueError("Krok czasowy dt musi być większy od zera.")
         if T < dt:
-            raise ValueError("Czas symulacji T nie może być mniejszy od kroku czasowego dt.")
+            raise ValueError(
+                "Czas symulacji T nie może być mniejszy od kroku czasowego dt."
+            )
 
         self.state.T = self.T_var.get()
         self.state.seed = self.seed_var.get()
@@ -101,7 +105,11 @@ class GuiRunnerMixin:
                     "timestep": dt,
                     "seed": seed,
                     "task": {"scenario": self.state.scenario, "duration": T},
-                    "output": {"save_results": False, "label": "gui", "output_dir": "outputs"},
+                    "output": {
+                        "save_results": False,
+                        "label": "gui",
+                        "output_dir": "outputs",
+                    },
                 }
                 config_payload = json.dumps(config_doc)
                 cfg = load_config_from_string(config_payload, format_hint="json")
@@ -116,10 +124,12 @@ class GuiRunnerMixin:
                     [self._extract_metrics(diagnostics, behavior)]
                 )
             else:
-                runs, model, time, activity, diagnostics, oscillations, behavior = self._run_batch(
-                    T=T,
-                    base_params=brain_params,
-                    oscillator_params=oscillator_params,
+                runs, model, time, activity, diagnostics, oscillations, behavior = (
+                    self._run_batch(
+                        T=T,
+                        base_params=brain_params,
+                        oscillator_params=oscillator_params,
+                    )
                 )
                 summary_text = self._summarize_metrics(runs)
             elapsed = pytime.perf_counter() - start
@@ -140,7 +150,9 @@ class GuiRunnerMixin:
                                 "latency": behavior["latency"].tolist(),
                                 "confidence": behavior["confidence"].tolist(),
                                 "decision_score": behavior["decision_score"].tolist(),
-                                "decision_event": behavior["decision_event"].astype(int).tolist(),
+                                "decision_event": behavior["decision_event"]
+                                .astype(int)
+                                .tolist(),
                             }
                         },
                         model_params=model.p,
@@ -213,7 +225,9 @@ class GuiRunnerMixin:
     def _summarize_metrics(self, runs: list[dict[str, float | int]]) -> str:
         """Zbuduj tekstowe podsumowanie średnich metryk uruchomień."""
         agg = {
-            "prediction_error_mean": np.mean([r["prediction_error_mean"] for r in runs]),
+            "prediction_error_mean": np.mean(
+                [r["prediction_error_mean"] for r in runs]
+            ),
             "gw_ignition_mean": np.mean([r["gw_ignition_mean"] for r in runs]),
             "confidence_mean": np.mean([r["confidence_mean"] for r in runs]),
             "decision_events": np.mean([r["decision_events"] for r in runs]),
@@ -238,7 +252,9 @@ class GuiRunnerMixin:
     ) -> tuple[list[dict[str, float | int]], Any, Any, Any, Any, Any, Any]:
         """Wykonaj serię symulacji dla seedów, scenariuszy i perturbacji."""
         seeds = [int(s) for s in self._parse_list(self.state.batch_seeds)]
-        scenarios = self._parse_list(self.state.batch_scenarios) or [self.state.scenario]
+        scenarios = self._parse_list(self.state.batch_scenarios) or [
+            self.state.scenario
+        ]
         sens_params = self._parse_list(self.state.sensitivity_params)
         delta = float(self.state.sensitivity_delta)
         base_total = len(seeds) * len(scenarios)
@@ -255,7 +271,9 @@ class GuiRunnerMixin:
                     seed=seed,
                     stimulus=scenario,
                 )
-                time, activity, diagnostics, oscillations, behavior = model.simulate(T=T)
+                time, activity, diagnostics, oscillations, behavior = model.simulate(
+                    T=T
+                )
                 metrics.append(self._extract_metrics(diagnostics, behavior))
                 last = (model, time, activity, diagnostics, oscillations, behavior)
                 completed += 1

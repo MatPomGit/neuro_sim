@@ -8,7 +8,6 @@ import numpy as np
 from .connectome import Connectome
 from .regions import BrainRegion, RegionAtlas
 
-
 DATA_ROOT = Path(__file__).resolve().parents[2] / "data"
 
 
@@ -63,18 +62,27 @@ def _load_square_matrix(path: Path, expected_names: tuple[str, ...]) -> np.ndarr
         raise ValueError(f"Matrix header mismatch for {path.name}")
 
     if len(rows) - 1 != len(expected_names):
-        raise ValueError(f"Matrix row count mismatch for {path.name}: expected {len(expected_names)}, got {len(rows) - 1}")
+        expected_count = len(expected_names)
+        actual_count = len(rows) - 1
+        raise ValueError(
+            f"Matrix row count mismatch for {path.name}: "
+            f"expected {expected_count}, got {actual_count}"
+        )
 
     matrix = np.zeros((len(expected_names), len(expected_names)), dtype=float)
     for i, row in enumerate(rows[1:]):
         row_name = row[0].strip()
         if row_name != expected_names[i]:
-            raise ValueError(f"Row order mismatch for {path.name}: expected {expected_names[i]}, got {row_name}")
+            raise ValueError(
+                f"Row order mismatch for {path.name}: expected {expected_names[i]}, got {row_name}"
+            )
         matrix[i, :] = np.array([float(v) for v in row[1:]], dtype=float)
     return matrix
 
 
-def load_connectome(atlas: RegionAtlas, connectome_dir: str | Path | None = None) -> Connectome:
+def load_connectome(
+    atlas: RegionAtlas, connectome_dir: str | Path | None = None
+) -> Connectome:
     """
     Ładuje connectome na podstawie atlasu regionów i katalogu z plikami CSV.
 
@@ -92,7 +100,9 @@ def load_connectome(atlas: RegionAtlas, connectome_dir: str | Path | None = None
     return Connectome(region_names=region_names, weights=weights, fiber_lengths=lengths)
 
 
-def validate_atlas_connectome_consistency(atlas: RegionAtlas, connectome: Connectome) -> None:
+def validate_atlas_connectome_consistency(
+    atlas: RegionAtlas, connectome: Connectome
+) -> None:
     """
     Waliduje spójność atlasu regionów i connectome.
 

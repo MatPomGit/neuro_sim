@@ -3,7 +3,6 @@ from __future__ import annotations
 import numpy as np
 
 
-
 class DelayBuffer:
     """
     Bufor pierścieniowy do obsługi opóźnień między połączeniami (per-connection delay).
@@ -33,7 +32,9 @@ class DelayBuffer:
 
         self.delays_steps: np.ndarray = delays_steps.astype(int)
         self.max_delay: int = int(np.max(self.delays_steps))
-        self._history: np.ndarray = np.zeros((self.max_delay + 1, n_regions), dtype=float)
+        self._history: np.ndarray = np.zeros(
+            (self.max_delay + 1, n_regions), dtype=float
+        )
         self._cursor: int = 0
 
     def push(self, activity: np.ndarray) -> None:
@@ -68,7 +69,9 @@ class DelayBuffer:
         return out
 
 
-def delayed_coupling(connectivity: np.ndarray, delayed_matrix: np.ndarray) -> np.ndarray:
+def delayed_coupling(
+    connectivity: np.ndarray, delayed_matrix: np.ndarray
+) -> np.ndarray:
     """
     Oblicza sprzężenie z uwzględnieniem opóźnień: coupling_i(t) = Σ_j C_ij * activity_j(t-delay_ij).
 
@@ -83,5 +86,7 @@ def delayed_coupling(connectivity: np.ndarray, delayed_matrix: np.ndarray) -> np
         ValueError: Jeśli macierze mają różne rozmiary.
     """
     if connectivity.shape != delayed_matrix.shape:
-        raise ValueError("connectivity i delayed_matrix muszą mieć ten sam rozmiar [n_regions, n_regions]")
+        raise ValueError(
+            "connectivity i delayed_matrix muszą mieć ten sam rozmiar [n_regions, n_regions]"
+        )
     return np.sum(connectivity * delayed_matrix, axis=1)

@@ -16,6 +16,7 @@ class InformationFlowMetricResult:
         series (dict[str, np.ndarray]): Słownik z macierzami metryk.
         summary (dict[str, float]): Słownik z podsumowującymi statystykami.
     """
+
     series: dict[str, np.ndarray]
     summary: dict[str, float]
 

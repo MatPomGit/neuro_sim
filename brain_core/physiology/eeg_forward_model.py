@@ -1,4 +1,3 @@
-
 """
 Modele EEG (forward/inverse) oparte o macierz leadfield.
 """
@@ -10,7 +9,6 @@ from dataclasses import dataclass
 import numpy as np
 
 
-
 @dataclass(frozen=True)
 class ForwardModelConfig:
     """
@@ -20,9 +18,9 @@ class ForwardModelConfig:
         sensor_noise_std (float): Odchylenie standardowe szumu sensorycznego.
         reference (str): Typ referencji ('none' | 'average').
     """
+
     sensor_noise_std: float = 0.0
     reference: str = "none"  # none | average
-
 
 
 class EEGForwardModel:
@@ -34,7 +32,9 @@ class EEGForwardModel:
         config (ForwardModelConfig): Konfiguracja modelu.
     """
 
-    def __init__(self, leadfield: np.ndarray, config: ForwardModelConfig | None = None) -> None:
+    def __init__(
+        self, leadfield: np.ndarray, config: ForwardModelConfig | None = None
+    ) -> None:
         """
         Inicjalizuje model forward EEG.
 
@@ -84,7 +84,9 @@ class EEGForwardModel:
             return eeg - np.mean(eeg, axis=-1, keepdims=True)
         raise ValueError("Unsupported reference. Use 'none' or 'average'.")
 
-    def project(self, source_activity: np.ndarray, rng: np.random.Generator | None = None) -> np.ndarray:
+    def project(
+        self, source_activity: np.ndarray, rng: np.random.Generator | None = None
+    ) -> np.ndarray:
         """
         Rzutuje aktywność źródeł na sensory EEG.
 
@@ -105,16 +107,21 @@ class EEGForwardModel:
             eeg = self.leadfield @ src
         elif src.ndim == 2:
             if src.shape[1] != self.n_sources:
-                raise ValueError("Source matrix second dimension must match number of sources.")
+                raise ValueError(
+                    "Source matrix second dimension must match number of sources."
+                )
             eeg = src @ self.leadfield.T
         else:
-            raise ValueError("source_activity must be [n_sources] or [n_samples, n_sources].")
+            raise ValueError(
+                "source_activity must be [n_sources] or [n_samples, n_sources]."
+            )
 
         if self.config.sensor_noise_std > 0.0:
             noise_rng = rng if rng is not None else np.random.default_rng(0)
-            eeg = eeg + noise_rng.normal(scale=self.config.sensor_noise_std, size=eeg.shape)
+            eeg = eeg + noise_rng.normal(
+                scale=self.config.sensor_noise_std, size=eeg.shape
+            )
         return self._apply_reference(eeg)
-
 
 
 class EEGInverseSolver:
@@ -183,10 +190,7 @@ class EEGInverseSolver:
         return self._solve(eeg, operator)
 
     def weighted_minimum_norm(
-        self,
-        eeg: np.ndarray,
-        lam: float = 1e-2,
-        depth: np.ndarray | None = None
+        self, eeg: np.ndarray, lam: float = 1e-2, depth: np.ndarray | None = None
     ) -> np.ndarray:
         """
         Odwrotność minimum normy z wagami głębokości (priorytet diagonalny).
@@ -206,7 +210,11 @@ class EEGInverseSolver:
             raise ValueError("lam must be > 0")
         g = self.leadfield
         n_sources = g.shape[1]
-        d = np.ones(n_sources, dtype=float) if depth is None else np.asarray(depth, dtype=float)
+        d = (
+            np.ones(n_sources, dtype=float)
+            if depth is None
+            else np.asarray(depth, dtype=float)
+        )
         if d.shape != (n_sources,):
             raise ValueError("depth must have shape [n_sources]")
         if np.any(d <= 0):

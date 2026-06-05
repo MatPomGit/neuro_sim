@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 import pytest
 
@@ -6,7 +8,6 @@ from brain_core.anatomy.atlases import (
     load_region_atlas,
     validate_atlas_connectome_consistency,
 )
-from typing import Any
 
 
 def test_load_default_atlas_and_connectome() -> None:

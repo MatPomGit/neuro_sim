@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from .io import load_run
-from typing import Any
 
 
 def _run_metrics(run: dict) -> dict:
@@ -24,7 +24,9 @@ def _run_metrics(run: dict) -> dict:
     }
 
 
-def generate_comparison_report(run_dirs: Any, output_path: str | Path = "outputs/report_comparison.png") -> Any:
+def generate_comparison_report(
+    run_dirs: Any, output_path: str | Path = "outputs/report_comparison.png"
+) -> Any:
     """Opis funkcji generate_comparison_report."""
     if not run_dirs:
         raise ValueError("run_dirs cannot be empty")
@@ -35,7 +37,9 @@ def generate_comparison_report(run_dirs: Any, output_path: str | Path = "outputs
     fig, axes = plt.subplots(2, 2, figsize=(15, 10))
 
     for run, label in zip(runs, labels):
-        axes[0, 0].plot(run["time"], run["diagnostics"]["prediction_error"], label=label)
+        axes[0, 0].plot(
+            run["time"], run["diagnostics"]["prediction_error"], label=label
+        )
     axes[0, 0].set_title("Prediction error")
     axes[0, 0].set_xlabel("Time [s]")
     axes[0, 0].legend(fontsize=8)
@@ -48,17 +52,25 @@ def generate_comparison_report(run_dirs: Any, output_path: str | Path = "outputs
     x = np.arange(len(labels))
     width = 0.18
     for i, band in enumerate(["theta_mean", "alpha_mean", "beta_mean", "gamma_mean"]):
-        axes[1, 0].bar(x + (i - 1.5) * width, [m[band] for m in metrics], width=width, label=band.replace("_mean", ""))
+        axes[1, 0].bar(
+            x + (i - 1.5) * width,
+            [m[band] for m in metrics],
+            width=width,
+            label=band.replace("_mean", ""),
+        )
     axes[1, 0].set_xticks(x)
     axes[1, 0].set_xticklabels(labels, rotation=30, ha="right")
     axes[1, 0].set_title("Mean band power")
     axes[1, 0].legend()
 
-    table_data = [[
-        f"{m['prediction_error_mean']:.3f}",
-        f"{m['gw_ignition_peak']:.3f}",
-        f"{m['dopamine_delta_mean']:.3f}",
-    ] for m in metrics]
+    table_data = [
+        [
+            f"{m['prediction_error_mean']:.3f}",
+            f"{m['gw_ignition_peak']:.3f}",
+            f"{m['dopamine_delta_mean']:.3f}",
+        ]
+        for m in metrics
+    ]
     axes[1, 1].axis("off")
     axes[1, 1].table(
         cellText=table_data,

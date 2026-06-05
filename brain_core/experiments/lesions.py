@@ -7,8 +7,14 @@ import numpy as np
 
 from brain_core.simulation.state import SimulationState
 
-
-PathologyKind = Literal["lesion", "disconnection", "noise_increase", "ei_imbalance", "delay_increase", "atrophy"]
+PathologyKind = Literal[
+    "lesion",
+    "disconnection",
+    "noise_increase",
+    "ei_imbalance",
+    "delay_increase",
+    "atrophy",
+]
 MutationStage = Literal["pre", "runtime"]
 
 
@@ -25,6 +31,7 @@ class PathologyMutation:
         stage (MutationStage): Etap aplikacji mutacji.
         source (str | None): Źródło (dla edge-level).
     """
+
     kind: PathologyKind
     target: str
     scope: Literal["region", "edge"]
@@ -69,7 +76,9 @@ class PathologyMutation:
         elif self.kind == "atrophy":
             signal *= max(0.0, 1.0 - 0.5 * self.magnitude)
         else:
-            raise ValueError(f"Typ {self.kind} wymaga scope='edge' albo nie jest wspierany dla regionu")
+            raise ValueError(
+                f"Typ {self.kind} wymaga scope='edge' albo nie jest wspierany dla regionu"
+            )
 
         state.regions[self.target] = signal
         state.metrics[f"pathology:{self.kind}:{self.target}"] = float(np.mean(signal))
@@ -120,8 +129,12 @@ class PathologyController:
         Args:
             mutations (list[PathologyMutation]): Lista mutacji.
         """
-        self.pre_simulation: list[PathologyMutation] = [m for m in mutations if m.stage == "pre"]
-        self.runtime: list[PathologyMutation] = [m for m in mutations if m.stage == "runtime"]
+        self.pre_simulation: list[PathologyMutation] = [
+            m for m in mutations if m.stage == "pre"
+        ]
+        self.runtime: list[PathologyMutation] = [
+            m for m in mutations if m.stage == "runtime"
+        ]
 
     def apply_pre_simulation(self, state: SimulationState) -> None:
         """
@@ -146,15 +159,46 @@ class PathologyController:
 
 REFERENCE_PATHOLOGY_SCENARIOS: dict[str, list[PathologyMutation]] = {
     "hippocampal_lesion": [
-        PathologyMutation(kind="lesion", scope="region", target="Hippocampus", magnitude=0.8, stage="pre"),
+        PathologyMutation(
+            kind="lesion",
+            scope="region",
+            target="Hippocampus",
+            magnitude=0.8,
+            stage="pre",
+        ),
     ],
     "dlpfc_weakening": [
-        PathologyMutation(kind="atrophy", scope="region", target="DLPFC", magnitude=0.6, stage="runtime"),
-        PathologyMutation(kind="disconnection", scope="edge", source="DLPFC", target="ACC", magnitude=0.4, stage="runtime"),
+        PathologyMutation(
+            kind="atrophy",
+            scope="region",
+            target="DLPFC",
+            magnitude=0.6,
+            stage="runtime",
+        ),
+        PathologyMutation(
+            kind="disconnection",
+            scope="edge",
+            source="DLPFC",
+            target="ACC",
+            magnitude=0.4,
+            stage="runtime",
+        ),
     ],
     "reduced_gaba": [
-        PathologyMutation(kind="ei_imbalance", scope="region", target="PFC", magnitude=0.35, stage="pre"),
-        PathologyMutation(kind="noise_increase", scope="region", target="PFC", magnitude=0.12, stage="runtime"),
+        PathologyMutation(
+            kind="ei_imbalance",
+            scope="region",
+            target="PFC",
+            magnitude=0.35,
+            stage="pre",
+        ),
+        PathologyMutation(
+            kind="noise_increase",
+            scope="region",
+            target="PFC",
+            magnitude=0.12,
+            stage="runtime",
+        ),
     ],
 }
 
@@ -166,12 +210,14 @@ def pathology_scenarios() -> dict[str, list[PathologyMutation]]:
     Returns:
         dict[str, list[PathologyMutation]]: Słownik scenariuszy.
     """
-    return {name: list(mutations) for name, mutations in REFERENCE_PATHOLOGY_SCENARIOS.items()}
+    return {
+        name: list(mutations)
+        for name, mutations in REFERENCE_PATHOLOGY_SCENARIOS.items()
+    }
 
 
 def build_pathology_controller(
-    entries: list[dict[str, Any]] | None,
-    scenario_name: str | None = None
+    entries: list[dict[str, Any]] | None, scenario_name: str | None = None
 ) -> PathologyController:
     """
     Buduje kontroler patologii na podstawie wpisów lub nazwy scenariusza.

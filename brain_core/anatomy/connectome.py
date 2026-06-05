@@ -15,6 +15,7 @@ class Connectome:
         weights (np.ndarray): Macierz wag połączeń.
         fiber_lengths (np.ndarray): Macierz długości włókien.
     """
+
     region_names: tuple[str, ...]
     weights: np.ndarray
     fiber_lengths: np.ndarray
