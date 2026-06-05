@@ -75,8 +75,8 @@ def _parse_svg_translate(transform: str | None) -> tuple[float, float]:
     if not transform:
         return 0.0, 0.0
     match = re.search(
-        r"translate\(\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)"
-        r"(?:[\s,]+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?))?\s*\)",
+        r"translate\(\s*([-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?)"
+        r"(?:[\s,]+([-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?))?\s*\)",
         transform,
     )
     if match is None:
