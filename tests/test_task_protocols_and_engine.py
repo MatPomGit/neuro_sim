@@ -151,7 +151,7 @@ def test_roving_oddball_metrics_have_stable_sequence_definitions() -> Any:
         for stimulus in first_sequence
         if stimulus.payload["run_index"] == 0 and stimulus.condition == "standard"
     ]
-    assert first_run_habituation == [0.333333, 0.666667, 1.0]
+    assert first_run_habituation == pytest.approx([0.333333, 0.666667, 1.0])
 
     new_standard = first_sequence[4]
     assert new_standard.payload["is_new_standard"] is True
