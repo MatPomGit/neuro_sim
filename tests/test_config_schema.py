@@ -128,6 +128,15 @@ def test_invalid_brain_profile_id_type_reports_full_path() -> None:
         validate_config(payload)
 
 
+def test_missing_required_brain_profile_id_reports_full_path() -> None:
+    """Brak wymaganego pola brain_profile.id ma wskazywać ścieżkę pola."""
+    payload = _valid_config_payload()
+    payload["brain_profile"].pop("id")
+
+    with pytest.raises(ConfigValidationError, match=r"Brak pola brain_profile\.id"):
+        validate_config(payload)
+
+
 def test_invalid_task_duration_type_reports_field_path() -> None:
     """Błędny typ wartości ma wskazywać ścieżkę pola `task.duration`."""
     payload = _valid_config_payload()
