@@ -378,6 +378,11 @@ def export_report(
         for plot in plots
         if plot.get("how_to_read")
     }
+    merged_metrics = {}
+    for res in results:
+        if isinstance(res, dict):
+            merged_metrics.update(res)
+
     export_experiment_pdf(
         filename,
         status_message=f"Autor: {author}",
@@ -385,7 +390,7 @@ def export_report(
         state_config=simulation_params,
         event_timeline=[],
         clinical_profile={},
-        analysis_report={"results": results, "title": title},
+        analysis_report={"metrics": merged_metrics},
         plots=plot_pairs,
         plot_descriptions=plot_descriptions,
     )
