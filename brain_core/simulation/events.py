@@ -453,8 +453,8 @@ def _trial_contexts(trial_events: list[dict[str, Any]]) -> list[dict[str, Any]]:
         duration_s = float(event.get("duration_s", 0.0) or 0.0)
         contexts.append(
             {
-                "trial_id": event.get("trial_id", "n/a"),
-                "condition": str(event.get("condition", "n/a")),
+                "trial_id": event.get("trial_id") or "n/a",
+                "condition": str(event.get("condition") or "n/a"),
                 "start_s": onset_s,
                 "end_s": onset_s + max(duration_s, 0.0) + 0.75,
             }
