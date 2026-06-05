@@ -501,7 +501,9 @@ def test_healthy_v1_baseline_metrics_match_reference_thresholds() -> Any:
     metrics = result["analysis_report"]["metrics"]
 
     for metric_name, metric_reference in reference["metrics"].items():
-        assert metric_name in metrics, f"Metric '{metric_name}' is missing from the experiment results."
+        assert (
+            metric_name in metrics
+        ), f"Metric '{metric_name}' is missing from the experiment results."
         expected = float(metric_reference["expected"])
         tolerance = float(metric_reference["absolute_tolerance"])
         observed = float(metrics[metric_name])

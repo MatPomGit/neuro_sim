@@ -1,4 +1,3 @@
-
 """
 Minimalistyczny model BOLD oparty o splot z funkcją HRF.
 """
@@ -8,13 +7,12 @@ from __future__ import annotations
 import numpy as np
 
 
-
 def canonical_hrf(
     length: int,
     dt: float,
     peak_latency: float = 5.0,
     undershoot_latency: float = 12.0,
-    ratio: float = 0.35
+    ratio: float = 0.35,
 ) -> np.ndarray:
     """
     Buduje prostą funkcję HRF (bi-gamma) z dwóch funkcji alfa.
@@ -41,7 +39,9 @@ def canonical_hrf(
 
     t = np.arange(length, dtype=float) * dt
     peak = (t / peak_latency) ** 8 * np.exp(-(t - peak_latency) / peak_latency)
-    undershoot = (t / undershoot_latency) ** 8 * np.exp(-(t - undershoot_latency) / undershoot_latency)
+    undershoot = (t / undershoot_latency) ** 8 * np.exp(
+        -(t - undershoot_latency) / undershoot_latency
+    )
     hrf = peak - ratio * undershoot
     norm = np.sum(np.abs(hrf))
     if norm == 0:
@@ -49,11 +49,7 @@ def canonical_hrf(
     return hrf / norm
 
 
-
-def convolve_with_hrf(
-    neural_drive: np.ndarray,
-    hrf: np.ndarray
-) -> np.ndarray:
+def convolve_with_hrf(neural_drive: np.ndarray, hrf: np.ndarray) -> np.ndarray:
     """
     Splot napędu neuronalnego z HRF wzdłuż osi czasu (po regionach).
 
@@ -76,4 +72,6 @@ def convolve_with_hrf(
         for i in range(drive.shape[1]):
             out[:, i] = np.convolve(drive[:, i], kernel, mode="full")[: drive.shape[0]]
         return out
-    raise ValueError("neural_drive must have shape [n_samples] or [n_samples, n_regions].")
+    raise ValueError(
+        "neural_drive must have shape [n_samples] or [n_samples, n_regions]."
+    )

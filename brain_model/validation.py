@@ -30,7 +30,15 @@ def _find_module_index(module_names: list[str], module: str) -> int | None:
         return None
 
 
-def evaluate_run(time: Any, activity: Any, diagnostics: Any, oscillations: Any, scenario: Any, behavior: Any=None, rules: dict[str, float] | None = None) -> dict[str, Any]:
+def evaluate_run(
+    time: Any,
+    activity: Any,
+    diagnostics: Any,
+    oscillations: Any,
+    scenario: Any,
+    behavior: Any = None,
+    rules: dict[str, float] | None = None,
+) -> dict[str, Any]:
     """Evaluate one simulation run and return metrics with pass/fail rules."""
     if len(time) == 0:
         raise ValueError("time cannot be empty")
@@ -45,7 +53,9 @@ def evaluate_run(time: Any, activity: Any, diagnostics: Any, oscillations: Any, 
     sat_mask = sat_low | sat_high
 
     saturation_fraction = float(np.mean(sat_mask))
-    saturation_per_module = {f"module_{i}": float(np.mean(sat_mask[:, i])) for i in range(modules)}
+    saturation_per_module = {
+        f"module_{i}": float(np.mean(sat_mask[:, i])) for i in range(modules)
+    }
 
     run_lengths = []
     for m in range(modules):
@@ -57,11 +67,20 @@ def evaluate_run(time: Any, activity: Any, diagnostics: Any, oscillations: Any, 
     saturation_run_length_max = float(max(run_lengths) / steps) if run_lengths else 0.0
 
     band_power = oscillations.get("band_power", {})
-    band_totals = {band: float(np.mean(np.asarray(values))) for band, values in band_power.items()}
+    band_totals = {
+        band: float(np.mean(np.asarray(values))) for band, values in band_power.items()
+    }
     total = sum(max(v, 0.0) for v in band_totals.values())
-    band_share = {band: (value / total if total > 1e-12 else 0.0) for band, value in band_totals.items()}
+    band_share = {
+        band: (value / total if total > 1e-12 else 0.0)
+        for band, value in band_totals.items()
+    }
 
-    scenario_id = scenario if isinstance(scenario, str) else scenario.get("scenario_id", "unknown")
+    scenario_id = (
+        scenario
+        if isinstance(scenario, str)
+        else scenario.get("scenario_id", "unknown")
+    )
 
     expected = {
         "threat-response": {"theta": 0.35, "alpha": 0.20, "beta": 0.25, "gamma": 0.20},
@@ -69,18 +88,28 @@ def evaluate_run(time: Any, activity: Any, diagnostics: Any, oscillations: Any, 
     }.get(scenario_id)
 
     if expected:
-        match = 1.0 - 0.5 * sum(abs(band_share.get(b, 0.0) - expected[b]) for b in expected)
+        match = 1.0 - 0.5 * sum(
+            abs(band_share.get(b, 0.0) - expected[b]) for b in expected
+        )
         band_match_score = float(np.clip(match, 0.0, 1.0))
     else:
         uniform = 1.0 / max(len(band_share), 1)
-        band_match_score = float(np.clip(1.0 - 0.5 * sum(abs(v - uniform) for v in band_share.values()), 0.0, 1.0))
+        band_match_score = float(
+            np.clip(
+                1.0 - 0.5 * sum(abs(v - uniform) for v in band_share.values()), 0.0, 1.0
+            )
+        )
 
     module_names = MODULES
 
     def metric_change(metric_name: str, signal: np.ndarray) -> float:
         """Opis funkcji metric_change."""
         cue = np.asarray(diagnostics.get(metric_name, np.zeros_like(time)))
-        trigger_idx = int(np.argmax(cue > np.percentile(cue, 70))) if np.any(cue > np.percentile(cue, 70)) else 0
+        trigger_idx = (
+            int(np.argmax(cue > np.percentile(cue, 70)))
+            if np.any(cue > np.percentile(cue, 70))
+            else 0
+        )
         early = _window_mean(signal, 0, max(1, trigger_idx))
         late = _window_mean(signal, min(steps - 1, trigger_idx + steps // 8), steps)
         return float(late - early)
@@ -111,12 +140,24 @@ def evaluate_run(time: Any, activity: Any, diagnostics: Any, oscillations: Any, 
     reward_strength = float(np.mean(np.abs(reward_signal)))
 
     behavior = behavior or {}
-    decision_mask = np.asarray(behavior.get("decision_event", np.zeros(steps, dtype=bool)))
+    decision_mask = np.asarray(
+        behavior.get("decision_event", np.zeros(steps, dtype=bool))
+    )
     confidence = np.asarray(behavior.get("confidence", np.zeros(steps)))
     decision_rt = np.asarray(behavior.get("latency", time))
-    reaction_time_mean = float(np.mean(decision_rt[decision_mask])) if np.any(decision_mask) else float(time[-1])
-    accuracy_proxy = float(np.mean(confidence[decision_mask])) if np.any(decision_mask) else 0.0
-    false_alarm_proxy = float(np.mean(threat_signal[decision_mask] < np.median(threat_signal))) if np.any(decision_mask) else 0.0
+    reaction_time_mean = (
+        float(np.mean(decision_rt[decision_mask]))
+        if np.any(decision_mask)
+        else float(time[-1])
+    )
+    accuracy_proxy = (
+        float(np.mean(confidence[decision_mask])) if np.any(decision_mask) else 0.0
+    )
+    false_alarm_proxy = (
+        float(np.mean(threat_signal[decision_mask] < np.median(threat_signal)))
+        if np.any(decision_mask)
+        else 0.0
+    )
 
     functional = {
         "threat_sal_gain": sal_gain,
@@ -130,9 +171,11 @@ def evaluate_run(time: Any, activity: Any, diagnostics: Any, oscillations: Any, 
     }
 
     rules_status = {
-        "trajectory_stable": saturation_fraction <= config["saturation_fraction_max"] and saturation_run_length_max <= config["saturation_run_length_max"],
+        "trajectory_stable": saturation_fraction <= config["saturation_fraction_max"]
+        and saturation_run_length_max <= config["saturation_run_length_max"],
         "bands_match": band_match_score >= config["band_match_min"],
-        "threat_response": (sal_gain >= config["threat_sal_int_gain_min"]) and (int_gain >= config["threat_sal_int_gain_min"]),
+        "threat_response": (sal_gain >= config["threat_sal_int_gain_min"])
+        and (int_gain >= config["threat_sal_int_gain_min"]),
         "reward_response": val_gain >= config["reward_val_gain_min"],
     }
 

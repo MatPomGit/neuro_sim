@@ -20,8 +20,10 @@
 # oraz zastosowane atrybuty (attr/)
 
 
-indent_style = space # Określa, czy edytor ma używać spacji, czy tabulatorów.
-indent_size = 4 # Standardowa szerokość wcięcia (często stosowana w Pythonie).
-charset = utf-8 # Wymusza kodowanie znaków, co zapobiega problemom z wyświetlaniem polskich liter.
-trim_trailing_whitespace = true # Automatycznie usuwa spacje na końcach linii podczas zapisu.
-insert_final_newline = true # Zapewnia, że każdy plik kończy się pustą linią (częsty wymóg standardów POSIX i linterów).
+# Poniższe ustawienia należą do formatu EditorConfig, więc w .gitattributes
+# muszą pozostać komentarzem, aby Git nie traktował ich jako atrybutów.
+# indent_style = space
+# indent_size = 4
+# charset = utf-8
+# trim_trailing_whitespace = true
+# insert_final_newline = true

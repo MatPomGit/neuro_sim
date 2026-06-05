@@ -1,16 +1,22 @@
+from typing import Any, Callable
+
 import numpy as np
+
+from brain_core.cognition import regions_for_module
 
 from .activations import sigmoid
 from .behavior import map_behavior_state
 from .connectivity import build_connectivity
 from .modules import MODULES, TAU
-from .params import BrainParams
-from brain_core.cognition import regions_for_module
-from .plasticity import apply_state_learning, build_weight_history_series, update_connectivity
-from .scenarios import get_scenario, CHANNELS
-from .stimuli import build_stimulus_fn
 from .oscillators import WilsonCowanOscillatorBank
-from typing import Any, Callable
+from .params import BrainParams
+from .plasticity import (
+    apply_state_learning,
+    build_weight_history_series,
+    update_connectivity,
+)
+from .scenarios import CHANNELS, get_scenario
+from .stimuli import build_stimulus_fn
 
 
 class CognitiveBrainModel:
@@ -36,7 +42,14 @@ class CognitiveBrainModel:
             stałe czasowe modułów.
     """
 
-    def __init__(self, params: BrainParams | None = None, stimulus: Any = None, seed: int = 7, oscillator_params: Any = None, oscillator_band_map: dict[str, str] | None = None) -> None:
+    def __init__(
+        self,
+        params: BrainParams | None = None,
+        stimulus: Any = None,
+        seed: int = 7,
+        oscillator_params: Any = None,
+        oscillator_band_map: dict[str, str] | None = None,
+    ) -> None:
         """Inicjalizuje mezoskopowy model dynamiki poznawczej z określonymi parametrami."""
         self.p: BrainParams = params or BrainParams()
         self.rng: np.random.Generator = np.random.default_rng(seed)
@@ -63,7 +76,9 @@ class CognitiveBrainModel:
             probe = stimulus(0.0)
             required = set(CHANNELS)
             if not isinstance(probe, dict) or not required.issubset(probe):
-                raise ValueError(f"Callable stimulus must return dict with required channels: {CHANNELS}")
+                raise ValueError(
+                    f"Callable stimulus must return dict with required channels: {CHANNELS}"
+                )
             self.stimulus_fn = stimulus
         else:
             raise TypeError("stimulus must be None, scenario id (str), or callable")
@@ -86,7 +101,9 @@ class CognitiveBrainModel:
         x[self.idx["SEM"]] = 0.25
         return x
 
-    def compute_prediction_error(self, x: np.ndarray, u: dict[str, float]) -> tuple[float, float, float]:
+    def compute_prediction_error(
+        self, x: np.ndarray, u: dict[str, float]
+    ) -> tuple[float, float, float]:
         """
         Uproszczony mechanizm predictive processing.
 
@@ -134,11 +151,32 @@ class CognitiveBrainModel:
         noradrenaline = sigmoid(prediction_error + u["threat"] - 0.45)
         acetylcholine = sigmoid(u["task_cue"] + x[ATT] - 0.55)
 
-        serotonin = sigmoid(0.70 * u["reward"] - 0.45 * u["threat"] + 0.25 * x[self.idx["DMN"]] - 0.2)
-        gaba = sigmoid(0.55 * x[self.idx["ATT"]] + 0.35 * x[self.idx["EXEC"]] + 0.30 * u["interoceptive"] - 0.45)
-        glutamate = sigmoid(0.70 * u["visual"] + 0.65 * u["auditory"] + 0.50 * u["task_cue"] + 0.35 * prediction_error - 0.4)
-        endorphins = sigmoid(0.65 * u["reward"] + 0.40 * u["threat"] + 0.30 * u["interoceptive"] - 0.35)
-        cortisol = sigmoid(0.80 * u["threat"] + 0.45 * prediction_error + 0.30 * u["task_cue"] - 0.40 * serotonin - 0.20)
+        serotonin = sigmoid(
+            0.70 * u["reward"] - 0.45 * u["threat"] + 0.25 * x[self.idx["DMN"]] - 0.2
+        )
+        gaba = sigmoid(
+            0.55 * x[self.idx["ATT"]]
+            + 0.35 * x[self.idx["EXEC"]]
+            + 0.30 * u["interoceptive"]
+            - 0.45
+        )
+        glutamate = sigmoid(
+            0.70 * u["visual"]
+            + 0.65 * u["auditory"]
+            + 0.50 * u["task_cue"]
+            + 0.35 * prediction_error
+            - 0.4
+        )
+        endorphins = sigmoid(
+            0.65 * u["reward"] + 0.40 * u["threat"] + 0.30 * u["interoceptive"] - 0.35
+        )
+        cortisol = sigmoid(
+            0.80 * u["threat"]
+            + 0.45 * prediction_error
+            + 0.30 * u["task_cue"]
+            - 0.40 * serotonin
+            - 0.20
+        )
 
         return (
             dopamine_delta,
@@ -166,8 +204,9 @@ class CognitiveBrainModel:
         )
         return sigmoid(candidate - self.p.gw_threshold, beta=self.p.gw_gain)
 
-
-    def _add_drive_to_module_regions(self, external: Any, module_name: Any, value: Any) -> Any:
+    def _add_drive_to_module_regions(
+        self, external: Any, module_name: Any, value: Any
+    ) -> Any:
         """Opis funkcji _add_drive_to_module_regions."""
         regions = [r for r in regions_for_module(module_name) if r in self.idx]
         if not regions:
@@ -176,15 +215,20 @@ class CognitiveBrainModel:
         for region in regions:
             external[self.idx[region]] += share
 
-    def build_external_drive(self, x: Any, u: Any, err_visual: Any, err_auditory: Any, prediction_error: Any, acetylcholine: Any) -> Any:
+    def build_external_drive(
+        self,
+        x: Any,
+        u: Any,
+        err_visual: Any,
+        err_auditory: Any,
+        prediction_error: Any,
+        acetylcholine: Any,
+    ) -> Any:
         """Opis funkcji build_external_drive."""
         VIS = self.idx["VIS"]
         AUD = self.idx["AUD"]
         INT = self.idx["INT"]
-        SAL = self.idx["SAL"]
         ATT = self.idx["ATT"]
-        EXEC = self.idx["EXEC"]
-        VAL = self.idx["VAL"]
 
         external = np.zeros(self.n)
 
@@ -193,8 +237,12 @@ class CognitiveBrainModel:
         external[VIS] += precision_gain * u["visual"]
         external[AUD] += precision_gain * u["auditory"]
         external[INT] += u["interoceptive"]
-        self._add_drive_to_module_regions(external, "SAL", 0.8 * u["threat"] + 0.4 * prediction_error)
-        self._add_drive_to_module_regions(external, "ATT", 0.5 * u["task_cue"] + 0.25 * acetylcholine)
+        self._add_drive_to_module_regions(
+            external, "SAL", 0.8 * u["threat"] + 0.4 * prediction_error
+        )
+        self._add_drive_to_module_regions(
+            external, "ATT", 0.5 * u["task_cue"] + 0.25 * acetylcholine
+        )
         self._add_drive_to_module_regions(external, "EXEC", 0.35 * u["task_cue"])
 
         external[VIS] += 0.65 * err_visual
@@ -285,10 +333,7 @@ class CognitiveBrainModel:
         recurrent = self.W @ x
         global_broadcast = self.build_global_broadcast(gw_ignition)
 
-        target = sigmoid(
-            recurrent + external + global_broadcast - 0.35,
-            beta=3.5
-        )
+        target = sigmoid(recurrent + external + global_broadcast - 0.35, beta=3.5)
 
         dx = (-x + target) / self.tau
 
@@ -301,7 +346,9 @@ class CognitiveBrainModel:
         )
 
         # Osobna aktualizacja global workspace.
-        dx[self.idx["GW"]] += (-x[self.idx["GW"]] + gw_ignition) / self.tau[self.idx["GW"]]
+        dx[self.idx["GW"]] += (-x[self.idx["GW"]] + gw_ignition) / self.tau[
+            self.idx["GW"]
+        ]
 
         noise = p.noise * self.rng.normal(size=self.n)
 
@@ -336,10 +383,12 @@ class CognitiveBrainModel:
         self,
         T: float = 45.0,
         progress_callback: Any = None,
-        external_drive_callback: Callable[
-            [int, float, np.ndarray, np.ndarray, np.ndarray], np.ndarray | None
-        ]
-        | None = None,
+        external_drive_callback: (
+            Callable[
+                [int, float, np.ndarray, np.ndarray, np.ndarray], np.ndarray | None
+            ]
+            | None
+        ) = None,
     ) -> tuple[np.ndarray, np.ndarray, dict[str, Any], dict[str, Any], dict[str, Any]]:
         """Przeprowadza pełną symulację modelu w przedziale czasowym od 0 do T.
 
@@ -430,7 +479,9 @@ class CognitiveBrainModel:
             behavior["latency"][k] = sample.latency
             behavior["confidence"][k] = sample.confidence
             behavior["decision_score"][k] = sample.decision_score
-            behavior["decision_event"][k] = sample.decision != "wait" and prev_decision == "wait"
+            behavior["decision_event"][k] = (
+                sample.decision != "wait" and prev_decision == "wait"
+            )
             prev_decision = sample.decision
 
             external_drive = None
@@ -467,7 +518,9 @@ class CognitiveBrainModel:
                 "context": {},
             }
 
-        diagnostics["weight_history"] = build_weight_history_series(weight_history, steps)
+        diagnostics["weight_history"] = build_weight_history_series(
+            weight_history, steps
+        )
 
         oscillations = {
             "eeg": eeg,

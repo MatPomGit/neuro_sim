@@ -283,7 +283,8 @@ def _trial_table_rows(events: list[dict[str, Any]]) -> list[dict[str, str]]:
     return [
         grouped[key]
         for key in sorted(
-            grouped, key=lambda value: (0, int(value)) if value.isdigit() else (1, value)
+            grouped,
+            key=lambda value: (0, int(value)) if value.isdigit() else (1, value),
         )
     ]
 

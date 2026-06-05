@@ -16,6 +16,7 @@ class ConnectivityMetricResult:
         series (dict[str, np.ndarray]): Słownik z macierzami metryk.
         summary (dict[str, float]): Słownik z podsumowującymi statystykami.
     """
+
     series: dict[str, np.ndarray]
     summary: dict[str, float]
 
@@ -66,7 +67,11 @@ def compute_connectivity(signals: np.ndarray) -> ConnectivityMetricResult:
     region_strength = np.mean(np.abs(corr), axis=1)
 
     return ConnectivityMetricResult(
-        series={"correlation": corr, "pli_proxy": pli, "region_strength": region_strength},
+        series={
+            "correlation": corr,
+            "pli_proxy": pli,
+            "region_strength": region_strength,
+        },
         summary={
             "correlation_mean": float(np.mean(corr)),
             "correlation_abs_mean": float(np.mean(np.abs(corr))),

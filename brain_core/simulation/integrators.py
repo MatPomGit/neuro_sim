@@ -1,12 +1,11 @@
-from __future__ import annotations
-
 """Integratory numeryczne używane przez komponenty dynamiczne symulacji."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Protocol
 
 import numpy as np
-
 
 
 class DynamicsFn(Protocol):
@@ -20,10 +19,10 @@ class DynamicsFn(Protocol):
     Returns:
         np.ndarray: Pochodna stanu.
     """
+
     def __call__(self, t: float, y: np.ndarray) -> np.ndarray:
         """Zwraca pochodną stanu dla podanego czasu i wektora stanu."""
         ...
-
 
 
 class NoiseFn(Protocol):
@@ -37,10 +36,10 @@ class NoiseFn(Protocol):
     Returns:
         np.ndarray: Składowa dyfuzyjna.
     """
+
     def __call__(self, t: float, y: np.ndarray) -> np.ndarray:
         """Zwraca składową dyfuzyjną dla podanego czasu i wektora stanu."""
         ...
-
 
 
 class BaseIntegrator(Protocol):
@@ -56,10 +55,10 @@ class BaseIntegrator(Protocol):
     Returns:
         np.ndarray: Nowy stan po kroku integracji.
     """
+
     def step(self, t: float, y: np.ndarray, dt: float, f: DynamicsFn) -> np.ndarray:
         """Wykonuje pojedynczy krok integracji czasu."""
         ...
-
 
 
 @dataclass(slots=True)
@@ -71,6 +70,7 @@ class EulerMaruyamaIntegrator:
         noise_fn (NoiseFn): Funkcja szumu.
         rng (np.random.Generator): Generator losowy.
     """
+
     noise_fn: NoiseFn
     rng: np.random.Generator
 
@@ -90,7 +90,6 @@ class EulerMaruyamaIntegrator:
         drift = f(t, y) * dt
         diffusion = self.noise_fn(t, y) * self.rng.normal(size=y.shape) * np.sqrt(dt)
         return y + drift + diffusion
-
 
 
 @dataclass(slots=True)

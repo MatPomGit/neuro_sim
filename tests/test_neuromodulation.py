@@ -1,9 +1,13 @@
+from typing import Any
+
 import numpy as np
 
 from brain_core.experiments.pharmacology import comparison_scenarios
-from brain_core.populations.wilson_cowan import RegionWilsonCowanModel, RegionWilsonCowanParams
+from brain_core.populations.wilson_cowan import (
+    RegionWilsonCowanModel,
+    RegionWilsonCowanParams,
+)
 from brain_core.synapses.state import NeuromodulationState, update_region_state
-from typing import Any
 
 
 def test_neuromodulation_state_update_bounds() -> Any:
@@ -55,6 +59,11 @@ def test_wilson_cowan_accepts_neuromodulation_vector() -> Any:
         "cortisol": np.array([0.2, 0.9]),
         "adrenaline": np.array([0.3, 0.7]),
     }
-    e, i = model.step(0.001, np.array([0.2, 0.2]), np.array([0.1, 0.1]), neuromodulators=neuromodulators)
+    e, i = model.step(
+        0.001,
+        np.array([0.2, 0.2]),
+        np.array([0.1, 0.1]),
+        neuromodulators=neuromodulators,
+    )
     assert e.shape == (2,)
     assert i.shape == (2,)

@@ -1,4 +1,3 @@
-
 """
 Prymitywy sprzężenia sieciowego i transmisji sygnału.
 """

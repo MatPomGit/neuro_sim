@@ -45,7 +45,8 @@ def apply_state_learning(
     idx: Mapping[str, int],
 ) -> NDArray[np.float64]:
     """Aktualizuje pochodne stanu zgodnie z regułami uczenia semantycznego i wartości."""
-    # TODO(typing): zastąpić Any docelowym typem konfiguracji modelu, gdy interfejs params zostanie ustabilizowany.
+    # TODO(typing): zastąpić Any docelowym typem konfiguracji modelu,
+    # gdy interfejs params zostanie ustabilizowany.
     sem_cfg = params.semantic_rule
     val_cfg = params.value_rule
 
@@ -68,7 +69,8 @@ def update_connectivity(
     idx: Mapping[str, int],
 ) -> NDArray[np.float64]:
     """Modyfikuje wybrane wagi konektywności na podstawie aktywności i diagnostyki."""
-    # TODO(typing): zastąpić Any docelowym typem konfiguracji modelu, gdy interfejs params zostanie ustabilizowany.
+    # TODO(typing): zastąpić Any docelowym typem konfiguracji modelu,
+    # gdy interfejs params zostanie ustabilizowany.
     cfg = params.connectivity_adaptation
     diagnostics.setdefault("weight_updates", {})
 

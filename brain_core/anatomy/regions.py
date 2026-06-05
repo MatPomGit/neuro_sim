@@ -12,6 +12,7 @@ class BrainRegion:
         name (str): Nazwa regionu.
         tau (float): Stała czasowa regionu.
     """
+
     name: str
     tau: float
 
@@ -24,6 +25,7 @@ class RegionAtlas:
     Attributes:
         regions (tuple[BrainRegion, ...]): Krotka regionów.
     """
+
     regions: tuple[BrainRegion, ...]
 
     @property

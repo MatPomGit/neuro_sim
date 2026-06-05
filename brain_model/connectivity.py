@@ -3,8 +3,11 @@ from typing import Sequence
 import numpy as np
 from numpy.typing import NDArray
 
-from brain_core.anatomy.atlases import load_connectome, load_region_atlas, validate_atlas_connectome_consistency
-
+from brain_core.anatomy.atlases import (
+    load_connectome,
+    load_region_atlas,
+    validate_atlas_connectome_consistency,
+)
 
 _ATLAS = load_region_atlas()
 _CONNECTOME = load_connectome(_ATLAS)

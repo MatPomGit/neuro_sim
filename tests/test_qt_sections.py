@@ -139,8 +139,9 @@ def _omitted_gui_state_fields() -> set[str]:
 def test_write_bound_control_blocks_signals_during_programmatic_sync() -> None:
     """Programowa synchronizacja kontrolek blokuje sygnały i przywraca ich stan."""
     from unittest.mock import MagicMock
-    from brain_model.qt_sections import ControlBinding, QtSections
+
     from brain_model.gui_state import GuiState
+    from brain_model.qt_sections import ControlBinding, QtSections
 
     state = GuiState(seed="42")
     sections = QtSections(state, {})

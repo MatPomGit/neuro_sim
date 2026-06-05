@@ -59,7 +59,13 @@ def _add_selected_plots_to_panel(
     has_plots = False
     if gui.state.plots.get("activity", False):
         gui.plot_panel.add_plot(
-            "Aktywacje", draw_activity, time, activity, model.names, model.idx, figsize=(11, 7)
+            "Aktywacje",
+            draw_activity,
+            time,
+            activity,
+            model.names,
+            model.idx,
+            figsize=(11, 7),
         )
         has_plots = True
     if gui.state.plots.get("simulated_brain_activity", False):
@@ -96,10 +102,14 @@ def _add_selected_plots_to_panel(
         )
         has_plots = True
     if gui.state.plots.get("diagnostics", False):
-        gui.plot_panel.add_plot("Diagnostyka", draw_diagnostics, time, diagnostics, figsize=(11, 5))
+        gui.plot_panel.add_plot(
+            "Diagnostyka", draw_diagnostics, time, diagnostics, figsize=(11, 5)
+        )
         has_plots = True
     if gui.state.plots.get("behavior", False):
-        gui.plot_panel.add_plot("Zachowanie", draw_behavior, time, behavior, figsize=(11, 5))
+        gui.plot_panel.add_plot(
+            "Zachowanie", draw_behavior, time, behavior, figsize=(11, 5)
+        )
         has_plots = True
     if gui.state.plots.get("eeg", False):
         gui.plot_panel.add_plot(
@@ -113,11 +123,17 @@ def _add_selected_plots_to_panel(
         )
         has_plots = True
     if gui.state.plots.get("band_power", False):
-        gui.plot_panel.add_plot("Moc pasm", draw_band_power, time, oscillations, figsize=(11, 8))
+        gui.plot_panel.add_plot(
+            "Moc pasm", draw_band_power, time, oscillations, figsize=(11, 8)
+        )
         has_plots = True
     if gui.state.plots.get("weight_trajectories", False):
         gui.plot_panel.add_plot(
-            "Trajektorie wag", draw_weight_trajectories, time, diagnostics, figsize=(11, 5)
+            "Trajektorie wag",
+            draw_weight_trajectories,
+            time,
+            diagnostics,
+            figsize=(11, 5),
         )
         has_plots = True
     if gui.state.plots.get("weight_deltas", False):
