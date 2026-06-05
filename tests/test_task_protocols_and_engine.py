@@ -156,7 +156,7 @@ def test_roving_oddball_metrics_have_stable_sequence_definitions() -> Any:
     new_standard = first_sequence[4]
     assert new_standard.payload["is_new_standard"] is True
     assert new_standard.payload["tone_hz"] == first_sequence[3].payload["tone_hz"]
-    assert new_standard.payload["habituation_level"] == 0.333333
+    assert new_standard.payload["habituation_level"] == pytest.approx(0.333333)
     assert new_standard.payload["readaptation_latency"] == 2
     assert first_sequence[6].payload["readaptation_latency"] == 0
 
