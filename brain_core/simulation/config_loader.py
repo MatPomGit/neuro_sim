@@ -8,39 +8,54 @@ from typing import Any
 
 import yaml
 
-from .config_schema import ExperimentConfig, validate_config
+from .config_schema import ConfigValidationError, ExperimentConfig, validate_config
 
 
 def _parse_payload(payload: str, suffix: str = "") -> dict[str, Any]:
+    """Parsuje payload konfiguracji YAML/JSON do słownika Python.
+
+    Parameters
+    ----------
+    payload:
+        Tekst konfiguracji.
+    suffix:
+        Rozszerzenie pliku albo sztuczna podpowiedź formatu.
+
+    Returns
+    -------
+    dict[str, Any]
+        Surowy słownik konfiguracji kierowany do wspólnej walidacji schematu.
+
+    Raises
+    ------
+    ConfigValidationError
+        Gdy payload nie jest obiektem YAML/JSON.
     """
-    Parsuje payload konfiguracji YAML/JSON do słownika Python.
-
-    Args:
-        payload (str): Tekst konfiguracji.
-        suffix (str): Rozszerzenie pliku (".yaml" lub ".json").
-
-    Returns:
-        dict[str, Any]: Słownik z konfiguracją.
-
-    """
-    if suffix.lower() == ".json":
-        return json.loads(payload)
-    try:
+    normalized_suffix = suffix.lower()
+    if normalized_suffix == ".json":
+        parsed = json.loads(payload)
+    else:
         parsed = yaml.safe_load(payload)
-        return parsed if isinstance(parsed, dict) else {}
-    except Exception:
-        return json.loads(payload)
+
+    if not isinstance(parsed, dict):
+        raise ConfigValidationError(
+            "Konfiguracja YAML/JSON musi być obiektem mapującym na poziomie głównym."
+        )
+    return parsed
 
 
 def load_config(path: str | Path) -> ExperimentConfig:
-    """
-    Wczytuje konfigurację z pliku i zwraca obiekt po walidacji.
+    """Wczytuje konfigurację z pliku i zwraca obiekt po walidacji.
 
-    Args:
-        path (str | Path): Ścieżka do pliku konfiguracyjnego.
+    Parameters
+    ----------
+    path:
+        Ścieżka do pliku konfiguracyjnego YAML albo JSON.
 
-    Returns:
-        ExperimentConfig: Zweryfikowany obiekt konfiguracji.
+    Returns
+    -------
+    ExperimentConfig
+        Zweryfikowany obiekt konfiguracji.
     """
     config_path = Path(path)
     raw_config = _parse_payload(
@@ -52,15 +67,19 @@ def load_config(path: str | Path) -> ExperimentConfig:
 def load_config_from_string(
     payload: str, format_hint: str = "yaml"
 ) -> ExperimentConfig:
-    """
-    Wczytuje konfigurację z tekstu i zwraca obiekt po walidacji.
+    """Wczytuje konfigurację z tekstu i zwraca obiekt po walidacji.
 
-    Args:
-        payload (str): Tekst konfiguracji.
-        format_hint (str): Podpowiedź formatu ("yaml" lub "json").
+    Parameters
+    ----------
+    payload:
+        Tekst konfiguracji.
+    format_hint:
+        Podpowiedź formatu: `yaml` albo `json`.
 
-    Returns:
-        ExperimentConfig: Zweryfikowany obiekt konfiguracji.
+    Returns
+    -------
+    ExperimentConfig
+        Zweryfikowany obiekt konfiguracji.
     """
     suffix = ".json" if format_hint.lower() == "json" else ".yaml"
     raw_config = _parse_payload(payload, suffix=suffix)
@@ -89,7 +108,7 @@ def load_clinical_profile(path: str | Path) -> dict[str, Any]:
     raw_profile = _parse_payload(
         profile_path.read_text(encoding="utf-8"), suffix=profile_path.suffix
     )
-    validate_config(raw_profile)
+    validate_config(raw_profile, require_sections=False)
     return raw_profile
 
 

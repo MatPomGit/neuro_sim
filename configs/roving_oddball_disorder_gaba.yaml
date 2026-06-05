@@ -3,6 +3,7 @@ integrator:
   method: euler
 timestep: 0.005
 seed: 21
+rng_seed: 21
 task:
   name: roving_oddball
   scenario: roving_oddball
@@ -13,23 +14,48 @@ task:
   deviant_probability: 1.0
   inter_stimulus_interval: 0.8
   jitter: 0.05
-pathology:
-  enabled: true
-  scenario: reduced_gaba
-  mutations: []
-output:
-  save_results: false
-  label: roving_oddball_disorder_gaba
-  output_dir: outputs
+stimulus:
+  scenario: roving_oddball
+  source: task
+brain_profile:
+  id: default
+  description: Bazowy profil parametrów modelu.
 clinical_profile:
   id: gaba_dysregulation
   display_name: Dysregulacja GABA
   mechanism: Obniżona inhibicja zwiększająca szum i niestabilność kontroli przedczołowej.
   affected_regions:
-    - PFC
-    - ATT
+  - PFC
+  - ATT
   cognitive_functions:
-    - hamowanie reakcji
-    - stabilność uwagi
+  - hamowanie reakcji
+  - stabilność uwagi
   expected_effects:
     noise: wyższy poziom szumu aktywacji
+  expected_direction: stable_reference
+  primary_metric: mean_abs_difference
+  severity_level:
+    small: 0.0
+    medium: 0.02
+    large: 0.05
+connectome:
+  atlas: default_regions
+  weights: data/connectomes/weights.csv
+  fiber_lengths: data/connectomes/fiber_lengths.csv
+pathology:
+  enabled: true
+  scenario: reduced_gaba
+  mutations: []
+snn:
+  enabled: false
+  circuits: []
+analysis:
+  sets:
+  - spectral
+  - phase_locking
+  - connectivity
+  - information_flow
+output:
+  save_results: false
+  label: roving_oddball_disorder_gaba
+  output_dir: outputs

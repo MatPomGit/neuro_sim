@@ -7,55 +7,81 @@ integrator:
     cognitive_drive_gain: 3.0
 timestep: 0.005
 seed: 37
+rng_seed: 37
 task:
   name: n_back
   scenario: task-switching
   duration: 10.0
+stimulus:
+  scenario: task-switching
+  source: task
+brain_profile:
+  id: default
+  description: Bazowy profil parametrów modelu.
+clinical_profile:
+  id: hippocampal_lesion
+  display_name: Demo SNN hipokampa
+  mechanism: Lokalny obwód SNN regionu HIP testuje sprzężenie hipokampa z modelem
+    masowym.
+  affected_regions:
+  - HIP
+  cognitive_functions:
+  - pamięć epizodyczna
+  - detekcja nowości
+  expected_effects:
+    snn_coupling: sprzężenie closed-loop dla HIP
+  expected_direction: stable_reference
+  primary_metric: mean_abs_difference
+  severity_level:
+    small: 0.0
+    medium: 0.02
+    large: 0.05
+connectome:
+  atlas: default_regions
+  weights: data/connectomes/weights.csv
+  fiber_lengths: data/connectomes/fiber_lengths.csv
+pathology:
+  enabled: false
+  scenario: null
+  mutations: []
+snn:
+  enabled: true
+  mode: closed_loop
+  sync_dt: 0.01
+  max_feedback_amplitude: 0.15
+  input_rate_unit: Hz
+  output_activity_unit: fraction
+  neural_mass_regions:
+  - VIS
+  - AUD
+  - INT
+  - SAL
+  - ATT
+  - PHON
+  - VSWM
+  - EXEC
+  - EPIS
+  - SEM
+  - HIP
+  - VAL
+  - MOT
+  - DMN
+  - LANG
+  - GW
+  circuits:
+  - region: HIP
+    backend: brian2
+    neurons: 800
+    coupling_gain: 0.2
+    notes_pl: Lokalny obwód hipokampa sprzężony z proxy regionu HIP.
+analysis:
+  sets:
+  - spectral
+  - phase_locking
+  - connectivity
+  - information_flow
 output:
   save_results: true
   label: snn-hippocampus-demo
   output_dir: outputs
   save_event_timeline: true
-analysis:
-  sets: [spectral, phase_locking, connectivity, information_flow]
-snn:
-  enabled: true
-  mode: closed_loop
-  sync_dt: 0.010
-  max_feedback_amplitude: 0.15
-  input_rate_unit: Hz
-  output_activity_unit: fraction
-  neural_mass_regions:
-    - VIS
-    - AUD
-    - INT
-    - SAL
-    - ATT
-    - PHON
-    - VSWM
-    - EXEC
-    - EPIS
-    - SEM
-    - HIP
-    - VAL
-    - MOT
-    - DMN
-    - LANG
-    - GW
-  circuits:
-    - region: HIP
-      backend: brian2
-      neurons: 800
-      coupling_gain: 0.20
-      notes_pl: "Lokalny obwód hipokampa sprzężony z proxy regionu HIP."
-clinical_profile:
-  id: hippocampal_lesion
-  display_name: Demo SNN hipokampa
-  mechanism: Lokalny obwód SNN regionu HIP testuje sprzężenie hipokampa z modelem masowym.
-  affected_regions:
-    - HIP
-  cognitive_functions:
-    - pamięć epizodyczna
-    - detekcja nowości
-  expected_effects:
-    snn_coupling: sprzężenie closed-loop dla HIP

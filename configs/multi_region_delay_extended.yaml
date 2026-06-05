@@ -1,49 +1,220 @@
 model:
-  regions: [V1_L, V1_R, IPS_L, IPS_R, ACC, PCC]
+  regions:
+  - V1_L
+  - V1_R
+  - IPS_L
+  - IPS_R
+  - ACC
+  - PCC
   region_params:
-    V1_L:  {tau_E: 0.020, tau_I: 0.010, w_EE: 12.0, w_EI: 10.0, w_IE: 10.0, w_II: 2.0, gain_E: 1.10, gain_I: 1.00, threshold_E: 0.20, threshold_I: 0.10}
-    V1_R:  {tau_E: 0.020, tau_I: 0.010, w_EE: 12.0, w_EI: 10.0, w_IE: 10.0, w_II: 2.0, gain_E: 1.10, gain_I: 1.00, threshold_E: 0.20, threshold_I: 0.10}
-    IPS_L: {tau_E: 0.019, tau_I: 0.010, w_EE: 12.2, w_EI: 10.3, w_IE: 10.1, w_II: 2.1, gain_E: 1.15, gain_I: 1.05, threshold_E: 0.22, threshold_I: 0.11}
-    IPS_R: {tau_E: 0.019, tau_I: 0.010, w_EE: 12.2, w_EI: 10.3, w_IE: 10.1, w_II: 2.1, gain_E: 1.15, gain_I: 1.05, threshold_E: 0.22, threshold_I: 0.11}
-    ACC:   {tau_E: 0.018, tau_I: 0.009, w_EE: 12.5, w_EI: 10.5, w_IE: 10.2, w_II: 2.1, gain_E: 1.20, gain_I: 1.10, threshold_E: 0.25, threshold_I: 0.12}
-    PCC:   {tau_E: 0.024, tau_I: 0.012, w_EE: 11.8, w_EI: 10.2, w_IE: 9.9,  w_II: 2.0, gain_E: 1.05, gain_I: 1.00, threshold_E: 0.22, threshold_I: 0.10}
+    V1_L:
+      tau_E: 0.02
+      tau_I: 0.01
+      w_EE: 12.0
+      w_EI: 10.0
+      w_IE: 10.0
+      w_II: 2.0
+      gain_E: 1.1
+      gain_I: 1.0
+      threshold_E: 0.2
+      threshold_I: 0.1
+    V1_R:
+      tau_E: 0.02
+      tau_I: 0.01
+      w_EE: 12.0
+      w_EI: 10.0
+      w_IE: 10.0
+      w_II: 2.0
+      gain_E: 1.1
+      gain_I: 1.0
+      threshold_E: 0.2
+      threshold_I: 0.1
+    IPS_L:
+      tau_E: 0.019
+      tau_I: 0.01
+      w_EE: 12.2
+      w_EI: 10.3
+      w_IE: 10.1
+      w_II: 2.1
+      gain_E: 1.15
+      gain_I: 1.05
+      threshold_E: 0.22
+      threshold_I: 0.11
+    IPS_R:
+      tau_E: 0.019
+      tau_I: 0.01
+      w_EE: 12.2
+      w_EI: 10.3
+      w_IE: 10.1
+      w_II: 2.1
+      gain_E: 1.15
+      gain_I: 1.05
+      threshold_E: 0.22
+      threshold_I: 0.11
+    ACC:
+      tau_E: 0.018
+      tau_I: 0.009
+      w_EE: 12.5
+      w_EI: 10.5
+      w_IE: 10.2
+      w_II: 2.1
+      gain_E: 1.2
+      gain_I: 1.1
+      threshold_E: 0.25
+      threshold_I: 0.12
+    PCC:
+      tau_E: 0.024
+      tau_I: 0.012
+      w_EE: 11.8
+      w_EI: 10.2
+      w_IE: 9.9
+      w_II: 2.0
+      gain_E: 1.05
+      gain_I: 1.0
+      threshold_E: 0.22
+      threshold_I: 0.1
   connectivity:
-    - [0.00, 0.28, 0.25, 0.18, 0.14, 0.12]
-    - [0.28, 0.00, 0.18, 0.25, 0.14, 0.12]
-    - [0.22, 0.15, 0.00, 0.20, 0.20, 0.18]
-    - [0.15, 0.22, 0.20, 0.00, 0.20, 0.18]
-    - [0.12, 0.12, 0.18, 0.18, 0.00, 0.24]
-    - [0.10, 0.10, 0.16, 0.16, 0.24, 0.00]
+  - - 0.0
+    - 0.28
+    - 0.25
+    - 0.18
+    - 0.14
+    - 0.12
+  - - 0.28
+    - 0.0
+    - 0.18
+    - 0.25
+    - 0.14
+    - 0.12
+  - - 0.22
+    - 0.15
+    - 0.0
+    - 0.2
+    - 0.2
+    - 0.18
+  - - 0.15
+    - 0.22
+    - 0.2
+    - 0.0
+    - 0.2
+    - 0.18
+  - - 0.12
+    - 0.12
+    - 0.18
+    - 0.18
+    - 0.0
+    - 0.24
+  - - 0.1
+    - 0.1
+    - 0.16
+    - 0.16
+    - 0.24
+    - 0.0
   delays_steps:
-    - [0, 2, 3, 4, 5, 6]
-    - [2, 0, 4, 3, 5, 6]
-    - [3, 4, 0, 2, 3, 4]
-    - [4, 3, 2, 0, 3, 4]
-    - [5, 5, 3, 3, 0, 2]
-    - [6, 6, 4, 4, 2, 0]
-  external_drive_E: [0.10, 0.10, 0.09, 0.09, 0.07, 0.06]
-  external_drive_I: [0.05, 0.05, 0.05, 0.05, 0.04, 0.04]
+  - - 0
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+  - - 2
+    - 0
+    - 4
+    - 3
+    - 5
+    - 6
+  - - 3
+    - 4
+    - 0
+    - 2
+    - 3
+    - 4
+  - - 4
+    - 3
+    - 2
+    - 0
+    - 3
+    - 4
+  - - 5
+    - 5
+    - 3
+    - 3
+    - 0
+    - 2
+  - - 6
+    - 6
+    - 4
+    - 4
+    - 2
+    - 0
+  external_drive_E:
+  - 0.1
+  - 0.1
+  - 0.09
+  - 0.09
+  - 0.07
+  - 0.06
+  external_drive_I:
+  - 0.05
+  - 0.05
+  - 0.05
+  - 0.05
+  - 0.04
+  - 0.04
 integrator:
   method: euler
 timestep: 0.005
 seed: 21
+rng_seed: 21
 task:
   scenario: multi-region-delay-extended
   duration: 12.0
+stimulus:
+  scenario: multi-region-delay-extended
+  source: task
+brain_profile:
+  id: default
+  description: Bazowy profil parametrów modelu.
+clinical_profile:
+  id: healthy_v1
+  display_name: Zdrowy profil bazowy v1
+  mechanism: Brak jawnie modelowanej patologii klinicznej.
+  affected_regions: []
+  cognitive_functions: []
+  expected_effects: {}
+  expected_direction: stable_reference
+  primary_metric: mean_abs_difference
+  severity_level:
+    small: 0.0
+    medium: 0.02
+    large: 0.05
+connectome:
+  atlas: default_regions
+  weights: data/connectomes/weights.csv
+  fiber_lengths: data/connectomes/fiber_lengths.csv
+pathology:
+  enabled: false
+  scenario: null
+  mutations: []
+snn:
+  enabled: true
+  sync_dt: 0.01
+  circuits:
+  - region: ACC
+    backend: brian2
+    neurons: 1200
+    coupling_gain: 0.8
+  - region: PCC
+    backend: brian2
+    neurons: 1000
+    coupling_gain: 0.7
+analysis:
+  sets:
+  - spectral
+  - phase_locking
+  - connectivity
+  - information_flow
 output:
   save_results: false
   label: multi-region-delay-extended
   output_dir: outputs
-
-snn:
-  enabled: true
-  sync_dt: 0.010
-  circuits:
-    - region: ACC
-      backend: brian2
-      neurons: 1200
-      coupling_gain: 0.8
-    - region: PCC
-      backend: brian2
-      neurons: 1000
-      coupling_gain: 0.7
