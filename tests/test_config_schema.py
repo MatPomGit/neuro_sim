@@ -172,7 +172,9 @@ def test_invalid_analysis_set_type_reports_field_path() -> None:
 )
 def test_target_schema_examples_are_loadable(config_path: str) -> None:
     """Przykładowe konfiguracje mają przechodzić docelowy schemat walidacji."""
-    cfg = load_config(config_path)
+    from pathlib import Path
+    root_dir = Path(__file__).parent.parent
+    cfg = load_config(root_dir / config_path)
 
     assert cfg.seed == cfg.rng_seed
     assert cfg.task["duration"] > 0.0
