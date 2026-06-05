@@ -158,7 +158,6 @@ def _create_activity_controls(canvas: Any, axes: list[Any]) -> QWidget:
 
     def autoscale_activity_y() -> None:
         current_xlim = activity_axis.get_xlim()
-        activity_axis.relim()
         activity_axis.relim(visible_only=True)
         activity_axis.autoscale_view(scalex=False, scaley=True)
         activity_axis.set_xlim(current_xlim)
