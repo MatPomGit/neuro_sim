@@ -170,8 +170,7 @@ def _create_activity_controls(canvas: Any, axes: list[Any]) -> QWidget:
         activity_axis.autoscale_view(scalex=True, scaley=True)
         if stimulus_axis is not None:
             stimulus_axis.relim()
-            stimulus_axis.autoscale_view(scalex=True, scaley=True)
-            stimulus_axis.set_xlim(activity_axis.get_xlim())
+            stimulus_axis.autoscale_view(scalex=False, scaley=True)
         canvas.draw_idle()
 
     def toggle_activity_y_scale() -> None:
