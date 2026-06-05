@@ -215,7 +215,7 @@ def _plot_svg_underlay_background(
     """Narysuj szary podkład anatomiczny taki jak w kompaktowym viewerze SVG."""
     if not underlay_shapes:
         return
-    polygons = [list(zip(xs, ys, strict=True)) for xs, ys, _ in underlay_shapes]
+    polygons = [list(zip(xs, ys)) for xs, ys, _ in underlay_shapes]
     fill_colors = [fill_color for _, _, fill_color in underlay_shapes]
     collection = PolyCollection(
         polygons,
