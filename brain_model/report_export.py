@@ -467,9 +467,10 @@ def export_experiment_report(
         clinical_profile=clinical_profile,
         analysis_report=analysis_report,
     )
-    if target.suffix == ".md":
+    suffix = target.suffix.lower()
+    if suffix == ".md":
         content = markdown
-    elif target.suffix == ".html":
+    elif suffix == ".html":
         content = _markdown_to_simple_html(markdown)
     else:
         raise ValueError("Raport tekstowy musi mieć rozszerzenie .md albo .html.")
