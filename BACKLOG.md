@@ -57,24 +57,27 @@ Na dzień 2026-06-05 status nie jest prognozą wdrożenia, tylko krótką oceną
 | ID | Priorytet | Zadanie | Powiązane ryzyko | Akceptacja |
 | --- | --- | --- | --- | --- |
 | BL-ROV-01 | P0 | Uruchomić `roving_oddball` dla healthy/disorder/lesion na wspólnym seedzie i porównać habituację, readaptację, amplitudę oraz latencję. | Interpretacja benchmarków, kompletność raportu trial-by-trial | Raport porównawczy zawiera tabelę metryk i jawny komentarz amplitude-latency-mechanism. |
-| BL-CLIN-01 | P0 | Skalibrować progi clinical profiles względem benchmarków i dopisać tolerancje oraz kierunek oczekiwanej zmiany. | Kalibracja progów clinical profiles | Każdy próg ma źródło, tolerancję, zakres stosowalności i test regresji albo jawne uzasadnienie braku testu. |
+| BL-CLIN-01 | P0 | Skalibrować progi clinical profiles względem benchmarków i dopisać tolerancje oraz kierunek oczekiwanej zmiany. | Kalibracja progów clinical profiles | Każdy próg ma źródło, tolerancję, zakres stosowalności i test regresji albo jawne uzasadnienie braku testu; każdy profil clinical ma `expected_direction`, `primary_metric`, `severity_level` i komentarz w raporcie porównawczym. |
 | BL-TL-01 | P0 | Rozszerzyć timeline o grupowanie trial-by-trial i powiązania z wykresami. | Kompletność raportu trial-by-trial | Raport dla `roving_oddball` pokazuje numer triala, typ bodźca, odpowiedź, metryki i komentarz mechanizmu. |
 | BL-SNN-01 | P1 | Zmierzyć koszt `report_only` vs `closed_loop` SNN dla tej samej konfiguracji, seeda i czasu symulacji. | Koszt `closed_loop` SNN | Raport zawiera czas wykonania, długości sygnałów, amplitudę feedbacku i rekomendację, czy wariant nadaje się do GUI. |
 | BL-GUI-01 | P1 | Dodać w GUI dydaktyczne opisy presetów YAML dla `roving_oddball` i `snn_hippocampus_demo`. | Interpretacja benchmarków, koszt `closed_loop` SNN | Użytkownik widzi polski opis celu, oczekiwany efekt, ograniczenia i link do konfiguracji bez duplikowania logiki silnika. |
+| BL-EDU-01 | P1 | Zaprojektować profesjonalny katalog scenariuszy dydaktycznych: lekcja, cel, czas, poziom trudności, profil, task, pytania kontrolne i oczekiwany raport. | Gotowość aplikacji do zajęć | Co najmniej 3 scenariusze mają kartę lekcji, konfigurację YAML, oczekiwane obserwacje, pytania kontrolne i kryteria oceny odpowiedzi. |
+| BL-EDU-02 | P1 | Rozbudować tryb nauczyciela o prowadzenie użytkownika krok po kroku przez hipotezę, uruchomienie, obserwację metryk i interpretację ograniczeń. | Kompletność raportu trial-by-trial, interpretacja benchmarków | Widok nauczyciela pokazuje checklistę lekcji, komentarze per etap, ostrzeżenie przed interpretacją diagnostyczną i link do raportu porównawczego. |
+| BL-EDU-03 | P2 | Dodać eksport pakietu dydaktycznego dla zajęć: raport HTML/PDF, skrót dla prowadzącego, karta pracy studenta i metadane konfiguracji. | Replikowalność zajęć | Eksport zawiera konfigurację, seed, wersję kodu, metryki, wykresy, komentarze dydaktyczne i pytania kontrolne bez ręcznego kopiowania z GUI. |
 | BL-VAL-01 | P1 | Uzupełnić rejestr walidacji o kryteria zgodności, źródła i poziomy walidacji per benchmark. | Interpretacja benchmarków | Rejestr wskazuje efekty odtworzone jakościowo, częściowo odtworzone i pozostające poza zakresem. |
 
 ### Zrealizowane milestone’y
 
 Poniższe pozycje opisują funkcje ukończone lub częściowo ukończone na
 poziomie MVP. Nie oznacza to pełnej realizacji architektury docelowej z
-`docs/todo.md`; każda pozycja ma jawne pole **Pozostałe ograniczenia**, aby
+długoterminowej sekcji biologicznej backlogu; każda pozycja ma jawne pole **Pozostałe ograniczenia**, aby
 odróżnić działający artefakt od kompletnego zakresu badawczego.
 
 | Milestone | Status | Główne pliki | Testy | Pozostałe ograniczenia |
 | --- | --- | --- | --- | --- |
 | Taski poznawcze `stroop`, `go_nogo`, `n_back`, `roving_oddball` | `partial` | [`brain_core/experiments/protocols.py`](brain_core/experiments/protocols.py), [`brain_model/stimuli.py`](brain_model/stimuli.py), [`configs/stroop.yaml`](configs/stroop.yaml), [`configs/go_nogo.yaml`](configs/go_nogo.yaml), [`configs/n_back.yaml`](configs/n_back.yaml), [`configs/roving_oddball_healthy.yaml`](configs/roving_oddball_healthy.yaml), [`configs/roving_oddball_disorder_gaba.yaml`](configs/roving_oddball_disorder_gaba.yaml), [`configs/roving_oddball_lesion_hippocampus.yaml`](configs/roving_oddball_lesion_hippocampus.yaml) | [`tests/test_task_protocols_and_engine.py`](tests/test_task_protocols_and_engine.py), [`tests/test_task_stimulus_player.py`](tests/test_task_stimulus_player.py) | Dostępne są podstawowe protokoły, konfiguracje demonstracyjne i przewodnik dydaktyczny `roving_oddball`; dalszy zakres obejmuje walidację metryk habituacji/readaptacji, porównanie profili healthy/disorder/lesion oraz raport amplitude-latency-mechanism. |
 | Moduł uszkodzeń `lesions.py` | `partial` | [`brain_core/experiments/lesions.py`](brain_core/experiments/lesions.py), [`brain_model/scenarios/library.py`](brain_model/scenarios/library.py), [`brain_model/scenarios/types.py`](brain_model/scenarios/types.py) | [`tests/test_lesions.py`](tests/test_lesions.py), [`tests/test_task_protocols_and_engine.py`](tests/test_task_protocols_and_engine.py) | Obecny zakres wspiera scenariusze ogniskowe/sieciowe i integrację z taskami, ale katalog profili klinicznych, interpretacje dydaktyczne oraz raport różnic region-czas-funkcja pozostają niepełne. |
-| Raport benchmarkowy | `partial` | [`brain_core/analysis/reports.py`](brain_core/analysis/reports.py), [`brain_core/analysis/benchmark_loader.py`](brain_core/analysis/benchmark_loader.py), [`brain_core/simulation/engine.py`](brain_core/simulation/engine.py), [`data/validation/eeg_target.csv`](data/validation/eeg_target.csv), [`data/validation/fmri_target.csv`](data/validation/fmri_target.csv), [`data/validation/behavior_target.csv`](data/validation/behavior_target.csv) | [`tests/test_observation_and_analysis.py`](tests/test_observation_and_analysis.py), [`tests/test_signal_metrics_modules.py`](tests/test_signal_metrics_modules.py) | Raport potrafi agregować metryki i porównania referencyjne, ale nie zastępuje pełnego raportu dydaktycznego z kompletną osią trial-by-trial, wykresami i interpretacją profili z `docs/todo.md`. |
+| Raport benchmarkowy | `partial` | [`brain_core/analysis/reports.py`](brain_core/analysis/reports.py), [`brain_core/analysis/benchmark_loader.py`](brain_core/analysis/benchmark_loader.py), [`brain_core/simulation/engine.py`](brain_core/simulation/engine.py), [`data/validation/eeg_target.csv`](data/validation/eeg_target.csv), [`data/validation/fmri_target.csv`](data/validation/fmri_target.csv), [`data/validation/behavior_target.csv`](data/validation/behavior_target.csv) | [`tests/test_observation_and_analysis.py`](tests/test_observation_and_analysis.py), [`tests/test_signal_metrics_modules.py`](tests/test_signal_metrics_modules.py) | Raport potrafi agregować metryki i porównania referencyjne, ale nie zastępuje pełnego raportu dydaktycznego z kompletną osią trial-by-trial, wykresami i interpretacją profili z długoterminowej sekcji biologicznej backlogu. |
 | Metryki analityczne EEG/BOLD/zachowanie | `partial` | [`brain_core/analysis/signal_metrics.py`](brain_core/analysis/signal_metrics.py), [`brain_core/analysis/spectral.py`](brain_core/analysis/spectral.py), [`brain_core/analysis/phase_locking.py`](brain_core/analysis/phase_locking.py), [`brain_core/analysis/connectivity.py`](brain_core/analysis/connectivity.py), [`brain_core/analysis/information_flow.py`](brain_core/analysis/information_flow.py), [`brain_core/physiology/eeg_forward_model.py`](brain_core/physiology/eeg_forward_model.py), [`brain_core/physiology/bold_hrf.py`](brain_core/physiology/bold_hrf.py), [`brain_core/physiology/neurovascular_coupling.py`](brain_core/physiology/neurovascular_coupling.py) | [`tests/test_signal_metrics_modules.py`](tests/test_signal_metrics_modules.py), [`tests/test_observation_and_analysis.py`](tests/test_observation_and_analysis.py) | Dostępne są metryki sygnałowe i fasada kompatybilności, ale integracja z raportami EEG/BOLD, wykresami, progami jakości i porównaniami wielu profili nadal wymaga domknięcia. |
 | SNN signal adapter i kontrakt NM↔SNN | `partial` | [`brain_core/simulation/signal_adapter.py`](brain_core/simulation/signal_adapter.py), [`brain_core/populations/spiking_population.py`](brain_core/populations/spiking_population.py), [`brain_core/simulation/multiscale_engine.py`](brain_core/simulation/multiscale_engine.py) | [`tests/test_spiking_population_adapter.py`](tests/test_spiking_population_adapter.py), [`tests/test_multiscale_engine.py`](tests/test_multiscale_engine.py) | Adapter definiuje kontrakt sygnałów i pilotażową wymianę neural-mass ↔ SNN, ale backend jest startową aproksymacją; pełne obwody SNN, większe sieci i backendy typu NEST/NEURON pozostają zakresem docelowym. |
 | GUI state | `partial` | [`brain_model/gui_state.py`](brain_model/gui_state.py), [`brain_model/gui_layout.py`](brain_model/gui_layout.py), [`brain_model/qt_state.py`](brain_model/qt_state.py), [`brain_model/qt_app.py`](brain_model/qt_app.py), [`brain_model/qt_sections.py`](brain_model/qt_sections.py), [`brain_model/qt_config.py`](brain_model/qt_config.py) | [`tests/test_gui_state.py`](tests/test_gui_state.py), [`tests/test_gui_layout_static.py`](tests/test_gui_layout_static.py), [`tests/test_qt_config.py`](tests/test_qt_config.py), [`tests/test_qt_sections.py`](tests/test_qt_sections.py), [`tests/test_gui_dependencies_static.py`](tests/test_gui_dependencies_static.py) | Stan GUI jest wydzielony i testowany statycznie dla głównych przepływów, ale migracja wszystkich nowych przepływów na PySide6, tryb nauczyciela i pełna zgodność etykiet z glosariuszem pozostają częściowe. |
@@ -98,7 +101,11 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
     kompatybilny punkt wejścia `brain_model.gui:run_gui` zgodnie z ADR-0016.
 12. **Tryb nauczyciela P2** — Status: `planned`. dopisać widoki edukacyjne, pytania kontrolne i
     polskie etykiety pojęć zgodne z `docs/english_polish_glossary.md`.
-13. **Jakość i dokumentacja przekrojowa** — Status: `partial`. utrzymać standard docstringów/type hints,
+13. **Profesjonalizacja aplikacji dydaktycznej P1/P2** — Status: `planned`. przygotować katalog lekcji,
+    prowadzenie krok po kroku, eksport pakietów zajęciowych, checklistę
+    prowadzącego, kartę pracy studenta oraz jasne ograniczenia interpretacyjne
+    dla scenariuszy clinical/lesion.
+14. **Jakość i dokumentacja przekrojowa** — Status: `partial`. utrzymać standard docstringów/type hints,
     aktualizować `docs/program_structure.md` oraz ADR przy zmianach
     strukturalnych i dopisać instrukcje uruchamiania dla scenariuszy.
 
@@ -287,13 +294,14 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 - Podstawowe komentarze dydaktyczne i progi jakościowe różnic są traktowane jako istniejący zakres MVP, a nie jako pozostała praca.
 
 **Zakres prac:**
-- Zestaw profili zaburzeń (np. deficyt dopaminy, dysregulacja GABA, serotonin imbalance).
-- Scenariusze uszkodzeń mechanicznych (ogniskowe, sieciowe).
-- Uruchamianie tego samego bodźca na wielu profilach.
+- Utrzymać istniejące profile zaburzeń i lesion jako wersjonowane artefakty MVP.
+- Uruchamiać ten sam bodziec na wielu profilach bez zmiany konfiguracji bazowej poza jawnie wskazanym profilem.
+- Rozwijać raport porównawczy wyłącznie o brakujące elementy walidacyjne i task-specific.
 
-**Deliverables:**
-- Katalog profili klinicznych v1.
-- Automatyczny raport różnic (region, czas, funkcja poznawcza).
+**Deliverables / artefakty:**
+- `configs/clinical_profiles/*.yaml` — katalog profili klinicznych v1.
+- `brain_core/simulation/config_schema.py` — schemat pól profilu clinical w konfiguracji.
+- `brain_core/analysis/reports.py` — automatyczny raport różnic, komentarze dydaktyczne i porównanie region-czas-funkcja.
 
 **Istniejące profile:**
 - `healthy_v1`
@@ -423,12 +431,37 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 - Panele „co obserwujesz teraz?” i „dlaczego to ważne?”.
 - Oznaczenia regionów/neuromodulatorów na osi czasu.
 - Gotowe scenariusze lekcyjne z pytaniami kontrolnymi.
+- Katalog lekcji dla prowadzącego: cel, czas trwania, poziom trudności,
+  wymagane konfiguracje, oczekiwane obserwacje i pytania kontrolne.
+- Prowadzenie krok po kroku: hipoteza → konfiguracja → uruchomienie → metryki
+  → interpretacja → ograniczenia modelu.
+- Eksport pakietu zajęciowego: raport HTML/PDF, karta pracy studenta, skrót dla
+  prowadzącego, konfiguracja, seed i metadane uruchomienia.
+- Mechanizmy bezpieczeństwa dydaktycznego: komunikaty, że profile clinical są
+  modelami edukacyjnymi i nie stanowią predykcji diagnostycznej.
+- Podstawy profesjonalnej dostępności i użyteczności: spójna nawigacja,
+  czytelne stany błędów, kontrast, opisy wykresów i powtarzalne układy ekranów.
 
 **Deliverables:**
 - Desktopowe GUI PySide6 v1 uruchamiane przez `brain_model.gui:run_gui`.
 - Statyczne testy importów, punktu wejścia i panelu wykresów Qt.
 - Widoki edukacyjne v1.
 - Szablony lekcji laboratoryjnych.
+- Katalog scenariuszy dydaktycznych v1 dla `healthy_v1`, `roving_oddball`,
+  `gaba_dysregulation`, `dopamine_deficit` i scenariusza lesion.
+- Eksportowalny pakiet zajęciowy z raportem, kartą pracy i metadanymi
+  reprodukowalności.
+- Lista kontrolna prowadzącego oraz rubryka oceny odpowiedzi studenta.
+
+**Akceptacja profesjonalnej aplikacji dydaktycznej:**
+- Prowadzący może uruchomić gotową lekcję bez edycji kodu i otrzymuje pełny
+  pakiet materiałów do zajęć.
+- Student widzi w jednym miejscu bodziec, metrykę, wykres, komentarz mechanizmu
+  i ograniczenia interpretacyjne.
+- Eksport lekcji zawiera konfigurację, seed, wersję kodu, metryki i komentarze
+  wystarczające do powtórzenia demonstracji.
+- GUI nie powiela logiki walidacji silnika; błędy konfiguracji są pokazane po
+  polsku i wskazują konkretne pole lub sekcję.
 
 **Pozostały zakres:**
 - Domknąć migrację nowych przepływów desktopowych na PySide6 i nie rozwijać
@@ -436,6 +469,7 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 - Uzupełnić statyczne testy GUI o importy PySide6, punkt wejścia
   `brain_model.gui:run_gui` i backend wykresów Qt.
 - Dodać tryb nauczyciela z pytaniami kontrolnymi i scenariuszami lekcyjnymi.
+- Zbudować katalog lekcji, eksport pakietów zajęciowych i rubrykę oceny.
 - Ujednolicić polskie etykiety pojęć z `docs/english_polish_glossary.md`.
 
 ---
@@ -628,3 +662,596 @@ Zadanie uznaje się za ukończone, gdy:
 **Pozostały zakres:**
 - Brak znanych luk docstringów i adnotacji typów na dzień 2026-05-29.
 - Opcjonalnie dodać kontrolę CI egzekwującą minimalny poziom pokrycia.
+
+---
+
+## Zintegrowany plan biologiczny i wieloskalowy
+
+Ta sekcja konsoliduje długoterminowy zakres biologiczny i wieloskalowy, aby jeden
+plik backlogu był źródłem prawdy dla zadań, etapów i ograniczeń rozwoju.
+Najbliższe zadania operacyjne pozostają w sekcji **Najbliższe konkretne zadania
+do zaplanowania**, natomiast poniższe punkty opisują kierunek docelowy i nie
+muszą odpowiadać jeden-do-jednego bieżącej strukturze plików.
+
+## 1. Docelowa idea systemu
+
+Docelowy program powinien mieć trzy warstwy:
+
+```text
+warstwa biologiczna
+    neurony, synapsy, populacje neuronalne, astrocyty, neuromodulatory
+
+warstwa sieciowa
+    obszary mózgu, konektom, opóźnienia przewodzenia, oscylacje, synchronizacja
+
+warstwa poznawcza
+    uwaga, pamięć robocza, salience, kontrola wykonawcza, język, emocje, decyzje
+```
+
+Obecny program znajduje się głównie w trzeciej warstwie, z początkiem warstwy sieciowej przez oscylatory Wilsona-Cowana. Kolejnym etapem jest „podłożenie” pod każdy moduł poznawczy biologicznego mechanizmu: populacji pobudzających i hamujących, receptorów, neuroprzekaźników, plastyczności i sprzężeń międzyobszarowych.
+
+## 2. Proponowana architektura docelowa
+
+```text
+brain_simulator/
+├── apps/
+│   ├── desktop_gui/
+│   ├── web_gui/
+│   └── notebooks/
+│
+├── brain_core/
+│   ├── anatomy/
+│   │   ├── regions.py
+│   │   ├── connectome.py
+│   │   ├── cortical_layers.py
+│   │   └── atlases.py
+│   │
+│   ├── neurons/
+│   │   ├── izhikevich.py
+│   │   ├── adaptive_exponential.py
+│   │   ├── hodgkin_huxley.py
+│   │   └── cell_types.py
+│   │
+│   ├── synapses/
+│   │   ├── ampa.py
+│   │   ├── nmda.py
+│   │   ├── gaba.py
+│   │   ├── dopamine.py
+│   │   ├── serotonin.py
+│   │   ├── acetylcholine.py
+│   │   └── plasticity.py
+│   │
+│   ├── populations/
+│   │   ├── neural_mass.py
+│   │   ├── wilson_cowan.py
+│   │   ├── jansen_rit.py
+│   │   ├── mean_field.py
+│   │   └── spiking_population.py
+│   │
+│   ├── networks/
+│   │   ├── structural_network.py
+│   │   ├── functional_network.py
+│   │   ├── delays.py
+│   │   └── coupling.py
+│   │
+│   ├── cognition/
+│   │   ├── attention.py
+│   │   ├── working_memory.py
+│   │   ├── episodic_memory.py
+│   │   ├── semantic_memory.py
+│   │   ├── executive_control.py
+│   │   ├── salience.py
+│   │   ├── language.py
+│   │   ├── valuation.py
+│   │   └── global_workspace.py
+│   │
+│   ├── physiology/
+│   │   ├── eeg_forward_model.py
+│   │   ├── bold_hrf.py
+│   │   ├── metabolism.py
+│   │   ├── neurovascular_coupling.py
+│   │   └── homeostasis.py
+│   │
+│   ├── simulation/
+│   │   ├── integrators.py
+│   │   ├── scheduler.py
+│   │   ├── multiscale_engine.py
+│   │   ├── random_sources.py
+│   │   └── state.py
+│   │
+│   ├── experiments/
+│   │   ├── stimuli.py
+│   │   ├── cognitive_tasks.py
+│   │   ├── lesions.py
+│   │   ├── pharmacology.py
+│   │   └── protocols.py
+│   │
+│   └── analysis/
+│       ├── eeg.py
+│       ├── spectral.py
+│       ├── connectivity.py
+│       ├── information_flow.py
+│       ├── phase_locking.py
+│       └── reports.py
+│
+├── data/
+│   ├── atlases/
+│   ├── connectomes/
+│   ├── parameters/
+│   └── validation/
+│
+├── configs/
+│   ├── default.yaml
+│   ├── cognitive_demo.yaml
+│   ├── eeg_demo.yaml
+│   ├── lesion_demo.yaml
+│   └── pharmacology_demo.yaml
+│
+└── tests/
+```
+
+Kluczowa zasada: kod modelu nie powinien być zaszyty w GUI. GUI powinno tylko generować konfigurację, np. YAML/JSON, a silnik symulacji powinien działać niezależnie.
+
+## 3. Poziomy modelowania
+
+### Poziom A: obecny model poznawczy
+
+To zostaje jako warstwa wysokopoziomowa. Moduły typu `ATT`, `EXEC`, `HIP`, `SEM`, `DMN`, `GW` nadal istnieją, ale nie są już tylko abstrakcyjnymi zmiennymi. Każdy moduł dostaje biologiczne „ciało”.
+
+Przykład:
+
+```text
+HIP =
+    CA1
+    CA3
+    DG
+    subiculum
+    populacje pyramidalne
+    interneurony GABA
+    oscylacje theta
+    plastyczność epizodyczna
+```
+
+```text
+EXEC =
+    DLPFC
+    ACC
+    basal ganglia loop
+    populacje pobudzające/hamujące
+    rytm beta
+    kontrola bramkowania pamięci roboczej
+```
+
+### Poziom B: neural mass / mean field
+
+To najbardziej praktyczny poziom dla całego mózgu. Każdy region atlasu mózgowego, np. 68, 100, 200 albo 400 regionów, jest opisany niewielkim układem równań różniczkowych. Takie podejście jest powszechne w modelowaniu whole-brain, bo jeden region można reprezentować małą liczbą zmiennych zamiast milionami neuronów. ([PLOS][2])
+
+Minimalnie:
+
+```text
+E_r(t)  aktywność populacji pobudzającej regionu r
+I_r(t)  aktywność populacji hamującej regionu r
+A_r(t)  adaptacja / zmęczenie
+N_r(t)  neuromodulacja
+```
+
+Równania:
+
+```text
+dE_r/dt = (-E_r + S(w_EE E_r - w_EI I_r + input_r + coupling_r)) / τ_E
+dI_r/dt = (-I_r + S(w_IE E_r - w_II I_r)) / τ_I
+```
+
+### Poziom C: sieci kolczaste, czyli spiking neural networks
+
+Dla wybranych obszarów, np. hipokampa, kory przedczołowej, wzgórza lub ciała migdałowatego, można zastosować modele neuronów kolczastych. Tutaj warto użyć Brian2, NEST, NEURON, Arbor albo NetPyNE. Brian2 jest elastycznym symulatorem sieci kolczastych w Pythonie, a NetPyNE pozwala budować wieloskalowe modele w NEURON z separacją parametrów od implementacji. ([brian2.readthedocs.io][3])
+
+Praktyczna zasada:
+
+```text
+cały mózg        neural mass / mean field
+wybrane obwody   spiking neural network
+wybrane neurony  compartmental / Hodgkin-Huxley
+```
+
+### Poziom D: modele komórkowe
+
+To najwyższy koszt obliczeniowy. Stosować tylko lokalnie, np. do demonstracji kanałów jonowych, receptorów NMDA, wpływu GABA albo dopaminy.
+
+Modele:
+
+```text
+Hodgkin-Huxley
+Morris-Lecar
+Adaptive Exponential Integrate-and-Fire
+Izhikevich
+multi-compartment NEURON
+```
+
+## 4. Moduł anatomii i konektomu
+
+Obecna macierz `W` powinna zostać zastąpiona przez strukturalny konektom.
+
+Dane wejściowe:
+
+```text
+atlas mózgu
+lista regionów
+macierz połączeń strukturalnych
+długości włókien
+opóźnienia przewodzenia
+typ regionu: sensoryczny, asocjacyjny, limbiczny, motoryczny
+```
+
+Model połączeń:
+
+```text
+coupling_i(t) = Σ_j C_ij · activity_j(t - delay_ij)
+```
+
+To jest istotne, bo mózg nie jest siecią natychmiastową. Opóźnienia przewodzenia są warunkiem powstawania synchronizacji, desynchronizacji, rytmów i fal aktywności.
+
+## 5. Moduł neurochemii
+
+Pełniejsza symulacja musi mieć neuromodulatory jako osobne pola dynamiczne, a nie pojedyncze zmienne diagnostyczne.
+
+Proponowane systemy:
+
+```text
+dopamina        nagroda, błąd predykcji, motywacja, bramkowanie jąder podstawy
+noradrenalina   czujność, stres, niepewność, wzrost gain
+serotonina      stabilizacja nastroju, impulsywność, awersja, cierpliwość
+acetylocholina  uwaga, uczenie sensoryczne, precyzja predykcji
+GABA            hamowanie lokalne
+glutaminian     pobudzenie, transmisja AMPA/NMDA
+```
+
+Każdy neuromodulator powinien wpływać na parametry regionów:
+
+```text
+gain sigmoidy
+próg aktywacji
+plastyczność synaptyczna
+stosunek E/I
+szum neuronalny
+stałą czasową
+```
+
+Przykład:
+
+```text
+wysoka acetylocholina → większa precyzja sygnałów sensorycznych
+wysoka noradrenalina  → większy gain, silniejsza reakcja salience
+wysoka dopamina       → silniejsze uczenie wartościowania
+wysoki GABA           → hamowanie, spadek pobudliwości
+```
+
+## 6. Moduł plastyczności
+
+Bez plastyczności program będzie tylko symulatorem aktywacji. Biologiczna symulacja wymaga zmiany połączeń w czasie.
+
+Potrzebne mechanizmy:
+
+```text
+Hebbian learning
+STDP
+homeostatic plasticity
+synaptic scaling
+reinforcement-modulated plasticity
+metaplasticity
+consolidation
+forgetting
+```
+
+Dla poziomu neural mass wystarczy reguła:
+
+```text
+dW_ij/dt = η · pre_j · post_i · neuromodulator - λW_ij
+```
+
+Dla sieci kolczastych można stosować STDP:
+
+```text
+Δw = A+ exp(-Δt/τ+) gdy pre przed post
+Δw = -A- exp(Δt/τ-) gdy post przed pre
+```
+
+## 7. Moduł EEG, LFP i fMRI/BOLD
+
+Obecny sygnał `E-I` jest dobrym szkicem. Docelowo trzeba rozdzielić:
+
+```text
+spikes       aktywność neuronów kolczastych
+LFP          lokalny potencjał polowy
+EEG/MEG      projekcja aktywności źródeł korowych na elektrody
+BOLD/fMRI    wolna odpowiedź hemodynamiczna
+```
+
+Minimalny model EEG:
+
+```text
+source_r(t) = gain_r · pyramidal_activity_r(t)
+EEG_e(t) = Σ_r leadfield[e,r] · source_r(t)
+```
+
+Minimalny model BOLD:
+
+```text
+neural_activity → neurovascular coupling → HRF convolution → BOLD
+```
+
+Dzięki temu program może generować dane porównywalne z EEG/fMRI, a nie tylko abstrakcyjne wykresy aktywacji.
+
+## 8. Moduł zadań poznawczych
+
+Obecny scenariusz bodźców należy zamienić na protokoły eksperymentalne.
+
+Przykłady:
+
+```text
+Stroop task
+Go/No-Go
+N-back
+oddball auditory
+visual search
+fear conditioning
+reward learning
+semantic priming
+working memory delay task
+```
+
+Każde zadanie powinno mieć:
+
+```text
+bodźce
+czas prezentacji
+reguły odpowiedzi
+oczekiwane reakcje
+miary behawioralne
+mapowanie na moduły mózgowe
+```
+
+Wyniki:
+
+```text
+czas reakcji
+trafność
+błąd predykcji
+siła uwagi
+obciążenie pamięci roboczej
+aktywność EEG
+moc pasm
+synchronizacja między regionami
+```
+
+## 9. Moduł uszkodzeń i zaburzeń
+
+Bardzo wartościowy naukowo byłby moduł manipulacji patologicznych.
+
+Typy manipulacji:
+
+```text
+lesion          usunięcie lub osłabienie regionu
+disconnection   osłabienie połączeń
+noise increase  wzrost szumu
+E/I imbalance   zaburzenie równowagi pobudzenie-hamowanie
+dopamine shift  zmiana dopaminy
+GABA reduction  spadek hamowania
+atrophy         spadek pojemności regionu
+delay increase  spowolnienie przewodzenia
+```
+
+Przykłady symulacyjne:
+
+```text
+uszkodzenie hipokampa → deficyt kodowania epizodycznego
+osłabienie DLPFC → gorsza kontrola wykonawcza
+nadreaktywny salience network → błędna detekcja istotności
+obniżony GABA → nadmierna synchronizacja / podatność napadowa
+```
+
+## 10. Silnik symulacyjny
+
+Docelowy silnik powinien obsługiwać wiele solverów.
+
+```text
+Euler-Maruyama      szybki, prosty, dla SDE
+Runge-Kutta RK4     dokładniejszy dla ODE
+Dopri5 / RK45       adaptacyjny krok czasowy
+event-based         dla sieci kolczastych
+co-simulation       różne kroki czasowe dla różnych skal
+GPU backend         JAX / PyTorch / CuPy
+```
+
+Najważniejszy problem to różne skale czasowe:
+
+```text
+kanały jonowe       mikrosekundy-milisekundy
+spikes              milisekundy
+oscylacje EEG       milisekundy-sekundy
+BOLD/fMRI           sekundy
+uczenie             sekundy-godziny
+konsolidacja        godziny-dni
+```
+
+Dlatego potrzebny jest scheduler wieloskalowy.
+
+## 11. Architektura obliczeniowa
+
+Docelowo:
+
+```text
+Python core
+NumPy/SciPy dla wersji bazowej
+JAX albo PyTorch dla przyspieszenia GPU
+Brian2/NEST/NEURON/Arbor jako backendy opcjonalne
+HDF5/Zarr do zapisu dużych wyników
+YAML/JSON do konfiguracji eksperymentów
+Plotly/Dash albo web GUI do interfejsu
+```
+
+Wersja GitHub Pages z Pyodide może nadal istnieć, ale tylko jako wersja demonstracyjna. Pełna biologiczna symulacja powinna działać lokalnie albo na serwerze/HPC. Pyodide nie jest właściwym środowiskiem dla ciężkich modeli wieloskalowych.
+
+## 12. Etapy rozbudowy
+
+### Etap 1: uporządkowanie obecnego modelu
+
+**Status:** `partial`
+
+Cel: stabilna baza.
+
+Dodać:
+
+```text
+konfiguracje YAML
+zapis wyników do CSV/HDF5
+testy jednostkowe
+walidację parametrów
+moduł eksperymentów
+rozdzielenie GUI od silnika
+```
+
+### Etap 2: pełne modele populacyjne
+
+**Status:** `partial`
+
+Cel: biologicznie interpretowalne moduły.
+
+Dodać:
+
+```text
+Wilson-Cowan dla każdego regionu
+Jansen-Rit dla sygnałów EEG
+opóźnienia przewodzenia
+osobne populacje E/I
+oscylacje theta/alpha/beta/gamma
+sprzężenie między regionami
+```
+
+### Etap 3: konektom i atlas
+
+**Status:** `partial`
+
+Cel: przejście z 16 modułów poznawczych na regiony anatomiczne.
+
+Dodać:
+
+```text
+atlas Desikan-Killiany albo Schaefer
+macierz konektomu
+mapowanie regionów na funkcje poznawcze
+projekcję regionów na moduły poznawcze
+```
+
+Przykład:
+
+```text
+ATT  = FEF + IPS + pulvinar
+EXEC = DLPFC + ACC + basal ganglia
+EPIS = hippocampus + parahippocampal cortex
+SAL  = anterior insula + dACC + amygdala
+DMN  = mPFC + PCC + angular gyrus
+```
+
+### Etap 4: neuromodulacja
+
+**Status:** `partial`
+
+Cel: biologiczne sterowanie parametrami.
+
+Dodać:
+
+```text
+dopamina
+noradrenalina
+serotonina
+acetylocholina
+GABA/glutaminian
+farmakologiczne manipulacje parametrów
+```
+
+### Etap 5: plastyczność i uczenie
+
+**Status:** `partial`
+
+Cel: model ma się zmieniać w wyniku doświadczenia.
+
+Dodać:
+
+```text
+Hebbian learning
+STDP
+reinforcement learning
+consolidation
+forgetting
+homeostatic regulation
+```
+
+### Etap 6: backend SNN dla wybranych obwodów
+
+Cel: lokalnie szczegółowa symulacja biologiczna.
+
+**Status:** `partial`
+
+Zrealizowano:
+
+```text
+[x] Brian2 jako backend startowy (adapter: brain_core/populations/spiking_population.py)
+[x] Kontrakt NM↔SNN (wejścia/wyjścia + sync_dt)
+[x] Ograniczenie pilotażu do 1-2 obwodów (hipokamp, DLPFC)
+[x] Scheduler wieloskalowy (brain_core/simulation/multiscale_engine.py)
+[x] Test wydajności/stabilności smoke dla współsymulacji
+```
+
+Do dalszej realizacji:
+
+```text
+[ ] NEST dla dużych SNN
+[ ] NEURON/NetPyNE dla modeli biokomórkowych
+[ ] Arbor dla symulacji wielkoskalowych/HPC
+```
+
+### Etap 7: walidacja
+
+**Status:** `partial`
+
+Cel: model nie tylko generuje wykresy, ale daje porównywalne dane.
+
+Porównać z:
+
+```text
+EEG: moc pasm, ERP, phase locking
+fMRI: BOLD, functional connectivity
+behawior: czas reakcji, trafność, błędy
+neuropsychologia: profile deficytów po uszkodzeniach
+```
+
+## 13. Proponowany docelowy przepływ działania
+
+```text
+1. Użytkownik wybiera eksperyment poznawczy.
+2. System ładuje konfigurację mózgu.
+3. System generuje bodźce.
+4. Silnik symuluje dynamikę neuronalną i poznawczą.
+5. Moduł fizjologii generuje EEG/BOLD.
+6. Moduł zachowania generuje odpowiedzi.
+7. Moduł analizy oblicza metryki.
+8. GUI pokazuje wykresy, sieci, raport i eksport danych.
+```
+
+## 14. Najważniejsza decyzja projektowa
+
+Nie próbowałbym od razu budować „pełnego mózgu” na poziomie neuronów. To byłoby obliczeniowo i metodologicznie niekontrolowane. Najlepsza architektura to:
+
+```text
+whole brain = neural mass / mean field
+selected circuits = spiking neural networks
+selected cells = biophysical compartment models
+cognition = symbolic/functional control layer
+```
+
+To daje kompromis: biologiczna interpretowalność, wykonalność obliczeniowa i możliwość demonstracji procesów psychologii poznawczej oraz neuropsychologii.
+
+[1]: https://ebrains.eu/data-tools-services/modelling-simulation/whole-brain-simulation?utm_source=chatgpt.com "Whole Brain Simulation"
+[2]: https://journals.plos.org/ploscompbiol/article?id=10.1371%2Fjournal.pcbi.1012647&utm_source=chatgpt.com "Insights from next generation neural mass modelling ..."
+[3]: https://brian2.readthedocs.io/?utm_source=chatgpt.com "Brian 2 documentation — Brian 2 2.10.1 documentation"

@@ -37,5 +37,4 @@ Wydzielamy dotychczasowy webowy interfejs symulacji do `docs/web_gui.html`, a `d
 - `docs/index.html`
 - `docs/web_gui.html`
 - `BACKLOG.md`
-- `docs/todo.md`
 - `ROADMAP.md`

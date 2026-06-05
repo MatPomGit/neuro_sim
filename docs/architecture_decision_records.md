@@ -67,10 +67,10 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0003 | accepted | Deterministyczność przez kontrolę źródeł losowości | `docs/architecture_decision_records.md` | `BACKLOG.md` P0 / 1 |
 | ADR-0004 | accepted | Model regionowy Wilson-Cowan z opóźnionym sprzężeniem strukturalnym | `docs/architecture_decision_records.md` | `BACKLOG.md` P1 / 4, P1 / 5 |
 | ADR-0005 | proposed | Ujednolicenie typów neuromodulatorów między `brain_model` i `brain_core` | `docs/architecture_decision_records.md` | `BACKLOG.md` P1 / 6 |
-| ADR-0006 | proposed | Synaptyczna plastyczność neural-mass z dwiema skalami czasowymi | `docs/architecture_decision_records.md` | `docs/todo.md` Etap 5 |
+| ADR-0006 | proposed | Synaptyczna plastyczność neural-mass z dwiema skalami czasowymi | `docs/architecture_decision_records.md` | `BACKLOG.md` Etap 5 |
 | ADR-0007 | proposed | Kanał obserwacyjny EEG/BOLD i zestaw walidacji porównawczej | `docs/architecture_decision_records.md` | `BACKLOG.md` P2 / 9, najbliższe prace / 10 |
 | ADR-0008 | proposed | Rozszerzenie EEG o warianty forward i solvery inverse | `docs/architecture_decision_records.md` | `BACKLOG.md` P2 / 9 |
-| ADR-0009 | proposed | Pilotażowa współsymulacja neural-mass ↔ SNN z backendem Brian2 | `docs/architecture_decision_records.md` | `BACKLOG.md` P3 / 11, `docs/todo.md` Etap 6 |
+| ADR-0009 | proposed | Pilotażowa współsymulacja neural-mass ↔ SNN z backendem Brian2 | `docs/architecture_decision_records.md` | `BACKLOG.md` P3 / 11 i Etap 6 |
 | ADR-0010 | proposed | Ujednolicony postprocessing analityczny i raport benchmarkowy | `docs/architecture_decision_records.md` | `BACKLOG.md` P0 / 2, P2 / 9, najbliższe prace / 10 |
 | ADR-0011 | accepted | Modularizacja metryk analizy sygnałów i konfigurowalne zestawy analiz | `docs/architecture_decision_records.md` | `BACKLOG.md` P2 / 9, najbliższe prace / 10 |
 | ADR-0012 | accepted | Modularizacja GUI modelu poznawczego | [`docs/adr/0012-modularizacja-gui.md`](adr/0012-modularizacja-gui.md) | `BACKLOG.md` P2 / 10, najbliższe prace / 11 |
@@ -82,7 +82,7 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0018 | accepted | Worker symulacji jako QObject uruchamiany w QThread | [`docs/adr/0018-worker-symulacji-qt-object-thread.md`](adr/0018-worker-symulacji-qt-object-thread.md) | `BACKLOG.md` P2 / 10, najbliższe prace / 11 |
 | ADR-0019 | accepted | Profile kliniczne i raport różnic między uruchomieniami | [`docs/adr/0019-profile-kliniczne-i-raport-roznic.md`](adr/0019-profile-kliniczne-i-raport-roznic.md) | `BACKLOG.md` P1 / 7 |
 | ADR-0020 | proposed | Oś czasu zdarzeń symulacji | [`docs/adr/0020-os-czasu-zdarzen-symulacji.md`](adr/0020-os-czasu-zdarzen-symulacji.md) | `BACKLOG.md` P0 / 2 |
-| ADR-0021 | proposed | Formalny kontrakt I/O dla współsymulacji neural-mass i SNN | `docs/architecture_decision_records.md` | `BACKLOG.md` P3 / 11, `docs/todo.md` Etap 6 |
+| ADR-0021 | proposed | Formalny kontrakt I/O dla współsymulacji neural-mass i SNN | `docs/architecture_decision_records.md` | `BACKLOG.md` P3 / 11 i Etap 6 |
 | ADR-0022 | proposed | Progi interpretacyjne profili klinicznych | [`docs/adr/0022-progi-interpretacyjne-profili-klinicznych.md`](adr/0022-progi-interpretacyjne-profili-klinicznych.md) | `BACKLOG.md` P1 / 7 |
 | ADR-0023 | proposed | Konfiguracje YAML i panele wyników Qt oparte na silniku | [`docs/adr/0023-konfiguracje-yaml-i-panele-qt-silnika.md`](adr/0023-konfiguracje-yaml-i-panele-qt-silnika.md) | — |
 
@@ -512,7 +512,7 @@ Wprowadzamy minimalny, testowalny szkielet:
 - `tests/test_multiscale_engine.py`
 - `tests/test_spiking_population_adapter.py`
 - `BACKLOG.md` — P3 / 11 „Hybrydy mikro-makro (spiking submodels)”
-- `docs/todo.md` — Etap 6 „backend SNN dla wybranych obwodów”
+- `BACKLOG.md` — Etap 6 „backend SNN dla wybranych obwodów”
 
 ---
 
@@ -610,7 +610,7 @@ Dodatkowo rozszerzamy konfigurację `configs/multi_region_delay_*.yaml` oraz prz
 - `configs/multi_region_delay_extended.yaml`
 - `configs/snn_hippocampus_demo.yaml`
 - `BACKLOG.md` — P3 / 11 „Hybrydy mikro-makro (spiking submodels)”
-- `docs/todo.md` — Etap 6 „backend SNN dla wybranych obwodów”
+- `BACKLOG.md` — Etap 6 „backend SNN dla wybranych obwodów”
 
 ---
 

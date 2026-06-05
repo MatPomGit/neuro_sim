@@ -411,6 +411,126 @@
 
     .callout strong { color: var(--accent-dark); }
 
+    .roadmap-visual {
+      display: grid;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .release-map {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .release-card {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f4f9ff 100%);
+      overflow: hidden;
+    }
+
+    .release-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 5px;
+      background: var(--accent);
+    }
+
+    .release-card.current::before { background: var(--success); }
+    .release-card.next::before { background: #7b61ff; }
+    .release-card.future::before { background: var(--warning); }
+
+    .release-version {
+      display: inline-flex;
+      margin-bottom: 10px;
+      border-radius: 999px;
+      padding: 5px 9px;
+      color: #fff;
+      background: var(--bg-soft);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .release-card h3 {
+      margin-bottom: 8px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .release-card p {
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .release-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .feature-matrix {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+
+    .feature-matrix th,
+    .feature-matrix td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .feature-matrix th {
+      background: #f4f8fc;
+      color: #34465b;
+      font-size: 13px;
+    }
+
+    .feature-matrix tr:last-child td { border-bottom: 0; }
+
+    .feature-matrix td:first-child {
+      font-weight: 850;
+      color: var(--accent-dark);
+    }
+
+    .roadmap-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .roadmap-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .legend-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .legend-dot.current { background: var(--success); }
+    .legend-dot.next { background: #7b61ff; }
+    .legend-dot.future { background: var(--warning); }
+
     .timeline {
       display: grid;
       gap: 14px;
@@ -528,7 +648,8 @@
       .split,
       .cards,
       .manual-grid,
-      .feature-list {
+      .feature-list,
+      .release-map {
         grid-template-columns: 1fr;
       }
 
@@ -544,7 +665,7 @@
       .metric-grid { grid-template-columns: 1fr; }
       .tabs { padding: 10px; }
       .tab-panel { padding: 20px; }
-      .status-table { display: block; overflow-x: auto; }
+      .status-table, .feature-matrix { display: block; overflow-x: auto; }
     }
   </style>
 </head>
@@ -610,7 +731,7 @@
       <section class="tab-panel active" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-panel="overview">
         <div class="section-header">
           <h2>Jedno narzędzie do demonstracji, porównywania i interpretacji dynamiki mózgu.</h2>
-          <p>Strona podsumowuje kierunek rozwoju opisany w backlogu, liście todo i roadmapie: od prostego webowego uruchomienia symulacji po edukacyjne raporty, task battery oraz porównania profili zdrowych, zaburzeń i uszkodzeń.</p>
+          <p>Strona podsumowuje kierunek rozwoju opisany w backlogu i roadmapie: od prostego webowego uruchomienia symulacji po edukacyjne raporty, task battery oraz porównania profili zdrowych, zaburzeń i uszkodzeń.</p>
           <p>Najważniejszy cel użytkowy to praca w krótkiej pętli: wybierz scenariusz, ustaw czas i seed, uruchom symulację, obejrzyj aktywność modułów oraz zapisz konfigurację do późniejszego porównania. Dzięki temu narzędzie sprawdza się zarówno jako pokaz na zajęciach, jak i jako piaskownica do testowania hipotez o uwadze, decyzji, uczeniu i neuromodulacji.</p>
         </div>
         <div class="cards">
@@ -659,7 +780,74 @@
       <section class="tab-panel" id="panel-roadmap" role="tabpanel" aria-labelledby="tab-roadmap" data-panel="roadmap">
         <div class="section-header">
           <h2>Roadmapa rozwoju produktu</h2>
-          <p>Kolejne etapy prowadzą od porządkowania konfiguracji i raportów do symulacji wieloskalowych, kohort i benchmarków literaturowych.</p>
+          <p>Kolejne etapy prowadzą od porządkowania konfiguracji i raportów do profesjonalnej aplikacji dydaktycznej, symulacji wieloskalowych, kohort i benchmarków literaturowych. Daty nie są obietnicą wydania — wizualizacja pokazuje kolejność zależności oraz funkcje planowane dla następnych wersji.</p>
+        </div>
+        <div class="roadmap-visual" aria-label="Wizualizacja funkcjonalności w kolejnych wersjach aplikacji">
+          <div class="release-map">
+            <article class="release-card current">
+              <span class="release-version">0.3.x teraz</span>
+              <h3>Stabilizacja demonstratora</h3>
+              <p>Obecny nacisk: odtwarzalne uruchomienia i spójna dokumentacja.</p>
+              <ul>
+                <li>web GUI i desktop GUI,</li>
+                <li>seedy oraz konfiguracje,</li>
+                <li>podstawowe wykresy i eksport.</li>
+              </ul>
+            </article>
+            <article class="release-card next">
+              <span class="release-version">0.4.x</span>
+              <h3>Raport dydaktyczny</h3>
+              <p>Pierwsza wersja raportu, którą można omawiać krok po kroku na zajęciach.</p>
+              <ul>
+                <li>timeline trial-by-trial,</li>
+                <li>baseline <code>healthy_v1</code>,</li>
+                <li>czytelne błędy konfiguracji.</li>
+              </ul>
+            </article>
+            <article class="release-card next">
+              <span class="release-version">0.5.x</span>
+              <h3>Scenariusze porównawcze</h3>
+              <p>Porównywanie tej samej procedury w profilach healthy/disorder/lesion.</p>
+              <ul>
+                <li><code>roving_oddball</code> jako scenariusz referencyjny,</li>
+                <li>metryki amplitude-latency-mechanism,</li>
+                <li>komentarze clinical profiles.</li>
+              </ul>
+            </article>
+            <article class="release-card future">
+              <span class="release-version">0.6.x</span>
+              <h3>Profesjonalny tryb nauczyciela</h3>
+              <p>Materiały gotowe do wykorzystania podczas ćwiczeń i laboratoriów.</p>
+              <ul>
+                <li>katalog lekcji,</li>
+                <li>karty pracy studentów,</li>
+                <li>eksport pakietu HTML/PDF.</li>
+              </ul>
+            </article>
+            <article class="release-card future">
+              <span class="release-version">0.7+</span>
+              <h3>Warstwa wieloskalowa</h3>
+              <p>Dalszy rozwój biologiczny i walidacyjny po domknięciu dydaktyki.</p>
+              <ul>
+                <li>EEG/BOLD i benchmarki,</li>
+                <li>hybrydy neural mass ↔ SNN,</li>
+                <li>kohorty i raport wersyjny.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="roadmap-legend" aria-label="Legenda statusów roadmapy">
+            <span><i class="legend-dot current"></i>obecny fundament</span>
+            <span><i class="legend-dot next"></i>najbliższe wersje</span>
+            <span><i class="legend-dot future"></i>dalszy rozwój</span>
+          </div>
+          <table class="feature-matrix" aria-label="Macierz funkcjonalności planowanych w wersjach">
+            <thead><tr><th>Obszar</th><th>0.3.x</th><th>0.4.x</th><th>0.5.x</th><th>0.6.x</th><th>0.7+</th></tr></thead>
+            <tbody>
+              <tr><td>Doświadczenie użytkownika</td><td>Uruchomienie scenariusza</td><td>Raport timeline</td><td>Porównanie profili</td><td>Pełna lekcja z przewodnikiem</td><td>Kohorty i warianty zaawansowane</td></tr>
+              <tr><td>Dydaktyka</td><td>Polskie opisy i instrukcja</td><td>Komentarze per trial</td><td>Mechanizm różnic clinical/lesion</td><td>Karty pracy, rubryki i eksport</td><td>Biblioteka kursów i benchmarków</td></tr>
+              <tr><td>Model biologiczny</td><td>Moduły poznawcze i podstawowe sygnały</td><td>Baseline i walidacja konfiguracji</td><td>Roving oddball + progi jakościowe</td><td>EEG/BOLD w raportach lekcyjnych</td><td>Mikro-makro, SNN i raport zgodności</td></tr>
+            </tbody>
+          </table>
         </div>
         <div class="timeline">
           <article class="timeline-item"><span class="phase">Etap 0</span><div><h3>Dokumentacja i kontrakty</h3><p>Utrzymanie spójnego obrazu projektu w roadmapie, backlogu, strukturze programu i ADR.</p></div></article>
@@ -667,7 +855,7 @@
           <article class="timeline-item"><span class="phase">Etap 2</span><div><h3>Konektom, neural mass i neuromodulacja</h3><p>Model regionowy z opóźnieniami, populacjami E/I oraz widocznym wpływem neuromodulatorów.</p></div></article>
           <article class="timeline-item"><span class="phase">Etap 3</span><div><h3>Task battery i roving oddball</h3><p>Istniejące MVP roving oddball, wspólne API zadań oraz dalsza walidacja metryk nowości, habituacji i readaptacji.</p></div></article>
           <article class="timeline-item"><span class="phase">Etap 4</span><div><h3>Profile kliniczne i uszkodzenia</h3><p>Porównania healthy/disorder/lesion z automatycznym komentarzem mechanistycznym.</p></div></article>
-          <article class="timeline-item"><span class="phase">Etap 5+</span><div><h3>EEG/BOLD, tryb nauczyciela i mikro-makro</h3><p>Raporty sygnałowe, scenariusze lekcyjne, hybrydy neural mass ze spiking submodels oraz symulacje kohortowe.</p></div></article>
+          <article class="timeline-item"><span class="phase">Etap 5+</span><div><h3>EEG/BOLD, profesjonalny tryb nauczyciela i mikro-makro</h3><p>Raporty sygnałowe, katalog lekcji, eksport pakietów zajęciowych, hybrydy neural mass ze spiking submodels oraz symulacje kohortowe.</p></div></article>
         </div>
       </section>
 
@@ -731,7 +919,7 @@
           <thead><tr><th>Obszar</th><th>Status</th><th>Gdzie czytać dalej</th></tr></thead>
           <tbody>
             <tr><td>Fundamenty konfiguracji, baseline i raportów</td><td><span class="pill now">częściowo gotowe</span></td><td><a href="../BACKLOG.md">BACKLOG.md</a></td></tr>
-            <tr><td>Biologiczny i wieloskalowy kierunek rozwoju</td><td><span class="pill next">w rozbudowie</span></td><td><a href="todo.md">docs/todo.md</a></td></tr>
+            <tr><td>Biologiczny i wieloskalowy kierunek rozwoju</td><td><span class="pill next">w rozbudowie</span></td><td><a href="../BACKLOG.md">BACKLOG.md</a></td></tr>
             <tr><td>Etapy produktu i zależności</td><td><span class="pill plan">roadmapa</span></td><td><a href="../ROADMAP.md">ROADMAP.md</a></td></tr>
             <tr><td>Decyzje architektoniczne</td><td><span class="pill now">dokumentowane</span></td><td><a href="architecture_decision_records.md">docs/architecture_decision_records.md</a></td></tr>
           </tbody>
