@@ -259,6 +259,37 @@ def _build_educational_comment(
     )
 
 
+def _build_baseline_reference_section(profile: dict[str, Any]) -> dict[str, str] | None:
+    """Zbuduj opis roli profilu `healthy_v1` w raporcie edukacyjnym.
+
+    Parameters
+    ----------
+    profile:
+        Metadane profilu klinicznego zapisane w payloadzie raportu.
+
+    Returns
+    -------
+    dict[str, str] | None
+        Słownik z polami sekcji baseline albo ``None``, jeśli raport nie
+        dotyczy profilu referencyjnego `healthy_v1`.
+    """
+    if profile.get("id") != "healthy_v1":
+        return None
+
+    return {
+        "profile_id": "healthy_v1",
+        "role_pl": "punkt odniesienia dla porównań profili klinicznych",
+        "interpretation_pl": (
+            "Profil healthy_v1 opisuje edukacyjny stan bez jawnie modelowanej "
+            "patologii i nie jest diagnozą kliniczną ani normą populacyjną."
+        ),
+        "primary_metric": str(profile.get("primary_metric", "mean_abs_difference")),
+        "expected_direction": str(
+            profile.get("expected_direction", "stable_reference")
+        ),
+    }
+
+
 @dataclass(frozen=True)
 class ValidationComplianceEntry:
     """Wiersz zgodności walidacyjnej benchmarku prezentowany w raporcie.
@@ -528,6 +559,25 @@ class AnalysisReport:
         for name, value in metrics.items():
             lines.append(f"- **{name}**: {value}")
         lines.append("")
+
+        baseline_reference = _build_baseline_reference_section(
+            self.payload.get("clinical_profile", {})
+        )
+        if baseline_reference:
+            lines.append("## Baseline healthy_v1")
+            lines.append(f"- **rola**: {baseline_reference['role_pl']}")
+            lines.append(
+                f"- **interpretacja**: {baseline_reference['interpretation_pl']}"
+            )
+            lines.append(
+                f"- **metryka główna**: {baseline_reference['primary_metric']}"
+            )
+            lines.append(
+                f"- **oczekiwany kierunek**: "
+                f"{baseline_reference['expected_direction']}"
+            )
+            lines.append("")
+
         if benchmark_metadata:
             lines.append("## Status walidacji")
             for benchmark_name, metadata in benchmark_metadata.items():
@@ -809,6 +859,19 @@ class AnalysisReport:
                         "section": "validation_compliance",
                         "metric": f"{benchmark_name}_{metric_name}",
                         "value": str(item.get(metric_name, "n/a")),
+                    }
+                )
+
+        baseline_reference = _build_baseline_reference_section(
+            self.payload.get("clinical_profile", {})
+        )
+        if baseline_reference:
+            for metric_name, value in baseline_reference.items():
+                rows.append(
+                    {
+                        "section": "baseline_reference",
+                        "metric": metric_name,
+                        "value": str(value),
                     }
                 )
 
