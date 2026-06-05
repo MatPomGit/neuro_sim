@@ -196,7 +196,7 @@ def _roving_mechanism_metadata(profile: dict[str, Any] | None) -> dict[str, Any]
     """Zwraca zwalidowane metadane mechanizmu amplituda-latencja dla profilu."""
     if not isinstance(profile, dict):
         return {}
-    metadata = profile.get("amplitude_latency_mechanism") or {}
+    metadata = profile.get("amplitude_latency_mechanism")
     return dict(metadata) if isinstance(metadata, dict) else {}
 
 
