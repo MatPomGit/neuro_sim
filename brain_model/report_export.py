@@ -1,81 +1,391 @@
-"""
-Moduł eksportu raportów badawczych do PDF z wykresami i opisami.
-"""
+"""Eksport opisanych wyników eksperymentu do plików PDF."""
 
-from typing import Any, Dict, List
+from __future__ import annotations
+
+import datetime
+import textwrap
+from pathlib import Path
+from typing import Any
+
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-import datetime
+from matplotlib.figure import Figure
+
+from brain_core.analysis.reports import AnalysisReport
+
+A4_FIGSIZE = (8.27, 11.69)
+TEXT_LEFT = 0.07
+TEXT_TOP = 0.94
+LINE_HEIGHT = 0.026
+WRAP_WIDTH = 96
+
+
+def _stringify_value(value: Any) -> str:
+    """Zamień wartość raportową na krótki tekst czytelny w polskim PDF.
+
+    Parameters
+    ----------
+    value:
+        Wartość metryki, parametru albo pola raportowego.
+
+    Returns
+    -------
+    str
+        Jednowierszowy tekst z zachowaniem istotnych wartości liczbowych.
+    """
+
+    if isinstance(value, float):
+        return f"{value:.6g}"
+    if isinstance(value, list):
+        return ", ".join(_stringify_value(item) for item in value) or "brak"
+    if isinstance(value, dict):
+        return "; ".join(
+            f"{key}: {_stringify_value(item)}" for key, item in value.items()
+        )
+    return str(value)
+
+
+def _draw_wrapped_text_page(
+    pdf: PdfPages,
+    title: str,
+    paragraphs: list[str],
+    footer: str | None = None,
+) -> None:
+    """Dodaj do PDF stronę tekstową z automatycznym zawijaniem akapitów.
+
+    Parameters
+    ----------
+    pdf:
+        Otwarty obiekt `PdfPages`, do którego dopisywana jest strona.
+    title:
+        Polski tytuł strony.
+    paragraphs:
+        Lista akapitów albo linii raportu do pokazania użytkownikowi.
+    footer:
+        Opcjonalna stopka z informacją o źródle artefaktów.
+    """
+
+    fig, axis = plt.subplots(figsize=A4_FIGSIZE)
+    axis.axis("off")
+    y_position = TEXT_TOP
+    axis.text(
+        0.05,
+        y_position,
+        title,
+        fontsize=15,
+        fontweight="bold",
+        va="top",
+    )
+    y_position -= LINE_HEIGHT * 2
+
+    for paragraph in paragraphs:
+        wrapped_lines = textwrap.wrap(str(paragraph), width=WRAP_WIDTH) or [""]
+        for line in wrapped_lines:
+            if y_position < 0.08:
+                if footer:
+                    axis.text(0.05, 0.04, footer, fontsize=8, va="bottom")
+                pdf.savefig(fig)
+                plt.close(fig)
+                fig, axis = plt.subplots(figsize=A4_FIGSIZE)
+                axis.axis("off")
+                y_position = TEXT_TOP
+            axis.text(TEXT_LEFT, y_position, line, fontsize=10.5, va="top")
+            y_position -= LINE_HEIGHT
+        y_position -= LINE_HEIGHT * 0.35
+
+    if footer:
+        axis.text(0.05, 0.04, footer, fontsize=8, va="bottom")
+    pdf.savefig(fig)
+    plt.close(fig)
+
+
+def _flatten_mapping(mapping: dict[str, Any], prefix: str = "") -> list[str]:
+    """Spłaszcz słownik konfiguracji lub metryk do linii `klucz: wartość`.
+
+    Parameters
+    ----------
+    mapping:
+        Słownik z parametrami eksperymentu, metrykami albo profilem klinicznym.
+    prefix:
+        Prefiks używany rekurencyjnie dla pól zagnieżdżonych.
+
+    Returns
+    -------
+    list[str]
+        Linie tekstu gotowe do umieszczenia na stronie PDF.
+    """
+
+    lines: list[str] = []
+    for key, value in mapping.items():
+        full_key = f"{prefix}.{key}" if prefix else str(key)
+        if isinstance(value, dict):
+            lines.extend(_flatten_mapping(value, full_key))
+        else:
+            lines.append(f"{full_key}: {_stringify_value(value)}")
+    return lines
+
+
+def _report_markdown_lines(analysis_report: dict[str, Any]) -> list[str]:
+    """Zamień raport analityczny silnika na linie tekstu do PDF.
+
+    Parameters
+    ----------
+    analysis_report:
+        Słownik `analysis_report` zwrócony przez `run_experiment()`.
+
+    Returns
+    -------
+    list[str]
+        Linie raportu Markdown bez odtwarzania logiki protokołów w GUI.
+    """
+
+    if not analysis_report:
+        return ["Raport analityczny jest pusty dla bieżącego uruchomienia."]
+    markdown = AnalysisReport(analysis_report).to_markdown()
+    return [line for line in markdown.splitlines() if line.strip()]
+
+
+def _event_timeline_lines(events: list[dict[str, Any]], limit: int = 40) -> list[str]:
+    """Zbuduj opis osi czasu zdarzeń do raportu PDF.
+
+    Parameters
+    ----------
+    events:
+        Lista zdarzeń z pola `event_timeline` wyniku eksperymentu.
+    limit:
+        Maksymalna liczba zdarzeń wypisywana w PDF, aby raport pozostał czytelny.
+
+    Returns
+    -------
+    list[str]
+        Linie tekstowe z czasem, typem i opisem zdarzenia.
+    """
+
+    if not events:
+        return ["Brak zdarzeń w `event_timeline` dla bieżącego uruchomienia."]
+
+    lines = [f"Liczba zdarzeń: {len(events)}"]
+    for event in events[:limit]:
+        lines.append(
+            "{time_s} s | {event_type} | {label} | {description}".format(
+                time_s=event.get("time_s", "n/a"),
+                event_type=event.get("event_type", "n/a"),
+                label=event.get("label_pl", "n/a"),
+                description=event.get("description_pl", "brak opisu"),
+            )
+        )
+    if len(events) > limit:
+        lines.append(f"Pominięto {len(events) - limit} dalszych zdarzeń w skrócie PDF.")
+    return lines
+
+
+def _plot_description(title: str) -> str:
+    """Zwróć krótki opis sposobu czytania wykresu w raporcie PDF.
+
+    Parameters
+    ----------
+    title:
+        Tytuł zakładki wykresu w GUI.
+
+    Returns
+    -------
+    str
+        Polski opis interpretacyjny dopisywany przed stroną z wykresem.
+    """
+
+    descriptions = {
+        "Aktywacje": (
+            "Porównaj przebiegi aktywacji modułów w czasie i zestaw je z kanałami "
+            "bodźców. Nagłe wzrosty pokazują odpowiedź modelu na zdarzenia."
+        ),
+        "Zachowanie": (
+            "Sprawdź zmienne decyzyjne i markery odpowiedzi, aby ocenić, kiedy model "
+            "osiąga próg decyzji lub zmienia dynamikę odpowiedzi."
+        ),
+        "Oś czasu scenariusza": (
+            "Traktuj ten wykres jako mapę faz i zdarzeń eksperymentu; pomaga powiązać "
+            "zmiany aktywności z bodźcami."
+        ),
+        "Kanały scenariusza": (
+            "Kanały pokazują natężenie bodźców wejściowych, które silnik wykorzystał "
+            "podczas uruchomienia."
+        ),
+        "Diagnostyka": (
+            "Wykres zbiera zmienne diagnostyczne i neuromodulacyjne, pomocne przy "
+            "interpretacji stabilności oraz błędu predykcji."
+        ),
+        "Moc pasm": (
+            "Porównaj moc pasm theta, alpha, beta i gamma, aby opisać rytmy "
+            "oscylacyjne wygenerowane przez model."
+        ),
+        "EEG modułów": (
+            "Sygnały EEG modułów pokazują syntetyczny ślad aktywności E-I dla "
+            "wybranych regionów."
+        ),
+    }
+    return descriptions.get(
+        title,
+        "Wykres pochodzi z panelu GUI i zachowuje ten sam widok, który użytkownik "
+        "wybrał po zakończeniu symulacji.",
+    )
+
+
+def export_experiment_pdf(
+    output_path: str | Path,
+    *,
+    status_message: str,
+    summary_text: str,
+    state_config: dict[str, Any],
+    event_timeline: list[dict[str, Any]],
+    clinical_profile: dict[str, Any],
+    analysis_report: dict[str, Any],
+    plots: list[tuple[str, Figure]],
+    plot_descriptions: dict[str, str] | None = None,
+) -> Path:
+    """Wygeneruj gotowy PDF z opisem eksperymentu i wykresami z GUI.
+
+    Parameters
+    ----------
+    output_path:
+        Docelowa ścieżka pliku PDF.
+    status_message:
+        Komunikat zakończenia uruchomienia widoczny w GUI.
+    summary_text:
+        Tekstowe podsumowanie metryk przygotowane po `run_experiment()`.
+    state_config:
+        Konfiguracja GUI/YAML zapisana jako słownik dla replikowalności.
+    event_timeline:
+        Oś czasu zdarzeń zwrócona przez silnik.
+    clinical_profile:
+        Profil kliniczny użyty w eksperymencie.
+    analysis_report:
+        Raport analityczny zwrócony przez silnik.
+    plots:
+        Lista par `(tytuł, figura)` z aktualnych wykresów GUI.
+    plot_descriptions:
+        Opcjonalne opisy konkretnych wykresów, np. z dotychczasowego eksportu.
+
+    Returns
+    -------
+    Path
+        Ścieżka zapisanego pliku PDF.
+    """
+
+    target = Path(output_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    generated_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    footer = "Źródło: konfiguracja YAML, wynik run_experiment() i wykresy z panelu GUI."
+
+    with PdfPages(target) as pdf:
+        _draw_wrapped_text_page(
+            pdf,
+            "Raport eksperymentu neuro_sim",
+            [
+                f"Wygenerowano: {generated_at}",
+                f"Status uruchomienia: {status_message}",
+                "Raport zawiera opisane wyniki eksperymentu oraz wykresy wybrane "
+                "w panelu GUI. Nie odtwarza logiki tasków poza silnikiem symulacji.",
+            ],
+            footer=footer,
+        )
+        _draw_wrapped_text_page(
+            pdf,
+            "Podsumowanie wyników",
+            [summary_text or "Brak tekstowego podsumowania metryk."],
+            footer=footer,
+        )
+        _draw_wrapped_text_page(
+            pdf,
+            "Konfiguracja uruchomienia",
+            _flatten_mapping(state_config) or ["Brak zapisanej konfiguracji GUI."],
+            footer=footer,
+        )
+        _draw_wrapped_text_page(
+            pdf,
+            "Profil kliniczny",
+            _flatten_mapping(clinical_profile) or ["Brak profilu klinicznego."],
+            footer=footer,
+        )
+        _draw_wrapped_text_page(
+            pdf,
+            "Oś czasu zdarzeń",
+            _event_timeline_lines(event_timeline),
+            footer=footer,
+        )
+        _draw_wrapped_text_page(
+            pdf,
+            "Raport analityczny",
+            _report_markdown_lines(analysis_report),
+            footer=footer,
+        )
+
+        if not plots:
+            _draw_wrapped_text_page(
+                pdf,
+                "Wykresy",
+                ["Nie wybrano wykresów do eksportu PDF."],
+                footer=footer,
+            )
+        for title, figure in plots:
+            description = (plot_descriptions or {}).get(title, _plot_description(title))
+            _draw_wrapped_text_page(
+                pdf,
+                f"Opis wykresu: {title}",
+                [description],
+                footer=footer,
+            )
+            pdf.savefig(figure)
+
+    return target
 
 
 def export_report(
     filename: str,
-    simulation_params: Dict[str, Any],
-    results: List[Dict[str, Any]],
-    plots: List[Dict[str, Any]],
+    simulation_params: dict[str, Any],
+    results: list[dict[str, Any]],
+    plots: list[dict[str, Any]],
     title: str = "Raport badawczy symulacji poznawczej",
     author: str = "neuro_sim",
-    description: str = "Automatycznie wygenerowany raport z symulacji."
+    description: str = "Automatycznie wygenerowany raport z symulacji.",
 ) -> None:
+    """Eksportuj prosty raport badawczy do pliku PDF.
+
+    Parameters
+    ----------
+    filename:
+        Ścieżka do pliku PDF.
+    simulation_params:
+        Słownik parametrów symulacji.
+    results:
+        Lista słowników z wynikami, np. statystykami lub metrykami.
+    plots:
+        Lista słowników `figure`, `caption` i `how_to_read`.
+    title:
+        Tytuł raportu.
+    author:
+        Autor raportu.
+    description:
+        Opis raportu.
     """
-    Eksportuje raport badawczy do pliku PDF.
 
-    :param filename: Ścieżka do pliku PDF.
-    :param simulation_params: Słownik parametrów symulacji.
-    :param results: Lista słowników z wynikami (np. statystyki, metryki).
-    :param plots: Lista słowników: {'figure': plt.Figure, 'caption': str, 'how_to_read': str}
-    :param title: Tytuł raportu.
-    :param author: Autor raportu.
-    :param description: Opis raportu.
-    """
-    with PdfPages(filename) as pdf:
-        # Strona tytułowa
-        fig, ax = plt.subplots(figsize=(8.27, 11.69))  # A4
-        ax.axis('off')
-        ax.text(0.5, 0.85, title, ha='center', va='center', fontsize=20, weight='bold')
-        ax.text(0.5, 0.78, f"Autor: {author}", ha='center', va='center', fontsize=12)
-        ax.text(0.5, 0.75, f"Data: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}", ha='center', va='center', fontsize=12)
-        ax.text(0.5, 0.70, description, ha='center', va='center', fontsize=12)
-        pdf.savefig(fig)
-        plt.close(fig)
-
-        # Parametry symulacji
-        fig, ax = plt.subplots(figsize=(8.27, 11.69))
-        ax.axis('off')
-        y = 0.95
-        ax.text(0.05, y, "Parametry symulacji:", fontsize=14, weight='bold', va='top')
-        y -= 0.05
-        for k, v in simulation_params.items():
-            ax.text(0.07, y, f"{k}: {v}", fontsize=12, va='top')
-            y -= 0.03
-        pdf.savefig(fig)
-        plt.close(fig)
-
-        # Wyniki symulacji
-        fig, ax = plt.subplots(figsize=(8.27, 11.69))
-        ax.axis('off')
-        y = 0.95
-        ax.text(0.05, y, "Wyniki symulacji:", fontsize=14, weight='bold', va='top')
-        y -= 0.05
-        for result in results:
-            for k, v in result.items():
-                ax.text(0.07, y, f"{k}: {v}", fontsize=12, va='top')
-                y -= 0.03
-        pdf.savefig(fig)
-        plt.close(fig)
-
-        # Wykresy z opisami
-        for plot in plots:
-            fig = plot['figure']
-            caption = plot.get('caption', "")
-            how_to_read = plot.get('how_to_read', "")
-            fig.suptitle(caption, fontsize=14)
-            pdf.savefig(fig)
-            plt.close(fig)
-            # Strona z opisem wykresu
-            fig_desc, ax_desc = plt.subplots(figsize=(8.27, 11.69))
-            ax_desc.axis('off')
-            ax_desc.text(0.05, 0.95, f"Opis wykresu:", fontsize=13, weight='bold', va='top')
-            ax_desc.text(0.07, 0.90, how_to_read, fontsize=12, va='top', wrap=True)
-            pdf.savefig(fig_desc)
-            plt.close(fig_desc)
+    plot_pairs = [
+        (str(plot.get("caption", "Wykres")), plot["figure"])
+        for plot in plots
+        if "figure" in plot
+    ]
+    plot_descriptions = {
+        str(plot.get("caption", "Wykres")): str(plot.get("how_to_read", ""))
+        for plot in plots
+        if plot.get("how_to_read")
+    }
+    export_experiment_pdf(
+        filename,
+        status_message=f"Autor: {author}",
+        summary_text=description,
+        state_config=simulation_params,
+        event_timeline=[],
+        clinical_profile={},
+        analysis_report={"results": results, "title": title},
+        plots=plot_pairs,
+        plot_descriptions=plot_descriptions,
+    )

@@ -559,38 +559,6 @@ class ObservationPanel(QWidget):
             )
         return observations
 
-    def _tones_for_condition(
-        self, roving_report: dict[str, Any], condition: str
-    ) -> str:
-        """Wypisz tony z gotowej sygnatury sekwencji dla wskazanego warunku.
-
-        Parameters
-        ----------
-        roving_report:
-            Sekcja `roving_oddball` raportu analitycznego zwrócona przez silnik.
-        condition:
-            Warunek triala, np. `standard` albo `deviant`.
-
-        Returns
-        -------
-        str
-            Lista tonów w Hz albo `n/a`, jeśli raport nie zawiera sygnatury.
-        """
-
-        signature = roving_report.get("sequence_signature", [])
-        if not isinstance(signature, list):
-            return "n/a"
-        tones = []
-        for item in signature:
-            if not isinstance(item, dict) or item.get("condition") != condition:
-                continue
-            tone_hz = item.get("tone_hz", "n/a")
-            if tone_hz not in tones:
-                tones.append(tone_hz)
-        if not tones:
-            return "n/a"
-        return ", ".join(f"{tone} Hz" for tone in tones[:4])
-
 
 class RovingOddballQuestionsPanel(QWidget):
     """Panel pytań kontrolnych dla lekcji roving oddball z odpowiedziami z raportu."""
@@ -679,63 +647,3 @@ class RovingOddballQuestionsPanel(QWidget):
                 ),
             ),
         ]
-
-    def _tones_for_condition(
-        self, roving_report: dict[str, Any], condition: str
-    ) -> str:
-        """Wypisz tony z gotowej sygnatury sekwencji dla warunku kontrolnego.
-
-        Parameters
-        ----------
-        roving_report:
-            Sekcja `roving_oddball` raportu analitycznego zwrócona przez silnik.
-        condition:
-            Warunek triala, np. `standard` albo `deviant`.
-
-        Returns
-        -------
-        str
-            Lista unikalnych tonów w Hz albo `n/a`, gdy raport nie zawiera danych.
-        """
-
-        signature = roving_report.get("sequence_signature", [])
-        if not isinstance(signature, list):
-            return "n/a"
-        tones = []
-        for item in signature:
-            if not isinstance(item, dict) or item.get("condition") != condition:
-                continue
-            tone_hz = item.get("tone_hz", "n/a")
-            if tone_hz not in tones:
-                tones.append(tone_hz)
-        if not tones:
-            return "n/a"
-        return ", ".join(f"{tone} Hz" for tone in tones[:4])
-
-    def _new_standard_tones(self, roving_report: dict[str, Any]) -> str:
-        """Wypisz tony oznaczone przez raport jako nowe standardy po dewiancie.
-
-        Parameters
-        ----------
-        roving_report:
-            Sekcja `roving_oddball` raportu analitycznego zwrócona przez silnik.
-
-        Returns
-        -------
-        str
-            Lista tonów nowych standardów albo `n/a`, gdy brak takich triali.
-        """
-
-        signature = roving_report.get("sequence_signature", [])
-        if not isinstance(signature, list):
-            return "n/a"
-        tones = []
-        for item in signature:
-            if not isinstance(item, dict) or not item.get("is_new_standard"):
-                continue
-            tone_hz = item.get("tone_hz", "n/a")
-            if tone_hz not in tones:
-                tones.append(tone_hz)
-        if not tones:
-            return "n/a"
-        return ", ".join(f"{tone} Hz" for tone in tones[:4])

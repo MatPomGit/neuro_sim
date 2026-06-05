@@ -39,6 +39,7 @@ from .qt_config import (
     default_config_filename,
     load_config,
     save_config,
+    state_to_config,
 )
 from .qt_results import (
     ClinicalProfilePanel,
@@ -51,6 +52,7 @@ from .qt_results import (
 from .qt_runner import SimulationWorker
 from .qt_sections import QtSections
 from .qt_styles import apply_qt_styles
+from .report_export import export_experiment_pdf
 
 
 class QtDataclassParameterDialog(QDialog):
@@ -176,6 +178,8 @@ class BrainModelQtWindow(QMainWindow):
         )
         self.worker_thread: QThread | None = None
         self.worker: SimulationWorker | None = None
+        self.last_result_payload: tuple[Any, ...] | None = None
+        self.last_run_state_config: dict[str, Any] | None = None
         self.sections = QtSections(
             self.state,
             {
@@ -195,6 +199,9 @@ class BrainModelQtWindow(QMainWindow):
         save_action.triggered.connect(self.save_current_config)
         load_action = file_menu.addAction("Wczytaj konfigurację...")
         load_action.triggered.connect(self.load_existing_config)
+        self.export_pdf_action = file_menu.addAction("Eksportuj raport PDF...")
+        self.export_pdf_action.setEnabled(False)
+        self.export_pdf_action.triggered.connect(self.export_current_pdf_report)
         file_menu.addSeparator()
         close_action = file_menu.addAction("Zamknij")
         close_action.triggered.connect(self.close)
@@ -261,11 +268,18 @@ class BrainModelQtWindow(QMainWindow):
         run_button = QPushButton("Uruchom symulację")
         run_button.setObjectName("primaryButton")
         run_button.clicked.connect(self.start_simulation)
+        self.export_pdf_button = QPushButton("Eksportuj raport PDF")
+        self.export_pdf_button.setEnabled(False)
+        self.export_pdf_button.setToolTip(
+            "Zapisuje gotowy PDF z opisem wyników i aktualnymi wykresami."
+        )
+        self.export_pdf_button.clicked.connect(self.export_current_pdf_report)
         close_button = QPushButton("Zamknij")
         close_button.clicked.connect(self.close)
         actions.addWidget(reset_button)
         actions.addStretch(1)
         actions.addWidget(run_button)
+        actions.addWidget(self.export_pdf_button)
         actions.addWidget(close_button)
         root.addLayout(actions)
 
@@ -363,6 +377,10 @@ class BrainModelQtWindow(QMainWindow):
         self.clinical_profile_panel.set_profile({})
         self.observation_panel.set_context([], {}, {})
         self.roving_questions_panel.set_report({})
+        self.last_result_payload = None
+        self.last_run_state_config = None
+        self.export_pdf_action.setEnabled(False)
+        self.export_pdf_button.setEnabled(False)
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
 
@@ -383,6 +401,10 @@ class BrainModelQtWindow(QMainWindow):
             QMessageBox.information(self, "Informacja", "Symulacja już trwa.")
             return
         self.sections.sync_state_from_controls()
+        self.last_result_payload = None
+        self.last_run_state_config = state_to_config(self.state)
+        self.export_pdf_action.setEnabled(False)
+        self.export_pdf_button.setEnabled(False)
         self.status_label.setObjectName("statusLabel")
         self.status_label.setText("Symulacja w toku...")
         self.summary_label.setText("")
@@ -415,6 +437,7 @@ class BrainModelQtWindow(QMainWindow):
             self.on_simulation_error("Worker zwrócił niepoprawny wynik symulacji.")
             return
         result = payload
+        self.last_result_payload = result
         has_plots = apply_run_result(self.plot_panel, self.state, result)
         self.status_label.setObjectName("statusLabel")
         self.status_label.setText(str(result[0]))
@@ -426,6 +449,8 @@ class BrainModelQtWindow(QMainWindow):
         if len(result) >= 12:
             self.observation_panel.set_context(result[9], result[10], result[11])
             self.roving_questions_panel.set_report(result[11])
+        self.export_pdf_action.setEnabled(True)
+        self.export_pdf_button.setEnabled(True)
         self.tabs.setCurrentIndex(1 if has_plots else 0)
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
@@ -437,6 +462,48 @@ class BrainModelQtWindow(QMainWindow):
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
         QMessageBox.critical(self, "Błąd", message)
+
+    def export_current_pdf_report(self) -> None:
+        """Zapisz opisany raport PDF dla ostatniego zakończonego eksperymentu."""
+        result = self.last_result_payload
+        if result is None or len(result) < 12:
+            QMessageBox.information(
+                self,
+                "Brak wyników",
+                "Najpierw uruchom symulację, aby wygenerować raport PDF.",
+            )
+            return
+
+        save_info = result[2] if isinstance(result[2], dict) else None
+        output_dir = save_info.get("output_dir") if save_info else None
+        default_dir = Path(output_dir) if output_dir else Path.cwd()
+        target, _ = QFileDialog.getSaveFileName(
+            self,
+            "Eksportuj raport PDF",
+            str(default_dir / "raport_eksperymentu.pdf"),
+            "Pliki PDF (*.pdf);;Wszystkie pliki (*)",
+        )
+        if not target:
+            return
+
+        try:
+            report_path = export_experiment_pdf(
+                target,
+                status_message=str(result[0]),
+                summary_text=str(result[1]),
+                state_config=self.last_run_state_config or state_to_config(self.state),
+                event_timeline=list(result[9]),
+                clinical_profile=dict(result[10]),
+                analysis_report=dict(result[11]),
+                plots=self.plot_panel.plots_for_export(),
+            )
+        except Exception as exc:
+            QMessageBox.critical(
+                self, "Błąd", f"Nie udało się zapisać raportu PDF: {exc}"
+            )
+            return
+
+        self.status_label.setText(f"Zapisano raport PDF: {report_path}")
 
     def on_worker_finished(self) -> None:
         """Odłącz zakończony worker Qt i jego wątek od okna głównego."""
