@@ -191,7 +191,6 @@ def _create_activity_controls(canvas: Any, axes: list[Any]) -> QWidget:
         else:
             activity_axis.set_yscale("linear")
             scale_button.setText("Skala Y: liniowa")
-            activity_axis.relim()
             activity_axis.relim(visible_only=True)
             activity_axis.autoscale_view(scalex=False, scaley=True)
         activity_axis.set_xlim(current_xlim)
