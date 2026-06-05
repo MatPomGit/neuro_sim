@@ -1,3 +1,5 @@
+import json
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -16,7 +18,11 @@ from brain_core.physiology.eeg_forward_model import (
     ForwardModelConfig,
 )
 from brain_core.physiology.neurovascular_coupling import neural_drive_from_activity
-from brain_core.simulation.config_loader import load_clinical_profiles
+from brain_core.simulation.config_loader import (
+    load_clinical_profile,
+    load_clinical_profiles,
+    load_config,
+)
 from brain_core.simulation.config_schema import ExperimentConfig
 from brain_core.simulation.engine import (
     run_experiment,
@@ -450,3 +456,72 @@ def test_roving_oddball_report_groups_trials_and_exports_text_reports(
     assert "początek bodźca" in md_text
     assert "<!doctype html>" in html_text
     assert "Tabela triali" in html_text
+
+
+def test_healthy_v1_profile_has_complete_required_baseline_fields() -> Any:
+    """Profil healthy_v1 ma komplet metadanych wymaganych dla baseline."""
+    profile_payload = load_clinical_profile("configs/clinical_profiles/healthy_v1.yaml")
+    clinical_profile = profile_payload["clinical_profile"]
+
+    required_fields = {
+        "id",
+        "display_name",
+        "mechanism",
+        "affected_regions",
+        "cognitive_functions",
+        "expected_effects",
+        "expected_direction",
+        "severity_level",
+        "primary_metric",
+    }
+
+    assert required_fields.issubset(clinical_profile)
+    assert clinical_profile["id"] == "healthy_v1"
+    assert clinical_profile["expected_direction"] == "stable_reference"
+    assert clinical_profile["primary_metric"] == "mean_abs_difference"
+    assert clinical_profile["expected_effects"]["clinical_interpretation"]
+    assert clinical_profile["severity_level"] == {
+        "small": 0.0,
+        "medium": 0.02,
+        "large": 0.05,
+    }
+
+
+def test_healthy_v1_baseline_metrics_match_reference_thresholds() -> Any:
+    """Metryki baseline healthy_v1 mieszczą się w jakościowych tolerancjach."""
+    reference_path = Path("data/validation/healthy_v1_baseline_metrics.json")
+    reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    config = load_config(reference["config_path"])
+
+    assert reference["artifact_format"] == "healthy_v1_baseline_metrics_v1"
+    assert reference["profile_id"] == config.clinical_profile["id"] == "healthy_v1"
+    assert reference["seed"] == config.rng_seed == 21
+
+    result = run_experiment(config)
+    metrics = result["analysis_report"]["metrics"]
+
+    for metric_name, metric_reference in reference["metrics"].items():
+        assert metric_name in metrics, f"Metric '{metric_name}' is missing from the experiment results."
+        expected = float(metric_reference["expected"])
+        tolerance = float(metric_reference["absolute_tolerance"])
+        observed = float(metrics[metric_name])
+
+        assert metric_reference["quality_band"]
+        assert abs(observed - expected) <= tolerance
+
+
+def test_healthy_v1_report_marks_baseline_as_reference_not_diagnosis() -> Any:
+    """Raport baseline pokazuje rolę punktu odniesienia bez diagnozy klinicznej."""
+    from brain_core.analysis.reports import AnalysisReport
+
+    config = load_config("configs/roving_oddball_healthy.yaml")
+    result = run_experiment(config)
+    report = AnalysisReport(result["analysis_report"])
+
+    markdown = report.to_markdown()
+    csv_rows = report.to_csv_rows()
+
+    assert "## Baseline healthy_v1" in markdown
+    assert "punkt odniesienia" in markdown
+    assert "nie jest diagnozą kliniczną" in markdown
+    assert any(row["section"] == "baseline_reference" for row in csv_rows)
