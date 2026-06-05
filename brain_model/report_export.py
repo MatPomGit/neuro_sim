@@ -381,9 +381,10 @@ def _experiment_report_markdown(
             ]
         )
         for row in rows:
+            escaped_row = {k: str(v).replace("|", "\\|") for k, v in row.items()}
             lines.append(
                 "| {trial_id} | {condition} | {stimulus} | {response} | "
-                "{correctness} | {activity} |".format(**row)
+                "{correctness} | {activity} |".format(**escaped_row)
             )
     else:
         lines.append("Brak triali w osi czasu.")
