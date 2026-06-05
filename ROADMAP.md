@@ -2,7 +2,7 @@
 
 ## 1. Status dokumentu
 
-**Stan na dzień:** 2026-06-04
+**Stan na dzień:** 2026-06-05
 **Zakres:** kierunek rozwoju aplikacji, kamienie milowe i zależności między strumieniami prac.
 **Relacja do backlogu:** `BACKLOG.md` pozostaje operacyjną listą zadań, statusów i artefaktów. Ten dokument opisuje szerszą kolejność rozwoju oraz kryteria przejścia między etapami.
 
@@ -51,7 +51,7 @@ Docelowy użytkownik powinien móc:
 
 ---
 
-## 4. Stan wyjściowy po przeglądzie 2026-06-04
+## 4. Stan wyjściowy po przeglądzie 2026-06-05
 
 Repozytorium posiada już fundamenty potrzebne do rozwoju roadmapy:
 
@@ -63,7 +63,7 @@ Repozytorium posiada już fundamenty potrzebne do rozwoju roadmapy:
 - `brain_model/` — model poznawczy, scenariusze, GUI, IO, raporty i wizualizacje,
 - `configs/`, `data/`, `tests/` — przykładowe konfiguracje, dane atlasu/konektomu/walidacji oraz testy regresyjne.
 
-Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych dotyczą teraz walidacji i interpretacji, a nie samego tworzenia artefaktów MVP:
+Najważniejsze braki do domknięcia przed rozwojem funkcji zaawansowanych dotyczą teraz walidacji, spójnego połączenia istniejących artefaktów i interpretacji dydaktycznej, a nie samego tworzenia kolejnych artefaktów MVP:
 
 1. jeden spójny schemat konfiguracji dla wszystkich eksperymentów,
 2. pełny raport timeline trial-by-trial,
@@ -88,6 +88,8 @@ roadmapy jako obietnicy nowych funkcji na tym etapie.
 | Timeline | `partial` | Oś `event_timeline` tworzona w `brain_core/simulation/events.py` i dołączana przez silnik oraz raporty. | Pełne grupowanie trial-by-trial, eksport raportu, linkowanie z wykresami i objaśnienia per profil. |
 | Benchmark metadata | `partial` | Metadane benchmarków w `data/validation/benchmark_metadata.json` i walidacja w loaderze benchmarków. | Kryteria zgodności per benchmark, źródła literaturowe/empiryczne i raport wersyjny. |
 | SNN demo | `partial` | Demo `snn_hippocampus_demo`, adapter sygnałów NM↔SNN, tryb `closed_loop`, dokument demo i testy pilotażowe. | Walidacja stabilności closed-loop, pomiar kosztu `report_only` vs `closed_loop`, pełniejsza synchronizacja kroków i backendy NEST/NEURON/Arbor. |
+| GUI YAML presets | `partial` | Presety YAML dla `roving_oddball` i `snn_hippocampus_demo` są dostępne w konfiguracji GUI i sprawdzane statycznie testami. | Dopięcie interpretacji dydaktycznej w GUI, polskich etykiet i instrukcji wyboru scenariusza bez duplikowania logiki silnika. |
+| Rejestr walidacji | `partial` | `docs/validation_registry.md`, metadane benchmarków i loader opisują podstawowe benchmarki edukacyjne. | Kryteria zgodności, źródła, poziomy walidacji i raport wersyjny pokazujący zakres jakościowo odtworzonych efektów. |
 
 ## 5. Strumienie strategiczne
 

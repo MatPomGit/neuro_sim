@@ -9,7 +9,7 @@ Backlog jest uporządkowany według priorytetów (P0–P3) i gotowości wdrożen
 
 ---
 
-## Stan na dzień 2026-06-04
+## Stan na dzień 2026-06-05
 
 Backlog opisuje zarówno prace przyszłe, jak i obszary już częściowo zaimplementowane. Statusy oznaczają:
 - `done` — zakres pozycji jest domknięty zgodnie z kryteriami akceptacji,
@@ -18,7 +18,7 @@ Backlog opisuje zarówno prace przyszłe, jak i obszary już częściowo zaimple
 
 Najważniejsze istniejące fundamenty obejmują moduły eksperymentów, uszkodzeń i raportowania, m.in. `brain_core/experiments/protocols.py`, `brain_core/experiments/lesions.py` oraz `brain_core/analysis/reports.py`. Dla pozycji P0–P2 wskazano poniżej konkretne artefakty, aby oddzielić zakres już obecny w repozytorium od pozostałych prac.
 
-Na dzień 2026-06-04 status nie jest prognozą wdrożenia, tylko krótką oceną rzeczywistego stanu repozytorium na podstawie powyższych definicji.
+Na dzień 2026-06-05 status nie jest prognozą wdrożenia, tylko krótką oceną rzeczywistego stanu repozytorium na podstawie powyższych definicji.
 
 ### Najbliższe krytyczne ryzyka
 
@@ -49,6 +49,19 @@ Na dzień 2026-06-04 status nie jest prognozą wdrożenia, tylko krótką oceną
 | Timeline | `partial` | `event_timeline` w `brain_core/simulation/events.py` jest integrowany z silnikiem w `brain_core/simulation/engine.py` oraz raportami, a jego działanie weryfikują testy w `tests/test_task_protocols_and_engine.py`. | Jednolity format dla wszystkich symulacji, widok trial-by-trial, filtrowanie zdarzeń, grupowanie per trial, eksport HTML/PDF, linkowanie zdarzeń z wykresami i objaśnienia per profil kliniczny. |
 | Benchmark metadata | `partial` | `data/validation/benchmark_metadata.json` oraz walidacja metadanych w `brain_core/analysis/benchmark_loader.py`. | Jawne kryteria zgodności dla każdego benchmarku, źródła literaturowe/empiryczne i raport wersyjny. |
 | SNN demo | `partial` | `closed_loop` jest istniejącym MVP: `configs/snn_hippocampus_demo.yaml`, `brain_core/simulation/engine.py`, `brain_core/simulation/signal_adapter.py`, `brain_core/simulation/multiscale_engine.py` i opis demo. | Walidacja stabilności closed-loop, porównanie kosztu `report_only` vs `closed_loop`, pełniejszy backend biologiczny oraz integracja NEST/NEURON/Arbor. |
+| GUI YAML presets | `partial` | Presety YAML dla `roving_oddball` i `snn_hippocampus_demo` są dostępne w GUI oraz sprawdzane przez testy statyczne. | Dopięcie interpretacji dydaktycznej presetów, polskich etykiet i instrukcji wyboru scenariuszy. |
+| Rejestr walidacji | `partial` | `docs/validation_registry.md`, `data/validation/benchmark_metadata.json` i loader benchmarków opisują podstawowe benchmarki edukacyjne. | Kryteria zgodności, źródła, poziomy walidacji i raport wersyjny jakościowej zgodności. |
+
+### Najbliższe konkretne zadania do zaplanowania
+
+| ID | Priorytet | Zadanie | Powiązane ryzyko | Akceptacja |
+| --- | --- | --- | --- | --- |
+| BL-ROV-01 | P0 | Uruchomić `roving_oddball` dla healthy/disorder/lesion na wspólnym seedzie i porównać habituację, readaptację, amplitudę oraz latencję. | Interpretacja benchmarków, kompletność raportu trial-by-trial | Raport porównawczy zawiera tabelę metryk i jawny komentarz amplitude-latency-mechanism. |
+| BL-CLIN-01 | P0 | Skalibrować progi clinical profiles względem benchmarków i dopisać tolerancje oraz kierunek oczekiwanej zmiany. | Kalibracja progów clinical profiles | Każdy próg ma źródło, tolerancję, zakres stosowalności i test regresji albo jawne uzasadnienie braku testu. |
+| BL-TL-01 | P0 | Rozszerzyć timeline o grupowanie trial-by-trial i powiązania z wykresami. | Kompletność raportu trial-by-trial | Raport dla `roving_oddball` pokazuje numer triala, typ bodźca, odpowiedź, metryki i komentarz mechanizmu. |
+| BL-SNN-01 | P1 | Zmierzyć koszt `report_only` vs `closed_loop` SNN dla tej samej konfiguracji, seeda i czasu symulacji. | Koszt `closed_loop` SNN | Raport zawiera czas wykonania, długości sygnałów, amplitudę feedbacku i rekomendację, czy wariant nadaje się do GUI. |
+| BL-GUI-01 | P1 | Dodać w GUI dydaktyczne opisy presetów YAML dla `roving_oddball` i `snn_hippocampus_demo`. | Interpretacja benchmarków, koszt `closed_loop` SNN | Użytkownik widzi polski opis celu, oczekiwany efekt, ograniczenia i link do konfiguracji bez duplikowania logiki silnika. |
+| BL-VAL-01 | P1 | Uzupełnić rejestr walidacji o kryteria zgodności, źródła i poziomy walidacji per benchmark. | Interpretacja benchmarków | Rejestr wskazuje efekty odtworzone jakościowo, częściowo odtworzone i pozostające poza zakresem. |
 
 ### Zrealizowane milestone’y
 

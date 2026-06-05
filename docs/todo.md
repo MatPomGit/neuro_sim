@@ -1,6 +1,6 @@
 # Plan rozwoju biologicznego i wieloskalowego
 
-## Status dokumentu na dzień 2026-06-04
+## Status dokumentu na dzień 2026-06-05
 
 Ten dokument zachowuje szerszy, koncepcyjny plan rozwoju biologicznego modelu. Aktualny stan repozytorium i najbliższe zaplanowane prace są utrzymywane w `BACKLOG.md`, a rzeczywista struktura katalogów jest opisana w `docs/program_structure.md`.
 
@@ -116,6 +116,39 @@ a które pozostają poza zakresem.
 - **Kompletność raportu trial-by-trial** — timeline istnieje częściowo, ale
   pełne grupowanie zdarzeń per trial jest niezbędne dla interpretacji
   dydaktycznej.
+
+## Konkretne zadania do wykonania w przyszłości
+
+1. **TODO-ROV-01 — zwalidować metryki habituacji/readaptacji `roving_oddball`**
+   - uruchomić scenariusze healthy/disorder/lesion na tym samym seedzie,
+   - porównać amplitudę, latencję i wskaźnik readaptacji po zmianie standardu,
+   - zapisać oczekiwane zakresy jakościowe i test regresji metryk.
+2. **TODO-CLIN-01 — skalibrować progi clinical profiles**
+   - przypisać każdemu progowi źródło: benchmark edukacyjny, literaturowy albo
+     decyzja modelowa,
+   - dopisać tolerancję, kierunek oczekiwanej zmiany i ograniczenie interpretacji,
+   - sprawdzić, czy raport porównawczy nie sugeruje predykcji diagnostycznej.
+3. **TODO-SNN-01 — zmierzyć koszt `closed_loop` SNN**
+   - porównać `report_only` i `closed_loop` dla identycznej konfiguracji, seeda
+     oraz czasu symulacji,
+   - zapisać czas wykonania, długości sygnałów, amplitudę feedbacku i limit
+     użycia w GUI,
+   - oznaczyć scenariusze zbyt kosztowne dla trybu lekcyjnego.
+4. **TODO-GUI-01 — dopiąć interpretację presetów YAML w GUI**
+   - pokazać polski opis celu presetu, oczekiwany efekt i ograniczenia,
+   - użyć terminologii z `docs/english_polish_glossary.md`,
+   - nie duplikować logiki walidacji konfiguracji poza silnikiem.
+5. **TODO-VAL-01 — uzupełnić rejestr walidacji**
+   - dodać kryterium zgodności, poziom walidacji i źródło dla każdego
+     benchmarku,
+   - wygenerować raport wersyjny: efekty odtworzone jakościowo, częściowo
+     odtworzone i poza zakresem,
+   - powiązać wpisy rejestru z raportem trial-by-trial.
+6. **TODO-TL-01 — domknąć raport trial-by-trial**
+   - grupować zdarzenia według numeru triala i typu bodźca,
+   - połączyć zdarzenia z wykresami amplitudy/latencji oraz komentarzem
+     mechanizmu profilu klinicznego,
+   - dodać eksport HTML albo PDF jako artefakt uruchomienia eksperymentu.
 
 ---
 
