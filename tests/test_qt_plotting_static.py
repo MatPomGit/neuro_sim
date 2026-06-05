@@ -165,10 +165,17 @@ def test_qt_activity_controls_and_scenario_are_bound() -> None:
     assert "draw_activity_with_stimulus_channels" in results_source
     assert "get_scenario(state.scenario)" in results_source
     assert "controls_factory=_create_activity_controls" in results_source
+    assert 'QPushButton("Przybliż")' in results_source
+    assert 'QPushButton("Oddal")' in results_source
     assert 'QPushButton("Autoskaluj Y aktywacji")' in results_source
+    assert 'QPushButton("Autoskaluj wykres")' in results_source
     assert 'QPushButton("Skala Y: liniowa")' in results_source
+    assert "QCheckBox(signal_label)" in results_source
+    assert "checkbox.toggled.connect" in results_source
+    assert "zoom_activity_time(0.75)" in results_source
+    assert "zoom_activity_time(1.25)" in results_source
     assert 'scale_button.setText("Skala Y: logarytmiczna")' in results_source
-    assert "activity_axis.relim()" in results_source
+    assert "activity_axis.relim(visible_only=True)" in results_source
     assert "activity_axis.autoscale_view(scalex=False, scaley=True)" in results_source
     assert "QMessageBox.warning" in results_source
 

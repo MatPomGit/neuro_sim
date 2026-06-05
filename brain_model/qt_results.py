@@ -6,6 +6,7 @@ from typing import Any
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QFormLayout,
     QGroupBox,
@@ -114,20 +115,62 @@ def _get_min_positive_activity_value(activity_axis: Any) -> float | None:
 
 
 def _create_activity_controls(canvas: Any, axes: list[Any]) -> QWidget:
-    """Utwórz polskie kontrolki autoskalowania i skali Y dla wykresu aktywacji."""
+    """Utwórz polskie kontrolki widoczności, zoomu i skali Y dla aktywacji."""
     activity_axis = axes[0]
+    stimulus_axis = axes[1] if len(axes) > 1 else None
     controls = QWidget()
     layout = QHBoxLayout(controls)
     layout.setContentsMargins(6, 4, 6, 4)
 
+    zoom_in_button = QPushButton("Przybliż")
+    zoom_out_button = QPushButton("Oddal")
     autoscale_button = QPushButton("Autoskaluj Y aktywacji")
+    full_autoscale_button = QPushButton("Autoskaluj wykres")
     scale_button = QPushButton("Skala Y: liniowa")
+
+    def apply_activity_xlim(left: float, right: float) -> None:
+        """Ustaw ten sam zakres czasu dla aktywacji i kanałów bodźców."""
+        activity_axis.set_xlim(left, right)
+        if stimulus_axis is not None:
+            stimulus_axis.set_xlim(left, right)
+
+    def zoom_activity_time(scale_factor: float) -> None:
+        """Przybliż lub oddal oś czasu względem środka aktualnego widoku."""
+        data_left, data_right = activity_axis.dataLim.intervalx
+        left, right = activity_axis.get_xlim()
+        width = right - left
+        data_width = data_right - data_left
+        if width <= 0 or data_width <= 0:
+            return
+
+        new_width = min(data_width, max(width * scale_factor, 1e-9))
+        center = (left + right) / 2.0
+        new_left = center - new_width / 2.0
+        new_right = center + new_width / 2.0
+        if new_left < data_left:
+            new_left = data_left
+            new_right = data_left + new_width
+        if new_right > data_right:
+            new_right = data_right
+            new_left = data_right - new_width
+        apply_activity_xlim(float(new_left), float(new_right))
+        canvas.draw_idle()
 
     def autoscale_activity_y() -> None:
         current_xlim = activity_axis.get_xlim()
-        activity_axis.relim()
+        activity_axis.relim(visible_only=True)
         activity_axis.autoscale_view(scalex=False, scaley=True)
         activity_axis.set_xlim(current_xlim)
+        canvas.draw_idle()
+
+    def autoscale_activity_plot() -> None:
+        activity_axis.set_yscale("linear")
+        scale_button.setText("Skala Y: liniowa")
+        activity_axis.relim(visible_only=True)
+        activity_axis.autoscale_view(scalex=True, scaley=True)
+        if stimulus_axis is not None:
+            stimulus_axis.relim()
+            stimulus_axis.autoscale_view(scalex=False, scaley=True)
         canvas.draw_idle()
 
     def toggle_activity_y_scale() -> None:
@@ -148,15 +191,39 @@ def _create_activity_controls(canvas: Any, axes: list[Any]) -> QWidget:
         else:
             activity_axis.set_yscale("linear")
             scale_button.setText("Skala Y: liniowa")
-            activity_axis.relim()
+            activity_axis.relim(visible_only=True)
             activity_axis.autoscale_view(scalex=False, scaley=True)
         activity_axis.set_xlim(current_xlim)
         canvas.draw_idle()
 
+    def set_signal_visibility(signal_line: Any, is_visible: bool) -> None:
+        """Włącz lub wyłącz pojedynczy sygnał aktywacji na wykresie."""
+        signal_line.set_visible(is_visible)
+        autoscale_activity_y()
+
+    zoom_in_button.clicked.connect(lambda: zoom_activity_time(0.75))
+    zoom_out_button.clicked.connect(lambda: zoom_activity_time(1.25))
     autoscale_button.clicked.connect(autoscale_activity_y)
+    full_autoscale_button.clicked.connect(autoscale_activity_plot)
     scale_button.clicked.connect(toggle_activity_y_scale)
+
+    layout.addWidget(zoom_in_button)
+    layout.addWidget(zoom_out_button)
     layout.addWidget(autoscale_button)
+    layout.addWidget(full_autoscale_button)
     layout.addWidget(scale_button)
+
+    for signal_line in activity_axis.get_lines():
+        signal_label = signal_line.get_label()
+        if not signal_label or signal_label.startswith("_"):
+            continue
+        checkbox = QCheckBox(signal_label)
+        checkbox.setChecked(signal_line.get_visible())
+        checkbox.toggled.connect(
+            lambda is_visible, line=signal_line: set_signal_visibility(line, is_visible)
+        )
+        layout.addWidget(checkbox)
+
     layout.addStretch(1)
     return controls
 
