@@ -141,7 +141,7 @@ def _trial_group_markdown_lines(event_timeline: list[dict[str, Any]]) -> list[st
             lines.append(
                 "  - **zmiana aktywności**: "
                 + "; ".join(
-                    str(event.get("description_pl", "brak opisu"))
+                    str(event.get("description_pl") or "brak opisu")
                     for event in activity_changes[:3]
                 )
             )
@@ -153,7 +153,7 @@ def _trial_group_markdown_lines(event_timeline: list[dict[str, Any]]) -> list[st
             lines.append(
                 "  - **komentarz mechanizmu**: "
                 + "; ".join(
-                    str(event.get("description_pl", "brak opisu"))
+                    str(event.get("description_pl") or "brak opisu")
                     for event in mechanism_comments[:3]
                 )
             )
