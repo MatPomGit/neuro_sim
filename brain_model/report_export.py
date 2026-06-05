@@ -107,7 +107,6 @@ def _draw_wrapped_text_page(
     if footer:
         axis.text(0.05, 0.04, footer, fontsize=8, va="bottom")
     pdf.savefig(fig)
-    plt.close(fig)
 
 
 def _flatten_mapping(mapping: dict[str, Any], prefix: str = "") -> list[str]:
