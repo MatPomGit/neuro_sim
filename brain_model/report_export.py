@@ -271,7 +271,7 @@ def _trial_table_rows(events: list[dict[str, Any]]) -> list[dict[str, str]]:
             },
         )
         event_type = str(event.get("event_type", ""))
-        description = str(event.get("description_pl", "n/a"))
+        description = str(event.get("description_pl") or "n/a")
         if event_type == "stimulus_onset":
             row["stimulus"] = description
         elif event_type == "response":
