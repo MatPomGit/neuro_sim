@@ -19,6 +19,7 @@ class QtPlotPanel(QTabWidget):
         super().__init__(parent)
         self.setDocumentMode(True)
         self._figures: list[Figure] = []
+        self._figure_titles: list[str] = []
         self._canvases: list[FigureCanvasQTAgg] = []
 
     def clear(self) -> None:
@@ -29,6 +30,7 @@ class QtPlotPanel(QTabWidget):
                 widget.deleteLater()
         super().clear()
         self._figures.clear()
+        self._figure_titles.clear()
         self._canvases.clear()
 
     def add_plot(
@@ -68,4 +70,16 @@ class QtPlotPanel(QTabWidget):
         scroll.setWidget(container)
         self.addTab(scroll, title)
         self._figures.append(fig)
+        self._figure_titles.append(title)
         self._canvases.append(canvas)
+
+    def plots_for_export(self) -> list[tuple[str, Figure]]:
+        """Zwróć aktualne figury z tytułami zakładek do eksportu PDF.
+
+        Returns
+        -------
+        list[tuple[str, Figure]]
+            Lista par zawierających polski tytuł zakładki i figurę Matplotlib.
+        """
+
+        return list(zip(self._figure_titles, self._figures))
