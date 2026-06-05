@@ -224,12 +224,14 @@ def _build_amplitude_latency_mechanism_section(
         ``roving_oddball``.
     """
     clinical_profile = clinical_profile or {}
-    standard_trials = [
-        result for result in trial_results if result.get("condition") == "standard"
-    ]
-    deviant_trials = [
-        result for result in trial_results if result.get("condition") == "deviant"
-    ]
+    standard_trials: list[dict[str, Any]] = []
+    deviant_trials: list[dict[str, Any]] = []
+    for result in trial_results:
+        condition = result.get("condition")
+        if condition == "standard":
+            standard_trials.append(result)
+        elif condition == "deviant":
+            deviant_trials.append(result)
     standard_amplitude = _mean_regional_response_amplitude(standard_trials)
     deviant_amplitude = _mean_regional_response_amplitude(deviant_trials)
     response_amplitude = _mean_regional_response_amplitude(trial_results)
