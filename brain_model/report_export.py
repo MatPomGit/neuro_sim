@@ -87,10 +87,19 @@ def _draw_wrapped_text_page(
                 if footer:
                     axis.text(0.05, 0.04, footer, fontsize=8, va="bottom")
                 pdf.savefig(fig)
-                plt.close(fig)
-                fig, axis = plt.subplots(figsize=A4_FIGSIZE)
+                fig = Figure(figsize=A4_FIGSIZE)
+                axis = fig.add_subplot(111)
                 axis.axis("off")
                 y_position = TEXT_TOP
+                axis.text(
+                    0.05,
+                    y_position,
+                    f"{title} (c.d.)",
+                    fontsize=15,
+                    fontweight="bold",
+                    va="top",
+                )
+                y_position -= LINE_HEIGHT * 2
             axis.text(TEXT_LEFT, y_position, line, fontsize=10.5, va="top")
             y_position -= LINE_HEIGHT
         y_position -= LINE_HEIGHT * 0.35
