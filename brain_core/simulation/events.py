@@ -12,6 +12,7 @@ EVENT_TERM_GLOSSARY: dict[str, str] = {
     "stimulus_onset": "początek bodźca",
     "response": "odpowiedź",
     "error": "błąd",
+    "correctness": "poprawność",
     "neuromodulation_change": "zmiana neuromodulacji",
     "lesion_pathology_event": "zdarzenie lezji lub patologii",
     "significant_region_activity_change": "istotna zmiana aktywności regionu",
@@ -25,6 +26,7 @@ EVENT_TERM_EXPLANATIONS: dict[str, str] = {
     "stimulus_onset": "czas rozpoczęcia prezentacji bodźca w trialu",
     "response": "zarejestrowana odpowiedź modelu wraz z czasem reakcji",
     "error": "niepoprawna albo brakująca odpowiedź w punktacji trialu",
+    "correctness": "informacja, czy odpowiedź w trialu była poprawna",
     "neuromodulation_change": "wykryty skok sygnału neuromodulacyjnego w diagnostyce",
     "lesion_pathology_event": "jawna lezja, patologia albo profil kliniczny użyty w uruchomieniu",
     "significant_region_activity_change": (
@@ -63,8 +65,14 @@ class SimulationEvent:
         Krótki opis zdarzenia przeznaczony do raportu użytkownika.
     source:
         Źródło zdarzenia, np. ``task`` lub ``diagnostics``.
+    trial_id:
+        Stabilny identyfikator trialu albo ``n/a`` dla zdarzeń globalnych.
+    condition:
+        Warunek eksperymentalny trialu albo ``n/a`` dla zdarzeń globalnych.
     details:
         Dodatkowe metadane potrzebne do reprodukcji i filtrowania osi czasu.
+    plot_anchor:
+        Opcjonalny znacznik łączący zdarzenie z serią lub panelem wykresu.
     """
 
     time_s: float
@@ -72,7 +80,10 @@ class SimulationEvent:
     label_pl: str
     description_pl: str
     source: str
+    trial_id: int | str = "n/a"
+    condition: str = "n/a"
     details: dict[str, Any] = field(default_factory=dict)
+    plot_anchor: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Zwraca zdarzenie jako słownik bez obiektów NumPy.
@@ -85,6 +96,8 @@ class SimulationEvent:
         payload = asdict(self)
         payload["time_s"] = round(float(self.time_s), 6)
         payload["details"] = _to_builtin(payload["details"])
+        if payload.get("plot_anchor") is None:
+            payload.pop("plot_anchor", None)
         return payload
 
 
@@ -132,6 +145,7 @@ def build_event_timeline(
         Lista zdarzeń posortowana według czasu i typu, gotowa do zapisu JSON.
     """
     events: list[SimulationEvent] = []
+    trial_contexts = _trial_contexts(trial_events)
     events.extend(_stimulus_onset_events(trial_events))
     events.extend(_response_and_error_events(trial_results, trial_events))
     events.extend(_pathology_events(pathology, clinical_profile))
@@ -139,6 +153,7 @@ def build_event_timeline(
         _neuromodulation_events(
             time=time,
             diagnostics=diagnostics,
+            trial_contexts=trial_contexts,
             max_events=max_neuromodulation_events,
         )
     )
@@ -147,6 +162,7 @@ def build_event_timeline(
             time=time,
             activity=activity,
             region_names=region_names,
+            trial_contexts=trial_contexts,
             max_events=max_activity_events,
         )
     )
@@ -168,12 +184,15 @@ def _stimulus_onset_events(trial_events: list[dict[str, Any]]) -> list[Simulatio
                 label_pl=EVENT_TERM_GLOSSARY["stimulus_onset"],
                 description_pl=f"Początek bodźca w trialu {trial_id} ({condition}).",
                 source="task",
+                trial_id=trial_id,
+                condition=condition,
                 details={
                     "trial_id": trial_id,
                     "condition": condition,
                     "duration_s": trial_event.get("duration_s"),
                     "regional_input": trial_event.get("regional_input", {}),
                 },
+                plot_anchor="task_timeline",
             )
         )
     return events
@@ -208,10 +227,32 @@ def _response_and_error_events(
                     f"{'poprawna' if correct else 'niepoprawna'}."
                 ),
                 source="task_scoring",
+                trial_id=trial_id,
+                condition=str(result.get("condition", "n/a")),
                 details={
                     "trial_id": trial_id,
                     "condition": result.get("condition", "n/a"),
                     "reaction_time_s": reaction_time,
+                    "correct": correct,
+                    "error_type": error_type,
+                },
+            )
+        )
+        events.append(
+            SimulationEvent(
+                time_s=event_time,
+                event_type="correctness",
+                label_pl=EVENT_TERM_GLOSSARY["correctness"],
+                description_pl=(
+                    f"Trial {trial_id}: "
+                    f"{'odpowiedź poprawna' if correct else 'odpowiedź niepoprawna'}."
+                ),
+                source="task_scoring",
+                trial_id=trial_id,
+                condition=str(result.get("condition", "n/a")),
+                details={
+                    "trial_id": trial_id,
+                    "condition": result.get("condition", "n/a"),
                     "correct": correct,
                     "error_type": error_type,
                 },
@@ -225,6 +266,8 @@ def _response_and_error_events(
                     label_pl=EVENT_TERM_GLOSSARY["error"],
                     description_pl=f"Błąd w trialu {trial_id}: {error_type}.",
                     source="task_scoring",
+                    trial_id=trial_id,
+                    condition=str(result.get("condition", "n/a")),
                     details={
                         "trial_id": trial_id,
                         "condition": result.get("condition", "n/a"),
@@ -256,6 +299,7 @@ def _pathology_events(
                     ),
                     source="pathology_config",
                     details=dict(mutation),
+                    plot_anchor="diagnostics",
                 )
             )
 
@@ -286,7 +330,11 @@ def _pathology_events(
 
 
 def _neuromodulation_events(
-    *, time: np.ndarray, diagnostics: dict[str, Any], max_events: int
+    *,
+    time: np.ndarray,
+    diagnostics: dict[str, Any],
+    trial_contexts: list[dict[str, Any]],
+    max_events: int,
 ) -> list[SimulationEvent]:
     """Wykrywa największe skoki sygnałów neuromodulacyjnych."""
     candidates: list[tuple[float, int, str, float, float]] = []
@@ -313,6 +361,7 @@ def _neuromodulation_events(
     events: list[SimulationEvent] = []
     for delta, sample_index, key, previous_value, current_value in selected:
         time_s = _time_at(time, sample_index)
+        trial_context = _trial_context_at(time_s, trial_contexts)
         events.append(
             SimulationEvent(
                 time_s=time_s,
@@ -323,6 +372,8 @@ def _neuromodulation_events(
                     f"{previous_value:.3f} → {current_value:.3f}."
                 ),
                 source="diagnostics",
+                trial_id=trial_context["trial_id"],
+                condition=trial_context["condition"],
                 details={
                     "signal": key,
                     "previous_value": round(previous_value, 6),
@@ -330,13 +381,19 @@ def _neuromodulation_events(
                     "abs_delta": round(delta, 6),
                     "sample_index": sample_index,
                 },
+                plot_anchor=f"diagnostics.{key}",
             )
         )
     return events
 
 
 def _activity_change_events(
-    *, time: np.ndarray, activity: np.ndarray, region_names: list[str], max_events: int
+    *,
+    time: np.ndarray,
+    activity: np.ndarray,
+    region_names: list[str],
+    trial_contexts: list[dict[str, Any]],
+    max_events: int,
 ) -> list[SimulationEvent]:
     """Wykrywa największe istotne zmiany aktywności regionów."""
     matrix = np.asarray(activity, dtype=float)
@@ -361,9 +418,11 @@ def _activity_change_events(
             if region_index < len(region_names)
             else f"region_{region_index}"
         )
+        time_s = _time_at(time, sample_index)
+        trial_context = _trial_context_at(time_s, trial_contexts)
         events.append(
             SimulationEvent(
-                time_s=_time_at(time, sample_index),
+                time_s=time_s,
                 event_type="significant_region_activity_change",
                 label_pl=EVENT_TERM_GLOSSARY["significant_region_activity_change"],
                 description_pl=(
@@ -371,6 +430,8 @@ def _activity_change_events(
                     f"{previous_value:.3f} → {current_value:.3f}."
                 ),
                 source="activity",
+                trial_id=trial_context["trial_id"],
+                condition=trial_context["condition"],
                 details={
                     "region": region,
                     "previous_value": round(previous_value, 6),
@@ -378,9 +439,40 @@ def _activity_change_events(
                     "abs_delta": round(delta, 6),
                     "sample_index": sample_index,
                 },
+                plot_anchor=f"activity.{region}",
             )
         )
     return events
+
+
+def _trial_contexts(trial_events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Buduje przedziały czasowe triali do przypisania zdarzeń diagnostycznych."""
+    contexts: list[dict[str, Any]] = []
+    for event in trial_events:
+        onset_s = float(event.get("onset_s", 0.0) or 0.0)
+        duration_s = float(event.get("duration_s", 0.0) or 0.0)
+        contexts.append(
+            {
+                "trial_id": event.get("trial_id") or "n/a",
+                "condition": str(event.get("condition") or "n/a"),
+                "start_s": onset_s,
+                "end_s": onset_s + max(duration_s, 0.0) + 0.75,
+            }
+        )
+    return sorted(contexts, key=lambda item: float(item["start_s"]))
+
+
+def _trial_context_at(
+    time_s: float, trial_contexts: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Zwraca kontekst trialu aktywny w danym czasie albo wartości globalne."""
+    for context in trial_contexts:
+        if float(context["start_s"]) <= time_s <= float(context["end_s"]):
+            return {
+                "trial_id": context["trial_id"],
+                "condition": context["condition"],
+            }
+    return {"trial_id": "n/a", "condition": "n/a"}
 
 
 def _time_at(time: np.ndarray, sample_index: int) -> float:

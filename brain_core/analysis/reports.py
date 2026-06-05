@@ -42,6 +42,131 @@ def _format_polish_list(values: list[str]) -> str:
     return ", ".join(cleaned_values[:-1]) + f" oraz {cleaned_values[-1]}"
 
 
+def _group_event_timeline_by_trial(
+    event_timeline: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Grupuje zdarzenia osi czasu według triali w kolejności interpretacyjnej.
+
+    Parameters
+    ----------
+    event_timeline:
+        Chronologiczna lista zdarzeń z ujednoliconymi polami ``trial_id`` i
+        ``condition``.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Lista grup triali z polami: bodziec, odpowiedź, ocena poprawności,
+        zmiany aktywności i komentarz mechanizmu.
+    """
+    grouped: dict[str, dict[str, Any]] = {}
+    for event in event_timeline:
+        trial_id = event.get("trial_id", "n/a")
+        if trial_id in {None, "n/a"}:
+            continue
+        trial_key = str(trial_id)
+        group = grouped.setdefault(
+            trial_key,
+            {
+                "trial_id": trial_id,
+                "condition": event.get("condition") or "n/a",
+                "stimulus": None,
+                "response": None,
+                "correctness": None,
+                "activity_changes": [],
+                "mechanism_comments": [],
+                "first_time_s": event.get("time_s", 0.0) or 0.0,
+            },
+        )
+        group["condition"] = event.get("condition") or group["condition"]
+        group["first_time_s"] = min(
+            float(group["first_time_s"]), float(event.get("time_s", 0.0) or 0.0)
+        )
+        event_type = str(event.get("event_type", ""))
+        if event_type == "stimulus_onset":
+            group["stimulus"] = event
+        elif event_type == "response":
+            group["response"] = event
+        elif event_type in {"correctness", "error"}:
+            group["correctness"] = event
+        elif event_type == "significant_region_activity_change":
+            group["activity_changes"].append(event)
+        elif event_type in {"neuromodulation_change", "lesion_pathology_event"}:
+            group["mechanism_comments"].append(event)
+
+    return sorted(grouped.values(), key=lambda item: float(item["first_time_s"]))
+
+
+def _trial_group_markdown_lines(event_timeline: list[dict[str, Any]]) -> list[str]:
+    """Buduje polskie linie Markdown z grupami triali i komentarzem mechanizmu.
+
+    Parameters
+    ----------
+    event_timeline:
+        Chronologiczna lista zdarzeń eksperymentu.
+
+    Returns
+    -------
+    list[str]
+        Linie raportu w kolejności: bodziec, odpowiedź, poprawność/błąd,
+        zmiana aktywności i komentarz mechanizmu.
+    """
+    groups = _group_event_timeline_by_trial(event_timeline)
+    if not groups:
+        return ["- Brak triali możliwych do pogrupowania."]
+
+    lines: list[str] = []
+    for group in groups[:20]:
+        trial_id = group.get("trial_id", "n/a")
+        condition = group.get("condition", "n/a")
+        lines.append(f"- **Trial {trial_id}** ({condition})")
+        stimulus = group.get("stimulus") or {}
+        response = group.get("response") or {}
+        correctness = group.get("correctness") or {}
+        activity_changes = group.get("activity_changes") or []
+        mechanism_comments = group.get("mechanism_comments") or []
+        lines.append(
+            "  - **bodziec**: "
+            f"{stimulus.get('description_pl') or 'brak zapisanego bodźca'}"
+        )
+        lines.append(
+            "  - **odpowiedź**: "
+            f"{response.get('description_pl') or 'brak zapisanej odpowiedzi'}"
+        )
+        lines.append(
+            "  - **błąd/poprawność**: "
+            f"{correctness.get('description_pl') or 'brak oceny poprawności'}"
+        )
+        if activity_changes:
+            lines.append(
+                "  - **zmiana aktywności**: "
+                + "; ".join(
+                    str(event.get("description_pl") or "brak opisu")
+                    for event in activity_changes[:3]
+                )
+            )
+        else:
+            lines.append(
+                "  - **zmiana aktywności**: brak istotnej zmiany w progu raportu"
+            )
+        if mechanism_comments:
+            lines.append(
+                "  - **komentarz mechanizmu**: "
+                + "; ".join(
+                    str(event.get("description_pl") or "brak opisu")
+                    for event in mechanism_comments[:3]
+                )
+            )
+        else:
+            lines.append(
+                "  - **komentarz mechanizmu**: interpretuj trial przez warunek, "
+                "poprawność i lokalne zmiany aktywności."
+            )
+    if len(groups) > 20:
+        lines.append(f"- ... pominięto {len(groups) - 20} dalszych triali.")
+    return lines
+
+
 def _classify_clinical_difference(
     value: float,
     severity_thresholds: dict[str, Any] | None,
@@ -468,6 +593,14 @@ class AnalysisReport:
         event_timeline = self.payload.get("event_timeline", [])
         if event_timeline:
             lines.extend(["", "## Oś czasu eksperymentu"])
+            lines.extend(
+                [
+                    "",
+                    "### Grupy triali: bodziec → odpowiedź → wynik → aktywność → mechanizm",
+                ]
+            )
+            lines.extend(_trial_group_markdown_lines(event_timeline))
+            lines.extend(["", "### Chronologiczny skrót zdarzeń"])
             for event in event_timeline[:30]:
                 lines.append(
                     f"- **{event.get('time_s', 'n/a')} s** — "

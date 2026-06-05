@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import datetime
+import html
 import textwrap
 from pathlib import Path
 from typing import Any
 
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 
@@ -83,25 +83,25 @@ def _draw_wrapped_text_page(
         for raw_line in str(paragraph).splitlines():
             wrapped_lines = textwrap.wrap(raw_line, width=WRAP_WIDTH) or [""]
             for line in wrapped_lines:
-            if y_position < 0.08:
-                if footer:
-                    axis.text(0.05, 0.04, footer, fontsize=8, va="bottom")
-                pdf.savefig(fig)
-                fig = Figure(figsize=A4_FIGSIZE)
-                axis = fig.add_subplot(111)
-                axis.axis("off")
-                y_position = TEXT_TOP
-                axis.text(
-                    0.05,
-                    y_position,
-                    f"{title} (c.d.)",
-                    fontsize=15,
-                    fontweight="bold",
-                    va="top",
-                )
-                y_position -= LINE_HEIGHT * 2
-            axis.text(TEXT_LEFT, y_position, line, fontsize=10.5, va="top")
-            y_position -= LINE_HEIGHT
+                if y_position < 0.08:
+                    if footer:
+                        axis.text(0.05, 0.04, footer, fontsize=8, va="bottom")
+                    pdf.savefig(fig)
+                    fig = Figure(figsize=A4_FIGSIZE)
+                    axis = fig.add_subplot(111)
+                    axis.axis("off")
+                    y_position = TEXT_TOP
+                    axis.text(
+                        0.05,
+                        y_position,
+                        f"{title} (c.d.)",
+                        fontsize=15,
+                        fontweight="bold",
+                        va="top",
+                    )
+                    y_position -= LINE_HEIGHT * 2
+                axis.text(TEXT_LEFT, y_position, line, fontsize=10.5, va="top")
+                y_position -= LINE_HEIGHT
         y_position -= LINE_HEIGHT * 0.35
 
     if footer:
@@ -238,6 +238,245 @@ def _plot_description(title: str) -> str:
         "Wykres pochodzi z panelu GUI i zachowuje ten sam widok, który użytkownik "
         "wybrał po zakończeniu symulacji.",
     )
+
+
+def _trial_table_rows(events: list[dict[str, Any]]) -> list[dict[str, str]]:
+    """Zbuduj wiersze tabeli triali z ujednoliconej osi czasu.
+
+    Parameters
+    ----------
+    events:
+        Lista zdarzeń z polami ``trial_id``, ``condition`` i polskimi opisami.
+
+    Returns
+    -------
+    list[dict[str, str]]
+        Wiersze tabeli zawierające trial, warunek, bodziec, odpowiedź i wynik.
+    """
+    grouped: dict[str, dict[str, str]] = {}
+    for event in events:
+        trial_id = event.get("trial_id", "n/a")
+        if trial_id in {None, "n/a"}:
+            continue
+        key = str(trial_id)
+        row = grouped.setdefault(
+            key,
+            {
+                "trial_id": key,
+                "condition": str(event.get("condition", "n/a")),
+                "stimulus": "n/a",
+                "response": "n/a",
+                "correctness": "n/a",
+                "activity": "n/a",
+            },
+        )
+        event_type = str(event.get("event_type", ""))
+        description = str(event.get("description_pl") or "n/a")
+        if event_type == "stimulus_onset":
+            row["stimulus"] = description
+        elif event_type == "response":
+            row["response"] = description
+        elif event_type in {"correctness", "error"}:
+            row["correctness"] = description
+        elif event_type == "significant_region_activity_change":
+            row["activity"] = description
+    return [
+        grouped[key]
+        for key in sorted(
+            grouped, key=lambda value: (0, int(value)) if value.isdigit() else (1, value)
+        )
+    ]
+
+
+def _metrics_summary_lines(
+    analysis_report: dict[str, Any], limit: int = 12
+) -> list[str]:
+    """Zwróć skrót metryk analitycznych do raportu Markdown/HTML.
+
+    Parameters
+    ----------
+    analysis_report:
+        Raport analityczny zwrócony przez silnik symulacji.
+    limit:
+        Maksymalna liczba metryk w skrócie.
+
+    Returns
+    -------
+    list[str]
+        Linie listy punktowanej z nazwą i wartością metryki.
+    """
+    metrics = analysis_report.get("metrics", {}) if analysis_report else {}
+    if not isinstance(metrics, dict) or not metrics:
+        return ["- Brak metryk analitycznych w raporcie."]
+    return [
+        f"- **{key}**: {_stringify_value(value)}"
+        for key, value in list(metrics.items())[:limit]
+    ]
+
+
+def _glossary_markdown_lines() -> list[str]:
+    """Zwróć polski słownik pojęć używany w eksporcie raportu.
+
+    Returns
+    -------
+    list[str]
+        Linie Markdown z angielską nazwą techniczną i polskim objaśnieniem.
+    """
+    from brain_core.simulation.events import (
+        EVENT_TERM_EXPLANATIONS,
+        EVENT_TERM_GLOSSARY,
+    )
+
+    return [
+        f"- **{key}**: {label} — {EVENT_TERM_EXPLANATIONS.get(key, 'brak opisu')}"
+        for key, label in EVENT_TERM_GLOSSARY.items()
+    ]
+
+
+def _experiment_report_markdown(
+    *,
+    title: str,
+    status_message: str,
+    summary_text: str,
+    state_config: dict[str, Any],
+    event_timeline: list[dict[str, Any]],
+    clinical_profile: dict[str, Any],
+    analysis_report: dict[str, Any],
+) -> str:
+    """Złóż raport eksperymentu w formacie Markdown.
+
+    Parameters
+    ----------
+    title:
+        Polski tytuł raportu.
+    status_message:
+        Status uruchomienia pokazany użytkownikowi.
+    summary_text:
+        Tekstowy skrót wyniku przygotowany przez GUI lub CLI.
+    state_config:
+        Konfiguracja uruchomienia.
+    event_timeline:
+        Ujednolicona oś czasu zdarzeń.
+    clinical_profile:
+        Profil kliniczny użyty w eksperymencie.
+    analysis_report:
+        Raport analityczny z metrykami.
+
+    Returns
+    -------
+    str
+        Treść raportu Markdown.
+    """
+    lines = [f"# {title}", "", f"- **Status**: {status_message}"]
+    if summary_text:
+        lines.extend([f"- **Skrót**: {summary_text}", ""])
+    lines.extend(["## Skrót metryk", *_metrics_summary_lines(analysis_report), ""])
+    lines.extend(["## Tabela triali", ""])
+    rows = _trial_table_rows(event_timeline)
+    if rows:
+        lines.extend(
+            [
+                "| Trial | Warunek | Bodziec | Odpowiedź | Wynik | Zmiana aktywności |",
+                "| --- | --- | --- | --- | --- | --- |",
+            ]
+        )
+        for row in rows:
+            escaped_row = {k: str(v).replace("|", "\\|") for k, v in row.items()}
+            lines.append(
+                "| {trial_id} | {condition} | {stimulus} | {response} | "
+                "{correctness} | {activity} |".format(**escaped_row)
+            )
+    else:
+        lines.append("Brak triali w osi czasu.")
+    lines.extend(["", "## Konfiguracja", *_flatten_mapping(state_config), ""])
+    lines.extend(["## Profil kliniczny", *_flatten_mapping(clinical_profile), ""])
+    lines.extend(["## Polski słownik pojęć", *_glossary_markdown_lines(), ""])
+    return "\n".join(lines)
+
+
+def _markdown_to_simple_html(markdown: str) -> str:
+    """Przekształć ograniczony Markdown raportu do samodzielnego HTML.
+
+    Parameters
+    ----------
+    markdown:
+        Treść raportu Markdown wygenerowana przez `_experiment_report_markdown`.
+
+    Returns
+    -------
+    str
+        Prosty dokument HTML z zachowaniem treści tabelarycznych w bloku tekstowym.
+    """
+    escaped = html.escape(markdown)
+    return (
+        '<!doctype html><html lang="pl"><head><meta charset="utf-8">'
+        "<title>Raport eksperymentu neuro_sim</title></head><body>"
+        f"<pre>{escaped}</pre></body></html>"
+    )
+
+
+def export_experiment_report(
+    output_path: str | Path,
+    *,
+    status_message: str,
+    summary_text: str,
+    state_config: dict[str, Any],
+    event_timeline: list[dict[str, Any]],
+    clinical_profile: dict[str, Any],
+    analysis_report: dict[str, Any],
+    title: str = "Raport eksperymentu neuro_sim",
+) -> Path:
+    """Eksportuj raport `.md` albo `.html` z tabelą triali, metrykami i słownikiem.
+
+    Parameters
+    ----------
+    output_path:
+        Ścieżka docelowa z rozszerzeniem `.md` albo `.html`.
+    status_message:
+        Polski status uruchomienia eksperymentu.
+    summary_text:
+        Krótki opis wyniku lub metryk.
+    state_config:
+        Konfiguracja uruchomienia zapisywana dla replikowalności.
+    event_timeline:
+        Ujednolicona oś czasu zdarzeń z trialami.
+    clinical_profile:
+        Profil kliniczny użyty w symulacji.
+    analysis_report:
+        Raport analityczny z metrykami.
+    title:
+        Tytuł raportu.
+
+    Returns
+    -------
+    Path
+        Ścieżka zapisanego raportu.
+
+    Raises
+    ------
+    ValueError
+        Gdy rozszerzenie pliku nie jest `.md` ani `.html`.
+    """
+    target = Path(output_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    markdown = _experiment_report_markdown(
+        title=title,
+        status_message=status_message,
+        summary_text=summary_text,
+        state_config=state_config,
+        event_timeline=event_timeline,
+        clinical_profile=clinical_profile,
+        analysis_report=analysis_report,
+    )
+    suffix = target.suffix.lower()
+    if suffix == ".md":
+        content = markdown
+    elif suffix == ".html":
+        content = _markdown_to_simple_html(markdown)
+    else:
+        raise ValueError("Raport tekstowy musi mieć rozszerzenie .md albo .html.")
+    target.write_text(content, encoding="utf-8")
+    return target
 
 
 def export_experiment_pdf(
