@@ -99,6 +99,35 @@ def test_missing_required_section_reports_full_path() -> None:
         validate_config(payload)
 
 
+def test_missing_required_stimulus_field_reports_full_path() -> None:
+    """Brak wymaganego pola bodźca ma wskazywać ścieżkę `stimulus.source`."""
+    payload = _valid_config_payload()
+    payload["stimulus"].pop("source")
+
+    with pytest.raises(ConfigValidationError, match=r"Brak pola stimulus\.source"):
+        validate_config(payload)
+
+
+def test_missing_required_connectome_field_reports_full_path() -> None:
+    """Brak wymaganego atlasu connectome ma wskazywać ścieżkę pola."""
+    payload = _valid_config_payload()
+    payload["connectome"].pop("atlas")
+
+    with pytest.raises(ConfigValidationError, match=r"Brak pola connectome\.atlas"):
+        validate_config(payload)
+
+
+def test_invalid_brain_profile_id_type_reports_full_path() -> None:
+    """Błędny typ profilu mózgu ma wskazywać ścieżkę `brain_profile.id`."""
+    payload = _valid_config_payload()
+    payload["brain_profile"]["id"] = 123
+
+    with pytest.raises(
+        ConfigValidationError, match=r"brain_profile\.id musi być niepustym tekstem"
+    ):
+        validate_config(payload)
+
+
 def test_invalid_task_duration_type_reports_field_path() -> None:
     """Błędny typ wartości ma wskazywać ścieżkę pola `task.duration`."""
     payload = _valid_config_payload()
