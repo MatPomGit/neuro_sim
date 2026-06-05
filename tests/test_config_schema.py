@@ -70,6 +70,17 @@ def test_legacy_seed_is_migrated_to_rng_seed() -> None:
     assert cfg.rng_seed == 7
 
 
+def test_rng_seed_without_legacy_seed_is_mapped_to_seed() -> None:
+    """Docelowe pole `rng_seed` ma zasilać kompatybilne pole `seed`."""
+    payload = _valid_config_payload()
+    payload.pop("seed")
+
+    cfg = validate_config(payload)
+
+    assert cfg.seed == 7
+    assert cfg.rng_seed == 7
+
+
 def test_conflicting_seed_and_rng_seed_is_rejected() -> None:
     """Różne wartości `seed` i `rng_seed` mają dawać czytelny błąd migracji."""
     payload = _valid_config_payload()
@@ -157,6 +168,17 @@ def test_invalid_analysis_set_type_reports_field_path() -> None:
         validate_config(payload)
 
 
+def test_validate_config_does_not_mutate_raw_payload() -> None:
+    """Walidacja nie może dopisywać domyślnych pól do surowej konfiguracji."""
+    payload = _valid_config_payload()
+    payload["snn"].pop("sync_dt", None)
+    original_payload = deepcopy(payload)
+
+    validate_config(payload)
+
+    assert payload == original_payload
+
+
 @pytest.mark.parametrize(
     "config_path",
     [
@@ -168,11 +190,19 @@ def test_invalid_analysis_set_type_reports_field_path() -> None:
         "configs/multi_region_delay_demo.yaml",
         "configs/multi_region_delay_extended.yaml",
         "configs/snn_hippocampus_demo.yaml",
+        "configs/stroop.yaml",
+        "configs/go_nogo.yaml",
+        "configs/n_back.yaml",
+        "configs/scenario_yaml_stroop_dlpfc.yaml",
+        "configs/scenario_yaml_go_nogo_gaba.yaml",
+        "configs/scenario_yaml_n_back_dopamine.yaml",
+        "configs/scenario_yaml_stress_recovery_serotonin.yaml",
     ],
 )
 def test_target_schema_examples_are_loadable(config_path: str) -> None:
     """Przykładowe konfiguracje mają przechodzić docelowy schemat walidacji."""
     from pathlib import Path
+
     root_dir = Path(__file__).parent.parent
     cfg = load_config(root_dir / config_path)
 

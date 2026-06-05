@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -222,7 +223,7 @@ def _require_top_level_sections(raw: dict[str, Any]) -> None:
 
 def _normalize_seed_fields(raw: dict[str, Any]) -> dict[str, Any]:
     """Migruje `seed` i `rng_seed` do jednej jawnej semantyki losowości."""
-    normalized = dict(raw)
+    normalized = deepcopy(raw)
     has_seed = "seed" in normalized
     has_rng_seed = "rng_seed" in normalized
 

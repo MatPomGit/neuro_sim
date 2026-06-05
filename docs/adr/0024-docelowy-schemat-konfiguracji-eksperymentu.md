@@ -43,6 +43,11 @@ a komunikaty błędów wskazują pełną ścieżkę pola, np. `task.duration` al
   ręcznej korekty, aby uniknąć niejawnej niedeterministyczności.
 - Fragmenty profili klinicznych nadal mogą być walidowane jako nakładki na
   konfigurację pełnego eksperymentu.
+- Walidacja pracuje na kopii surowego payloadu, aby nie dopisywać pól
+  migracyjnych ani wartości domyślnych do danych wejściowych używanych w testach
+  reprodukowalności.
+- Presety YAML używane przez GUI otrzymują te same jawne sekcje metodologiczne,
+  dzięki czemu ścieżka ładowania scenariuszy GUI nie omija walidacji silnika.
 
 ## Alternatywy rozważane
 
