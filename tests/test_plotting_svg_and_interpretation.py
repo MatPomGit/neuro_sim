@@ -4,12 +4,18 @@ from __future__ import annotations
 
 import matplotlib.pyplot as plt
 
+from brain_model.model import CognitiveBrainModel
 from brain_model.plotting import (
     INTERPRETATION_WRAP_WIDTH,
     _add_interpretation_box,
     _load_svg_region_centroids,
     _load_svg_region_shapes,
+    _load_svg_underlay_shapes,
+    _parse_svg_translate,
     _plot_svg_region_background,
+    _plot_svg_underlay_background,
+    draw_weight_deltas,
+    draw_weight_trajectories,
 )
 
 
@@ -82,3 +88,60 @@ def test_interpretation_box_replaces_previous_artist() -> None:
 def test_interpretation_wrap_width_fits_default_qt_panel() -> None:
     """Szerokość łamania opisu powinna być czytelna dla domyślnego panelu Qt."""
     assert INTERPRETATION_WRAP_WIDTH <= 100
+
+
+def test_svg_underlay_uses_non_region_paths_and_translate(tmp_path) -> None:
+    """Podkład SVG ma brać bazowe ścieżki z przesunięciem jak viewer kompaktowy."""
+    svg_path = tmp_path / "regions.svg"
+    svg_path.write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg">'
+        '<path fill="#2E2E2E" transform="translate(10,20)" '
+        'd="M 0 0 L 4 0 L 4 4 Z" />'
+        '<path data-region="VIS" d="M 100 100 L 120 100 L 120 120 Z" />'
+        "</svg>",
+        encoding="utf-8",
+    )
+    _load_svg_underlay_shapes.cache_clear()
+
+    underlay_shapes = _load_svg_underlay_shapes(str(svg_path))
+
+    assert len(underlay_shapes) == 1
+    xs, ys, fill_color = underlay_shapes[0]
+    assert fill_color == "#2E2E2E"
+    assert xs[0] == 10.0
+    assert ys[0] == 20.0
+
+
+def test_svg_underlay_background_adds_polycollection() -> None:
+    """Podkład anatomiczny powinien trafiać do osi jako warstwa pod regionami."""
+    fig, ax = plt.subplots()
+
+    try:
+        _plot_svg_underlay_background(
+            ax, (((0.0, 1.0, 1.0), (0.0, 0.0, 1.0), "#333333"),)
+        )
+        assert len(ax.collections) == 1
+    finally:
+        plt.close(fig)
+
+
+def test_svg_translate_parser_accepts_single_and_pair_values() -> None:
+    """Parser transformacji SVG powinien obsłużyć wariant jedno- i dwuargumentowy."""
+    assert _parse_svg_translate("translate(10)") == (10.0, 0.0)
+    assert _parse_svg_translate("translate(10, 20)") == (10.0, 20.0)
+
+
+def test_default_simulation_produces_weight_plots() -> None:
+    """Domyślna symulacja powinna dawać niepuste trajektorie i przyrosty wag."""
+    model = CognitiveBrainModel(seed=7, stimulus="baseline")
+    time, _activity, diagnostics, _oscillations, _behavior = model.simulate(T=0.1)
+    fig, (trajectory_ax, delta_ax) = plt.subplots(2, 1)
+
+    try:
+        draw_weight_trajectories(trajectory_ax, time, diagnostics)
+        draw_weight_deltas(delta_ax, time, diagnostics)
+
+        assert trajectory_ax.lines
+        assert len(delta_ax.lines) > 1
+    finally:
+        plt.close(fig)

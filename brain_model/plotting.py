@@ -10,6 +10,7 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.collections import PolyCollection
 
 from .scenarios.types import CHANNELS, StimulusScenario
 from .stimuli import build_stimulus_fn
@@ -58,6 +59,33 @@ def _add_interpretation_box(fig: Any, text: str) -> None:
     fig._neuro_sim_interpretation_bottom = min(0.42, 0.10 + line_count * 0.032)
 
 
+def _parse_svg_translate(transform: str | None) -> tuple[float, float]:
+    """Odczytaj przesunięcie `translate(x,y)` ze ścieżek podkładu SVG.
+
+    Parameters
+    ----------
+    transform:
+        Wartość atrybutu `transform` z elementu SVG.
+
+    Returns
+    -------
+    tuple[float, float]
+        Przesunięcie x/y dodawane do współrzędnych ścieżki.
+    """
+    if not transform:
+        return 0.0, 0.0
+    match = re.search(
+        r"translate\(\s*([-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?)"
+        r"(?:[\s,]+([-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?))?\s*\)",
+        transform,
+    )
+    if match is None:
+        return 0.0, 0.0
+    x_offset = float(match.group(1))
+    y_offset = float(match.group(2) or 0.0)
+    return x_offset, y_offset
+
+
 def _extract_svg_region_paths(svg_text: str) -> list[tuple[str, str]]:
     """Wydobądź pary region-ścieżka SVG niezależnie od kolejności atrybutów."""
     region_paths = []
@@ -76,12 +104,51 @@ def _extract_svg_region_paths(svg_text: str) -> list[tuple[str, str]]:
     return region_paths
 
 
-def _split_svg_path_coordinates(d_attr: str) -> tuple[list[float], list[float]]:
+def _extract_svg_underlay_paths(svg_text: str) -> list[tuple[str, str, str | None]]:
+    """Wydobądź nieinteraktywne ścieżki podkładu SVG używane w widoku kompaktowym.
+
+    Parameters
+    ----------
+    svg_text:
+        Treść pliku SVG z warstwą bazową i nakładkami regionów.
+
+    Returns
+    -------
+    list[tuple[str, str, str | None]]
+        Lista krotek `d`, `fill`, `transform` dla ścieżek bez `data-region`.
+    """
+    underlay_paths = []
+    try:
+        root = ET.fromstring(svg_text)
+    except ET.ParseError as e:
+        warnings.warn(f"Niepoprawny format pliku SVG: {e}", UserWarning)
+        return []
+    for element in root.iter():
+        if element.tag.rsplit("}", 1)[-1] != "path":
+            continue
+        d_attr = element.attrib.get("d")
+        if element.attrib.get("data-region") or not d_attr:
+            continue
+        underlay_paths.append(
+            (
+                d_attr,
+                element.attrib.get("fill", "#cbd5e1"),
+                element.attrib.get("transform"),
+            )
+        )
+    return underlay_paths
+
+
+def _split_svg_path_coordinates(
+    d_attr: str, *, x_offset: float = 0.0, y_offset: float = 0.0
+) -> tuple[list[float], list[float]]:
     """Zamień liczby ze ścieżki SVG na bezpiecznie sparowane współrzędne x/y."""
-    numbers = [float(v) for v in re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", d_attr)]
+    numbers = [float(v) for v in re.findall(r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?", d_attr)]
     coordinate_count = len(numbers) - (len(numbers) % 2)
     paired_numbers = numbers[:coordinate_count]
-    return paired_numbers[0::2], paired_numbers[1::2]
+    xs = [x + x_offset for x in paired_numbers[0::2]]
+    ys = [y + y_offset for y in paired_numbers[1::2]]
+    return xs, ys
 
 
 def _apply_interpretation_layout(fig: Any) -> None:
@@ -113,21 +180,72 @@ def _load_svg_region_shapes(
     return shapes
 
 
+@lru_cache(maxsize=8)
+def _load_svg_underlay_shapes(
+    svg_path: str,
+) -> tuple[tuple[tuple[float, ...], tuple[float, ...], str], ...]:
+    """Wczytaj podkład anatomiczny SVG zgodny z `brain_viewer_compact.html`.
+
+    Parameters
+    ----------
+    svg_path:
+        Ścieżka do pliku SVG zawierającego bazowy rysunek mózgu i regiony.
+
+    Returns
+    -------
+    tuple[tuple[tuple[float, ...], tuple[float, ...], str], ...]
+        Niemutowalna lista ścieżek podkładu: współrzędne x, współrzędne y i kolor.
+    """
+    text = Path(svg_path).read_text(encoding="utf-8")
+    underlay_shapes = []
+    for d_attr, fill_color, transform in _extract_svg_underlay_paths(text):
+        x_offset, y_offset = _parse_svg_translate(transform)
+        xs, ys = _split_svg_path_coordinates(
+            d_attr, x_offset=x_offset, y_offset=y_offset
+        )
+        if len(xs) >= 2 and len(ys) >= 2:
+            underlay_shapes.append((tuple(xs), tuple(ys), fill_color))
+    return tuple(underlay_shapes)
+
+
+def _plot_svg_underlay_background(
+    ax: Any,
+    underlay_shapes: tuple[tuple[tuple[float, ...], tuple[float, ...], str], ...],
+) -> None:
+    """Narysuj szary podkład anatomiczny taki jak w kompaktowym viewerze SVG."""
+    if not underlay_shapes:
+        return
+    polygons = [list(zip(xs, ys)) for xs, ys, _ in underlay_shapes]
+    fill_colors = [fill_color for _, _, fill_color in underlay_shapes]
+    collection = PolyCollection(
+        polygons,
+        facecolors=fill_colors,
+        edgecolors="none",
+        alpha=0.30,
+        zorder=0,
+    )
+    ax.add_collection(collection)
+
+
 def _plot_svg_region_background(
     ax: Any, shapes: dict[str, tuple[list[float], list[float]]]
 ) -> None:
-    """Narysuj lekkie kontury regionów SVG jako tło mapy aktywacji."""
+    """Narysuj lekkie kontury regionów SVG jako nakładkę na podkład mózgu."""
     for xs, ys in shapes.values():
-        ax.plot(xs, ys, color="#64748b", linewidth=0.45, alpha=0.35, zorder=1)
-        ax.fill(xs, ys, color="#e2e8f0", alpha=0.08, zorder=0)
+        ax.plot(xs, ys, color="#1f2937", linewidth=0.45, alpha=0.32, zorder=2)
+        ax.fill(xs, ys, color="#e2e8f0", alpha=0.10, zorder=1)
 
 
 def _set_svg_data_limits(
-    ax: Any, shapes: dict[str, tuple[list[float], list[float]]]
+    ax: Any,
+    shapes: dict[str, tuple[list[float], list[float]]],
+    underlay_shapes: tuple[tuple[tuple[float, ...], tuple[float, ...], str], ...],
 ) -> None:
-    """Dopasuj zakres osi do rzeczywistych współrzędnych regionów SVG."""
+    """Dopasuj zakres osi do rzeczywistych współrzędnych regionów i podkładu SVG."""
     all_x = [x for xs, _ in shapes.values() for x in xs]
     all_y = [y for _, ys in shapes.values() for y in ys]
+    all_x.extend(x for xs, _, _ in underlay_shapes for x in xs)
+    all_y.extend(y for _, ys, _ in underlay_shapes for y in ys)
     if not all_x or not all_y:
         ax.set_xlim(0, 2048)
         ax.set_ylim(2048, 0)
@@ -243,6 +361,7 @@ def _draw_brain_projection(
     """Narysuj aktywację regionów na tle konturów z wybranego rzutu SVG."""
     centroids = _load_svg_region_centroids(svg_path)
     shapes = _load_svg_region_shapes(svg_path)
+    underlay_shapes = _load_svg_underlay_shapes(svg_path)
     if not centroids:
         ax.text(
             0.5,
@@ -255,6 +374,7 @@ def _draw_brain_projection(
         ax.set_title(title)
         return None
 
+    _plot_svg_underlay_background(ax, underlay_shapes)
     _plot_svg_region_background(ax, shapes)
     region_activity_t = _compute_region_activity_series(activity, idx, centroids.keys())
     region_activity = {
@@ -280,7 +400,7 @@ def _draw_brain_projection(
         linewidths=0.4,
         zorder=3,
     )
-    _set_svg_data_limits(ax, shapes)
+    _set_svg_data_limits(ax, shapes, underlay_shapes)
     ax.set_aspect("equal", adjustable="box")
     ax.set_xticks([])
     ax.set_yticks([])
@@ -687,13 +807,13 @@ def draw_brain_region_projections(
     _add_interpretation_box(
         fig,
         "Rzuty SVG pokazują aktywację regionów. Co widzisz: każdy panel to inny "
-        "rzut mózgu, a szare kontury dają orientacyjny kontekst "
-        "anatomiczny, a kolor punktu pokazuje aktywację regionu w ostatnim kroku symulacji. "
+        "rzut mózgu z podkładem anatomicznym zgodnym z kompaktowym viewerem SVG, "
+        "a kolor punktu pokazuje aktywację regionu w ostatnim kroku symulacji. "
         "Dla osoby początkującej kluczowe jest, gdzie pojawiają się najjaśniejsze punkty. "
         "Dla specjalisty ważne jest, czy aktywacja tworzy lokalne ognisko, "
         "wzorzec boczny/lewy-prawy "
-        "albo rozlane pobudzenie. Zakres osi pochodzi z rzeczywistych współrzędnych danego SVG, "
-        "więc widok lateral nie jest rozciągany do sztucznej skali.",
+        "albo rozlane pobudzenie. Zakres osi pochodzi z rzeczywistych współrzędnych "
+        "regionów i podkładów danego SVG.",
     )
     return list(axes.flatten())
 
