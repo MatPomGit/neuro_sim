@@ -80,8 +80,9 @@ def _draw_wrapped_text_page(
     y_position -= LINE_HEIGHT * 2
 
     for paragraph in paragraphs:
-        wrapped_lines = textwrap.wrap(str(paragraph), width=WRAP_WIDTH) or [""]
-        for line in wrapped_lines:
+        for raw_line in str(paragraph).splitlines():
+            wrapped_lines = textwrap.wrap(raw_line, width=WRAP_WIDTH) or [""]
+            for line in wrapped_lines:
             if y_position < 0.08:
                 if footer:
                     axis.text(0.05, 0.04, footer, fontsize=8, va="bottom")
