@@ -374,7 +374,7 @@ profili clinical/lesion.
 - widoki edukacyjne v1,
 - katalog profesjonalnych scenariuszy dydaktycznych v1,
 - eksportowalne pakiety zajęciowe HTML/PDF,
-- karta pracy studenta, notatka dla prowadzącego i rubryka oceny.
+- karta pracy studenta, skrót dla prowadzącego i rubryka oceny.
 
 **Kryteria ukończenia:**
 
