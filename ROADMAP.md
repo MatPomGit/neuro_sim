@@ -123,6 +123,17 @@ roadmapy jako obietnicy nowych funkcji na tym etapie.
 
 **Obejmuje:** testy, docstringi, type hints, ADR, instrukcje uruchamiania, słownik EN→PL, scenariusze lekcyjne.
 
+### S6. Profesjonalna aplikacja dydaktyczna
+
+**Cel:** przekształcić demonstrator naukowy w aplikację, którą prowadzący może
+bezpiecznie wykorzystać na ćwiczeniach, laboratoriach i pokazach bez ręcznej
+edycji kodu.
+
+**Obejmuje:** katalog lekcji, tryb nauczyciela krok po kroku, pakiety
+zajęciowe HTML/PDF, karty pracy studentów, rubryki oceny, dostępność,
+spójne komunikaty po polsku oraz ostrzeżenia przed interpretacją diagnostyczną
+profili clinical/lesion.
+
 ---
 
 ## 6. Roadmapa etapami
@@ -137,7 +148,7 @@ roadmapy jako obietnicy nowych funkcji na tym etapie.
 
 - Utrzymać `BACKLOG.md` jako listę prac z jasnym statusem i pozostałym zakresem.
 - Utrzymać `docs/program_structure.md` jako opis rzeczywistej struktury repozytorium.
-- Spiąć `ROADMAP.md`, `BACKLOG.md`, `README.md` i `docs/todo.md` w jeden spójny obraz rozwoju.
+- Spiąć `ROADMAP.md`, `BACKLOG.md` i `README.md` w jeden spójny obraz rozwoju.
 
 **Najbliższe działania:**
 
@@ -323,7 +334,7 @@ roadmapy jako obietnicy nowych funkcji na tym etapie.
 
 ---
 
-### Etap 5 — Warstwa EEG/BOLD i tryb nauczyciela
+### Etap 5 — Warstwa EEG/BOLD i profesjonalny tryb nauczyciela
 
 **Horyzont:** po ustabilizowaniu scenariuszy porównawczych
 **Priorytet:** P2
@@ -333,6 +344,8 @@ roadmapy jako obietnicy nowych funkcji na tym etapie.
 
 - Połączyć symulację z metrykami znanymi z praktyki badawczej.
 - Uczynić aplikację gotową do użycia podczas zajęć.
+- Dostarczyć profesjonalny przepływ dydaktyczny: przygotowanie lekcji,
+  prowadzenie ćwiczenia, omówienie wyników i eksport materiałów.
 
 **Zakres:**
 
@@ -340,20 +353,38 @@ roadmapy jako obietnicy nowych funkcji na tym etapie.
 - uproszczone mapowanie BOLD/HRF,
 - raporty z wykresami i interpretacją,
 - widoki „co obserwujesz teraz?” i „dlaczego to ważne?”,
-- pytania kontrolne, scenariusze lekcyjne i polskie etykiety pojęć.
+- pytania kontrolne, scenariusze lekcyjne i polskie etykiety pojęć,
+- katalog lekcji z metadanymi: cel, czas, poziom trudności, profil, task,
+  wymagane artefakty i oczekiwane obserwacje,
+- kreator lub panel wyboru scenariusza, który uruchamia konfigurację bez
+  ręcznego edytowania YAML przez studenta,
+- pakiet zajęciowy eksportowany po uruchomieniu: raport HTML/PDF, karta pracy,
+  skrót dla prowadzącego, seed, konfiguracja i wersja kodu,
+- rubryka oceny odpowiedzi studenta oraz lista kontrolna prowadzącego,
+- dostępność i profesjonalna użyteczność: kontrast, opisy wykresów, spójne
+  komunikaty błędów, przewidywalna nawigacja i polska terminologia,
+- jawne ograniczenia interpretacyjne dla profili clinical/lesion, aby aplikacja
+  nie sugerowała zastosowań diagnostycznych.
 
 **Artefakty docelowe:**
 
 - raporty EEG/BOLD per scenariusz,
 - szablony lekcji laboratoryjnych,
 - rozszerzony słownik pojęć EN→PL,
-- widoki edukacyjne v1.
+- widoki edukacyjne v1,
+- katalog profesjonalnych scenariuszy dydaktycznych v1,
+- eksportowalne pakiety zajęciowe HTML/PDF,
+- karta pracy studenta, skrót dla prowadzącego i rubryka oceny.
 
 **Kryteria ukończenia:**
 
 - student widzi metrykę, interpretację i kontekst biologiczny w jednym raporcie,
 - nauczyciel może użyć gotowego scenariusza z pytaniami kontrolnymi,
-- raporty są spójne dla tasków i profili porównawczych.
+- raporty są spójne dla tasków i profili porównawczych,
+- prowadzący może przeprowadzić co najmniej trzy kompletne lekcje bez edycji
+  kodu ani ręcznego składania materiałów,
+- eksport lekcji zawiera konfigurację, seed, wersję kodu, wykresy, metryki,
+  komentarze dydaktyczne i ograniczenia interpretacyjne.
 
 ---
 
@@ -417,7 +448,7 @@ Etap 3: task battery + roving oddball
     ↓
 Etap 4: healthy/disorder/lesion
     ↓
-Etap 5: EEG/BOLD + tryb nauczyciela
+Etap 5: EEG/BOLD + profesjonalny tryb nauczyciela
     ↓
 Etap 6: mikro-makro + kohorty + benchmarki
 ```
@@ -437,6 +468,9 @@ Najważniejsze zależności blokujące:
 
 - liczba gotowych scenariuszy uruchamianych z konfiguracji,
 - liczba profili healthy/disorder/lesion z raportem porównawczym,
+- liczba kompletnych lekcji dostępnych bez edycji kodu,
+- kompletność eksportu pakietu zajęciowego: raport, karta pracy, notatka dla
+  prowadzącego, seed, konfiguracja i wersja kodu,
 - czas potrzebny użytkownikowi do uruchomienia i zinterpretowania eksperymentu.
 
 ### Naukowo-dydaktyczne
