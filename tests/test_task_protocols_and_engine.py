@@ -263,3 +263,45 @@ def test_roving_oddball_report_contains_conditions_and_habituation_metrics() -> 
     assert "nowy standard" in markdown
     assert "tempo habituacji" in markdown
     assert "latency readaptacji" in markdown
+
+
+def test_roving_oddball_event_timeline_has_trials_order_and_polish_labels() -> Any:
+    """Oś czasu roving oddball zawiera triale, chronologię i polskie etykiety."""
+    cfg = ExperimentConfig(
+        task={
+            "name": "roving_oddball",
+            "scenario": "roving_oddball",
+            "duration": 8.0,
+            "n_runs": 3,
+            "run_length_min": 2,
+            "run_length_max": 2,
+            "deviant_probability": 1.0,
+            "inter_stimulus_interval": 0.5,
+            "jitter": 0.0,
+        },
+        output={"save_results": False},
+    )
+
+    result = run_experiment(cfg)
+    event_timeline = result["event_timeline"]
+    required_fields = {
+        "time_s",
+        "event_type",
+        "trial_id",
+        "condition",
+        "label_pl",
+        "description_pl",
+        "source",
+        "details",
+    }
+
+    assert event_timeline
+    assert all(required_fields.issubset(event) for event in event_timeline)
+    assert event_timeline == sorted(
+        event_timeline, key=lambda event: (event["time_s"], event["event_type"])
+    )
+    trial_events = [event for event in event_timeline if event["trial_id"] != "n/a"]
+    assert {event["condition"] for event in trial_events} >= {"standard", "deviant"}
+    assert all(event["label_pl"] for event in trial_events)
+    assert any(event["label_pl"] == "poprawność" for event in trial_events)
+    assert any("Początek bodźca" in event["description_pl"] for event in trial_events)

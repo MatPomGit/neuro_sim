@@ -391,3 +391,62 @@ def test_clinical_difference_report_classifies_disorders_and_lesions() -> Any:
         assert "Mechanizm:" in item["educational_comment"]
         assert item["mechanism"] in item["educational_comment"]
         assert item["cognitive_function"] in item["educational_comment"]
+
+
+def test_roving_oddball_report_groups_trials_and_exports_text_reports(
+    tmp_path: Any,
+) -> Any:
+    """Raport grupuje triale i eksportuje MD/HTML z tabelą oraz słownikiem."""
+    from brain_core.analysis.reports import AnalysisReport
+    from brain_model.report_export import export_experiment_report
+
+    cfg = ExperimentConfig(
+        task={
+            "name": "roving_oddball",
+            "scenario": "roving_oddball",
+            "duration": 8.0,
+            "n_runs": 3,
+            "run_length_min": 2,
+            "run_length_max": 2,
+            "deviant_probability": 1.0,
+            "inter_stimulus_interval": 0.5,
+            "jitter": 0.0,
+        },
+        output={"save_results": False},
+    )
+
+    result = run_experiment(cfg)
+    markdown = AnalysisReport(result["analysis_report"]).to_markdown()
+    md_path = export_experiment_report(
+        tmp_path / "raport.md",
+        status_message="Symulacja zakończona.",
+        summary_text="Skrót testowy.",
+        state_config={"task": "roving_oddball"},
+        event_timeline=result["event_timeline"],
+        clinical_profile=result["clinical_profile"],
+        analysis_report=result["analysis_report"],
+    )
+    html_path = export_experiment_report(
+        tmp_path / "raport.html",
+        status_message="Symulacja zakończona.",
+        summary_text="Skrót testowy.",
+        state_config={"task": "roving_oddball"},
+        event_timeline=result["event_timeline"],
+        clinical_profile=result["clinical_profile"],
+        analysis_report=result["analysis_report"],
+    )
+
+    md_text = md_path.read_text(encoding="utf-8")
+    html_text = html_path.read_text(encoding="utf-8")
+    assert "### Grupy triali" in markdown
+    assert "**bodziec**" in markdown
+    assert "**odpowiedź**" in markdown
+    assert "**błąd/poprawność**" in markdown
+    assert "**zmiana aktywności**" in markdown
+    assert "**komentarz mechanizmu**" in markdown
+    assert "| Trial | Warunek | Bodziec | Odpowiedź | Wynik |" in md_text
+    assert "## Skrót metryk" in md_text
+    assert "## Polski słownik pojęć" in md_text
+    assert "początek bodźca" in md_text
+    assert "<!doctype html>" in html_text
+    assert "Tabela triali" in html_text
