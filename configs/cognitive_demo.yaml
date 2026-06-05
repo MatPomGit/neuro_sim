@@ -7,9 +7,46 @@ integrator:
     cognitive_drive_gain: 3.2
 timestep: 0.005
 seed: 11
+rng_seed: 11
 task:
   scenario: threat-reversal
   duration: 60.0
+stimulus:
+  scenario: threat-reversal
+  source: task
+brain_profile:
+  id: default
+  description: Bazowy profil parametrów modelu.
+clinical_profile:
+  id: healthy_v1
+  display_name: Zdrowy profil bazowy v1
+  mechanism: Brak jawnie modelowanej patologii klinicznej.
+  affected_regions: []
+  cognitive_functions: []
+  expected_effects: {}
+  expected_direction: stable_reference
+  primary_metric: mean_abs_difference
+  severity_level:
+    small: 0.0
+    medium: 0.02
+    large: 0.05
+connectome:
+  atlas: default_regions
+  weights: data/connectomes/weights.csv
+  fiber_lengths: data/connectomes/fiber_lengths.csv
+pathology:
+  enabled: false
+  scenario: null
+  mutations: []
+snn:
+  enabled: false
+  circuits: []
+analysis:
+  sets:
+  - spectral
+  - phase_locking
+  - connectivity
+  - information_flow
 output:
   save_results: true
   label: cognitive-demo

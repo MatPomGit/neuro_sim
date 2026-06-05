@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -32,50 +33,68 @@ ALLOWED_CLINICAL_PROFILE_KEYS = {
     "primary_metric",
 }
 
+REQUIRED_CONFIG_SECTIONS = (
+    "model",
+    "integrator",
+    "task",
+    "stimulus",
+    "brain_profile",
+    "clinical_profile",
+    "connectome",
+    "pathology",
+    "snn",
+    "analysis",
+    "output",
+)
+
 
 @dataclass
 class ExperimentConfig:
-    """
-    Ujednolicony obiekt konfiguracji eksperymentu po walidacji.
+    """Ujednolicony obiekt konfiguracji eksperymentu po walidacji.
 
-    Atrybuty:
-        model (dict[str, Any]): Konfiguracja modelu.
-        integrator (dict[str, Any]): Konfiguracja integratora.
-        timestep (float): Krok czasowy symulacji.
-        seed (int): Ziarno generatora losowego.
-        task (dict[str, Any]): Konfiguracja zadania.
-        pathology (dict[str, Any]): Konfiguracja patologii.
-        output (dict[str, Any]): Ustawienia wyjścia.
-        snn (dict[str, Any]): Konfiguracja SNN.
-        analysis (dict[str, Any]): Konfiguracja analiz.
-        clinical_profile (dict[str, Any]): Metadane profilu klinicznego.
+    Parameters
+    ----------
+    model:
+        Parametry modelu masowego lub poznawczego.
+    integrator:
+        Parametry integratora numerycznego.
+    timestep:
+        Krok czasowy symulacji w sekundach.
+    seed:
+        Historyczne pole ziarna generatora losowego zachowane dla zgodności.
+    rng_seed:
+        Docelowe pole ziarna generatora losowego; po walidacji jest zgodne z
+        `seed`.
+    task:
+        Parametry zadania eksperymentalnego.
+    stimulus:
+        Jawna sekcja parametrów bodźców i prezentacji.
+    brain_profile:
+        Jawna sekcja bazowego profilu mózgu bez interpretacji klinicznej.
+    clinical_profile:
+        Metadane profilu klinicznego wykorzystywane w raportach porównań.
+    connectome:
+        Parametry atlasu i macierzy połączeń strukturalnych.
+    pathology:
+        Konfiguracja patologii lub uszkodzeń.
+    snn:
+        Parametry współsymulacji SNN.
+    analysis:
+        Lista zestawów analiz po symulacji.
+    output:
+        Parametry zapisu artefaktów eksperymentu.
     """
 
     model: dict[str, Any] = field(default_factory=dict)
     integrator: dict[str, Any] = field(default_factory=lambda: {"method": "euler"})
     timestep: float = 0.005
     seed: int = 7
+    rng_seed: int | None = None
     task: dict[str, Any] = field(
         default_factory=lambda: {"scenario": "reward-learning", "duration": 45.0}
     )
-    pathology: dict[str, Any] = field(
-        default_factory=lambda: {"enabled": False, "mutations": [], "scenario": None}
-    )
-    output: dict[str, Any] = field(
-        default_factory=lambda: {
-            "save_results": True,
-            "label": "run",
-            "output_dir": "outputs",
-        }
-    )
-    snn: dict[str, Any] = field(
-        default_factory=lambda: {"enabled": False, "circuits": []}
-    )
-    analysis: dict[str, Any] = field(
-        default_factory=lambda: {
-            "sets": ["spectral", "phase_locking", "connectivity", "information_flow"]
-        }
-    )
+    stimulus: dict[str, Any] = field(default_factory=dict)
+    brain_profile: dict[str, Any] = field(default_factory=lambda: {"id": "default"})
     clinical_profile: dict[str, Any] = field(
         default_factory=lambda: {
             "id": "healthy_v1",
@@ -89,97 +108,300 @@ class ExperimentConfig:
             "primary_metric": "mean_abs_difference",
         }
     )
+    connectome: dict[str, Any] = field(
+        default_factory=lambda: {
+            "atlas": "default_regions",
+            "weights": "data/connectomes/weights.csv",
+            "fiber_lengths": "data/connectomes/fiber_lengths.csv",
+        }
+    )
+    pathology: dict[str, Any] = field(
+        default_factory=lambda: {"enabled": False, "mutations": [], "scenario": None}
+    )
+    snn: dict[str, Any] = field(
+        default_factory=lambda: {"enabled": False, "circuits": []}
+    )
+    analysis: dict[str, Any] = field(
+        default_factory=lambda: {
+            "sets": ["spectral", "phase_locking", "connectivity", "information_flow"]
+        }
+    )
+    output: dict[str, Any] = field(
+        default_factory=lambda: {
+            "save_results": True,
+            "label": "run",
+            "output_dir": "outputs",
+        }
+    )
 
 
-def _coerce_string_tuple(value: Any, field_name: str) -> tuple[str, ...]:
-    """Normalizuje listę nazw regionów SNN do krotki niepustych tekstów.
+class ConfigValidationError(ValueError):
+    """Błąd walidacji konfiguracji eksperymentu."""
+
+
+def validate_config(
+    raw: dict[str, Any], *, require_sections: bool = True
+) -> ExperimentConfig:
+    """Waliduje surową konfigurację i zwraca obiekt `ExperimentConfig`.
 
     Parameters
     ----------
-    value:
-        Wartość odczytana z konfiguracji YAML/JSON.
-    field_name:
-        Nazwa pola używana w komunikacie błędu walidacji.
+    raw:
+        Surowa konfiguracja odczytana z YAML/JSON.
+    require_sections:
+        Gdy `True`, wymaga jawnych sekcji docelowego schematu eksperymentu.
+        Loader profili klinicznych może ustawić `False`, ponieważ waliduje
+        fragment konfiguracji używany jako nakładka.
 
     Returns
     -------
-    tuple[str, ...]
-        Krotka nazw regionów zachowująca kolejność z konfiguracji.
+    ExperimentConfig
+        Zweryfikowany obiekt konfiguracji z ujednoliconym `seed` i `rng_seed`.
 
     Raises
     ------
     ConfigValidationError
-        Gdy wartość nie jest listą niepustych tekstów.
-    """
-    if not isinstance(value, list) or not all(
-        isinstance(item, str) and item.strip() for item in value
-    ):
-        raise ConfigValidationError(f"{field_name} musi być listą niepustych tekstów")
-    return tuple(str(item).strip() for item in value)
-
-
-class ConfigValidationError(ValueError):
-    """
-    Błąd walidacji konfiguracji eksperymentu.
-    """
-
-
-def validate_config(raw: dict[str, Any]) -> ExperimentConfig:
-    """
-    Waliduje surową konfigurację i zwraca obiekt `ExperimentConfig`.
-
-    Args:
-        raw (dict[str, Any]): Surowa konfiguracja.
-
-    Returns:
-        ExperimentConfig: Zweryfikowany obiekt konfiguracji.
-
-    Raises:
-        ConfigValidationError: Jeśli konfiguracja jest niepoprawna.
+        Gdy konfiguracja jest niepoprawna.
     """
     if not isinstance(raw, dict):
         raise ConfigValidationError("Konfiguracja musi być obiektem mapującym (dict).")
 
+    if require_sections:
+        _require_top_level_sections(raw)
+
+    normalized_raw = _normalize_seed_fields(raw)
     cfg = ExperimentConfig(
-        **{k: v for k, v in raw.items() if k in ExperimentConfig.__dataclass_fields__}
+        **{
+            key: value
+            for key, value in normalized_raw.items()
+            if key in ExperimentConfig.__dataclass_fields__
+        }
     )
 
-    if cfg.timestep <= 0:
-        raise ConfigValidationError("timestep musi być > 0")
-    if cfg.seed < 0:
-        raise ConfigValidationError("seed musi być >= 0")
-    if float(cfg.task.get("duration", 0.0)) <= 0:
-        raise ConfigValidationError("task.duration musi być > 0")
-    method = str(cfg.integrator.get("method", "euler"))
-    if method != "euler":
-        raise ConfigValidationError("integrator.method aktualnie wspiera tylko 'euler'")
+    cfg.model = _require_mapping(cfg.model, "model")
+    cfg.integrator = _require_mapping(cfg.integrator, "integrator")
+    cfg.task = _require_mapping(cfg.task, "task")
+    cfg.stimulus = _require_mapping(cfg.stimulus, "stimulus")
+    cfg.brain_profile = _require_mapping(cfg.brain_profile, "brain_profile")
+    cfg.clinical_profile = _require_mapping(cfg.clinical_profile, "clinical_profile")
+    cfg.connectome = _require_mapping(cfg.connectome, "connectome")
+    cfg.pathology = _require_mapping(cfg.pathology, "pathology")
+    cfg.snn = _require_mapping(cfg.snn, "snn")
+    cfg.analysis = _require_mapping(cfg.analysis, "analysis")
+    cfg.output = _require_mapping(cfg.output, "output")
 
-    if not isinstance(cfg.pathology, dict):
-        raise ConfigValidationError("pathology musi być obiektem")
-    mutations = cfg.pathology.get("mutations", [])
-    if not isinstance(mutations, list):
-        raise ConfigValidationError("pathology.mutations musi być listą")
-    for idx, mutation in enumerate(mutations):
-        if not isinstance(mutation, dict):
-            raise ConfigValidationError(f"pathology.mutations[{idx}] musi być obiektem")
-        for required_key in ("kind", "scope", "target"):
-            if required_key not in mutation:
-                raise ConfigValidationError(
-                    f"Brak pola pathology.mutations[{idx}].{required_key}"
-                )
+    cfg.timestep = _require_positive_number(cfg.timestep, "timestep")
+    cfg.seed = _require_non_negative_int(cfg.seed, "seed")
+    if cfg.rng_seed is None:
+        cfg.rng_seed = cfg.seed
+    cfg.rng_seed = _require_non_negative_int(cfg.rng_seed, "rng_seed")
 
+    _validate_integrator_config(cfg)
+    _validate_task_config(cfg)
+    _validate_stimulus_config(cfg)
+    _validate_brain_profile_config(cfg)
+    _validate_connectome_config(cfg)
+    _validate_pathology_config(cfg)
     _validate_clinical_profile_config(cfg)
     _validate_snn_config(cfg)
     _validate_analysis_config(cfg)
-    cfg.output["output_dir"] = str(Path(cfg.output.get("output_dir", "outputs")))
+    _validate_output_config(cfg)
     return cfg
+
+
+def _require_top_level_sections(raw: dict[str, Any]) -> None:
+    """Sprawdza obecność jawnych sekcji docelowego schematu konfiguracji."""
+    for section_name in REQUIRED_CONFIG_SECTIONS:
+        if section_name not in raw:
+            raise ConfigValidationError(f"Brak wymaganej sekcji {section_name}")
+    if "rng_seed" not in raw and "seed" not in raw:
+        raise ConfigValidationError("Brak wymaganego pola rng_seed albo seed")
+    if "timestep" not in raw:
+        raise ConfigValidationError("Brak wymaganego pola timestep")
+
+
+def _normalize_seed_fields(raw: dict[str, Any]) -> dict[str, Any]:
+    """Migruje `seed` i `rng_seed` do jednej jawnej semantyki losowości."""
+    normalized = dict(raw)
+    has_seed = "seed" in normalized
+    has_rng_seed = "rng_seed" in normalized
+
+    if has_seed and has_rng_seed and normalized["seed"] != normalized["rng_seed"]:
+        raise ConfigValidationError(
+            "Pola seed i rng_seed wskazują różne wartości; ustaw jedną wartość "
+            "albo usuń historyczne pole seed."
+        )
+    if has_rng_seed:
+        normalized["seed"] = normalized["rng_seed"]
+    elif has_seed:
+        normalized["rng_seed"] = normalized["seed"]
+    return normalized
+
+
+def _require_mapping(value: Any, field_path: str) -> dict[str, Any]:
+    """Wymaga obiektu mapującego dla wskazanej ścieżki konfiguracji."""
+    if not isinstance(value, dict):
+        raise ConfigValidationError(f"{field_path} musi być obiektem")
+    return dict(value)
+
+
+def _require_bool(value: Any, field_path: str) -> bool:
+    """Wymaga wartości logicznej dla wskazanej ścieżki konfiguracji."""
+    if not isinstance(value, bool):
+        raise ConfigValidationError(f"{field_path} musi być wartością logiczną")
+    return value
+
+
+def _require_non_empty_string(value: Any, field_path: str) -> str:
+    """Wymaga niepustego tekstu dla wskazanej ścieżki konfiguracji."""
+    if not isinstance(value, str) or not value.strip():
+        raise ConfigValidationError(f"{field_path} musi być niepustym tekstem")
+    return value.strip()
+
+
+def _require_number(value: Any, field_path: str) -> float:
+    """Wymaga skończonej liczby dla wskazanej ścieżki konfiguracji."""
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise ConfigValidationError(f"{field_path} musi być liczbą")
+    number = float(value)
+    if not math.isfinite(number):
+        raise ConfigValidationError(f"{field_path} musi być liczbą skończoną")
+    return number
+
+
+def _require_positive_number(value: Any, field_path: str) -> float:
+    """Wymaga dodatniej skończonej liczby dla wskazanej ścieżki konfiguracji."""
+    number = _require_number(value, field_path)
+    if number <= 0:
+        raise ConfigValidationError(f"{field_path} musi być > 0")
+    return number
+
+
+def _require_non_negative_int(value: Any, field_path: str) -> int:
+    """Wymaga nieujemnej liczby całkowitej dla wskazanej ścieżki konfiguracji."""
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ConfigValidationError(f"{field_path} musi być liczbą całkowitą")
+    if value < 0:
+        raise ConfigValidationError(f"{field_path} musi być >= 0")
+    return int(value)
+
+
+def _require_list(value: Any, field_path: str) -> list[Any]:
+    """Wymaga listy dla wskazanej ścieżki konfiguracji."""
+    if not isinstance(value, list):
+        raise ConfigValidationError(f"{field_path} musi być listą")
+    return list(value)
+
+
+def _coerce_string_tuple(value: Any, field_name: str) -> tuple[str, ...]:
+    """Normalizuje listę nazw regionów SNN do krotki niepustych tekstów."""
+    values = _require_list(value, field_name)
+    if not all(isinstance(item, str) and item.strip() for item in values):
+        raise ConfigValidationError(f"{field_name} musi być listą niepustych tekstów")
+    return tuple(str(item).strip() for item in values)
+
+
+def _validate_integrator_config(cfg: ExperimentConfig) -> None:
+    """Waliduje parametry integratora numerycznego."""
+    if "method" not in cfg.integrator:
+        raise ConfigValidationError("Brak pola integrator.method")
+    method = _require_non_empty_string(cfg.integrator["method"], "integrator.method")
+    if method != "euler":
+        raise ConfigValidationError("integrator.method aktualnie wspiera tylko 'euler'")
+    cfg.integrator["method"] = method
+    if "oscillator" in cfg.integrator:
+        cfg.integrator["oscillator"] = _require_mapping(
+            cfg.integrator["oscillator"], "integrator.oscillator"
+        )
+
+
+def _validate_task_config(cfg: ExperimentConfig) -> None:
+    """Waliduje parametry zadania eksperymentalnego."""
+    if "scenario" not in cfg.task:
+        raise ConfigValidationError("Brak pola task.scenario")
+    cfg.task["scenario"] = _require_non_empty_string(
+        cfg.task["scenario"], "task.scenario"
+    )
+    if "duration" not in cfg.task:
+        raise ConfigValidationError("Brak pola task.duration")
+    cfg.task["duration"] = _require_positive_number(
+        cfg.task["duration"], "task.duration"
+    )
+    if "name" in cfg.task:
+        cfg.task["name"] = _require_non_empty_string(cfg.task["name"], "task.name")
+    for int_field in ("n_runs", "run_length_min", "run_length_max", "n"):
+        if int_field in cfg.task:
+            cfg.task[int_field] = _require_non_negative_int(
+                cfg.task[int_field], f"task.{int_field}"
+            )
+    for number_field in ("deviant_probability", "inter_stimulus_interval", "jitter"):
+        if number_field in cfg.task:
+            cfg.task[number_field] = _require_number(
+                cfg.task[number_field], f"task.{number_field}"
+            )
+
+
+def _validate_stimulus_config(cfg: ExperimentConfig) -> None:
+    """Waliduje jawną sekcję bodźców eksperymentalnych."""
+    if "scenario" in cfg.stimulus:
+        cfg.stimulus["scenario"] = _require_non_empty_string(
+            cfg.stimulus["scenario"], "stimulus.scenario"
+        )
+    if "source" in cfg.stimulus:
+        cfg.stimulus["source"] = _require_non_empty_string(
+            cfg.stimulus["source"], "stimulus.source"
+        )
+
+
+def _validate_brain_profile_config(cfg: ExperimentConfig) -> None:
+    """Waliduje bazowy profil mózgu niezależny od profilu klinicznego."""
+    if "id" in cfg.brain_profile:
+        cfg.brain_profile["id"] = _require_non_empty_string(
+            cfg.brain_profile["id"], "brain_profile.id"
+        )
+    if "description" in cfg.brain_profile:
+        cfg.brain_profile["description"] = _require_non_empty_string(
+            cfg.brain_profile["description"], "brain_profile.description"
+        )
+
+
+def _validate_connectome_config(cfg: ExperimentConfig) -> None:
+    """Waliduje sekcję atlasu i macierzy connectome."""
+    for text_field in ("atlas", "weights", "fiber_lengths"):
+        if text_field in cfg.connectome and cfg.connectome[text_field] is not None:
+            cfg.connectome[text_field] = _require_non_empty_string(
+                cfg.connectome[text_field], f"connectome.{text_field}"
+            )
+
+
+def _validate_pathology_config(cfg: ExperimentConfig) -> None:
+    """Waliduje konfigurację patologii i mutacji stanu symulacji."""
+    if "enabled" not in cfg.pathology:
+        raise ConfigValidationError("Brak pola pathology.enabled")
+    cfg.pathology["enabled"] = _require_bool(
+        cfg.pathology["enabled"], "pathology.enabled"
+    )
+    mutations = cfg.pathology.get("mutations", [])
+    cfg.pathology["mutations"] = _require_list(mutations, "pathology.mutations")
+    scenario = cfg.pathology.get("scenario")
+    if scenario is not None:
+        cfg.pathology["scenario"] = _require_non_empty_string(
+            scenario, "pathology.scenario"
+        )
+    for idx, mutation in enumerate(cfg.pathology["mutations"]):
+        mutation_path = f"pathology.mutations[{idx}]"
+        mutation_config = _require_mapping(mutation, mutation_path)
+        for required_key in ("kind", "scope", "target"):
+            if required_key not in mutation_config:
+                raise ConfigValidationError(f"Brak pola {mutation_path}.{required_key}")
+            mutation_config[required_key] = _require_non_empty_string(
+                mutation_config[required_key], f"{mutation_path}.{required_key}"
+            )
+        cfg.pathology["mutations"][idx] = mutation_config
 
 
 def _validate_clinical_profile_config(cfg: ExperimentConfig) -> None:
     """Waliduje metadane profilu klinicznego ładowanego z konfiguracji."""
-    if not isinstance(cfg.clinical_profile, dict):
-        raise ConfigValidationError("clinical_profile musi być obiektem")
-
     profile_id = cfg.clinical_profile.get("id", "healthy_v1")
     if profile_id not in ALLOWED_CLINICAL_PROFILE_IDS:
         allowed = sorted(ALLOWED_CLINICAL_PROFILE_IDS)
@@ -194,7 +416,9 @@ def _validate_clinical_profile_config(cfg: ExperimentConfig) -> None:
         raise ConfigValidationError(f"Nieznane pola clinical_profile: {unknown_keys}")
 
     for text_key in ("display_name", "mechanism"):
-        value = cfg.clinical_profile.get(text_key, "")
+        if text_key not in cfg.clinical_profile:
+            raise ConfigValidationError(f"Brak pola clinical_profile.{text_key}")
+        value = cfg.clinical_profile[text_key]
         if not isinstance(value, str) or not value.strip():
             raise ConfigValidationError(f"clinical_profile.{text_key} musi być tekstem")
 
@@ -240,12 +464,10 @@ def _validate_clinical_profile_config(cfg: ExperimentConfig) -> None:
             raise ConfigValidationError(
                 f"Brak progu clinical_profile.severity_level.{threshold_name}"
             )
-        try:
-            severity_level[threshold_name] = float(severity_level[threshold_name])
-        except (TypeError, ValueError) as error:
-            raise ConfigValidationError(
-                f"clinical_profile.severity_level.{threshold_name} musi być liczbą"
-            ) from error
+        severity_level[threshold_name] = _require_number(
+            severity_level[threshold_name],
+            f"clinical_profile.severity_level.{threshold_name}",
+        )
     if not (
         severity_level["small"] <= severity_level["medium"] <= severity_level["large"]
     ):
@@ -255,6 +477,8 @@ def _validate_clinical_profile_config(cfg: ExperimentConfig) -> None:
         )
 
     cfg.clinical_profile["id"] = str(profile_id)
+    cfg.clinical_profile["display_name"] = cfg.clinical_profile["display_name"].strip()
+    cfg.clinical_profile["mechanism"] = cfg.clinical_profile["mechanism"].strip()
     cfg.clinical_profile["affected_regions"] = list(
         cfg.clinical_profile.get("affected_regions", [])
     )
@@ -269,11 +493,10 @@ def _validate_clinical_profile_config(cfg: ExperimentConfig) -> None:
 
 def _validate_snn_config(cfg: ExperimentConfig) -> None:
     """Waliduje sekcję konfiguracji współsymulacji SNN."""
-    if not isinstance(cfg.snn, dict):
-        raise ConfigValidationError("snn musi być obiektem")
-    circuits = cfg.snn.get("circuits", [])
-    if not isinstance(circuits, list):
-        raise ConfigValidationError("snn.circuits musi być listą")
+    if "enabled" not in cfg.snn:
+        raise ConfigValidationError("Brak pola snn.enabled")
+    cfg.snn["enabled"] = _require_bool(cfg.snn["enabled"], "snn.enabled")
+    circuits = _require_list(cfg.snn.get("circuits", []), "snn.circuits")
 
     circuit_regions: list[str] = []
     for idx, circuit in enumerate(circuits):
@@ -292,13 +515,8 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
     if sync_dt_val is None:
         sync_dt = cfg.timestep
     else:
-        try:
-            sync_dt = float(sync_dt_val)
-        except (ValueError, TypeError) as exc:
-            raise ConfigValidationError("snn.sync_dt musi być liczbą") from exc
+        sync_dt = _require_positive_number(sync_dt_val, "snn.sync_dt")
 
-    if sync_dt <= 0:
-        raise ConfigValidationError("snn.sync_dt musi być > 0")
     ratio = sync_dt / cfg.timestep
     if abs(round(ratio) - ratio) > 1e-9:
         raise ConfigValidationError("snn.sync_dt musi być wielokrotnością timestep")
@@ -310,19 +528,9 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
             f"snn.mode musi mieć jedną z wartości: {allowed_modes}"
         )
 
-    max_feedback_amplitude_raw = cfg.snn.get("max_feedback_amplitude", 0.15)
-    try:
-        max_feedback_amplitude = float(max_feedback_amplitude_raw)
-    except (ValueError, TypeError) as exc:
-        raise ConfigValidationError(
-            "snn.max_feedback_amplitude musi być liczbą"
-        ) from exc
-    import math
-
-    if not math.isfinite(max_feedback_amplitude) or max_feedback_amplitude <= 0:
-        raise ConfigValidationError(
-            "snn.max_feedback_amplitude musi być skończoną liczbą > 0"
-        )
+    max_feedback_amplitude = _require_positive_number(
+        cfg.snn.get("max_feedback_amplitude", 0.15), "snn.max_feedback_amplitude"
+    )
 
     input_rate_unit = str(cfg.snn.get("input_rate_unit", "Hz"))
     output_activity_unit = str(cfg.snn.get("output_activity_unit", "fraction"))
@@ -347,6 +555,7 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
             raise ConfigValidationError(str(exc)) from exc
         cfg.snn["neural_mass_regions"] = list(neural_mass_regions)
 
+    cfg.snn["circuits"] = circuits
     cfg.snn["mode"] = coupling_mode
     cfg.snn["max_feedback_amplitude"] = max_feedback_amplitude
     cfg.snn["sync_dt"] = sync_dt
@@ -356,12 +565,25 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
 
 def _validate_analysis_config(cfg: ExperimentConfig) -> None:
     """Waliduje wybór zestawów analiz uruchamianych po symulacji."""
-    if not isinstance(cfg.analysis, dict):
-        raise ConfigValidationError("analysis musi być obiektem")
-    sets_val = cfg.analysis.get("sets", [])
-    if not isinstance(sets_val, list):
-        raise ConfigValidationError("analysis.sets musi być listą")
+    sets_val = _require_list(cfg.analysis.get("sets", []), "analysis.sets")
     allowed = {"spectral", "phase_locking", "connectivity", "information_flow"}
     unknown = [name for name in sets_val if name not in allowed]
     if unknown:
         raise ConfigValidationError(f"Nieznane analysis.sets: {unknown}")
+    cfg.analysis["sets"] = sets_val
+
+
+def _validate_output_config(cfg: ExperimentConfig) -> None:
+    """Waliduje i normalizuje parametry zapisu artefaktów eksperymentu."""
+    if "save_results" not in cfg.output:
+        raise ConfigValidationError("Brak pola output.save_results")
+    cfg.output["save_results"] = _require_bool(
+        cfg.output["save_results"], "output.save_results"
+    )
+    if "label" not in cfg.output:
+        raise ConfigValidationError("Brak pola output.label")
+    cfg.output["label"] = _require_non_empty_string(cfg.output["label"], "output.label")
+    output_dir = cfg.output.get("output_dir", "outputs")
+    cfg.output["output_dir"] = str(
+        Path(_require_non_empty_string(output_dir, "output.output_dir"))
+    )
