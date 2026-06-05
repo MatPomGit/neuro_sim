@@ -94,7 +94,9 @@ class ExperimentConfig:
     task: dict[str, Any] = field(
         default_factory=lambda: {"scenario": "reward-learning", "duration": 45.0}
     )
-    stimulus: dict[str, Any] = field(default_factory=dict)
+    stimulus: dict[str, Any] = field(
+        default_factory=lambda: {"scenario": "reward-learning", "source": "task"}
+    )
     brain_profile: dict[str, Any] = field(default_factory=lambda: {"id": "default"})
     clinical_profile: dict[str, Any] = field(
         default_factory=lambda: {
@@ -343,23 +345,22 @@ def _validate_task_config(cfg: ExperimentConfig) -> None:
 
 
 def _validate_stimulus_config(cfg: ExperimentConfig) -> None:
-    """Waliduje jawną sekcję bodźców eksperymentalnych."""
-    if "scenario" in cfg.stimulus:
-        cfg.stimulus["scenario"] = _require_non_empty_string(
-            cfg.stimulus["scenario"], "stimulus.scenario"
-        )
-    if "source" in cfg.stimulus:
-        cfg.stimulus["source"] = _require_non_empty_string(
-            cfg.stimulus["source"], "stimulus.source"
+    """Waliduje wymaganą sekcję bodźców eksperymentalnych."""
+    for text_field in ("scenario", "source"):
+        if text_field not in cfg.stimulus:
+            raise ConfigValidationError(f"Brak pola stimulus.{text_field}")
+        cfg.stimulus[text_field] = _require_non_empty_string(
+            cfg.stimulus[text_field], f"stimulus.{text_field}"
         )
 
 
 def _validate_brain_profile_config(cfg: ExperimentConfig) -> None:
     """Waliduje bazowy profil mózgu niezależny od profilu klinicznego."""
-    if "id" in cfg.brain_profile:
-        cfg.brain_profile["id"] = _require_non_empty_string(
-            cfg.brain_profile["id"], "brain_profile.id"
-        )
+    if "id" not in cfg.brain_profile:
+        raise ConfigValidationError("Brak pola brain_profile.id")
+    cfg.brain_profile["id"] = _require_non_empty_string(
+        cfg.brain_profile["id"], "brain_profile.id"
+    )
     if "description" in cfg.brain_profile:
         cfg.brain_profile["description"] = _require_non_empty_string(
             cfg.brain_profile["description"], "brain_profile.description"
@@ -368,7 +369,12 @@ def _validate_brain_profile_config(cfg: ExperimentConfig) -> None:
 
 def _validate_connectome_config(cfg: ExperimentConfig) -> None:
     """Waliduje sekcję atlasu i macierzy connectome."""
-    for text_field in ("atlas", "weights", "fiber_lengths"):
+    if "atlas" not in cfg.connectome:
+        raise ConfigValidationError("Brak pola connectome.atlas")
+    cfg.connectome["atlas"] = _require_non_empty_string(
+        cfg.connectome["atlas"], "connectome.atlas"
+    )
+    for text_field in ("weights", "fiber_lengths"):
         if text_field in cfg.connectome and cfg.connectome[text_field] is not None:
             cfg.connectome[text_field] = _require_non_empty_string(
                 cfg.connectome[text_field], f"connectome.{text_field}"

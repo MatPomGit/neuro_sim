@@ -30,7 +30,10 @@ walidator zgłasza jawny błąd zamiast wybierać jedną wartość po cichu.
 
 Loader YAML i JSON kieruje surowe dane przez tę samą ścieżkę `validate_config`,
 a komunikaty błędów wskazują pełną ścieżkę pola, np. `task.duration` albo
-`pathology.mutations[0].target`.
+`pathology.mutations[0].target`. Minimalny kontrakt pól wymaganych w sekcjach
+obejmuje m.in. `stimulus.scenario`, `stimulus.source`, `brain_profile.id` oraz
+`connectome.atlas`, aby brak podstawowego kontekstu metodologicznego był
+wykrywany przed uruchomieniem symulacji.
 
 ## Konsekwencje
 
