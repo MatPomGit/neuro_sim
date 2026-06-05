@@ -166,7 +166,6 @@ def _create_activity_controls(canvas: Any, axes: list[Any]) -> QWidget:
     def autoscale_activity_plot() -> None:
         activity_axis.set_yscale("linear")
         scale_button.setText("Skala Y: liniowa")
-        activity_axis.relim()
         activity_axis.relim(visible_only=True)
         activity_axis.autoscale_view(scalex=True, scaley=True)
         if stimulus_axis is not None:
