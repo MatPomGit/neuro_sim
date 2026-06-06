@@ -487,7 +487,7 @@ def _format_qualitative_threshold(severity_thresholds: dict[str, Any] | None) ->
     for key in ordered:
         val = thresholds[key]
         parts.append(f"{labels[key]} ≥ {val:.6g}")
-    return "; ".join(parts) if parts else "brak jawnie zapisanych progów w profilu"
+    return "; ".join(parts)
 
 
 def _describe_observed_direction(signed_difference: float) -> str:
