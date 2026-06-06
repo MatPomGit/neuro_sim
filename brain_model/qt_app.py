@@ -52,7 +52,7 @@ from .qt_results import (
 from .qt_runner import SimulationWorker
 from .qt_sections import QtSections
 from .qt_styles import apply_qt_styles
-from .report_export import export_experiment_pdf
+from .report_export import export_experiment_pdf, export_teaching_package
 
 
 class QtDataclassParameterDialog(QDialog):
@@ -202,6 +202,13 @@ class BrainModelQtWindow(QMainWindow):
         self.export_pdf_action = file_menu.addAction("Eksportuj raport PDF...")
         self.export_pdf_action.setEnabled(False)
         self.export_pdf_action.triggered.connect(self.export_current_pdf_report)
+        self.export_teaching_package_action = file_menu.addAction(
+            "Eksportuj pakiet zajęciowy..."
+        )
+        self.export_teaching_package_action.setEnabled(False)
+        self.export_teaching_package_action.triggered.connect(
+            self.export_current_teaching_package
+        )
         file_menu.addSeparator()
         close_action = file_menu.addAction("Zamknij")
         close_action.triggered.connect(self.close)
@@ -274,12 +281,21 @@ class BrainModelQtWindow(QMainWindow):
             "Zapisuje gotowy PDF z opisem wyników i aktualnymi wykresami."
         )
         self.export_pdf_button.clicked.connect(self.export_current_pdf_report)
+        self.export_teaching_package_button = QPushButton("Eksportuj pakiet zajęciowy")
+        self.export_teaching_package_button.setEnabled(False)
+        self.export_teaching_package_button.setToolTip(
+            "Zapisuje HTML/PDF, konfigurację, seed, metadane i pytania kontrolne."
+        )
+        self.export_teaching_package_button.clicked.connect(
+            self.export_current_teaching_package
+        )
         close_button = QPushButton("Zamknij")
         close_button.clicked.connect(self.close)
         actions.addWidget(reset_button)
         actions.addStretch(1)
         actions.addWidget(run_button)
         actions.addWidget(self.export_pdf_button)
+        actions.addWidget(self.export_teaching_package_button)
         actions.addWidget(close_button)
         root.addLayout(actions)
 
@@ -381,6 +397,8 @@ class BrainModelQtWindow(QMainWindow):
         self.last_run_state_config = None
         self.export_pdf_action.setEnabled(False)
         self.export_pdf_button.setEnabled(False)
+        self.export_teaching_package_action.setEnabled(False)
+        self.export_teaching_package_button.setEnabled(False)
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
 
@@ -405,6 +423,8 @@ class BrainModelQtWindow(QMainWindow):
         self.last_run_state_config = state_to_config(self.state)
         self.export_pdf_action.setEnabled(False)
         self.export_pdf_button.setEnabled(False)
+        self.export_teaching_package_action.setEnabled(False)
+        self.export_teaching_package_button.setEnabled(False)
         self.status_label.setObjectName("statusLabel")
         self.status_label.setText("Symulacja w toku...")
         self.summary_label.setText("")
@@ -451,6 +471,8 @@ class BrainModelQtWindow(QMainWindow):
             self.roving_questions_panel.set_report(result[11])
         self.export_pdf_action.setEnabled(True)
         self.export_pdf_button.setEnabled(True)
+        self.export_teaching_package_action.setEnabled(True)
+        self.export_teaching_package_button.setEnabled(True)
         self.tabs.setCurrentIndex(1 if has_plots else 0)
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
@@ -504,6 +526,47 @@ class BrainModelQtWindow(QMainWindow):
             return
 
         self.status_label.setText(f"Zapisano raport PDF: {report_path}")
+
+    def export_current_teaching_package(self) -> None:
+        """Zapisz kompletny pakiet zajęciowy dla ostatniej symulacji."""
+        result = self.last_result_payload
+        if result is None or len(result) < 12:
+            QMessageBox.information(
+                self,
+                "Brak wyników",
+                "Najpierw uruchom symulację, aby wygenerować pakiet zajęciowy.",
+            )
+            return
+
+        save_info = result[2] if isinstance(result[2], dict) else None
+        output_dir = save_info.get("output_dir") if save_info else None
+        default_dir = Path(output_dir) if output_dir else Path.cwd()
+        target = QFileDialog.getExistingDirectory(
+            self,
+            "Eksportuj pakiet zajęciowy",
+            str(default_dir),
+        )
+        if not target:
+            return
+
+        try:
+            package_path = export_teaching_package(
+                Path(target) / "pakiet_zajeciowy_neuro_sim",
+                status_message=str(result[0]),
+                summary_text=str(result[1]),
+                state_config=self.last_run_state_config or state_to_config(self.state),
+                event_timeline=list(result[9]),
+                clinical_profile=dict(result[10]),
+                analysis_report=dict(result[11]),
+                plots=self.plot_panel.plots_for_export(),
+            )
+        except Exception as exc:
+            QMessageBox.critical(
+                self, "Błąd", f"Nie udało się zapisać pakietu zajęciowego: {exc}"
+            )
+            return
+
+        self.status_label.setText(f"Zapisano pakiet zajęciowy: {package_path}")
 
     def on_worker_finished(self) -> None:
         """Odłącz zakończony worker Qt i jego wątek od okna głównego."""

@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import datetime
 import html
+import json
+import platform
+import shutil
 import textwrap
 from pathlib import Path
 from typing import Any
@@ -587,6 +590,191 @@ def export_experiment_pdf(
             pdf.savefig(figure)
 
     return target
+
+
+def _control_question_lines(analysis_report: dict[str, Any]) -> list[str]:
+    """Zbuduj pytania kontrolne z odpowiedziami z raportu analitycznego.
+
+    Parameters
+    ----------
+    analysis_report:
+        Raport analityczny zwrócony przez silnik symulacji.
+
+    Returns
+    -------
+    list[str]
+        Linie Markdown gotowe do zapisania w pakiecie zajęciowym.
+    """
+    roving_report = analysis_report.get("roving_oddball", {}) if analysis_report else {}
+    if not isinstance(roving_report, dict) or not roving_report:
+        return [
+            "# Pytania kontrolne",
+            "",
+            "1. Jakie zdarzenia widać na osi czasu eksperymentu?",
+            "2. Które metryki zmieniły się najmocniej po uruchomieniu scenariusza?",
+            "3. Jak profil kliniczny pomaga zinterpretować wynik?",
+        ]
+    return [
+        "# Pytania kontrolne",
+        "",
+        (
+            "1. Ile standardów raportuje silnik? Odpowiedź: "
+            f"{roving_report.get('standard_count', 'n/a')}."
+        ),
+        (
+            "2. Ile dewiantów raportuje silnik? Odpowiedź: "
+            f"{roving_report.get('deviant_count', 'n/a')}."
+        ),
+        (
+            "3. Po czym rozpoznać readaptację? Odpowiedź: nowe standardy="
+            f"{roving_report.get('new_standard_count', 'n/a')}, średnia latencja="
+            f"{roving_report.get('mean_readaptation_latency', 'n/a')}."
+        ),
+        (
+            "4. Jakie jest tempo habituacji? Odpowiedź: "
+            f"{roving_report.get('habituation_rate', 'n/a')}."
+        ),
+    ]
+
+
+def _instructor_summary_lines(
+    *,
+    status_message: str,
+    summary_text: str,
+    state_config: dict[str, Any],
+    clinical_profile: dict[str, Any],
+    analysis_report: dict[str, Any],
+) -> list[str]:
+    """Zbuduj krótki skrót dla prowadzącego zajęcia.
+
+    Returns
+    -------
+    list[str]
+        Linie Markdown z najważniejszymi informacjami organizacyjnymi.
+    """
+    scenario_path = state_config.get("scenario_config_path", "n/a")
+    scenario_id = state_config.get("scenario", "n/a")
+    seed = state_config.get("seed", "n/a")
+    profile = clinical_profile.get("display_name") or clinical_profile.get("id", "n/a")
+    return [
+        "# Skrót dla prowadzącego",
+        "",
+        f"- Status: {status_message}",
+        f"- Scenariusz: {scenario_id}",
+        f"- Konfiguracja YAML: {scenario_path}",
+        f"- Ziarno losowości: {seed}",
+        f"- Profil kliniczny: {profile}",
+        f"- Podsumowanie metryk: {summary_text or 'brak'}",
+        "",
+        "## Metryki do omówienia",
+        *_metrics_summary_lines(analysis_report),
+    ]
+
+
+def export_teaching_package(
+    output_dir: str | Path,
+    *,
+    status_message: str,
+    summary_text: str,
+    state_config: dict[str, Any],
+    event_timeline: list[dict[str, Any]],
+    clinical_profile: dict[str, Any],
+    analysis_report: dict[str, Any],
+    plots: list[tuple[str, Figure]],
+    plot_descriptions: dict[str, str] | None = None,
+) -> Path:
+    """Wyeksportuj kompletny pakiet zajęciowy HTML/PDF z metadanymi.
+
+    Parameters
+    ----------
+    output_dir:
+        Katalog docelowy pakietu zajęciowego.
+    status_message:
+        Status zakończonego uruchomienia.
+    summary_text:
+        Skrót metryk widoczny w GUI.
+    state_config:
+        Migawka konfiguracji GUI/YAML wraz z seedem.
+    event_timeline:
+        Oś czasu zdarzeń zwrócona przez silnik.
+    clinical_profile:
+        Profil kliniczny z konfiguracji lub wyniku.
+    analysis_report:
+        Raport analityczny zwrócony przez silnik.
+    plots:
+        Wykresy z panelu GUI do raportu PDF.
+    plot_descriptions:
+        Opcjonalne opisy wykresów.
+
+    Returns
+    -------
+    Path
+        Katalog zapisanego pakietu zajęciowego.
+    """
+    package_dir = Path(output_dir)
+    package_dir.mkdir(parents=True, exist_ok=True)
+    report_html = package_dir / "raport_zajeciowy.html"
+    report_pdf = package_dir / "raport_zajeciowy.pdf"
+    export_experiment_report(
+        report_html,
+        status_message=status_message,
+        summary_text=summary_text,
+        state_config=state_config,
+        event_timeline=event_timeline,
+        clinical_profile=clinical_profile,
+        analysis_report=analysis_report,
+        title="Raport zajęciowy neuro_sim",
+    )
+    export_experiment_pdf(
+        report_pdf,
+        status_message=status_message,
+        summary_text=summary_text,
+        state_config=state_config,
+        event_timeline=event_timeline,
+        clinical_profile=clinical_profile,
+        analysis_report=analysis_report,
+        plots=plots,
+        plot_descriptions=plot_descriptions,
+    )
+
+    (package_dir / "konfiguracja_gui.json").write_text(
+        json.dumps(state_config, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    scenario_path = state_config.get("scenario_config_path")
+    if scenario_path:
+        source = Path(str(scenario_path))
+        if not source.is_absolute():
+            source = Path(__file__).resolve().parents[1] / source
+        if source.exists():
+            shutil.copy2(source, package_dir / source.name)
+
+    metadata = {
+        "generated_at": datetime.datetime.now(datetime.UTC).isoformat(),
+        "seed": state_config.get("seed"),
+        "scenario": state_config.get("scenario"),
+        "scenario_config_path": state_config.get("scenario_config_path"),
+        "python_version": platform.python_version(),
+        "platform": platform.platform(),
+    }
+    (package_dir / "metadata_uruchomienia.json").write_text(
+        json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    (package_dir / "pytania_kontrolne.md").write_text(
+        "\n".join(_control_question_lines(analysis_report)), encoding="utf-8"
+    )
+    (package_dir / "skrot_dla_prowadzacego.md").write_text(
+        "\n".join(
+            _instructor_summary_lines(
+                status_message=status_message,
+                summary_text=summary_text,
+                state_config=state_config,
+                clinical_profile=clinical_profile,
+                analysis_report=analysis_report,
+            )
+        ),
+        encoding="utf-8",
+    )
+    return package_dir
 
 
 def export_report(

@@ -181,3 +181,28 @@ def test_control_bindings_keep_sync_sections_separate() -> None:
     assert "sync_plot_selection_controls_from_state" in QT_SECTIONS_PATH.read_text(
         encoding="utf-8"
     )
+
+
+def test_quick_start_has_lesson_and_yaml_selection() -> None:
+    """Szybki start ma osobny wybór lekcji oraz konfiguracji YAML."""
+    source = _method_source(QT_SECTIONS_PATH, "build_quick_start_section")
+
+    assert "self.ready_lesson_combo = QComboBox()" in source
+    assert "gotowa lekcja" in source
+    assert "self.scenario_config_combo = QComboBox()" in source
+    assert "scenario_yaml_preset_labels()" in source
+    assert "konfiguracja YAML" in source
+
+
+def test_ready_lessons_point_to_yaml_labels() -> None:
+    """Gotowe lekcje wskazują etykiety presetów YAML zamiast własnej konfiguracji."""
+    source = QT_SECTIONS_PATH.read_text(encoding="utf-8")
+
+    assert "READY_LESSON_PRESETS" in source
+    assert (
+        'label_for_scenario_yaml_path("configs/roving_oddball_healthy.yaml")' in source
+    )
+    assert (
+        'label_for_scenario_yaml_path("configs/roving_oddball_disorder_gaba.yaml")'
+        in source
+    )

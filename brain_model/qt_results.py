@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import Qt
@@ -37,6 +38,45 @@ from .plotting import (
 )
 from .qt_plotting import QtPlotPanel
 from .scenarios import get_scenario
+
+GLOSSARY_PATH = (
+    Path(__file__).resolve().parents[1] / "docs" / "english_polish_glossary.md"
+)
+
+
+def _load_glossary_terms() -> dict[str, tuple[str, str]]:
+    """Wczytaj polskie etykiety i konteksty z dokumentu słownika EN→PL.
+
+    Returns
+    -------
+    dict[str, tuple[str, str]]
+        Mapowanie nazwy technicznej na parę: polska etykieta, kontekst użycia.
+    """
+    terms: dict[str, tuple[str, str]] = {}
+    try:
+        lines = GLOSSARY_PATH.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return terms
+    for line in lines:
+        if not line.startswith("|") or "---" in line or "English" in line:
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if len(cells) != 3:
+            continue
+        english_name, polish_label, usage_context = cells
+        if english_name and polish_label:
+            terms[english_name] = (polish_label, usage_context)
+    return terms
+
+
+def _glossary_label(terms: dict[str, tuple[str, str]], key: str) -> str:
+    """Zwróć polską etykietę terminu ze słownika albo nazwę techniczną."""
+    return terms.get(key, (key, ""))[0]
+
+
+def _glossary_context(terms: dict[str, tuple[str, str]], key: str) -> str:
+    """Zwróć kontekst terminu ze słownika używany jako krótkie objaśnienie."""
+    return terms.get(key, (key, "brak opisu w słowniku"))[1]
 
 
 def _extract_tones(
@@ -449,24 +489,38 @@ class ClinicalProfilePanel(QWidget):
 
 
 class ObservationPanel(QWidget):
-    """Panel nauczyciela „Co obserwujesz?” oparty wyłącznie na wynikach silnika."""
+    """Panel nauczyciela z obserwacjami i znaczeniem pojęć ze słownika EN→PL."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Utwórz panel syntetyzujący oś czasu, profil kliniczny i raport roving oddball."""
+        """Utwórz panel syntetyzujący artefakty silnika oraz opisy słownikowe."""
         super().__init__(parent)
+        self.glossary_terms = _load_glossary_terms()
         layout = QVBoxLayout(self)
-        group = QGroupBox("Co obserwujesz?")
-        group_layout = QVBoxLayout(group)
+        observation_group = QGroupBox("Co obserwujesz teraz?")
+        observation_group.setToolTip(
+            "Co obserwujesz? Zobacz bieżące artefakty silnika."
+        )
+        observation_layout = QVBoxLayout(observation_group)
         hint = QLabel(
             "Wskazówki są budowane z `event_timeline`, `clinical_profile` oraz "
             "sekcji `roving_oddball` raportu zwróconego przez run_experiment()."
         )
         hint.setWordWrap(True)
-        group_layout.addWidget(hint)
+        observation_layout.addWidget(hint)
         self.summary_label = QLabel("Uruchom symulację, aby zobaczyć obserwacje.")
         self.summary_label.setWordWrap(True)
-        group_layout.addWidget(self.summary_label)
-        layout.addWidget(group)
+        observation_layout.addWidget(self.summary_label)
+
+        importance_group = QGroupBox("Dlaczego to ważne?")
+        importance_layout = QVBoxLayout(importance_group)
+        self.importance_label = QLabel(
+            "Panel używa polskich nazw i kontekstów z `docs/english_polish_glossary.md`."
+        )
+        self.importance_label.setWordWrap(True)
+        importance_layout.addWidget(self.importance_label)
+
+        layout.addWidget(observation_group)
+        layout.addWidget(importance_group)
         layout.addStretch(1)
 
     def set_context(
@@ -489,6 +543,58 @@ class ObservationPanel(QWidget):
         roving_report = analysis_report.get("roving_oddball", {})
         observations = self._build_observations(events, clinical_profile, roving_report)
         self.summary_label.setText("\n".join(f"• {item}" for item in observations))
+        importance = self._build_importance_points(
+            events, clinical_profile, roving_report
+        )
+        self.importance_label.setText("\n".join(f"• {item}" for item in importance))
+
+    def _build_importance_points(
+        self,
+        events: list[dict[str, Any]],
+        clinical_profile: dict[str, Any],
+        roving_report: dict[str, Any],
+    ) -> list[str]:
+        """Zbuduj znaczenie obserwacji z polskich opisów w słowniku projektu."""
+        terms = self.glossary_terms
+        points = [
+            (
+                f"{_glossary_label(terms, 'event_timeline').capitalize()} "
+                f"porządkuje bodźce i odpowiedzi w czasie; "
+                f"kontekst słownika: {_glossary_context(terms, 'event_timeline')}."
+            ),
+            (
+                f"{_glossary_label(terms, 'prediction_error').capitalize()} oraz "
+                f"{_glossary_label(terms, 'confidence')} pomagają powiązać wykresy "
+                "z decyzjami modelu zamiast oceniać tylko kształt krzywych."
+            ),
+        ]
+        event_types = {str(event.get("event_type", "")) for event in events}
+        for key in (
+            "stimulus_onset",
+            "response",
+            "error",
+            "neuromodulation_change",
+            "significant_region_activity_change",
+        ):
+            if key in event_types:
+                points.append(
+                    f"{_glossary_label(terms, key).capitalize()} — "
+                    f"{_glossary_context(terms, key)}."
+                )
+        functions = clinical_profile.get("cognitive_functions", [])
+        if isinstance(functions, list):
+            for function_name in functions[:3]:
+                glossary_key = str(function_name).replace("-", "_")
+                points.append(
+                    f"{_glossary_label(terms, glossary_key).capitalize()} — "
+                    f"{_glossary_context(terms, glossary_key)}."
+                )
+        if roving_report:
+            points.append(
+                "Standard, dewiant, habituacja i readaptacja pokazują, czy model "
+                "odróżnia przewidywalny bodziec od zmiany reguły w tym samym przebiegu."
+            )
+        return points
 
     def _build_observations(
         self,

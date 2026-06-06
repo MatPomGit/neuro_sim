@@ -19,61 +19,97 @@ from .gui_state import GuiState
 TDataclass = TypeVar("TDataclass")
 CONFIG_FORMAT = "brain-model-gui-config-v1"
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SCENARIO_YAML_PRESETS: tuple[tuple[str, Path], ...] = (
-    ("Roving oddball — zdrowy", Path("configs/roving_oddball_healthy.yaml")),
-    (
-        "Roving oddball — zaburzenie GABA",
-        Path("configs/roving_oddball_disorder_gaba.yaml"),
-    ),
-    (
-        "Roving oddball — lezja hipokampa",
-        Path("configs/roving_oddball_lesion_hippocampus.yaml"),
-    ),
-    ("SNN — demo hipokampa", Path("configs/snn_hippocampus_demo.yaml")),
-    ("Stroop — osłabienie DLPFC", Path("configs/scenario_yaml_stroop_dlpfc.yaml")),
-    ("Go/No-Go — dysregulacja GABA", Path("configs/scenario_yaml_go_nogo_gaba.yaml")),
-    ("N-back — deficyt dopaminowy", Path("configs/scenario_yaml_n_back_dopamine.yaml")),
-    (
-        "Stres i regeneracja — serotonina",
-        Path("configs/scenario_yaml_stress_recovery_serotonin.yaml"),
-    ),
-)
+CONFIGS_DIR = REPO_ROOT / "configs"
 
-SCENARIO_YAML_DESCRIPTIONS: dict[str, str] = {
-    "Roving oddball — zdrowy": (
-        "Profil referencyjny bez patologii. Wybierz go, aby zobaczyć bazową "
-        "identyfikację standardów, dewiantów, habituacji i readaptacji."
-    ),
-    "Roving oddball — zaburzenie GABA": (
-        "Ten wariant modeluje profil z obniżoną inhibicją GABA i służy do "
-        "porównania, jak większy szum oraz niestabilność kontroli przedczołowej "
-        "zmieniają odpowiedź na dewiant."
-    ),
-    "Roving oddball — lezja hipokampa": (
-        "Ten wariant modeluje skutki uszkodzenia hipokampa i pokazuje, jak słabsza "
-        "integracja epizodyczna wpływa na wykrywanie nowości oraz readaptację."
-    ),
-    "SNN — demo hipokampa": (
-        "Demo sprzężenia lokalnego obwodu SNN regionu HIP z modelem masowym; "
-        "użyj go do sprawdzenia zamkniętej pętli hipokampa zamiast lekcji roving oddball."
-    ),
-    "Stroop — osłabienie DLPFC": (
-        "Lekcja konfliktu poznawczego Stroop z profilem osłabienia DLPFC; "
-        "pomaga obserwować słabszą kontrolę wykonawczą i komunikację DLPFC–ACC."
-    ),
-    "Go/No-Go — dysregulacja GABA": (
-        "Wariant hamowania reakcji w przeciążeniu sensorycznym. Pokazuje, jak "
-        "obniżona inhibicja GABA zwiększa szum i utrudnia stabilną odpowiedź No-Go."
-    ),
-    "N-back — deficyt dopaminowy": (
-        "Zadanie pamięci roboczej 2-back połączone z kontekstem uczenia nagrody; "
-        "służy do omówienia słabszej modulacji wartościującej i decyzji."
-    ),
-    "Stres i regeneracja — serotonina": (
-        "Scenariusz epizodu stresu oraz wygaszania pobudzenia z profilem "
-        "zaburzonej równowagi serotoninowej i ostrożniejszym progiem decyzji."
-    ),
-}
+
+def _humanize_config_stem(stem: str) -> str:
+    """Zamień techniczną nazwę presetu YAML na czytelną etykietę GUI."""
+    cleaned = stem.removeprefix("scenario_yaml_")
+    return cleaned.replace("_", " ").replace("-", " ").strip().capitalize()
+
+
+def _scenario_yaml_label(path: Path) -> str:
+    """Zbuduj etykietę scenariusza na podstawie istniejącego pliku `configs/*.yaml`."""
+    try:
+        payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except OSError:
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+    task = payload.get("task", {})
+    clinical_profile = payload.get("clinical_profile", {})
+    scenario_id = task.get("scenario") if isinstance(task, dict) else None
+    profile_name = (
+        clinical_profile.get("display_name")
+        if isinstance(clinical_profile, dict)
+        else None
+    )
+    base_label = _humanize_config_stem(path.stem)
+    if scenario_id and profile_name:
+        return f"{base_label} — {scenario_id} — {profile_name}"
+    if scenario_id:
+        return f"{base_label} — {scenario_id}"
+    return base_label
+
+
+def _discover_scenario_yaml_presets() -> tuple[tuple[str, Path], ...]:
+    """Odczytaj dostępne scenariusze bez tworzenia równoległej konfiguracji GUI."""
+    presets: list[tuple[str, Path]] = []
+    for config_path in sorted(CONFIGS_DIR.glob("*.yaml")):
+        relative_path = config_path.relative_to(REPO_ROOT)
+        presets.append((_scenario_yaml_label(config_path), relative_path))
+    if not presets:
+        presets.append(("Domyślna konfiguracja", Path("configs/default.yaml")))
+    return tuple(presets)
+
+
+SCENARIO_YAML_PRESETS: tuple[tuple[str, Path], ...] = _discover_scenario_yaml_presets()
+
+
+def _scenario_yaml_descriptions() -> dict[str, str]:
+    """Zbuduj opisy presetów z pól YAML walidowanych później przez loader silnika."""
+    descriptions: dict[str, str] = {}
+    for label, preset_path in SCENARIO_YAML_PRESETS:
+        config_path = REPO_ROOT / preset_path
+        try:
+            payload = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        except OSError:
+            payload = {}
+        if not isinstance(payload, dict):
+            payload = {}
+        task = payload.get("task", {})
+        clinical_profile = payload.get("clinical_profile", {})
+        parts = []
+        if isinstance(task, dict):
+            scenario_id = task.get("scenario", "n/a")
+            duration = task.get("duration", "n/a")
+            parts.append(
+                f"Scenariusz silnika: {scenario_id}; czas z YAML: {duration} s."
+            )
+        if isinstance(clinical_profile, dict):
+            mechanism = clinical_profile.get("mechanism")
+            if mechanism:
+                parts.append(f"Mechanizm dydaktyczny: {mechanism}")
+            if clinical_profile.get("id") == "healthy_v1":
+                parts.append("Profil referencyjny bez patologii.")
+            if clinical_profile.get("id") == "gaba_dysregulation":
+                parts.append("Profil z obniżoną inhibicją GABA.")
+            if clinical_profile.get("id") == "hippocampal_lesion":
+                parts.append("Profil skutków uszkodzenia hipokampa.")
+            if clinical_profile.get("id") == "dlpfc_weakening":
+                parts.append("Profil osłabienia DLPFC.")
+            if clinical_profile.get("id") == "gaba_dysregulation":
+                parts.append("Lekcja hamowania reakcji.")
+            if clinical_profile.get("id") == "dopamine_deficit":
+                parts.append("Lekcja pokazuje deficyt dopaminowy.")
+            if clinical_profile.get("id") == "serotonin_imbalance":
+                parts.append("Lekcja pokazuje zaburzenie równowagi serotoninowej.")
+        parts.append("GUI wybiera ten plik i przekazuje go do walidacji `brain_core`.")
+        descriptions[label] = " ".join(parts)
+    return descriptions
+
+
+SCENARIO_YAML_DESCRIPTIONS: dict[str, str] = _scenario_yaml_descriptions()
 
 
 def editable_dataclass_values(
