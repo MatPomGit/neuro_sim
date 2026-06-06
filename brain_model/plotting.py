@@ -203,6 +203,7 @@ def _split_svg_path_coordinates(
         if upper_command == "Z":
             current_x = start_x
             current_y = start_y
+            command = ""
             continue
         if upper_command in {"M", "L", "T"}:
             first_pair = upper_command == "M"
