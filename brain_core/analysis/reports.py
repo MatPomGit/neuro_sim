@@ -25,9 +25,12 @@ DEFAULT_VALIDATION_REGISTRY_PATH = (
 VALIDATION_REGISTRY_COLUMNS = (
     "benchmark",
     "level",
+    "qualitative_validation_level",
     "source",
     "expected_effect",
+    "compliance_criteria",
     "tolerance",
+    "limitations",
     "status",
 )
 
@@ -296,6 +299,34 @@ def _classify_clinical_difference(
     return "mała różnica"
 
 
+def _format_qualitative_threshold(severity_thresholds: dict[str, Any] | None) -> str:
+    """Sformatuj jawne progi profilu jako opis jakościowej skali różnicy.
+
+    Parameters
+    ----------
+    severity_thresholds:
+        Progi ``small``, ``medium`` i ``large`` z metadanych profilu klinicznego.
+
+    Returns
+    -------
+    str
+        Polski opis progów używany w raporcie różnic klinicznych.
+    """
+    if not severity_thresholds:
+        return "brak jawnie zapisanych progów w profilu"
+    ordered = ("small", "medium", "large")
+    labels = {"small": "mała", "medium": "średnia", "large": "duża"}
+    parts = []
+    for key in ordered:
+        if key in severity_thresholds and severity_thresholds[key] is not None:
+            try:
+                val = float(severity_thresholds[key])
+                parts.append(f"{labels[key]} ≥ {val:.6g}")
+            except (ValueError, TypeError):
+                continue
+    return "; ".join(parts) if parts else "brak jawnie zapisanych progów w profilu"
+
+
 def _describe_observed_direction(signed_difference: float) -> str:
     """Opisuje kierunek zmiany aktywności względem profilu referencyjnego."""
     tol = 1e-7
@@ -410,6 +441,9 @@ class ValidationComplianceEntry:
     tolerance: str
     status: str
     last_comparison_result: str
+    qualitative_validation_level: str
+    compliance_criteria: str
+    limitations: str
 
     def to_dict(self) -> dict[str, str]:
         """Zwróć wiersz zgodności w formie serializowalnej do JSON.
@@ -426,6 +460,9 @@ class ValidationComplianceEntry:
             "tolerance": self.tolerance,
             "status": self.status,
             "last_comparison_result": self.last_comparison_result,
+            "qualitative_validation_level": self.qualitative_validation_level,
+            "compliance_criteria": self.compliance_criteria,
+            "limitations": self.limitations,
         }
 
 
@@ -586,6 +623,16 @@ def collect_validation_compliance(
                 last_comparison_result=_summarize_last_comparison(
                     benchmark_name, comparison_payload
                 ),
+                qualitative_validation_level=registry_entry.get(
+                    "qualitative_validation_level", "n/a"
+                ),
+                compliance_criteria=metadata.get(
+                    "compliance_criteria",
+                    registry_entry.get("compliance_criteria", "n/a"),
+                ),
+                limitations=metadata.get(
+                    "limitations", registry_entry.get("limitations", "n/a")
+                ),
             ).to_dict()
         )
     return entries
@@ -695,15 +742,19 @@ class AnalysisReport:
         if validation_compliance:
             lines.append("## Zgodność walidacyjna")
             lines.append(
-                "| Benchmark | Poziom | Tolerancja | Status | "
+                "| Benchmark | Poziom | Poziom walidacji jakościowej | "
+                "Kryteria zgodności | Tolerancja | Ograniczenia | Status | "
                 "Wynik ostatniego porównania |"
             )
-            lines.append("| --- | --- | --- | --- | --- |")
+            lines.append("| --- | --- | --- | --- | --- | --- | --- | --- |")
             for item in validation_compliance:
                 lines.append(
                     f"| {item.get('benchmark', 'n/a')} "
                     f"| {item.get('level', 'n/a')} "
+                    f"| {item.get('qualitative_validation_level', 'n/a')} "
+                    f"| {item.get('compliance_criteria', 'n/a')} "
                     f"| {item.get('tolerance', 'n/a')} "
+                    f"| {item.get('limitations', 'n/a')} "
                     f"| {item.get('status', 'n/a')} "
                     f"| {item.get('last_comparison_result', 'n/a')} |"
                 )
@@ -721,6 +772,10 @@ class AnalysisReport:
                 lines.append(f"  - **zakres**: {metadata.get('scope', 'n/a')}")
                 lines.append(
                     f"  - **ograniczenia**: {metadata.get('limitations', 'n/a')}"
+                )
+                lines.append(
+                    f"  - **kryteria zgodności**: "
+                    f"{metadata.get('compliance_criteria', 'n/a')}"
                 )
         for name, value in compare.items():
             lines.append(f"- **{name}**: {value}")
@@ -963,7 +1018,14 @@ class AnalysisReport:
         if clinical_differences:
             lines.extend(["", "## Raport różnic profili klinicznych"])
             for item in clinical_differences:
-                lines.append(f"- **profil**: {item.get('profile_id', 'n/a')}")
+                lines.append(
+                    f"- **profil bazowy**: "
+                    f"{item.get('baseline_profile') or item.get('reference_profile_id') or 'n/a'}"
+                )
+                lines.append(
+                    f"  - **profil porównywany**: "
+                    f"{item.get('compared_profile') or item.get('profile_id') or 'n/a'}"
+                )
                 lines.append(f"  - **region**: {item.get('region', 'n/a')}")
                 lines.append(f"  - **czas_s**: {item.get('time_s', 'n/a')}")
                 lines.append(
@@ -983,12 +1045,20 @@ class AnalysisReport:
                     f"  - **metryka główna**: {item.get('primary_metric', 'n/a')}"
                 )
                 lines.append(
+                    f"  - **próg jakościowy**: "
+                    f"{item.get('qualitative_threshold', 'n/a')}"
+                )
+                lines.append(
                     f"  - **kierunek obserwowany**: "
                     f"{item.get('observed_direction', 'n/a')}"
                 )
                 lines.append(
                     f"  - **komentarz dydaktyczny**: "
                     f"{item.get('educational_comment', 'n/a')}"
+                )
+                lines.append(
+                    f"  - **zastrzeżenie niediagnostyczne**: "
+                    f"{item.get('non_diagnostic_disclaimer', 'n/a')}"
                 )
         return "\n".join(lines)
 
@@ -1244,11 +1314,15 @@ class AnalysisReport:
                 "mechanism",
                 "mean_abs_difference",
                 "max_abs_difference",
+                "baseline_profile",
+                "compared_profile",
                 "primary_metric",
+                "qualitative_threshold",
                 "expected_direction",
                 "observed_direction",
                 "difference_classification",
                 "educational_comment",
+                "non_diagnostic_disclaimer",
             ):
                 rows.append(
                     {
@@ -1546,6 +1620,8 @@ def build_clinical_difference_report(
     reference_time = np.asarray(reference_result.get("time", []), dtype=float)
     reference_model = reference_result.get("model")
     reference_names = list(getattr(reference_model, "names", []))
+    reference_profile = reference_result.get("clinical_profile", {})
+    reference_profile_id = str(reference_profile.get("id", "reference_profile"))
     if reference_activity.size == 0 or reference_time.size == 0:
         raise ValueError("Wynik referencyjny musi zawierać aktywność i czas.")
 
@@ -1581,8 +1657,9 @@ def build_clinical_difference_report(
             if primary_metric == "max_abs_difference"
             else mean_abs_difference
         )
+        severity_thresholds = dict(profile.get("severity_level") or {})
         severity_label = _classify_clinical_difference(
-            primary_value, profile.get("severity_level")
+            primary_value, severity_thresholds
         )
         time_s = round(float(reference_time[min(time_idx, reference_time.size - 1)]), 6)
         observed_direction = _describe_observed_direction(
@@ -1598,6 +1675,8 @@ def build_clinical_difference_report(
         differences.append(
             {
                 "profile_id": profile.get("id", profile_id),
+                "baseline_profile": reference_profile_id,
+                "compared_profile": profile.get("id") or profile_id,
                 "display_name": profile.get("display_name", profile_id),
                 "region": region,
                 "time_s": time_s,
@@ -1609,12 +1688,16 @@ def build_clinical_difference_report(
                 "expected_direction": profile.get("expected_direction", "n/a"),
                 "observed_direction": observed_direction,
                 "primary_metric": primary_metric,
-                "severity_level": dict(
-                    profile.get("severity_level")
-                    or DEFAULT_CLINICAL_SEVERITY_THRESHOLDS
+                "severity_level": severity_thresholds,
+                "qualitative_threshold": _format_qualitative_threshold(
+                    severity_thresholds
                 ),
                 "difference_classification": severity_label,
                 "educational_comment": educational_comment,
+                "non_diagnostic_disclaimer": (
+                    "Raport ma charakter dydaktyczny i symulacyjny; nie stanowi "
+                    "diagnozy, normy populacyjnej ani rekomendacji klinicznej."
+                ),
                 "mean_abs_difference": mean_abs_difference,
                 "max_abs_difference": max_abs_difference,
             }

@@ -170,6 +170,7 @@ def test_reference_benchmark_metadata_validation() -> Any:
         assert item.source
         assert item.scope
         assert item.limitations
+        assert item.compliance_criteria
         assert item.level in {
             "synthetic",
             "educational",
@@ -196,18 +197,21 @@ def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> An
                     "scope": "test",
                     "limitations": "test",
                     "level": "unknown",
+                    "compliance_criteria": "test",
                 },
                 "fmri": {
                     "source": "test",
                     "scope": "test",
                     "limitations": "test",
                     "level": "synthetic",
+                    "compliance_criteria": "test",
                 },
                 "behavior": {
                     "source": "test",
                     "scope": "test",
                     "limitations": "test",
                     "level": "empirical",
+                    "compliance_criteria": "test",
                 },
             }
         ),
@@ -239,6 +243,7 @@ def test_report_marks_benchmark_origin_in_markdown() -> Any:
                     "scope": "test",
                     "limitations": "test",
                     "level": "synthetic",
+                    "compliance_criteria": "test",
                     "comparison_origin_pl": "syntetyczny",
                 },
                 "behavior": {
@@ -246,6 +251,7 @@ def test_report_marks_benchmark_origin_in_markdown() -> Any:
                     "scope": "test",
                     "limitations": "test",
                     "level": "empirical",
+                    "compliance_criteria": "test",
                     "comparison_origin_pl": "empiryczny",
                 },
             },

@@ -258,7 +258,7 @@ def test_run_experiment_records_clinical_pathology_event() -> Any:
     cfg = ExperimentConfig(
         output={"save_results": False, "label": "test", "output_dir": "outputs"},
         seed=3,
-        task={"name": "stroop", "scenario": "reward-learning", "duration": 0.2},
+        task={"name": "stroop", "scenario": "reward-learning", "duration": 3.0},
         clinical_profile={
             "id": "dopamine_deficit",
             "display_name": "Deficyt dopaminowy",
@@ -418,3 +418,71 @@ def test_roving_oddball_event_timeline_has_trials_order_and_polish_labels() -> A
     assert all(event["label_pl"] for event in trial_events)
     assert any(event["label_pl"] == "poprawność" for event in trial_events)
     assert any("Początek bodźca" in event["description_pl"] for event in trial_events)
+
+
+def test_clinical_profile_yaml_metadata_is_complete_for_examples() -> Any:
+    """Profile kliniczne muszą mieć kierunek, metrykę, progi i polski mechanizm."""
+    pytest.importorskip("yaml")
+    from pathlib import Path
+
+    import yaml
+
+    required_profile_ids = {
+        "healthy_v1",
+        "dopamine_deficit",
+        "hippocampal_lesion",
+    }
+    loaded_profile_ids: set[str] = set()
+    for path in Path("configs/clinical_profiles").glob("*.yaml"):
+        payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+        profile = payload["clinical_profile"]
+        loaded_profile_ids.add(profile["id"])
+
+        assert profile["expected_direction"].strip()
+        assert profile["primary_metric"] in {
+            "mean_abs_difference",
+            "max_abs_difference",
+        }
+        assert set(profile["severity_level"]) == {"small", "medium", "large"}
+        assert isinstance(profile["mechanism"], str)
+        assert any(char in profile["mechanism"] for char in "ąćęłńóśźż")
+
+    assert required_profile_ids.issubset(loaded_profile_ids)
+
+
+def test_clinical_profile_batch_reuses_seed_and_stimulus_sequence() -> Any:
+    """Porównanie trzech profili używa tego samego seeda i podpisu bodźców."""
+    pytest.importorskip("yaml")
+    from pathlib import Path
+
+    import yaml
+
+    base_config = ExperimentConfig(
+        seed=11,
+        task={"name": "stroop", "scenario": "reward-learning", "duration": 3.0},
+        output={"save_results": False},
+    )
+    profile_paths = (
+        Path("configs/clinical_profiles/healthy_v1.yaml"),
+        Path("configs/clinical_profiles/hippocampal_lesion.yaml"),
+        Path("configs/clinical_profiles/dlpfc_weakening.yaml"),
+    )
+    profiles = [
+        yaml.safe_load(path.read_text(encoding="utf-8")) for path in profile_paths
+    ]
+
+    batch = run_task_across_clinical_profiles(base_config, profiles)
+    difference_items = batch["clinical_difference_report"]["clinical_differences"]
+
+    assert batch["same_seed"] is True
+    assert batch["same_stimulus_sequence"] is True
+    assert batch["stimulus_sequence_signature"]
+    assert len(difference_items) == 2
+    for item in difference_items:
+        assert item["baseline_profile"] == "healthy_v1"
+        assert item["compared_profile"] in {"hippocampal_lesion", "dlpfc_weakening"}
+        assert item["primary_metric"] == "mean_abs_difference"
+        assert item["qualitative_threshold"].startswith("mała ≥")
+        assert item["observed_direction"]
+        assert item["educational_comment"]
+        assert "nie stanowi diagnozy" in item["non_diagnostic_disclaimer"]
