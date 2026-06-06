@@ -36,8 +36,10 @@ class BenchmarkMetadata:
         Poziom benchmarku: ``synthetic``, ``educational``,
         ``literature-inspired`` albo ``empirical``.
     compliance_criteria:
-        Jawne kryteria zgodności używane przy interpretacji porównań z tym
-        benchmarkiem; pochodzą z metadanych, bez wartości domyślnych w kodzie.
+        Jawny opis kryteriów zgodności używany w raportach tekstowych.
+    compliance_checks:
+        Strukturalne kryteria zgodności per benchmark. Każde pole musi pochodzić
+        z pliku metadanych, aby kod nie dopisywał arbitralnych progów.
     """
 
     source: str
@@ -45,6 +47,7 @@ class BenchmarkMetadata:
     limitations: str
     level: str
     compliance_criteria: str
+    compliance_checks: dict[str, object]
 
     @property
     def comparison_origin_pl(self) -> str:
@@ -61,14 +64,15 @@ class BenchmarkMetadata:
             return "empiryczny"
         return "syntetyczny"
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, object]:
         """Przekształć metadane benchmarku do słownika serializowalnego do JSON.
 
         Returns
         -------
         dict[str, str]
             Słownik z polami ``source``, ``scope``, ``limitations``, ``level``,
-            ``compliance_criteria`` i ``comparison_origin_pl``.
+            ``compliance_criteria``, ``compliance_checks`` i
+            ``comparison_origin_pl``.
         """
         return {
             "source": self.source,
@@ -76,6 +80,7 @@ class BenchmarkMetadata:
             "limitations": self.limitations,
             "level": self.level,
             "compliance_criteria": self.compliance_criteria,
+            "compliance_checks": dict(self.compliance_checks),
             "comparison_origin_pl": self.comparison_origin_pl,
         }
 
@@ -96,23 +101,28 @@ class ReferenceBenchmarkBundle:
     data: dict[str, np.ndarray]
     metadata: dict[str, BenchmarkMetadata]
 
-    def metadata_payload(self) -> dict[str, dict[str, str]]:
+    def metadata_payload(self) -> dict[str, dict[str, object]]:
         """Zwróć metadane w formie gotowej do zapisania w raporcie.
 
         Returns
         -------
-        dict[str, dict[str, str]]
+        dict[str, dict[str, object]]
             Zagnieżdżony słownik metadanych benchmarków.
         """
         return {name: item.to_dict() for name, item in self.metadata.items()}
 
 
-def _load_csv_matrix(path: Path) -> np.ndarray:
+def _load_csv_matrix(
+    path: Path, compliance_checks: dict[str, object] | None = None
+) -> np.ndarray:
     """
     Ładuje macierz danych z pliku CSV i waliduje jej strukturę.
 
     Args:
         path (Path): Ścieżka do pliku CSV.
+        compliance_checks (dict[str, object] | None): Jawne kryteria zgodności
+            odczytane z metadanych benchmarku. Funkcja nie dopisuje brakujących
+            kryteriów domyślnych.
 
     Returns:
         np.ndarray: Macierz danych z pliku.
@@ -130,6 +140,20 @@ def _load_csv_matrix(path: Path) -> np.ndarray:
     cols = [name for name in data.dtype.names if name not in {"time", "trial"}]
     if not cols:
         raise BenchmarkValidationError(f"Brak kolumn metryk w pliku: {path}")
+    if compliance_checks is not None:
+        required_columns = compliance_checks.get("required_columns")
+        if not isinstance(required_columns, list):
+            raise BenchmarkValidationError(
+                f"Brak listy wymaganych kolumn w kryteriach dla pliku: {path}"
+            )
+        missing_columns = [
+            str(column) for column in required_columns if str(column) not in cols
+        ]
+        if missing_columns:
+            raise BenchmarkValidationError(
+                f"Plik {path} nie spełnia kryteriów kolumn: "
+                + ", ".join(missing_columns)
+            )
     matrix = np.column_stack([np.asarray(data[name], dtype=float) for name in cols])
     if matrix.ndim != 2:
         raise BenchmarkValidationError(f"Niepoprawny kształt danych: {path}")
@@ -168,6 +192,90 @@ def _validate_text_field(
     return value.strip()
 
 
+def _validate_compliance_checks(
+    benchmark_name: str, metadata: dict[str, object]
+) -> dict[str, object]:
+    """Zweryfikuj strukturalne kryteria zgodności benchmarku.
+
+    Parameters
+    ----------
+    benchmark_name:
+        Nazwa benchmarku, dla którego walidowane są kryteria.
+    metadata:
+        Surowe metadane odczytane z pliku JSON.
+
+    Returns
+    -------
+    dict[str, object]
+        Kryteria zgodności opisane w pliku metadanych.
+
+    Raises
+    ------
+    BenchmarkValidationError
+        Gdy kryteria są nieobecne albo nie zawierają wymaganych pól.
+    """
+    checks = metadata.get("compliance_checks")
+    if not isinstance(checks, dict):
+        raise BenchmarkValidationError(
+            f"Benchmark {benchmark_name} musi mieć obiekt compliance_checks."
+        )
+
+    required_fields = (
+        "required_columns",
+        "minimum_rows",
+        "accepted_comparison_metrics",
+        "interpretation_scope",
+        "acceptance_rule",
+    )
+    missing = [field for field in required_fields if field not in checks]
+    if missing:
+        raise BenchmarkValidationError(
+            f"Benchmark {benchmark_name} nie ma pól compliance_checks: "
+            + ", ".join(missing)
+        )
+
+    required_columns = checks["required_columns"]
+    if not isinstance(required_columns, list) or not all(
+        isinstance(item, str) and item.strip() for item in required_columns
+    ):
+        raise BenchmarkValidationError(
+            f"Benchmark {benchmark_name} ma niepoprawne required_columns."
+        )
+
+    accepted_metrics = checks["accepted_comparison_metrics"]
+    if not isinstance(accepted_metrics, list) or not all(
+        isinstance(item, str) and item.strip() for item in accepted_metrics
+    ):
+        raise BenchmarkValidationError(
+            f"Benchmark {benchmark_name} ma niepoprawne accepted_comparison_metrics."
+        )
+
+    minimum_rows = checks["minimum_rows"]
+    if isinstance(minimum_rows, bool) or not isinstance(minimum_rows, int):
+        raise BenchmarkValidationError(
+            f"Benchmark {benchmark_name} ma niepoprawne minimum_rows."
+        )
+    if minimum_rows < 2:
+        raise BenchmarkValidationError(
+            f"Benchmark {benchmark_name} musi wymagać co najmniej dwóch wierszy."
+        )
+
+    normalized = dict(checks)
+    normalized["required_columns"] = [str(item).strip() for item in required_columns]
+    normalized["accepted_comparison_metrics"] = [
+        str(item).strip() for item in accepted_metrics
+    ]
+    normalized["minimum_rows"] = minimum_rows
+    for text_field in ("interpretation_scope", "acceptance_rule"):
+        value = normalized[text_field]
+        if not isinstance(value, str) or not value.strip():
+            raise BenchmarkValidationError(
+                f"Benchmark {benchmark_name} ma niepoprawne {text_field}."
+            )
+        normalized[text_field] = value.strip()
+    return normalized
+
+
 def _build_metadata(
     benchmark_name: str, metadata: dict[str, object]
 ) -> BenchmarkMetadata:
@@ -197,6 +305,7 @@ def _build_metadata(
     compliance_criteria = _validate_text_field(
         benchmark_name, metadata, "compliance_criteria"
     )
+    compliance_checks = _validate_compliance_checks(benchmark_name, metadata)
     if level not in ALLOWED_BENCHMARK_LEVELS:
         allowed = ", ".join(sorted(ALLOWED_BENCHMARK_LEVELS))
         raise BenchmarkValidationError(
@@ -209,6 +318,7 @@ def _build_metadata(
         limitations=limitations,
         level=level,
         compliance_criteria=compliance_criteria,
+        compliance_checks=compliance_checks,
     )
 
 
@@ -309,11 +419,25 @@ def load_reference_benchmarks(
         BenchmarkValidationError: Jeśli benchmarki są niepoprawne lub niekompletne.
     """
     root = Path(base_dir)
-    eeg = _load_csv_matrix(root / "eeg_target.csv")
-    fmri = _load_csv_matrix(root / "fmri_target.csv")
-    behavior = _load_csv_matrix(root / "behavior_target.csv")
+    metadata = load_reference_benchmark_metadata(base_dir)
+    matrices = {
+        "eeg": _load_csv_matrix(
+            root / "eeg_target.csv", metadata["eeg"].compliance_checks
+        ),
+        "fmri": _load_csv_matrix(
+            root / "fmri_target.csv", metadata["fmri"].compliance_checks
+        ),
+        "behavior": _load_csv_matrix(
+            root / "behavior_target.csv", metadata["behavior"].compliance_checks
+        ),
+    }
 
-    if eeg.shape[0] < 2 or fmri.shape[0] < 2 or behavior.shape[0] < 2:
-        raise BenchmarkValidationError("Benchmarki muszą mieć co najmniej 2 wiersze.")
+    for benchmark_name, matrix in matrices.items():
+        minimum_rows = metadata[benchmark_name].compliance_checks["minimum_rows"]
+        if matrix.shape[0] < int(minimum_rows):
+            raise BenchmarkValidationError(
+                f"Benchmark {benchmark_name} musi mieć co najmniej "
+                f"{minimum_rows} wiersze."
+            )
 
-    return {"eeg": eeg, "fmri": fmri, "behavior": behavior}
+    return matrices

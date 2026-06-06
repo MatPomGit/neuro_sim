@@ -171,6 +171,8 @@ def test_reference_benchmark_metadata_validation() -> Any:
         assert item.scope
         assert item.limitations
         assert item.compliance_criteria
+        assert item.compliance_checks["minimum_rows"] >= 2
+        assert item.compliance_checks["required_columns"]
         assert item.level in {
             "synthetic",
             "educational",
@@ -198,6 +200,13 @@ def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> An
                     "limitations": "test",
                     "level": "unknown",
                     "compliance_criteria": "test",
+                    "compliance_checks": {
+                        "required_columns": ["metric_a"],
+                        "minimum_rows": 2,
+                        "accepted_comparison_metrics": ["mae"],
+                        "interpretation_scope": "test",
+                        "acceptance_rule": "test",
+                    },
                 },
                 "fmri": {
                     "source": "test",
@@ -205,6 +214,13 @@ def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> An
                     "limitations": "test",
                     "level": "synthetic",
                     "compliance_criteria": "test",
+                    "compliance_checks": {
+                        "required_columns": ["metric_a"],
+                        "minimum_rows": 2,
+                        "accepted_comparison_metrics": ["mae"],
+                        "interpretation_scope": "test",
+                        "acceptance_rule": "test",
+                    },
                 },
                 "behavior": {
                     "source": "test",
@@ -212,6 +228,13 @@ def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> An
                     "limitations": "test",
                     "level": "empirical",
                     "compliance_criteria": "test",
+                    "compliance_checks": {
+                        "required_columns": ["metric_a"],
+                        "minimum_rows": 2,
+                        "accepted_comparison_metrics": ["mae"],
+                        "interpretation_scope": "test",
+                        "acceptance_rule": "test",
+                    },
                 },
             }
         ),
@@ -244,6 +267,13 @@ def test_report_marks_benchmark_origin_in_markdown() -> Any:
                     "limitations": "test",
                     "level": "synthetic",
                     "compliance_criteria": "test",
+                    "compliance_checks": {
+                        "required_columns": ["metric_a"],
+                        "minimum_rows": 2,
+                        "accepted_comparison_metrics": ["mae"],
+                        "interpretation_scope": "test",
+                        "acceptance_rule": "test",
+                    },
                     "comparison_origin_pl": "syntetyczny",
                 },
                 "behavior": {
@@ -252,6 +282,13 @@ def test_report_marks_benchmark_origin_in_markdown() -> Any:
                     "limitations": "test",
                     "level": "empirical",
                     "compliance_criteria": "test",
+                    "compliance_checks": {
+                        "required_columns": ["metric_a"],
+                        "minimum_rows": 2,
+                        "accepted_comparison_metrics": ["mae"],
+                        "interpretation_scope": "test",
+                        "acceptance_rule": "test",
+                    },
                     "comparison_origin_pl": "empiryczny",
                 },
             },

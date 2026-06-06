@@ -18,7 +18,7 @@ from .phase_locking import compute_phase_locking
 from .signal_metrics import comparative_report, reportable_signal_metrics
 from .spectral import compute_band_powers
 
-DEFAULT_CLINICAL_SEVERITY_THRESHOLDS = {"small": 0.0, "medium": 0.02, "large": 0.05}
+REQUIRED_CLINICAL_SEVERITY_KEYS = ("small", "medium", "large")
 DEFAULT_VALIDATION_REGISTRY_PATH = (
     Path(__file__).resolve().parents[2] / "docs" / "validation_registry.md"
 )
@@ -353,6 +353,17 @@ def _build_amplitude_latency_mechanism_section(
     deviant_amplitude = _mean_regional_response_amplitude(deviant_trials)
     response_amplitude = _mean_regional_response_amplitude(trial_results)
     metadata = _roving_mechanism_metadata(clinical_profile)
+    qualitative_threshold_source = metadata.get("qualitative_threshold")
+    if qualitative_threshold_source is None:
+        severity_level = clinical_profile.get("severity_level")
+        if isinstance(severity_level, dict):
+            qualitative_threshold_source = severity_level.get("large")
+    if qualitative_threshold_source is None:
+        raise ValueError(
+            "Profil kliniczny musi mieć amplitude_latency_mechanism."
+            "qualitative_threshold albo severity_level.large."
+        )
+
     return {
         "profile_id": clinical_profile.get("id", summary.get("profile_id", "n/a")),
         "response_amplitude": response_amplitude,
@@ -368,7 +379,7 @@ def _build_amplitude_latency_mechanism_section(
         "expected_readaptation_direction": metadata.get(
             "expected_readaptation_direction", "stable_reference"
         ),
-        "qualitative_threshold": float(metadata.get("qualitative_threshold", 0.05)),
+        "qualitative_threshold": float(qualitative_threshold_source),
         "mechanism_comment": metadata.get(
             "mechanism_comment", clinical_profile.get("mechanism", "n/a")
         ),
@@ -378,6 +389,51 @@ def _build_amplitude_latency_mechanism_section(
             "interpretuj ją jako opis dydaktyczny modelu, nie diagnozę kliniczną.",
         ),
     }
+
+
+def _require_clinical_severity_thresholds(
+    severity_thresholds: dict[str, Any] | None,
+) -> dict[str, float]:
+    """Zweryfikuj jawne progi jakościowe profilu klinicznego.
+
+    Parameters
+    ----------
+    severity_thresholds:
+        Progi ``small``, ``medium`` i ``large`` zapisane w profilu klinicznym.
+
+    Returns
+    -------
+    dict[str, float]
+        Znormalizowane progi jakościowe.
+
+    Raises
+    ------
+    ValueError
+        Gdy profil nie zawiera kompletnego zestawu progów albo kolejność progów
+        jest niespójna.
+    """
+    if not isinstance(severity_thresholds, dict):
+        raise ValueError(
+            "clinical_profile.severity_level musi jawnie zawierać progi "
+            "small, medium i large."
+        )
+    missing = [
+        key for key in REQUIRED_CLINICAL_SEVERITY_KEYS if key not in severity_thresholds
+    ]
+    if missing:
+        raise ValueError(
+            "Brak progów clinical_profile.severity_level: " + ", ".join(missing)
+        )
+
+    thresholds = {
+        key: float(severity_thresholds[key]) for key in REQUIRED_CLINICAL_SEVERITY_KEYS
+    }
+    if not thresholds["small"] <= thresholds["medium"] <= thresholds["large"]:
+        raise ValueError(
+            "Progi clinical_profile.severity_level muszą spełniać "
+            "small <= medium <= large."
+        )
+    return thresholds
 
 
 def _classify_clinical_difference(
@@ -402,9 +458,7 @@ def _classify_clinical_difference(
         Polska etykieta: ``mała różnica``, ``średnia różnica`` albo
         ``duża różnica``.
     """
-    thresholds = dict(DEFAULT_CLINICAL_SEVERITY_THRESHOLDS)
-    if severity_thresholds:
-        thresholds.update({key: float(v) for key, v in severity_thresholds.items()})
+    thresholds = _require_clinical_severity_thresholds(severity_thresholds)
 
     if value >= thresholds["large"]:
         return "duża różnica"
@@ -426,18 +480,13 @@ def _format_qualitative_threshold(severity_thresholds: dict[str, Any] | None) ->
     str
         Polski opis progów używany w raporcie różnic klinicznych.
     """
-    if not severity_thresholds:
-        return "brak jawnie zapisanych progów w profilu"
-    ordered = ("small", "medium", "large")
+    thresholds = _require_clinical_severity_thresholds(severity_thresholds)
+    ordered = REQUIRED_CLINICAL_SEVERITY_KEYS
     labels = {"small": "mała", "medium": "średnia", "large": "duża"}
     parts = []
     for key in ordered:
-        if key in severity_thresholds and severity_thresholds[key] is not None:
-            try:
-                val = float(severity_thresholds[key])
-                parts.append(f"{labels[key]} ≥ {val:.6g}")
-            except (ValueError, TypeError):
-                continue
+        val = thresholds[key]
+        parts.append(f"{labels[key]} ≥ {val:.6g}")
     return "; ".join(parts) if parts else "brak jawnie zapisanych progów w profilu"
 
 
@@ -682,7 +731,7 @@ def _summarize_last_comparison(benchmark_name: str, comparison: dict[str, Any]) 
 
 
 def collect_validation_compliance(
-    benchmark_metadata: dict[str, dict[str, str]],
+    benchmark_metadata: dict[str, dict[str, object]],
     comparison: dict[str, Any] | None = None,
     registry_path: str | Path = DEFAULT_VALIDATION_REGISTRY_PATH,
 ) -> list[dict[str, str]]:
@@ -911,6 +960,12 @@ class AnalysisReport:
                     f"  - **kryteria zgodności**: "
                     f"{metadata.get('compliance_criteria', 'n/a')}"
                 )
+                compliance_checks = metadata.get("compliance_checks")
+                if compliance_checks:
+                    lines.append(
+                        "  - **strukturalne kryteria zgodności**: "
+                        f"{compliance_checks}"
+                    )
         for name, value in compare.items():
             lines.append(f"- **{name}**: {value}")
 
@@ -1639,7 +1694,7 @@ def build_analysis_report(
     benchmark: dict[str, np.ndarray] | None = None,
     fs: float = 100.0,
     analysis_set: list[str] | None = None,
-    benchmark_metadata: dict[str, dict[str, str]] | None = None,
+    benchmark_metadata: dict[str, dict[str, object]] | None = None,
 ) -> AnalysisReport:
     """
     Buduje raport analizy sygnałów EEG, fMRI i zachowania oraz porównania z benchmarkiem.
@@ -1651,7 +1706,7 @@ def build_analysis_report(
         benchmark (dict[str, np.ndarray] | None): Słownik z benchmarkami.
         fs (float): Częstotliwość próbkowania.
         analysis_set (list[str] | None): Lista analiz do wykonania.
-        benchmark_metadata (dict[str, dict[str, str]] | None): Metadane źródeł,
+        benchmark_metadata (dict[str, dict[str, object]] | None): Metadane źródeł,
             zakresów, ograniczeń i poziomów benchmarków.
 
     Returns:
@@ -1826,7 +1881,9 @@ def build_clinical_difference_report(
             if primary_metric == "max_abs_difference"
             else mean_abs_difference
         )
-        severity_thresholds = dict(profile.get("severity_level") or {})
+        severity_thresholds = _require_clinical_severity_thresholds(
+            profile.get("severity_level")
+        )
         severity_label = _classify_clinical_difference(
             primary_value, severity_thresholds
         )

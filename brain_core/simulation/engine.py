@@ -20,7 +20,12 @@ from brain_core.analysis.reports import (
     write_report_files,
 )
 from brain_core.cognition.mapping import mapping_for_task
-from brain_core.experiments.protocols import ErrorType, TrialResult, get_task
+from brain_core.experiments.protocols import (
+    ErrorType,
+    TrialResult,
+    TrialStimulus,
+    get_task,
+)
 from brain_core.populations.spiking_population import Brian2SpikingPopulationAdapter
 from brain_model.io import build_output_dir, save_run
 from brain_model.model import CognitiveBrainModel
@@ -505,19 +510,59 @@ def _run_local_snn_comparison(
     }
 
 
-def _simulate_task_trials(
-    config: ExperimentConfig,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Symuluje przebieg triali i zwraca bodźce oraz wyniki punktacji."""
+def _generate_task_stimuli(config: ExperimentConfig) -> list[TrialStimulus]:
+    """Wygeneruj deterministyczną sekwencję bodźców dla konfiguracji zadania.
+
+    Parameters
+    ----------
+    config:
+        Konfiguracja eksperymentu zawierająca nazwę zadania, czas trwania i seed.
+
+    Returns
+    -------
+    list[TrialStimulus]
+        Bodźce z przypisanym wejściem regionalnym, gotowe do ponownego użycia w
+        porównaniach profili klinicznych.
+    """
     task_name = str(config.task.get("name", "stroop"))
     task = get_task(task_name, **config.task)
     duration = float(config.task.get("duration", 45.0))
-    stimuli = [
+    return [
         stimulus.with_regional_input(
             _regional_input_for_stimulus(task.name, stimulus.condition)
         )
         for stimulus in task.generate_stimuli(seed=config.seed, duration_s=duration)
     ]
+
+
+def _simulate_task_trials(
+    config: ExperimentConfig,
+    stimulus_sequence: list[TrialStimulus] | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Symuluje przebieg triali i zwraca bodźce oraz wyniki punktacji.
+
+    Parameters
+    ----------
+    config:
+        Konfiguracja eksperymentu z taskiem i seedem.
+    stimulus_sequence:
+        Opcjonalna, wcześniej wygenerowana sekwencja bodźców. Umożliwia
+        uruchomienie wielu profili klinicznych na identycznym bodźcu bez zmian
+        w logice punktacji silnika.
+
+    Returns
+    -------
+    tuple[list[dict[str, Any]], list[dict[str, Any]]]
+        Zdarzenia triali i wyniki punktacji.
+    """
+    task_name = str(config.task.get("name", "stroop"))
+    task = get_task(task_name, **config.task)
+    duration = float(config.task.get("duration", 45.0))
+    stimuli = (
+        list(stimulus_sequence)
+        if stimulus_sequence is not None
+        else _generate_task_stimuli(config)
+    )
 
     scheduler = SimulationScheduler(stimuli=[TaskStimulusPlayer(stimuli=stimuli)])
     state = SimulationState()
@@ -607,8 +652,25 @@ def _build_stimulus_sequence_signature(
 def run_experiment(
     config: ExperimentConfig,
     progress_callback: Callable[[float], None] | None = None,
+    stimulus_sequence: list[TrialStimulus] | None = None,
 ) -> dict[str, Any]:
-    """Uruchamia pełny eksperyment, analizę oraz opcjonalny zapis wyników."""
+    """Uruchamia pełny eksperyment, analizę oraz opcjonalny zapis wyników.
+
+    Parameters
+    ----------
+    config:
+        Konfiguracja eksperymentu.
+    progress_callback:
+        Opcjonalna funkcja raportowania postępu symulacji modelu.
+    stimulus_sequence:
+        Opcjonalna wspólna sekwencja bodźców używana w porównaniach profili
+        klinicznych przy tym samym seedzie.
+
+    Returns
+    -------
+    dict[str, Any]
+        Wyniki symulacji, triali, raportów i opcjonalnego zapisu artefaktów.
+    """
     model_params = BrainParams(dt=config.timestep, **config.model)
     osc_params = WilsonCowanParams(**config.integrator.get("oscillator", {}))
     stimulus_scenario = str(config.task.get("scenario", "reward-learning"))
@@ -634,7 +696,9 @@ def run_experiment(
     )
     elapsed = pytime.perf_counter() - start
 
-    trial_events, trial_results = _simulate_task_trials(config)
+    trial_events, trial_results = _simulate_task_trials(
+        config, stimulus_sequence=stimulus_sequence
+    )
     stimulus_sequence_signature = _build_stimulus_sequence_signature(trial_results)
     task_activation = _build_task_activation_summary(
         str(config.task.get("name", "stroop")), trial_events
@@ -1033,6 +1097,8 @@ def run_task_across_clinical_profiles(
     if not clinical_profiles:
         raise ValueError("Lista profili klinicznych nie może być pusta.")
 
+    shared_stimulus_sequence = _generate_task_stimuli(base_config)
+
     runs: dict[str, dict[str, Any]] = {}
     for profile_config in clinical_profiles:
         profile_id = str(
@@ -1040,7 +1106,9 @@ def run_task_across_clinical_profiles(
         )
         profile_run_config = apply_clinical_profile_config(base_config, profile_config)
         runs[profile_id] = run_experiment(
-            profile_run_config, progress_callback=progress_callback
+            profile_run_config,
+            progress_callback=progress_callback,
+            stimulus_sequence=shared_stimulus_sequence,
         )
 
     sequence_signatures = [
@@ -1059,6 +1127,7 @@ def run_task_across_clinical_profiles(
         "same_seed": True,
         "same_stimulus_sequence": same_stimulus_sequence,
         "stimulus_sequence_signature": reference_signature,
+        "shared_stimulus_sequence_reused": True,
         "task": dict(base_config.task),
         "reference_profile_id": reference_id,
         "runs": runs,
