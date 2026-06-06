@@ -664,15 +664,18 @@ def _attach_region_point_tooltips(
             return
 
         contains, info = scatter.contains(event)
-        if not contains:
+        if not contains or not info or "ind" not in info:
             if annotation.get_visible():
                 annotation.set_visible(False)
                 ax.figure.canvas.draw_idle()
             return
 
-        point_index = int(info.get("ind", [0])[0])
+        ind_list = info["ind"]
+        if len(ind_list) == 0:
+            return
+        point_index = int(ind_list[0])
         offsets = scatter.get_offsets()
-        if point_index >= len(labels) or point_index >= len(offsets):
+        if not (0 <= point_index < len(labels)) or point_index >= len(offsets):
             return
 
         region = labels[point_index]
