@@ -58,9 +58,10 @@ def _load_glossary_terms() -> dict[str, tuple[str, str]]:
     except OSError:
         return terms
     for line in lines:
-        if not line.startswith("|") or "---" in line or "English" in line:
+        cleaned_line = line.strip()
+        if not cleaned_line.startswith("|") or "---" in cleaned_line or "English" in cleaned_line:
             continue
-        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        cells = [cell.strip() for cell in cleaned_line.strip("|").split("|")]
         if len(cells) != 3:
             continue
         english_name, polish_label, usage_context = cells
