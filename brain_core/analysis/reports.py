@@ -1676,7 +1676,7 @@ def build_clinical_difference_report(
             {
                 "profile_id": profile.get("id", profile_id),
                 "baseline_profile": reference_profile_id,
-                "compared_profile": profile.get("id", profile_id),
+                "compared_profile": profile.get("id") or profile_id,
                 "display_name": profile.get("display_name", profile_id),
                 "region": region,
                 "time_s": time_s,
