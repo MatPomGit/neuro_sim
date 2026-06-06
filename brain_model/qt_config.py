@@ -73,7 +73,7 @@ def _scenario_yaml_descriptions() -> dict[str, str]:
         config_path = REPO_ROOT / preset_path
         try:
             payload = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-        except OSError:
+        except (OSError, yaml.YAMLError):
             payload = {}
         if not isinstance(payload, dict):
             payload = {}
