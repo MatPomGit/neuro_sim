@@ -964,7 +964,7 @@ class AnalysisReport:
                 if compliance_checks:
                     lines.append(
                         "  - **strukturalne kryteria zgodności**: "
-                        f"{compliance_checks}"
+                        f"{json.dumps(compliance_checks, ensure_ascii=False)}"
                     )
         for name, value in compare.items():
             lines.append(f"- **{name}**: {value}")
