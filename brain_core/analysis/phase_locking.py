@@ -6,6 +6,23 @@ from dataclasses import dataclass
 
 import numpy as np
 
+REPORTABLE_PHASE_LOCKING_METRICS = (
+    {
+        "name": "phase_locking_value",
+        "scope": "para kanałów EEG",
+        "unit": "bezwymiarowe 0–1",
+        "profile_groups": ("healthy", "disorder", "lesion"),
+        "interpretation_pl": (
+            "PLV jest gotowe do raportowania jako syntetyczna miara stałości "
+            "relacji fazowej między dwoma sygnałami."
+        ),
+        "limitations_pl": (
+            "Implementacja używa faz FFT całego sygnału, więc nie opisuje "
+            "lokalnych zmian fazy w oknach czasowych."
+        ),
+    },
+)
+
 
 @dataclass(frozen=True)
 class PhaseLockingMetricResult:

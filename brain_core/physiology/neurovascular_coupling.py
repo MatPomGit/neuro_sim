@@ -1,4 +1,4 @@
-"""Neurovascular coupling helper for BOLD signal generation."""
+"""Pomocnicze przekształcenia neuro-naczyniowe do generowania BOLD proxy."""
 
 from __future__ import annotations
 
@@ -12,11 +12,19 @@ def neural_drive_from_activity(
     Przekształca aktywność neuronalną na nieujemny napęd naczyniowy.
 
     Args:
-        activity (np.ndarray): Aktywność neuronalna.
-        baseline (float): Poziom bazowy do odjęcia.
+        activity (np.ndarray): Aktywność neuronalna w jednostkach proxy modelu.
+        baseline (float): Poziom bazowy w tej samej jednostce proxy, odejmowany
+            przed obcięciem wartości ujemnych.
 
     Returns:
-        np.ndarray: Napęd naczyniowy (nieujemny).
+        np.ndarray: Nieujemny napęd naczyniowy/BOLD proxy w względnych
+        jednostkach aktywności po odjęciu baseline.
+
+    Notes
+    -----
+    Funkcja opisuje metodologiczny etap sprzężenia neuro-naczyniowego: ujemne
+    odchylenia od baseline nie zwiększają napędu BOLD, dlatego wynik należy
+    interpretować jako uproszczony sygnał wejściowy do HRF.
     """
     values = np.asarray(activity, dtype=float) - float(baseline)
     return np.maximum(values, 0.0)

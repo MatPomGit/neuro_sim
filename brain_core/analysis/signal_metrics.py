@@ -4,9 +4,45 @@ from __future__ import annotations
 
 import numpy as np
 
-from .connectivity import compute_connectivity
-from .phase_locking import compute_phase_locking
-from .spectral import compute_band_powers
+from .connectivity import REPORTABLE_CONNECTIVITY_METRICS, compute_connectivity
+from .information_flow import REPORTABLE_INFORMATION_FLOW_METRICS
+from .phase_locking import REPORTABLE_PHASE_LOCKING_METRICS, compute_phase_locking
+from .spectral import REPORTABLE_SPECTRAL_METRICS, compute_band_powers
+
+REPORTABLE_SIGNAL_METRICS = (
+    *REPORTABLE_SPECTRAL_METRICS,
+    *REPORTABLE_PHASE_LOCKING_METRICS,
+    *REPORTABLE_CONNECTIVITY_METRICS,
+    *REPORTABLE_INFORMATION_FLOW_METRICS,
+    {
+        "name": "erp_proxy_peak_to_peak",
+        "scope": "kanał EEG / region źródłowy",
+        "unit": "amplituda syntetyczna peak-to-peak",
+        "profile_groups": ("healthy", "disorder", "lesion"),
+        "interpretation_pl": (
+            "Proxy ERP peak-to-peak jest gotowe do raportowania jako zakres "
+            "odpowiedzi w głównym sygnale EEG."
+        ),
+        "limitations_pl": (
+            "To opis amplitudy symulowanej, bez segmentacji triali i bez "
+            "kalibracji do mikrovoltów empirycznego EEG."
+        ),
+    },
+)
+
+
+def reportable_signal_metrics() -> tuple[dict[str, object], ...]:
+    """Zwróć katalog metryk gotowych do raportowania profili klinicznych.
+
+    Returns
+    -------
+    tuple[dict[str, object], ...]
+        Niemodyfikowalny katalog metryk EEG/sieciowych z polską interpretacją,
+        ograniczeniami, jednostką proxy i grupami profili: healthy, disorder,
+        lesion.
+    """
+
+    return REPORTABLE_SIGNAL_METRICS
 
 
 def band_powers(

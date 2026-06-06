@@ -6,6 +6,61 @@ from dataclasses import dataclass
 
 import numpy as np
 
+REPORTABLE_CONNECTIVITY_METRICS = (
+    {
+        "name": "connectivity_mean",
+        "scope": "wszystkie pary regionów",
+        "unit": "korelacja Pearsona [-1, 1]",
+        "profile_groups": ("healthy", "disorder", "lesion"),
+        "interpretation_pl": (
+            "Średnia korelacja jest gotowa do raportowania jako globalny "
+            "opis współzmienności regionów."
+        ),
+        "limitations_pl": (
+            "Korelacja nie rozstrzyga kierunku ani przyczynowości połączeń."
+        ),
+    },
+    {
+        "name": "connectivity_abs_mean",
+        "scope": "wszystkie pary regionów",
+        "unit": "|korelacja| [0, 1]",
+        "profile_groups": ("healthy", "disorder", "lesion"),
+        "interpretation_pl": (
+            "Średnia bezwzględna korelacja pokazuje siłę sprzężeń bez znaku "
+            "i nadaje się do porównań profili."
+        ),
+        "limitations_pl": (
+            "Wysoka wartość może wynikać z synchronizacji dodatniej albo ujemnej."
+        ),
+    },
+    {
+        "name": "pli_proxy_mean",
+        "scope": "wszystkie pary regionów",
+        "unit": "proxy PLI [0, 1]",
+        "profile_groups": ("healthy", "disorder", "lesion"),
+        "interpretation_pl": (
+            "PLI-proxy raportuje asymetrię znaków różnicy faz i może wskazywać "
+            "na stabilną synchronizację między regionami."
+        ),
+        "limitations_pl": (
+            "To uproszczony wskaźnik z faz FFT, a nie pełna procedura PLI EEG."
+        ),
+    },
+    {
+        "name": "region_strength_mean",
+        "scope": "średnia siła regionów",
+        "unit": "średnie |korelacja| [0, 1]",
+        "profile_groups": ("healthy", "disorder", "lesion"),
+        "interpretation_pl": (
+            "Średnia siła regionów podsumowuje, jak mocno regiony są powiązane "
+            "z resztą sieci."
+        ),
+        "limitations_pl": (
+            "Agregat ukrywa różnice między pojedynczymi parami regionów."
+        ),
+    },
+)
+
 
 @dataclass(frozen=True)
 class ConnectivityMetricResult:

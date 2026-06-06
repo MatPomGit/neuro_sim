@@ -15,7 +15,7 @@ from brain_core.simulation.events import EVENT_TERM_EXPLANATIONS, EVENT_TERM_GLO
 from .connectivity import compute_connectivity
 from .information_flow import compute_information_flow
 from .phase_locking import compute_phase_locking
-from .signal_metrics import comparative_report
+from .signal_metrics import comparative_report, reportable_signal_metrics
 from .spectral import compute_band_powers
 
 DEFAULT_CLINICAL_SEVERITY_THRESHOLDS = {"small": 0.0, "medium": 0.02, "large": 0.05}
@@ -30,6 +30,120 @@ VALIDATION_REGISTRY_COLUMNS = (
     "tolerance",
     "status",
 )
+
+
+def _metric_catalog_by_name() -> dict[str, dict[str, object]]:
+    """Zindeksuj katalog metryk EEG/sieciowych gotowych do raportowania.
+
+    Returns
+    -------
+    dict[str, dict[str, object]]
+        Słownik nazwa metryki → metadane interpretacyjne po polsku.
+    """
+
+    return {str(item["name"]): dict(item) for item in reportable_signal_metrics()}
+
+
+def _build_eeg_bold_report_sections(
+    metrics: dict[str, float],
+    *,
+    primary_region: str = "kanał_0",
+    secondary_region: str = "kanał_1",
+) -> list[dict[str, object]]:
+    """Zbuduj opisowe wiersze EEG/BOLD na podstawie policzonych metryk.
+
+    Parameters
+    ----------
+    metrics:
+        Słownik wartości wyliczony wcześniej przez funkcje analityczne
+        ``brain_core``. Funkcja nie liczy ponownie metryk, tylko dodaje warstwę
+        raportową: region/pasmo, jednostkę, interpretację i ograniczenia.
+    primary_region:
+        Nazwa głównego kanału albo regionu używanego w metrykach EEG.
+    secondary_region:
+        Nazwa drugiego kanału albo regionu używanego w metrykach parowych.
+
+    Returns
+    -------
+    list[dict[str, object]]
+        Wiersze sekcji EEG/BOLD gotowe do Markdown, CSV i eksportu PDF.
+    """
+
+    catalog = _metric_catalog_by_name()
+    metric_context = {
+        "band_power_delta": ("EEG", "pasmo delta"),
+        "band_power_theta": ("EEG", "pasmo theta"),
+        "band_power_alpha": ("EEG", "pasmo alpha"),
+        "band_power_beta": ("EEG", "pasmo beta"),
+        "band_power_gamma": ("EEG", "pasmo gamma"),
+        "erp_proxy_peak_to_peak": ("EEG", primary_region),
+        "phase_locking_value": ("EEG", f"{primary_region}–{secondary_region}"),
+        "connectivity_mean": ("EEG", "wszystkie regiony"),
+        "connectivity_abs_mean": ("EEG", "wszystkie regiony"),
+        "pli_proxy_mean": ("EEG", "wszystkie regiony"),
+        "region_strength_mean": ("EEG", "wszystkie regiony"),
+        "directional_mean": ("EEG", "wszystkie regiony"),
+        "directional_abs_mean": ("EEG", "wszystkie regiony"),
+        "outgoing_mean": ("EEG", "wszystkie regiony"),
+    }
+    rows: list[dict[str, object]] = []
+    for metric_name, (modality, region_or_band) in metric_context.items():
+        if metric_name not in metrics:
+            continue
+        metadata = catalog.get(metric_name, {})
+        rows.append(
+            {
+                "modality": modality,
+                "metric": metric_name,
+                "region_or_band": region_or_band,
+                "value": float(metrics[metric_name]),
+                "unit": metadata.get("unit", "jednostka proxy"),
+                "profile_groups": list(
+                    metadata.get("profile_groups", ("healthy", "disorder", "lesion"))
+                ),
+                "interpretation": metadata.get(
+                    "interpretation_pl",
+                    "Metryka gotowa do opisowego porównania profili symulacji.",
+                ),
+                "limitations": metadata.get(
+                    "limitations_pl",
+                    "Wynik jest proxy symulacyjnym, nie samodzielnym markerem klinicznym.",
+                ),
+            }
+        )
+
+    bold_rows = (
+        (
+            "fmri_mean",
+            "cały sygnał BOLD",
+            "średnia amplituda BOLD proxy",
+            "Średnia BOLD opisuje globalny poziom sygnału po modelowaniu hemodynamicznym.",
+            "To syntetyczna miara BOLD zależna od HRF i napędu neuronalnego, "
+            "bez kalibracji do danych fMRI.",
+        ),
+        (
+            "bold_peak_to_peak",
+            "cały sygnał BOLD",
+            "amplituda BOLD proxy peak-to-peak",
+            "Zakres BOLD pokazuje rozpiętość odpowiedzi hemodynamicznej w symulacji.",
+            "Metryka nie obejmuje szumu skanera, filtracji fMRI ani modelowania przestrzennego.",
+        ),
+    )
+    for metric_name, region_or_band, unit, interpretation, limitations in bold_rows:
+        if metric_name in metrics:
+            rows.append(
+                {
+                    "modality": "BOLD",
+                    "metric": metric_name,
+                    "region_or_band": region_or_band,
+                    "value": float(metrics[metric_name]),
+                    "unit": unit,
+                    "profile_groups": ["healthy", "disorder", "lesion"],
+                    "interpretation": interpretation,
+                    "limitations": limitations,
+                }
+            )
+    return rows
 
 
 def _format_polish_list(values: list[str]) -> str:
@@ -656,6 +770,26 @@ class AnalysisReport:
             lines.append(f"- **{name}**: {value}")
         lines.append("")
 
+        eeg_bold_sections = self.payload.get("eeg_bold_sections", [])
+        if eeg_bold_sections:
+            lines.append("## Sekcje EEG/BOLD gotowe do raportowania")
+            lines.append(
+                "| Modalność | Metryka | Region/pasmo | Wartość | Jednostka | "
+                "Interpretacja | Ograniczenia |"
+            )
+            lines.append("| --- | --- | --- | --- | --- | --- | --- |")
+            for item in eeg_bold_sections:
+                lines.append(
+                    f"| {item.get('modality', 'n/a')} "
+                    f"| {item.get('metric', 'n/a')} "
+                    f"| {item.get('region_or_band', 'n/a')} "
+                    f"| {item.get('value', 'n/a')} "
+                    f"| {item.get('unit', 'n/a')} "
+                    f"| {item.get('interpretation', 'n/a')} "
+                    f"| {item.get('limitations', 'n/a')} |"
+                )
+            lines.append("")
+
         baseline_reference = _build_baseline_reference_section(
             self.payload.get("clinical_profile", {})
         )
@@ -1002,6 +1136,29 @@ class AnalysisReport:
         for section in ("metrics", "comparison"):
             for key, value in self.payload.get(section, {}).items():
                 rows.append({"section": section, "metric": key, "value": str(value)})
+        for item in self.payload.get("eeg_bold_sections", []):
+            metric_name = str(item.get("metric", "n/a"))
+            rows.append(
+                {
+                    "section": "eeg_bold_sections",
+                    "metric": metric_name,
+                    "value": str(item.get("value", "n/a")),
+                }
+            )
+            for field_name in (
+                "modality",
+                "region_or_band",
+                "unit",
+                "interpretation",
+                "limitations",
+            ):
+                rows.append(
+                    {
+                        "section": "eeg_bold_sections",
+                        "metric": f"{metric_name}_{field_name}",
+                        "value": str(item.get(field_name, "n/a")),
+                    }
+                )
         for benchmark_name, metadata in self.payload.get(
             "benchmark_metadata", {}
         ).items():
@@ -1461,8 +1618,11 @@ def build_analysis_report(
     beh_std = float(np.std(behavior))
 
     metrics = {
+        "band_power_delta": float(bands.summary.get("delta", 0.0)) if bands else 0.0,
+        "band_power_theta": float(bands.summary.get("theta", 0.0)) if bands else 0.0,
         "band_power_alpha": float(bands.summary.get("alpha", 0.0)) if bands else 0.0,
         "band_power_beta": float(bands.summary.get("beta", 0.0)) if bands else 0.0,
+        "band_power_gamma": float(bands.summary.get("gamma", 0.0)) if bands else 0.0,
         "erp_proxy_peak_to_peak": erp_proxy,
         "phase_locking_value": float(plv.summary["plv"]) if plv else 0.0,
         "connectivity_mean": float(conn.summary["correlation_mean"]) if conn else 0.0,
@@ -1474,9 +1634,14 @@ def build_analysis_report(
             float(conn.summary["region_strength_mean"]) if conn else 0.0
         ),
         "directional_mean": float(flow.summary["directional_mean"]) if flow else 0.0,
+        "directional_abs_mean": (
+            float(flow.summary["directional_abs_mean"]) if flow else 0.0
+        ),
+        "outgoing_mean": float(flow.summary["outgoing_mean"]) if flow else 0.0,
         "behavior_mean": beh_mean,
         "behavior_std": beh_std,
         "fmri_mean": float(np.mean(fmri)),
+        "bold_peak_to_peak": float(np.max(fmri) - np.min(fmri)),
     }
 
     comparison: dict[str, float] = {}
@@ -1505,7 +1670,11 @@ def build_analysis_report(
                 }
             )
 
-    payload = {"metrics": metrics, "comparison": comparison}
+    payload = {
+        "metrics": metrics,
+        "comparison": comparison,
+        "eeg_bold_sections": _build_eeg_bold_report_sections(metrics),
+    }
     if benchmark_metadata is not None:
         payload["benchmark_metadata"] = benchmark_metadata
         payload["validation_compliance"] = collect_validation_compliance(
