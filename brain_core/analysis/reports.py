@@ -1020,11 +1020,11 @@ class AnalysisReport:
             for item in clinical_differences:
                 lines.append(
                     f"- **profil bazowy**: "
-                    f"{item.get('baseline_profile', item.get('reference_profile_id', 'n/a'))}"
+                    f"{item.get('baseline_profile') or item.get('reference_profile_id') or 'n/a'}"
                 )
                 lines.append(
                     f"  - **profil porównywany**: "
-                    f"{item.get('compared_profile', item.get('profile_id', 'n/a'))}"
+                    f"{item.get('compared_profile') or item.get('profile_id') or 'n/a'}"
                 )
                 lines.append(f"  - **region**: {item.get('region', 'n/a')}")
                 lines.append(f"  - **czas_s**: {item.get('time_s', 'n/a')}")
