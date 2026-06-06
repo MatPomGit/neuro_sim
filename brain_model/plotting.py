@@ -88,6 +88,14 @@ def _parse_svg_translate(transform: str | None) -> tuple[float, float]:
 
 def _extract_svg_region_paths(svg_text: str) -> list[tuple[str, str]]:
     """Wydobądź pary region-ścieżka SVG niezależnie od kolejności atrybutów."""
+    return [
+        (region, d_attr)
+        for region, d_attr, _label in _extract_svg_region_metadata(svg_text)
+    ]
+
+
+def _extract_svg_region_metadata(svg_text: str) -> list[tuple[str, str, str]]:
+    """Wydobądź identyfikator, ścieżkę i etykietę anatomiczną regionu SVG."""
     region_paths = []
     try:
         root = ET.fromstring(svg_text)
@@ -100,7 +108,9 @@ def _extract_svg_region_paths(svg_text: str) -> list[tuple[str, str]]:
         region = element.attrib.get("data-region")
         d_attr = element.attrib.get("d")
         if region and d_attr:
-            region_paths.append((region, d_attr))
+            region_paths.append(
+                (region, d_attr, element.attrib.get("data-label", region))
+            )
     return region_paths
 
 
@@ -142,15 +152,117 @@ def _extract_svg_underlay_paths(svg_text: str) -> list[tuple[str, str, str | Non
 def _split_svg_path_coordinates(
     d_attr: str, *, x_offset: float = 0.0, y_offset: float = 0.0
 ) -> tuple[list[float], list[float]]:
-    """Zamień liczby ze ścieżki SVG na bezpiecznie sparowane współrzędne x/y."""
-    numbers = [
-        float(v)
-        for v in re.findall(r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?", d_attr)
-    ]
-    coordinate_count = len(numbers) - (len(numbers) % 2)
-    paired_numbers = numbers[:coordinate_count]
-    xs = [x + x_offset for x in paired_numbers[0::2]]
-    ys = [y + y_offset for y in paired_numbers[1::2]]
+    """Zamień ścieżkę SVG na współrzędne z obsługą komend względnych."""
+    token_pattern = (
+        r"[MmLlHhVvCcSsQqTtAaZz]|[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?"
+    )
+    tokens = re.findall(token_pattern, d_attr)
+    xs: list[float] = []
+    ys: list[float] = []
+    index = 0
+    command = ""
+    current_x = 0.0
+    current_y = 0.0
+    start_x = 0.0
+    start_y = 0.0
+
+    def is_command(token: str) -> bool:
+        """Sprawdź, czy token ścieżki SVG jest literą komendy."""
+        return bool(re.fullmatch(r"[A-Za-z]", token))
+
+    def read_float() -> float | None:
+        """Odczytaj kolejną liczbę ze ścieżki SVG lub zwróć ``None``."""
+        nonlocal index
+        if index >= len(tokens) or is_command(tokens[index]):
+            return None
+        value = float(tokens[index])
+        index += 1
+        return value
+
+    def add_point(x_value: float, y_value: float, *, relative: bool) -> None:
+        """Dodaj punkt końcowy, respektując względne współrzędne SVG."""
+        nonlocal current_x, current_y
+        if relative:
+            current_x += x_value
+            current_y += y_value
+        else:
+            current_x = x_value
+            current_y = y_value
+        xs.append(current_x + x_offset)
+        ys.append(current_y + y_offset)
+
+    while index < len(tokens):
+        if is_command(tokens[index]):
+            command = tokens[index]
+            index += 1
+        if not command:
+            break
+
+        relative = command.islower()
+        upper_command = command.upper()
+        if upper_command == "Z":
+            current_x = start_x
+            current_y = start_y
+            continue
+        if upper_command in {"M", "L", "T"}:
+            first_pair = upper_command == "M"
+            while index < len(tokens) and not is_command(tokens[index]):
+                x_value = read_float()
+                y_value = read_float()
+                if x_value is None or y_value is None:
+                    break
+                add_point(x_value, y_value, relative=relative)
+                if first_pair:
+                    start_x = current_x
+                    start_y = current_y
+                    first_pair = False
+            command = "l" if relative else "L"
+            continue
+        if upper_command == "H":
+            while index < len(tokens) and not is_command(tokens[index]):
+                x_value = read_float()
+                if x_value is None:
+                    break
+                add_point(x_value, 0.0 if relative else current_y, relative=relative)
+            continue
+        if upper_command == "V":
+            while index < len(tokens) and not is_command(tokens[index]):
+                y_value = read_float()
+                if y_value is None:
+                    break
+                add_point(0.0 if relative else current_x, y_value, relative=relative)
+            continue
+        if upper_command in {"C", "S", "Q"}:
+            values_per_segment = {"C": 6, "S": 4, "Q": 4}[upper_command]
+            while index < len(tokens) and not is_command(tokens[index]):
+                values = []
+                for _ in range(values_per_segment):
+                    value = read_float()
+                    if value is None:
+                        break
+                    values.append(value)
+                if len(values) != values_per_segment:
+                    break
+                end_x = values[-2]
+                end_y = values[-1]
+                add_point(end_x, end_y, relative=relative)
+            continue
+        if upper_command == "A":
+            while index < len(tokens) and not is_command(tokens[index]):
+                values = []
+                for _ in range(7):
+                    value = read_float()
+                    if value is None:
+                        break
+                    values.append(value)
+                if len(values) != 7:
+                    break
+                add_point(values[-2], values[-1], relative=relative)
+            continue
+
+        while index < len(tokens) and not is_command(tokens[index]):
+            index += 1
+
     return xs, ys
 
 
@@ -163,7 +275,10 @@ def _apply_interpretation_layout(fig: Any) -> None:
             message="This figure includes Axes that are not compatible with tight_layout.*",
             category=UserWarning,
         )
-        if bottom is None:
+        manual_layout = getattr(fig, "_neuro_sim_manual_subplot_adjust", None)
+        if manual_layout is not None:
+            fig.subplots_adjust(**manual_layout)
+        elif bottom is None:
             fig.tight_layout()
         else:
             fig.tight_layout(rect=(0.0, float(bottom), 1.0, 1.0))
@@ -256,12 +371,12 @@ def _set_svg_data_limits(
     x_min, x_max = min(all_x), max(all_x)
     y_min, y_max = min(all_y), max(all_y)
     ax.set_xlim(
-        x_min - max((x_max - x_min) * 0.06, 1.0),
-        x_max + max((x_max - x_min) * 0.06, 1.0),
+        x_min - max((x_max - x_min) * 0.025, 1.0),
+        x_max + max((x_max - x_min) * 0.025, 1.0),
     )
     ax.set_ylim(
-        y_max + max((y_max - y_min) * 0.06, 1.0),
-        y_min - max((y_max - y_min) * 0.06, 1.0),
+        y_max + max((y_max - y_min) * 0.025, 1.0),
+        y_min - max((y_max - y_min) * 0.025, 1.0),
     )
 
 
@@ -302,6 +417,48 @@ BAND_DESCRIPTIONS = {
     "beta": "Pasmo beta: kontrola wykonawcza i nastawienie zadaniowe.",
     "gamma": "Pasmo gamma: lokalne wiązanie cech i reprezentacji.",
 }
+
+REGION_LOCATION_NAMES = {
+    "DLPFC_L": "lewa grzbietowo-boczna kora przedczołowa",
+    "DLPFC_R": "prawa grzbietowo-boczna kora przedczołowa",
+    "OFC_L": "lewa kora oczodołowo-czołowa",
+    "OFC_R": "prawa kora oczodołowo-czołowa",
+    "ACC": "przednia kora zakrętu obręczy",
+    "M1_L": "lewa pierwotna kora ruchowa",
+    "M1_R": "prawa pierwotna kora ruchowa",
+    "S1_L": "lewa pierwotna kora somatosensoryczna",
+    "S1_R": "prawa pierwotna kora somatosensoryczna",
+    "IPS_L": "lewa bruzda śródciemieniowa",
+    "IPS_R": "prawa bruzda śródciemieniowa",
+    "A1_L": "lewa pierwotna kora słuchowa",
+    "A1_R": "prawa pierwotna kora słuchowa",
+    "STG_L": "lewy zakręt skroniowy górny",
+    "STG_R": "prawy zakręt skroniowy górny",
+    "IFG_L": "lewy zakręt czołowy dolny",
+    "IFG_R": "prawy zakręt czołowy dolny",
+    "Insula_L": "lewa wyspa",
+    "Insula_R": "prawa wyspa",
+    "Thalamus_L": "lewe wzgórze",
+    "Thalamus_R": "prawe wzgórze",
+    "BasalGanglia_L": "lewe jądra podstawy",
+    "BasalGanglia_R": "prawe jądra podstawy",
+    "HIP_L": "lewy hipokamp",
+    "HIP_R": "prawy hipokamp",
+    "AMY_L": "lewe ciało migdałowate",
+    "AMY_R": "prawe ciało migdałowate",
+    "PCC": "tylna kora zakrętu obręczy",
+    "mPFC": "przyśrodkowa kora przedczołowa",
+    "Angular_L": "lewy zakręt kątowy",
+    "Angular_R": "prawy zakręt kątowy",
+    "V1_L": "lewa pierwotna kora wzrokowa",
+    "V1_R": "prawa pierwotna kora wzrokowa",
+    "V2_L": "lewa wtórna kora wzrokowa",
+    "V2_R": "prawa wtórna kora wzrokowa",
+    "Cerebellum_L": "lewa półkula móżdżku",
+    "Cerebellum_R": "prawa półkula móżdżku",
+    "Brainstem": "pień mózgu",
+}
+
 
 REGION_TO_MODULE_WEIGHTS = {
     "DLPFC_L": [("EXEC", 0.6), ("VSWM", 0.4)],
@@ -358,11 +515,189 @@ def _load_svg_region_centroids(svg_path: str) -> dict[str, tuple[float, float]]:
     return centroids
 
 
+@lru_cache(maxsize=8)
+def _load_svg_region_labels(svg_path: str) -> dict[str, str]:
+    """Wczytaj etykiety anatomiczne regionów zapisane w metadanych SVG."""
+    text = Path(svg_path).read_text(encoding="utf-8")
+    return {
+        region: REGION_LOCATION_NAMES.get(region, label)
+        for region, _d_attr, label in _extract_svg_region_metadata(text)
+    }
+
+
+def _describe_region_projection(region: str) -> str:
+    """Zbuduj polski opis funkcjonalny regionu na podstawie mapowania modułów."""
+    module_weights = REGION_TO_MODULE_WEIGHTS.get(region, [])
+    if not module_weights:
+        return "Brak przypisanego modułu funkcjonalnego w uproszczonym modelu."
+    module_descriptions = [
+        f"{module} ({weight:.2g}): {_describe(module)}"
+        for module, weight in module_weights
+    ]
+    return "; ".join(module_descriptions)
+
+
+def _calculate_scroll_zoom_limits(
+    current_limits: tuple[float, float],
+    home_limits: tuple[float, float],
+    cursor_value: float,
+    scale_factor: float,
+) -> tuple[float, float]:
+    """Oblicz nowy zakres osi po przybliżeniu kółkiem wokół kursora.
+
+    Parameters
+    ----------
+    current_limits:
+        Aktualny zakres osi, z zachowaniem ewentualnego odwrócenia osi.
+    home_limits:
+        Początkowy zakres osi traktowany jako maksymalny widok oddalenia.
+    cursor_value:
+        Współrzędna kursora w układzie danych osi.
+    scale_factor:
+        Mnożnik szerokości zakresu; wartości poniżej 1.0 przybliżają widok.
+
+    Returns
+    -------
+    tuple[float, float]
+        Nowy zakres osi, ograniczony do początkowego widoku.
+    """
+    left, right = current_limits
+    home_left, home_right = home_limits
+    current_span = right - left
+    home_span = home_right - home_left
+    if current_span == 0.0 or home_span == 0.0:
+        return current_limits
+
+    home_width = abs(home_span)
+    new_span = current_span * scale_factor
+    if abs(new_span) > home_width:
+        new_span = home_width if current_span > 0 else -home_width
+
+    cursor_ratio = (cursor_value - left) / current_span
+    new_left = cursor_value - cursor_ratio * new_span
+    new_right = new_left + new_span
+
+    home_min, home_max = sorted((home_left, home_right))
+    new_min, new_max = sorted((new_left, new_right))
+    new_width = new_max - new_min
+    if new_min < home_min:
+        new_min = home_min
+        new_max = home_min + new_width
+    if new_max > home_max:
+        new_max = home_max
+        new_min = home_max - new_width
+
+    if home_left <= home_right:
+        return new_min, new_max
+    return new_max, new_min
+
+
+def _attach_brain_projection_scroll_zoom(ax: Any) -> None:
+    """Podłącz przybliżanie i oddalanie rzutu SVG kółkiem myszy."""
+    home_xlim = tuple(float(value) for value in ax.get_xlim())
+    home_ylim = tuple(float(value) for value in ax.get_ylim())
+    ax._neuro_sim_home_xlim = home_xlim
+    ax._neuro_sim_home_ylim = home_ylim
+
+    def on_scroll(event: Any) -> None:
+        """Zmień skalę tylko wtedy, gdy kursor znajduje się nad danym rzutem."""
+        if event.inaxes != ax or event.xdata is None or event.ydata is None:
+            return
+
+        event_step = getattr(event, "step", 0)
+        if event.button == "up" or event_step > 0:
+            scale_factor = 0.8
+        elif event.button == "down" or event_step < 0:
+            scale_factor = 1.25
+        else:
+            return
+
+        ax.set_xlim(
+            _calculate_scroll_zoom_limits(
+                tuple(float(value) for value in ax.get_xlim()),
+                ax._neuro_sim_home_xlim,
+                float(event.xdata),
+                scale_factor,
+            )
+        )
+        ax.set_ylim(
+            _calculate_scroll_zoom_limits(
+                tuple(float(value) for value in ax.get_ylim()),
+                ax._neuro_sim_home_ylim,
+                float(event.ydata),
+                scale_factor,
+            )
+        )
+        ax.figure.canvas.draw_idle()
+
+    ax.figure.canvas.mpl_connect("scroll_event", on_scroll)
+
+
+def _attach_region_point_tooltips(
+    ax: Any, scatter: Any, labels: list[str], values: list[float], locations: list[str]
+) -> None:
+    """Podłącz podpowiedzi dla punktów aktywacji regionów na rzucie SVG."""
+    annotation = ax.annotate(
+        "",
+        xy=(0, 0),
+        xytext=(14, 14),
+        textcoords="offset points",
+        bbox={
+            "boxstyle": "round,pad=0.35",
+            "fc": "#fff7ed",
+            "ec": "#9a3412",
+            "alpha": 0.97,
+        },
+        arrowprops={"arrowstyle": "->", "color": "#9a3412"},
+        fontsize=8,
+        zorder=5,
+    )
+    annotation.set_visible(False)
+
+    def on_move(event: Any) -> None:
+        """Pokaż opis najbliższego punktu regionu pod kursorem myszy."""
+        if event.inaxes != ax:
+            if annotation.get_visible():
+                annotation.set_visible(False)
+                ax.figure.canvas.draw_idle()
+            return
+
+        contains, info = scatter.contains(event)
+        if not contains:
+            if annotation.get_visible():
+                annotation.set_visible(False)
+                ax.figure.canvas.draw_idle()
+            return
+
+        point_index = int(info.get("ind", [0])[0])
+        offsets = scatter.get_offsets()
+        if point_index >= len(labels) or point_index >= len(offsets):
+            return
+
+        region = labels[point_index]
+        annotation.xy = offsets[point_index]
+        annotation.set_text(
+            "\n".join(
+                [
+                    f"Miejsce: {locations[point_index]}",
+                    f"Region: {region}",
+                    f"Wartość aktywacji: {values[point_index]:.3f}",
+                    f"Opis: {_describe_region_projection(region)}",
+                ]
+            )
+        )
+        annotation.set_visible(True)
+        ax.figure.canvas.draw_idle()
+
+    ax.figure.canvas.mpl_connect("motion_notify_event", on_move)
+
+
 def _draw_brain_projection(
     ax: Any, time: Any, activity: Any, idx: Any, svg_path: str, title: str
 ) -> Any:
     """Narysuj aktywację regionów na tle konturów z wybranego rzutu SVG."""
     centroids = _load_svg_region_centroids(svg_path)
+    region_labels = _load_svg_region_labels(svg_path)
     shapes = _load_svg_region_shapes(svg_path)
     underlay_shapes = _load_svg_underlay_shapes(svg_path)
     if not centroids:
@@ -384,12 +719,13 @@ def _draw_brain_projection(
         region: float(values[-1]) for region, values in region_activity_t.items()
     }
 
-    xs, ys, vals, labels = [], [], [], []
+    xs, ys, vals, labels, locations = [], [], [], [], []
     for region, (x, y) in centroids.items():
         xs.append(x)
         ys.append(y)
         vals.append(region_activity.get(region, 0.0))
         labels.append(region)
+        locations.append(region_labels.get(region, region))
 
     scatter = ax.scatter(
         xs,
@@ -398,13 +734,15 @@ def _draw_brain_projection(
         cmap="magma",
         vmin=0.0,
         vmax=1.0,
-        s=95,
+        s=125,
         edgecolors="#111827",
-        linewidths=0.4,
+        linewidths=0.45,
         zorder=3,
     )
+    _attach_region_point_tooltips(ax, scatter, labels, vals, locations)
     _set_svg_data_limits(ax, shapes, underlay_shapes)
     ax.set_aspect("equal", adjustable="box")
+    _attach_brain_projection_scroll_zoom(ax)
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_title(title)
@@ -807,6 +1145,14 @@ def draw_brain_region_projections(
         )
         cbar.set_label("Aktywacja [0-1]")
     fig.suptitle("Aktywacja regionów mózgu na 4 rzutach (na bazie szkieletu SVG)")
+    fig._neuro_sim_manual_subplot_adjust = {
+        "left": 0.005,
+        "right": 0.885,
+        "top": 0.91,
+        "bottom": 0.17,
+        "wspace": 0.015,
+        "hspace": 0.18,
+    }
     _add_interpretation_box(
         fig,
         "Rzuty SVG pokazują aktywację regionów. Co widzisz: każdy panel to inny "

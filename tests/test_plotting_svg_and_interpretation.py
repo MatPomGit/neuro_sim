@@ -8,7 +8,9 @@ from brain_model.model import CognitiveBrainModel
 from brain_model.plotting import (
     INTERPRETATION_WRAP_WIDTH,
     _add_interpretation_box,
+    _calculate_scroll_zoom_limits,
     _load_svg_region_centroids,
+    _load_svg_region_labels,
     _load_svg_region_shapes,
     _load_svg_underlay_shapes,
     _parse_svg_translate,
@@ -46,7 +48,7 @@ def test_svg_region_background_ignores_unpaired_coordinate(tmp_path) -> None:
     svg_path = tmp_path / "regions.svg"
     svg_path.write_text(
         '<svg xmlns="http://www.w3.org/2000/svg">'
-        '<path data-region="VIS" d="M 1 2 L 3 4 H 5" />'
+        '<path data-region="VIS" d="M 1 2 L 3 4 L 5" />'
         "</svg>",
         encoding="utf-8",
     )
@@ -61,6 +63,60 @@ def test_svg_region_background_ignores_unpaired_coordinate(tmp_path) -> None:
         plt.close(fig)
 
     assert shapes["VIS"] == ([1.0, 3.0], [2.0, 4.0])
+
+
+def test_svg_region_loading_respects_relative_lateral_commands(tmp_path) -> None:
+    """Względne komendy SVG powinny ustawiać punkty na rzucie lateral bez przesunięcia."""
+    svg_path = tmp_path / "relative_regions.svg"
+    svg_path.write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg">'
+        '<path data-region="OFC_L" data-label="Orbitofrontal cortex left" '
+        'd="m 360,1090 c 95,-72 205,-100 345,-90 '
+        '90,6 145,38 173,95 z" />'
+        "</svg>",
+        encoding="utf-8",
+    )
+
+    _load_svg_region_shapes.cache_clear()
+    _load_svg_region_centroids.cache_clear()
+    _load_svg_region_labels.cache_clear()
+
+    shapes = _load_svg_region_shapes(str(svg_path))
+    centroids = _load_svg_region_centroids(str(svg_path))
+    labels = _load_svg_region_labels(str(svg_path))
+
+    xs, ys = shapes["OFC_L"]
+    assert min(xs) >= 360.0
+    assert max(xs) == 878.0
+    assert min(ys) >= 1000.0
+    assert centroids["OFC_L"][0] > 500.0
+    assert labels["OFC_L"] == "lewa kora oczodołowo-czołowa"
+
+
+def test_scroll_zoom_limits_zoom_around_cursor_and_keep_home_bounds() -> None:
+    """Zoom kółkiem powinien przybliżać wokół kursora i nie oddalać poza widok bazowy."""
+    zoomed_limits = _calculate_scroll_zoom_limits(
+        current_limits=(0.0, 100.0),
+        home_limits=(0.0, 100.0),
+        cursor_value=25.0,
+        scale_factor=0.8,
+    )
+    capped_limits = _calculate_scroll_zoom_limits(
+        current_limits=zoomed_limits,
+        home_limits=(0.0, 100.0),
+        cursor_value=25.0,
+        scale_factor=2.0,
+    )
+    inverted_limits = _calculate_scroll_zoom_limits(
+        current_limits=(100.0, 0.0),
+        home_limits=(100.0, 0.0),
+        cursor_value=75.0,
+        scale_factor=0.8,
+    )
+
+    assert zoomed_limits == (5.0, 85.0)
+    assert capped_limits == (0.0, 100.0)
+    assert inverted_limits == (95.0, 15.0)
 
 
 def test_interpretation_box_replaces_previous_artist() -> None:
