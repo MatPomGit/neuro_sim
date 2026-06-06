@@ -21,3 +21,15 @@ def test_qt_config_preserves_individual_plot_choices() -> None:
 
     assert config["plots"] == state.plots
     assert loaded_state.plots == state.plots
+
+
+def test_qt_config_discovers_all_yaml_presets() -> None:
+    """GUI używa plików `configs/*.yaml` jako źródła wyboru scenariuszy."""
+    from brain_model.qt_config import REPO_ROOT, SCENARIO_YAML_PRESETS
+
+    config_paths = {
+        path.relative_to(REPO_ROOT) for path in (REPO_ROOT / "configs").glob("*.yaml")
+    }
+    preset_paths = {preset_path for _label, preset_path in SCENARIO_YAML_PRESETS}
+
+    assert preset_paths == config_paths

@@ -152,44 +152,57 @@ def build_engine_config(
     brain_params: BrainParams,
     oscillator_params: WilsonCowanParams,
 ) -> ExperimentConfig:
-    """Zbuduj konfigurację silnika z YAML albo minimalnego dokumentu generowanego przez GUI."""
-    if state.scenario_config_path:
-        raw_config = load_scenario_yaml_document(state.scenario_config_path)
-        task_config = raw_config.setdefault("task", {})
-        task_config["scenario"] = state.scenario
-        task_config["duration"] = T
-        raw_config["timestep"] = dt
-        raw_config["seed"] = seed
-        raw_config.setdefault("output", {})["save_results"] = state.save_results
-        cfg = load_config_from_string(
-            _dump_json_compatible(raw_config), format_hint="json"
-        )
-        return cfg
+    """Przekaż wybrany preset YAML do walidacji schematu `brain_core`.
 
-    config_doc = {
-        "model": {
-            "noise": brain_params.noise,
-            "gw_threshold": brain_params.gw_threshold,
-            "gw_gain": brain_params.gw_gain,
-        },
-        "integrator": {
-            "method": "euler",
-            "oscillator": {
-                "cognitive_drive_gain": oscillator_params.cognitive_drive_gain,
-                "oscillator_noise": oscillator_params.oscillator_noise,
-            },
-        },
-        "timestep": dt,
-        "seed": seed,
-        "task": {"scenario": state.scenario, "duration": T},
-        "output": {
-            "save_results": state.save_results,
-            "label": "gui",
-            "output_dir": "outputs",
-        },
-    }
+    Parameters
+    ----------
+    state:
+        Migawka stanu GUI z wybraną ścieżką `configs/*.yaml`.
+    T:
+        Czas pokazany w GUI; zapisany do `task.duration` przed walidacją silnika.
+    seed:
+        Ziarno losowości z GUI, przepisywane do pól `seed` i `rng_seed`.
+    dt:
+        Krok czasowy z GUI, przepisywany do `timestep`.
+    brain_params:
+        Parametry modelu zachowane w sygnaturze workera; preset YAML pozostaje
+        źródłem właściwej konfiguracji modelu.
+    oscillator_params:
+        Parametry oscylatorów zachowane w sygnaturze workera; preset YAML
+        pozostaje źródłem właściwej konfiguracji integratora.
+
+    Returns
+    -------
+    ExperimentConfig
+        Konfiguracja zwalidowana wyłącznie przez loader i schemat `brain_core`.
+
+    Raises
+    ------
+    ValueError
+        Gdy stan GUI nie wskazuje pliku konfiguracyjnego scenariusza.
+    """
+    _ = (brain_params, oscillator_params)
+    if not state.scenario_config_path:
+        raise ValueError("Wybierz konfigurację YAML scenariusza przed uruchomieniem.")
+
+    raw_config = load_scenario_yaml_document(state.scenario_config_path)
+    if not isinstance(raw_config, dict):
+        raw_config = {}
+    task_config = raw_config.get("task")
+    if not isinstance(task_config, dict):
+        task_config = {}
+        raw_config["task"] = task_config
+    task_config["duration"] = T
+    raw_config["timestep"] = dt
+    raw_config["seed"] = seed
+    raw_config["rng_seed"] = seed
+    output_config = raw_config.get("output")
+    if not isinstance(output_config, dict):
+        output_config = {}
+        raw_config["output"] = output_config
+    output_config["save_results"] = state.save_results
     return load_config_from_string(
-        _dump_json_compatible(config_doc), format_hint="json"
+        _dump_json_compatible(raw_config), format_hint="json"
     )
 
 

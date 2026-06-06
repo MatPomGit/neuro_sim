@@ -83,10 +83,14 @@ def _function_source(path: Path, function_name: str) -> str:
     return ast.unparse(function)
 
 
-def test_yaml_engine_config_uses_gui_scenario_selection() -> None:
-    """Konfiguracja YAML zachowuje ręcznie wybrany scenariusz z GUI."""
+def test_yaml_engine_config_delegates_validation_to_core_schema() -> None:
+    """Worker przekazuje wybrany YAML do loadera, bez równoległej konfiguracji GUI."""
     source = _function_source(QT_RUNNER_PATH, "build_engine_config")
 
-    assert "task_config = raw_config.setdefault('task', {})" in source
-    assert "task_config['scenario'] = state.scenario" in source
+    assert (
+        "raw_config = load_scenario_yaml_document(state.scenario_config_path)" in source
+    )
+    assert "load_config_from_string" in source
+    assert "config_doc =" not in source
+    assert "task_config['scenario'] = state.scenario" not in source
     assert "task_config['duration'] = T" in source

@@ -254,18 +254,18 @@ PLOT_LABELS = {
 READY_LESSON_PRESETS: tuple[tuple[str, str, str], ...] = (
     (
         "roving_oddball_intro",
-        "roving_oddball_intro — wprowadzenie do standardu i dewiantu",
-        "Roving oddball — zdrowy",
+        "Wprowadzenie: standard, dewiant i habituacja",
+        label_for_scenario_yaml_path("configs/roving_oddball_healthy.yaml"),
     ),
     (
         "gaba_disorder_comparison",
-        "gaba_disorder_comparison — porównanie zaburzenia GABA",
-        "Roving oddball — zaburzenie GABA",
+        "Porównanie: dysregulacja GABA i odpowiedź na dewiant",
+        label_for_scenario_yaml_path("configs/roving_oddball_disorder_gaba.yaml"),
     ),
     (
         "hippocampal_lesion_comparison",
-        "hippocampal_lesion_comparison — porównanie lezji hipokampa",
-        "Roving oddball — lezja hipokampa",
+        "Porównanie: lezja hipokampa i readaptacja",
+        label_for_scenario_yaml_path("configs/roving_oddball_lesion_hippocampus.yaml"),
     ),
 )
 

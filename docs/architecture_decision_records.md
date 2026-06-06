@@ -87,6 +87,7 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0023 | proposed | Konfiguracje YAML i panele wyników Qt oparte na silniku | [`docs/adr/0023-konfiguracje-yaml-i-panele-qt-silnika.md`](adr/0023-konfiguracje-yaml-i-panele-qt-silnika.md) | — |
 | ADR-0024 | proposed | Docelowy schemat konfiguracji eksperymentu symulacyjnego | [`docs/adr/0024-docelowy-schemat-konfiguracji-eksperymentu.md`](adr/0024-docelowy-schemat-konfiguracji-eksperymentu.md) | — |
 | ADR-0025 | proposed | Raport amplituda-latencja dla roving oddball | [`docs/adr/0025-raport-amplituda-latencja-roving-oddball.md`](adr/0025-raport-amplituda-latencja-roving-oddball.md) | — |
+| ADR-0026 | proposed | Pakiety zajęciowe GUI oparte na presetach YAML | [`docs/adr/0026-pakiety-zajeciowe-gui-yaml.md`](adr/0026-pakiety-zajeciowe-gui-yaml.md) | — |
 
 ## Procedura dodawania kolejnego ADR
 

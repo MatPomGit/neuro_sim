@@ -45,3 +45,29 @@ def test_teacher_panels_do_not_import_task_protocols() -> None:
         source = path.read_text(encoding="utf-8")
 
         assert "brain_core.experiments.protocols" not in source
+
+
+def test_qt_matplotlib_backend_is_used_for_desktop_plots() -> None:
+    """Desktopowe GUI osadza Matplotlib przez backend Qt, nie przez inny toolkit."""
+    qt_plotting = (REPO_ROOT / "brain_model" / "qt_plotting.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "matplotlib.backends.backend_qtagg" in qt_plotting
+    assert "FigureCanvasQTAgg" in qt_plotting
+
+
+def test_desktop_gui_does_not_add_tkinter_flows() -> None:
+    """Nowe pliki przepływu GUI Qt nie importują ani nie uruchamiają `tkinter`."""
+    gui_paths = [
+        REPO_ROOT / "brain_model" / "qt_app.py",
+        REPO_ROOT / "brain_model" / "qt_sections.py",
+        REPO_ROOT / "brain_model" / "qt_runner.py",
+        REPO_ROOT / "brain_model" / "qt_results.py",
+    ]
+
+    for path in gui_paths:
+        source = path.read_text(encoding="utf-8").lower()
+        assert "import tkinter" not in source
+        assert "from tkinter" not in source
+        assert "tk()" not in source
