@@ -87,7 +87,7 @@ def _add_selected_plots_to_panel(
             activity,
             model.names,
             model.idx,
-            figsize=(11, 8),
+            figsize=(13, 9.5),
         )
         has_plots = True
     if gui.state.plots.get("region_activity_2d", False):
