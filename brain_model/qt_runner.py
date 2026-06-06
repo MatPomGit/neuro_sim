@@ -186,12 +186,21 @@ def build_engine_config(
         raise ValueError("Wybierz konfigurację YAML scenariusza przed uruchomieniem.")
 
     raw_config = load_scenario_yaml_document(state.scenario_config_path)
-    task_config = raw_config.setdefault("task", {})
+    if not isinstance(raw_config, dict):
+        raw_config = {}
+    task_config = raw_config.get("task")
+    if not isinstance(task_config, dict):
+        task_config = {}
+        raw_config["task"] = task_config
     task_config["duration"] = T
     raw_config["timestep"] = dt
     raw_config["seed"] = seed
     raw_config["rng_seed"] = seed
-    raw_config.setdefault("output", {})["save_results"] = state.save_results
+    output_config = raw_config.get("output")
+    if not isinstance(output_config, dict):
+        output_config = {}
+        raw_config["output"] = output_config
+    output_config["save_results"] = state.save_results
     return load_config_from_string(
         _dump_json_compatible(raw_config), format_hint="json"
     )
