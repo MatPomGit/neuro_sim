@@ -476,6 +476,7 @@ def test_clinical_profile_batch_reuses_seed_and_stimulus_sequence() -> Any:
 
     assert batch["same_seed"] is True
     assert batch["same_stimulus_sequence"] is True
+    assert batch["shared_stimulus_sequence_reused"] is True
     assert batch["stimulus_sequence_signature"]
     assert len(difference_items) == 2
     for item in difference_items:

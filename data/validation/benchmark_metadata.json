@@ -4,20 +4,62 @@
     "scope": "Krótki sygnał demonstracyjny EEG dla kanałów Cz i Pz używany do testowania kształtu danych oraz podstawowych porównań amplitudy.",
     "limitations": "Benchmark służy do walidacji technicznej i edukacyjnej; nie reprezentuje norm klinicznych, rozkładów populacyjnych ani pełnych właściwości czasowo-częstotliwościowych EEG.",
     "level": "synthetic",
-    "compliance_criteria": "Zgodność oznacza poprawny odczyt niepustej macierzy z kolumnami metryk Cz i Pz, zachowanie co najmniej dwóch próbek oraz raportowanie metryk porównawczych bez interpretacji klinicznej."
+    "compliance_criteria": "Zgodność oznacza poprawny odczyt niepustej macierzy z kolumnami metryk Cz i Pz, zachowanie co najmniej dwóch próbek oraz raportowanie metryk porównawczych bez interpretacji klinicznej.",
+    "compliance_checks": {
+      "required_columns": [
+        "cz",
+        "pz"
+      ],
+      "minimum_rows": 2,
+      "accepted_comparison_metrics": [
+        "mae",
+        "rmse",
+        "correlation"
+      ],
+      "interpretation_scope": "Kontrola techniczna kształtu sygnału EEG i stabilności raportowania amplitudy proxy.",
+      "acceptance_rule": "Benchmark jest zgodny tylko wtedy, gdy plik zawiera wymagane kolumny Cz i Pz, co najmniej dwie próbki oraz raport nie rozszerza wyniku na normy kliniczne."
+    }
   },
   "fmri": {
     "source": "Syntetyczny cel walidacyjny utrzymywany w repozytorium neuro_sim; nie pochodzi z akwizycji MRI ani z publicznego zbioru BIDS.",
     "scope": "Krótki sygnał demonstracyjny fMRI dla regionów V1 i PFC używany do testowania kształtu danych oraz porównań średniej aktywności.",
     "limitations": "Benchmark nie modeluje pełnej odpowiedzi hemodynamicznej, opóźnień skanera, wariancji międzyosobniczej ani artefaktów akwizycji.",
     "level": "synthetic",
-    "compliance_criteria": "Zgodność oznacza poprawny odczyt niepustej macierzy regionów V1 i PFC, zachowanie co najmniej dwóch próbek oraz raportowanie porównań średniej aktywności bez wnioskowania hemodynamicznego."
+    "compliance_criteria": "Zgodność oznacza poprawny odczyt niepustej macierzy regionów V1 i PFC, zachowanie co najmniej dwóch próbek oraz raportowanie porównań średniej aktywności bez wnioskowania hemodynamicznego.",
+    "compliance_checks": {
+      "required_columns": [
+        "v1",
+        "pfc"
+      ],
+      "minimum_rows": 2,
+      "accepted_comparison_metrics": [
+        "mae",
+        "rmse",
+        "correlation"
+      ],
+      "interpretation_scope": "Kontrola techniczna kształtu sygnału BOLD proxy i porównania średniej aktywności regionów.",
+      "acceptance_rule": "Benchmark jest zgodny tylko wtedy, gdy plik zawiera regiony V1 i PFC, co najmniej dwie próbki oraz raport nie interpretuje wyniku jako walidacji hemodynamicznej."
+    }
   },
   "behavior": {
     "source": "Edukacyjny cel walidacyjny utrzymywany w repozytorium neuro_sim; wartości dobrano ręcznie do testów raportowania.",
     "scope": "Minimalny zestaw prób z trafnością i czasem reakcji używany do sprawdzania porównań behawioralnych.",
     "limitations": "Benchmark nie jest próbą empiryczną, nie zawiera wariancji populacyjnej i nie powinien być używany do wniosków psychometrycznych.",
     "level": "educational",
-    "compliance_criteria": "Zgodność oznacza poprawny odczyt minimalnego zestawu prób z trafnością i czasem reakcji oraz raportowanie porównań behawioralnych wyłącznie jako kontroli edukacyjnej."
+    "compliance_criteria": "Zgodność oznacza poprawny odczyt minimalnego zestawu prób z trafnością i czasem reakcji oraz raportowanie porównań behawioralnych wyłącznie jako kontroli edukacyjnej.",
+    "compliance_checks": {
+      "required_columns": [
+        "accuracy",
+        "reaction_time"
+      ],
+      "minimum_rows": 2,
+      "accepted_comparison_metrics": [
+        "mae",
+        "rmse",
+        "correlation"
+      ],
+      "interpretation_scope": "Edukacyjna kontrola spójności raportowania trafności i czasu reakcji w minimalnym zestawie prób.",
+      "acceptance_rule": "Benchmark jest zgodny tylko wtedy, gdy plik zawiera trafność i czas reakcji, co najmniej dwie próby oraz raport pozostaje kontrolą edukacyjną bez wniosków psychometrycznych."
+    }
   }
 }

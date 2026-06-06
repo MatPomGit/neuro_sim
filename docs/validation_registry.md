@@ -6,6 +6,17 @@ ograniczeń i kryteriów zgodności pozostaje
 `data/validation/benchmark_metadata.json`; poniższa tabela uzupełnia ten opis o
 poziom walidacji jakościowej, oczekiwany efekt, tolerancję oraz bieżący status.
 
+## Zakres ograniczeń modelu
+
+Poziom walidacji jakościowej w tabeli oznacza wyłącznie zakres efektu, który
+można kontrolować automatycznie w repozytorium. Benchmarki `eeg` i `fmri` są
+syntetyczne, a `behavior` jest edukacyjny, dlatego zgodność nie oznacza
+kalibracji do danych uczestników, norm populacyjnych, diagnozy klinicznej ani
+walidacji psychometrycznej/hemodynamicznej. Strukturalne kryteria zgodności per
+benchmark są zapisane w `data/validation/benchmark_metadata.json` w polu
+`compliance_checks`; kod loadera wymaga tych pól jawnie i nie uzupełnia braków
+domyślnymi progami.
+
 | Benchmark | Poziom | Poziom walidacji jakościowej | Źródło | Oczekiwany efekt | Kryteria zgodności | Tolerancja | Ograniczenia modelu | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `eeg` | `synthetic` | Techniczna walidacja kształtu i raportowania sygnału; brak walidacji klinicznej. | Syntetyczny cel walidacyjny utrzymywany w repozytorium `neuro_sim`; nie pochodzi z danych uczestników. | Raport zachowuje poprawny kształt krótkiego sygnału EEG dla kanałów Cz i Pz oraz umożliwia podstawowe porównania amplitudy bez interpretacji klinicznej. | Zgodność oznacza poprawny odczyt niepustej macierzy z kolumnami metryk Cz i Pz, zachowanie co najmniej dwóch próbek oraz raportowanie metryk porównawczych bez interpretacji klinicznej. | Testy regresji powinny akceptować wyłącznie różnice numeryczne wynikające z precyzji obliczeń; zmiana jakościowa wymaga aktualizacji metadanych i uzasadnienia. | Benchmark nie reprezentuje norm klinicznych, rozkładów populacyjnych ani pełnych właściwości czasowo-częstotliwościowych EEG. | Aktywny benchmark edukacyjno-techniczny; nie jest benchmarkiem empirycznym. |

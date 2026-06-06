@@ -96,6 +96,9 @@ def test_reference_scenarios_and_pathology_config_validation() -> Any:
                 "affected_regions": ["Hippocampus"],
                 "cognitive_functions": ["pamięć epizodyczna"],
                 "expected_effects": {},
+                "expected_direction": "lower_activity",
+                "primary_metric": "mean_abs_difference",
+                "severity_level": {"small": 0.0, "medium": 0.02, "large": 0.05},
             },
             "connectome": {"atlas": "default_regions"},
             "pathology": {
