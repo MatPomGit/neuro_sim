@@ -749,7 +749,7 @@ def export_teaching_package(
             shutil.copy2(source, package_dir / source.name)
 
     metadata = {
-        "generated_at": datetime.datetime.now(datetime.UTC).isoformat(),
+        "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "seed": state_config.get("seed"),
         "scenario": state_config.get("scenario"),
         "scenario_config_path": state_config.get("scenario_config_path"),
