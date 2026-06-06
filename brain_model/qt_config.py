@@ -32,7 +32,7 @@ def _scenario_yaml_label(path: Path) -> str:
     """Zbuduj etykietę scenariusza na podstawie istniejącego pliku `configs/*.yaml`."""
     try:
         payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    except OSError:
+    except (OSError, yaml.YAMLError):
         payload = {}
     if not isinstance(payload, dict):
         payload = {}
