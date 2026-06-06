@@ -65,3 +65,54 @@ def test_compute_information_flow_prefers_known_direction() -> None:
 
     directional = result.series["directional_matrix"]
     assert directional[0, 1] > directional[1, 0]
+
+
+def test_reportable_signal_metrics_cover_profiles_and_polish_descriptions() -> None:
+    """Katalog raportowy zawiera metryki dla healthy/disorder/lesion po polsku."""
+    from brain_core.analysis.signal_metrics import reportable_signal_metrics
+
+    catalog = reportable_signal_metrics()
+    names = {str(item["name"]) for item in catalog}
+    required_names = {
+        "band_power_alpha",
+        "band_power_beta",
+        "erp_proxy_peak_to_peak",
+        "phase_locking_value",
+        "connectivity_abs_mean",
+        "pli_proxy_mean",
+        "directional_abs_mean",
+        "outgoing_mean",
+    }
+
+    assert required_names <= names
+    for item in catalog:
+        assert {"healthy", "disorder", "lesion"} <= set(item["profile_groups"])
+        assert "interpretation_pl" in item
+        assert "limitations_pl" in item
+        assert len(str(item["interpretation_pl"]).split()) >= 5
+        assert str(item["limitations_pl"]).strip()
+        assert str(item["unit"]).strip()
+
+
+def test_physiology_docstrings_describe_units_and_methodology() -> None:
+    """Modele EEG/BOLD opisują jednostki proxy i założenia metodologiczne."""
+    from brain_core.physiology.bold_hrf import canonical_hrf, convolve_with_hrf
+    from brain_core.physiology.eeg_forward_model import EEGForwardModel
+    from brain_core.physiology.neurovascular_coupling import neural_drive_from_activity
+
+    docstrings = "\n".join(
+        str(obj.__doc__ or "")
+        for obj in (
+            EEGForwardModel,
+            EEGForwardModel.project,
+            canonical_hrf,
+            convolve_with_hrf,
+            neural_drive_from_activity,
+        )
+    ).lower()
+
+    assert "jednost" in docstrings
+    assert "proxy" in docstrings
+    assert "sekund" in docstrings
+    assert "hrf" in docstrings
+    assert "bold" in docstrings

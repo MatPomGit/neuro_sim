@@ -232,6 +232,11 @@ def _plot_description(title: str) -> str:
             "Sygnały EEG modułów pokazują syntetyczny ślad aktywności E-I dla "
             "wybranych regionów."
         ),
+        "Metryki EEG/BOLD": (
+            "Wykres pokazuje gotowe wartości metryk z raportu brain_core. "
+            "Jest wyłącznie warstwą prezentacji; interpretacje, jednostki i "
+            "ograniczenia znajdują się w sekcji EEG/BOLD raportu."
+        ),
     }
     return descriptions.get(
         title,
@@ -372,6 +377,24 @@ def _experiment_report_markdown(
     if summary_text:
         lines.extend([f"- **Skrót**: {summary_text}", ""])
     lines.extend(["## Skrót metryk", *_metrics_summary_lines(analysis_report), ""])
+    eeg_bold_sections = analysis_report.get("eeg_bold_sections", [])
+    if eeg_bold_sections:
+        lines.extend(["## Sekcje EEG/BOLD", ""])
+        lines.extend(
+            [
+                "| Modalność | Metryka | Region/pasmo | Wartość | Interpretacja | Ograniczenia |",
+                "| --- | --- | --- | --- | --- | --- |",
+            ]
+        )
+        for item in eeg_bold_sections:
+            escaped_item = {
+                key: str(value).replace("|", "\\|") for key, value in item.items()
+            }
+            lines.append(
+                "| {modality} | {metric} | {region_or_band} | {value} | "
+                "{interpretation} | {limitations} |".format(**escaped_item)
+            )
+        lines.append("")
     lines.extend(["## Tabela triali", ""])
     rows = _trial_table_rows(event_timeline)
     if rows:

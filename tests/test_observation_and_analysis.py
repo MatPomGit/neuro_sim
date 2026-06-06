@@ -533,3 +533,38 @@ def test_healthy_v1_report_marks_baseline_as_reference_not_diagnosis() -> Any:
     assert "punkt odniesienia" in markdown
     assert "nie jest diagnozą kliniczną" in markdown
     assert any(row["section"] == "baseline_reference" for row in csv_rows)
+
+
+def test_analysis_report_contains_eeg_bold_sections_with_polish_descriptions() -> Any:
+    """Raport analityczny zawiera sekcje EEG/BOLD z interpretacją i ograniczeniami."""
+    from brain_core.analysis.reports import build_analysis_report
+
+    fs = 100.0
+    time = np.arange(0.0, 2.0, 1.0 / fs)
+    eeg = np.column_stack(
+        [
+            np.sin(2 * np.pi * 10.0 * time),
+            np.sin(2 * np.pi * 10.0 * time + np.pi / 8),
+        ]
+    )
+    fmri = np.column_stack(
+        [
+            np.sin(2 * np.pi * 0.5 * time) * 0.1,
+            np.cos(2 * np.pi * 0.5 * time) * 0.1,
+        ]
+    )
+    behavior = np.linspace(0.0, 1.0, time.size)
+
+    report = build_analysis_report(eeg=eeg, fmri=fmri, behavior=behavior, fs=fs)
+    sections = report.payload["eeg_bold_sections"]
+    markdown = report.to_markdown()
+    csv_rows = report.to_csv_rows()
+
+    assert sections
+    assert {"EEG", "BOLD"} <= {item["modality"] for item in sections}
+    assert all(item["interpretation"] for item in sections)
+    assert all(item["limitations"] for item in sections)
+    assert "## Sekcje EEG/BOLD gotowe do raportowania" in markdown
+    assert "Interpretacja" in markdown
+    assert "Ograniczenia" in markdown
+    assert any(row["section"] == "eeg_bold_sections" for row in csv_rows)

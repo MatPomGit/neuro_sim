@@ -6,6 +6,49 @@ from dataclasses import dataclass
 
 import numpy as np
 
+REPORTABLE_INFORMATION_FLOW_METRICS = (
+    {
+        "name": "directional_mean",
+        "scope": "macierz kierunkowa regionów",
+        "unit": "różnica korelacji opóźnionych",
+        "profile_groups": ("healthy", "disorder", "lesion"),
+        "interpretation_pl": (
+            "Średnia kierunkowość jest gotowa do raportowania jako znakowany "
+            "proxy przepływu między regionami."
+        ),
+        "limitations_pl": (
+            "Metryka opiera się na opóźnieniu jednej próbki i nie jest pełną "
+            "analizą przyczynowości Grangera."
+        ),
+    },
+    {
+        "name": "directional_abs_mean",
+        "scope": "macierz kierunkowa regionów",
+        "unit": "|różnica korelacji opóźnionych|",
+        "profile_groups": ("healthy", "disorder", "lesion"),
+        "interpretation_pl": (
+            "Bezwzględna kierunkowość pokazuje łączną siłę asymetrii przepływu "
+            "niezależnie od znaku."
+        ),
+        "limitations_pl": (
+            "Agregat nie wskazuje, który region jest źródłem dominującego wpływu."
+        ),
+    },
+    {
+        "name": "outgoing_mean",
+        "scope": "siła wychodząca regionów",
+        "unit": "dodatnia różnica korelacji opóźnionych",
+        "profile_groups": ("healthy", "disorder", "lesion"),
+        "interpretation_pl": (
+            "Średnia siła wychodząca opisuje regiony jako potencjalne źródła "
+            "wpływu w symulowanej sieci."
+        ),
+        "limitations_pl": (
+            "Wynik jest proxy raportowym i wymaga ostrożnej interpretacji."
+        ),
+    },
+)
+
 
 @dataclass(frozen=True)
 class InformationFlowMetricResult:

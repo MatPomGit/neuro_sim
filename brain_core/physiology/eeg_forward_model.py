@@ -27,6 +27,11 @@ class EEGForwardModel:
     """
     Liniowy model forward EEG rzutujący źródła regionalne na sensory.
 
+    Model stosuje macierz leadfield jako jawny operator liniowy: aktywność
+    źródłowa w jednostkach proxy modelu jest rzutowana na sensory EEG w tych
+    samych względnych jednostkach amplitudy. Wyniki należy raportować jako
+    syntetyczne EEG proxy, a nie jako empiryczne mikrovolty.
+
     Attributes:
         leadfield (np.ndarray): Macierz leadfield [n_sensors, n_sources].
         config (ForwardModelConfig): Konfiguracja modelu.
@@ -91,11 +96,14 @@ class EEGForwardModel:
         Rzutuje aktywność źródeł na sensory EEG.
 
         Args:
-            source_activity (np.ndarray): Aktywność źródeł [n_sources] lub [n_samples, n_sources].
-            rng (np.random.Generator | None): Generator losowy do szumu.
+            source_activity (np.ndarray): Aktywność źródeł w jednostkach proxy
+                modelu [n_sources] lub [n_samples, n_sources].
+            rng (np.random.Generator | None): Generator losowy do szumu
+                sensorycznego; odchylenie szumu ma tę samą jednostkę proxy co EEG.
 
         Returns:
-            np.ndarray: Sygnał EEG [n_sensors] lub [n_samples, n_sensors].
+            np.ndarray: Sygnał EEG [n_sensors] lub [n_samples, n_sensors] w
+            względnej amplitudzie proxy po opcjonalnej referencji.
 
         Raises:
             ValueError: Jeśli wejście ma niepoprawny kształt.

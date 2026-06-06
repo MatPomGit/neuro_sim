@@ -8,7 +8,75 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolb
 from matplotlib.figure import Figure
 from PySide6.QtWidgets import QScrollArea, QTabWidget, QVBoxLayout, QWidget
 
-from .plotting import _apply_interpretation_layout, _attach_line_tooltips
+from .plotting import (
+    _add_interpretation_box,
+    _apply_interpretation_layout,
+    _attach_line_tooltips,
+)
+
+
+def draw_report_metric_bars(
+    axis: Any, eeg_bold_sections: list[dict[str, Any]]
+) -> list[Any]:
+    """Narysuj gotowe metryki EEG/BOLD z raportu jako warstwę prezentacji.
+
+    Parameters
+    ----------
+    axis:
+        Oś Matplotlib utworzona przez panel Qt.
+    eeg_bold_sections:
+        Wiersze ``eeg_bold_sections`` przygotowane w ``brain_core``. Funkcja
+        nie liczy metryk analitycznych; tylko prezentuje przekazane wartości.
+
+    Returns
+    -------
+    list[Any]
+        Lista osi Matplotlib użytych do prezentacji.
+    """
+
+    rows = [row for row in eeg_bold_sections if isinstance(row, dict)]
+    numeric_rows: list[dict[str, Any]] = []
+    for row in rows:
+        try:
+            float(row.get("value", 0.0))
+        except (TypeError, ValueError):
+            continue
+        numeric_rows.append(row)
+
+    if not numeric_rows:
+        axis.text(
+            0.5,
+            0.5,
+            "Brak gotowych metryk EEG/BOLD do pokazania.",
+            ha="center",
+            va="center",
+            transform=axis.transAxes,
+        )
+        axis.set_axis_off()
+        return [axis]
+
+    labels = [
+        f"{row.get('modality', 'n/a')}\n{row.get('metric', 'metryka')}"
+        for row in numeric_rows
+    ]
+    values = [float(row.get("value", 0.0)) for row in numeric_rows]
+    colors = [
+        "#2563eb" if str(row.get("modality", "")) == "EEG" else "#7c3aed"
+        for row in numeric_rows
+    ]
+    axis.bar(range(len(values)), values, color=colors, alpha=0.82)
+    axis.set_xticks(range(len(labels)))
+    axis.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
+    axis.set_ylabel("Wartość metryki")
+    axis.set_title("Gotowe metryki EEG/BOLD z raportu brain_core")
+    axis.grid(axis="y", alpha=0.25)
+    _add_interpretation_box(
+        axis.figure,
+        "Co widzisz: słupki pokazują wartości już policzone w brain_core. "
+        "Ten wykres jest wyłącznie warstwą prezentacji Qt/PDF; interpretację "
+        "i ograniczenia metryk czytaj w sekcji EEG/BOLD raportu.",
+    )
+    return [axis]
 
 
 class QtPlotPanel(QTabWidget):
@@ -72,6 +140,23 @@ class QtPlotPanel(QTabWidget):
         self._figures.append(fig)
         self._figure_titles.append(title)
         self._canvases.append(canvas)
+
+    def add_report_metrics_plot(
+        self, eeg_bold_sections: list[dict[str, Any]], title: str = "Metryki EEG/BOLD"
+    ) -> None:
+        """Dodaj prezentacyjny wykres metryk EEG/BOLD bez logiki analitycznej.
+
+        Parameters
+        ----------
+        eeg_bold_sections:
+            Gotowe wiersze raportowe wyliczone przez ``brain_core``.
+        title:
+            Polski tytuł zakładki w panelu Qt.
+        """
+
+        self.add_plot(
+            title, draw_report_metric_bars, eeg_bold_sections, figsize=(11, 6)
+        )
 
     def plots_for_export(self) -> list[tuple[str, Figure]]:
         """Zwróć aktualne figury z tytułami zakładek do eksportu PDF.

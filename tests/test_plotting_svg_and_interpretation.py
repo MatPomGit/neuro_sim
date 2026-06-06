@@ -145,3 +145,17 @@ def test_default_simulation_produces_weight_plots() -> None:
         assert len(delta_ax.lines) > 1
     finally:
         plt.close(fig)
+
+
+def test_report_metric_bars_are_presentation_only_with_polish_text() -> None:
+    """Wykres raportowy Qt jest statycznie opisany jako prezentacja gotowych metryk."""
+    from pathlib import Path
+
+    source = Path("brain_model/qt_plotting.py").read_text(encoding="utf-8")
+
+    assert "def draw_report_metric_bars" in source
+    assert "eeg_bold_sections" in source
+    assert "nie liczy metryk analitycznych" in source
+    assert "warstwą prezentacji" in source
+    assert "Gotowe metryki EEG/BOLD" in source
+    assert "brain_core" not in source.split("def draw_report_metric_bars", 1)[0]

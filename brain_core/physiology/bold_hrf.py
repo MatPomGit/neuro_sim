@@ -18,14 +18,15 @@ def canonical_hrf(
     Buduje prostą funkcję HRF (bi-gamma) z dwóch funkcji alfa.
 
     Args:
-        length (int): Długość sygnału (liczba próbek).
-        dt (float): Rozdzielczość czasowa (s).
-        peak_latency (float): Opóźnienie piku (s).
-        undershoot_latency (float): Opóźnienie podbicia (s).
-        ratio (float): Stosunek amplitudy podbicia do piku.
+        length (int): Długość sygnału w próbkach.
+        dt (float): Rozdzielczość czasowa w sekundach [s].
+        peak_latency (float): Opóźnienie piku w sekundach [s].
+        undershoot_latency (float): Opóźnienie podbicia w sekundach [s].
+        ratio (float): Bezwymiarowy stosunek amplitudy podbicia do piku.
 
     Returns:
-        np.ndarray: Wektor HRF o zadanej długości.
+        np.ndarray: Bezwymiarowy, znormalizowany wektor HRF o zadanej długości;
+        suma wartości bezwzględnych wynosi 1, gdy norma jest niezerowa.
 
     Raises:
         ValueError: Jeśli parametry są niepoprawne.
@@ -54,11 +55,14 @@ def convolve_with_hrf(neural_drive: np.ndarray, hrf: np.ndarray) -> np.ndarray:
     Splot napędu neuronalnego z HRF wzdłuż osi czasu (po regionach).
 
     Args:
-        neural_drive (np.ndarray): Sygnał wejściowy [n_próbek] lub [n_próbek, n_regionów].
-        hrf (np.ndarray): Wektor HRF.
+        neural_drive (np.ndarray): Nieujemny napęd neuronalny/BOLD proxy
+            [n_próbek] lub [n_próbek, n_regionów].
+        hrf (np.ndarray): Bezwymiarowy wektor HRF, zwykle znormalizowany przez
+            ``canonical_hrf``.
 
     Returns:
-        np.ndarray: Sygnał BOLD po splocie.
+        np.ndarray: Sygnał BOLD proxy po splocie, w jednostkach względnej
+        amplitudy wynikających ze skali ``neural_drive``.
 
     Raises:
         ValueError: Jeśli wejście ma niepoprawny kształt.
