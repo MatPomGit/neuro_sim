@@ -318,8 +318,12 @@ def _format_qualitative_threshold(severity_thresholds: dict[str, Any] | None) ->
     labels = {"small": "mała", "medium": "średnia", "large": "duża"}
     parts = []
     for key in ordered:
-        if key in severity_thresholds:
-            parts.append(f"{labels[key]} ≥ {float(severity_thresholds[key]):.6g}")
+        if key in severity_thresholds and severity_thresholds[key] is not None:
+            try:
+                val = float(severity_thresholds[key])
+                parts.append(f"{labels[key]} ≥ {val:.6g}")
+            except (ValueError, TypeError):
+                continue
     return "; ".join(parts) if parts else "brak jawnie zapisanych progów w profilu"
 
 
