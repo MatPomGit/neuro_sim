@@ -235,11 +235,13 @@ def _validate_compliance_checks(
         )
 
     required_columns = checks["required_columns"]
-    if not isinstance(required_columns, list) or not all(
-        isinstance(item, str) and item.strip() for item in required_columns
+    if (
+        not isinstance(required_columns, list)
+        or not all(isinstance(item, str) and item.strip() for item in required_columns)
+        or any(item.strip() in {"time", "trial"} for item in required_columns)
     ):
         raise BenchmarkValidationError(
-            f"Benchmark {benchmark_name} ma niepoprawne required_columns."
+            f"Benchmark {benchmark_name} ma niepoprawne required_columns (nie mogą zawierać 'time' ani 'trial')."
         )
 
     accepted_metrics = checks["accepted_comparison_metrics"]
