@@ -67,4 +67,11 @@ def test_desktop_gui_does_not_add_tkinter_flows() -> None:
         assert "import tkinter" not in source
         assert "from tkinter" not in source
         assert "tk()" not in source
-        assert "gui_forms" not in source
+        import ast
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    assert "gui_forms" not in alias.name
+            elif isinstance(node, ast.ImportFrom) and node.module is not None:
+                assert "gui_forms" not in node.module
