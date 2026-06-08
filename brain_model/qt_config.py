@@ -13,7 +13,7 @@ import yaml
 from brain_core.simulation.config_loader import load_config as load_engine_config
 from brain_core.simulation.config_schema import ExperimentConfig
 
-from .gui_forms import APP_VERSION, RULE_FIELDS
+from .gui_labels import RULE_FIELDS
 from .gui_state import GuiState
 
 TDataclass = TypeVar("TDataclass")

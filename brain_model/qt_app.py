@@ -30,7 +30,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .gui_forms import PARAMETER_DESCRIPTIONS, PARAMETER_LABELS, RULE_FIELDS
+from .gui_labels import PARAMETER_DESCRIPTIONS, PARAMETER_LABELS, RULE_FIELDS
 from .gui_state import GuiState
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
