@@ -102,7 +102,16 @@ def build_app_version() -> str:
         return f"{APP_BASE_VERSION}.0"
 
 
-APP_VERSION = build_app_version()
+_APP_VERSION: str | None = None
+
+
+def __getattr__(name: str) -> str:
+    if name == "APP_VERSION":
+        global _APP_VERSION
+        if _APP_VERSION is None:
+            _APP_VERSION = build_app_version()
+        return _APP_VERSION
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 LAST_UPDATED = "2026-05-25"
 APP_AUTHOR = "dr inż. Mateusz Pomianek"
 
