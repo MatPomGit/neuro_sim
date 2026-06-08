@@ -28,7 +28,7 @@ KEY_DEPENDENCIES = ("numpy", "matplotlib", "PyYAML", "PySide6")
 def _to_jsonable(value: Any) -> Any:
     """Opis funkcji _to_jsonable."""
     if is_dataclass(value):
-        return asdict(value)
+        return _to_jsonable(asdict(value))
     if isinstance(value, Path):
         return str(value)
     if isinstance(value, np.ndarray):
