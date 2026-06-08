@@ -222,7 +222,7 @@ def save_run(
 
     metadata = {
         "format": "neuro-sim-run-v1",
-        "saved_utc": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "saved_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "seed": seed,
         "duration_s": duration_s,
         "git_commit": _git_commit_hash(),
