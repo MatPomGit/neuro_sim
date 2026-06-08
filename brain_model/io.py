@@ -166,7 +166,7 @@ def build_output_dir(
     scenario: str, label: str | None = None, root: str | Path = "outputs"
 ) -> Path:
     """Opis funkcji build_output_dir."""
-    stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     safe_scenario = (scenario or "scenario").replace("/", "-").replace(" ", "-")
     safe_label = (label or "run").replace("/", "-").replace(" ", "-")
     out_dir = Path(root) / f"{stamp}_{safe_scenario}_{safe_label}"
