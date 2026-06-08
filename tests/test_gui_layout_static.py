@@ -9,6 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 MAIN_GUI_PATH = REPO_ROOT / "main_gui.py"
 GUI_ENTRYPOINT_PATH = REPO_ROOT / "brain_model" / "gui.py"
 GUI_FORMS_PATH = REPO_ROOT / "brain_model" / "gui_forms.py"
+GUI_LABELS_PATH = REPO_ROOT / "brain_model" / "gui_labels.py"
 QT_APP_PATH = REPO_ROOT / "brain_model" / "qt_app.py"
 QT_SECTIONS_PATH = REPO_ROOT / "brain_model" / "qt_sections.py"
 QT_GUI_PATHS = tuple(sorted((REPO_ROOT / "brain_model").glob("qt_*.py")))
@@ -118,11 +119,12 @@ def test_qt_menu_opens_parameter_dialogs() -> None:
 def test_parameter_forms_use_polish_labels() -> None:
     """Sprawdź, że okna parametrów korzystają ze słownika polskich etykiet."""
     forms_source = GUI_FORMS_PATH.read_text(encoding="utf-8")
+    labels_source = GUI_LABELS_PATH.read_text(encoding="utf-8")
     qt_source = QT_APP_PATH.read_text(encoding="utf-8")
 
     assert "PARAMETER_LABELS" in forms_source
-    assert '"gw_threshold": "próg globalnej przestrzeni roboczej"' in forms_source
-    assert '"cognitive_drive_gain": "wzmocnienie napędu poznawczego"' in forms_source
+    assert '"gw_threshold": "próg globalnej przestrzeni roboczej"' in labels_source
+    assert '"cognitive_drive_gain": "wzmocnienie napędu poznawczego"' in labels_source
     assert "PARAMETER_LABELS.get(field.name, field.name)" in qt_source
 
 

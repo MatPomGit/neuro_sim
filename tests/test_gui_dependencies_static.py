@@ -58,16 +58,13 @@ def test_qt_matplotlib_backend_is_used_for_desktop_plots() -> None:
 
 
 def test_desktop_gui_does_not_add_tkinter_flows() -> None:
-    """Nowe pliki przepływu GUI Qt nie importują ani nie uruchamiają `tkinter`."""
-    gui_paths = [
-        REPO_ROOT / "brain_model" / "qt_app.py",
-        REPO_ROOT / "brain_model" / "qt_sections.py",
-        REPO_ROOT / "brain_model" / "qt_runner.py",
-        REPO_ROOT / "brain_model" / "qt_results.py",
-    ]
+    """Aktywne moduły Qt nie importują ani nie uruchamiają `tkinter`."""
+    gui_paths = sorted((REPO_ROOT / "brain_model").glob("qt_*.py"))
 
+    assert gui_paths
     for path in gui_paths:
         source = path.read_text(encoding="utf-8").lower()
         assert "import tkinter" not in source
         assert "from tkinter" not in source
         assert "tk()" not in source
+        assert "gui_forms" not in source
