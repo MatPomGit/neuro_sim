@@ -59,7 +59,11 @@ def _load_glossary_terms() -> dict[str, tuple[str, str]]:
         return terms
     for line in lines:
         cleaned_line = line.strip()
-        if not cleaned_line.startswith("|") or "---" in cleaned_line or "English" in cleaned_line:
+        if (
+            not cleaned_line.startswith("|")
+            or "---" in cleaned_line
+            or "English" in cleaned_line
+        ):
             continue
         cells = [cell.strip() for cell in cleaned_line.strip("|").split("|")]
         if len(cells) != 3:

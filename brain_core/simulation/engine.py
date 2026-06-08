@@ -774,7 +774,9 @@ def run_experiment(
     save_info: dict[str, Any] | None = None
     if config.output.get("save_results", False):
         out_dir = build_output_dir(
-            config.task.get("scenario", "run"), config.output.get("label", "run")
+            config.task.get("scenario", "run"),
+            config.output.get("label", "run"),
+            root=config.output.get("output_dir", "outputs"),
         )
         report_files = write_report_files(
             analysis_report, Path(out_dir), stem="analysis_report"
@@ -790,15 +792,19 @@ def run_experiment(
             scenario=oscillations.get("metadata"),
             seed=config.seed,
             duration_s=elapsed,
+            config=config,
+            metrics={
+                "metrics": analysis_report.payload.get("metrics", {}),
+                "comparison": analysis_report.payload.get("comparison", {}),
+            },
         )
         save_info["analysis_report_files"] = report_files
-        if config.output.get("save_event_timeline", True):
-            event_timeline_path = Path(out_dir) / "event_timeline.json"
-            event_timeline_path.write_text(
-                json.dumps(event_timeline, ensure_ascii=False, indent=2),
-                encoding="utf-8",
-            )
-            save_info["event_timeline"] = str(event_timeline_path)
+        event_timeline_path = Path(out_dir) / "event_timeline.json"
+        event_timeline_path.write_text(
+            json.dumps(event_timeline, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        save_info["event_timeline"] = str(event_timeline_path)
 
     return {
         "model": model,
