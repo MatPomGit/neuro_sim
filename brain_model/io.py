@@ -151,7 +151,7 @@ def _write_run_log(
 ) -> None:
     """Zapisuje krótki dziennik uruchomienia do katalogu wynikowego."""
     lines = [
-        f"Zapis wyników neuro-sim: {datetime.now(UTC).isoformat().replace('+00:00', 'Z')}",
+        f"Zapis wynikŃw neuro-sim: {datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')}",
         f"Ziarno losowości: {seed if seed is not None else 'n/a'}",
         f"Czas wykonania symulacji [s]: {duration_s if duration_s is not None else 'n/a'}",
         "Artefakty:",
