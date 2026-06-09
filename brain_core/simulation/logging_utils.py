@@ -80,11 +80,16 @@ def _ensure_file_handler(
 ) -> None:
     """Dodaj handler pliku logu bez duplikowania tej samej ścieżki."""
     resolved_log_file = log_file.resolve()
-    for handler in logger.handlers:
-        if getattr(handler, "_neuro_sim_log_file", None) == resolved_log_file:
-            handler.setLevel(level)
-            handler.setFormatter(formatter)
-            return
+    for handler in list(logger.handlers):
+        existing_log_file = getattr(handler, "_neuro_sim_log_file", None)
+        if existing_log_file is not None:
+            if existing_log_file == resolved_log_file:
+                handler.setLevel(level)
+                handler.setFormatter(formatter)
+                return
+            else:
+                logger.removeHandler(handler)
+                handler.close()
 
     log_file.parent.mkdir(parents=True, exist_ok=True)
     file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
