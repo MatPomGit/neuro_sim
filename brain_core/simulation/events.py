@@ -191,6 +191,7 @@ def _stimulus_onset_events(trial_events: list[dict[str, Any]]) -> list[Simulatio
                     "condition": condition,
                     "duration_s": trial_event.get("duration_s"),
                     "regional_input": trial_event.get("regional_input", {}),
+                    "payload": trial_event.get("payload", {}),
                 },
                 plot_anchor="task_timeline",
             )
@@ -235,6 +236,9 @@ def _response_and_error_events(
                     "reaction_time_s": reaction_time,
                     "correct": correct,
                     "error_type": error_type,
+                    "surprise_index": result.get("surprise_index"),
+                    "habituation_level": result.get("habituation_level"),
+                    "readaptation_latency": result.get("readaptation_latency"),
                 },
             )
         )
@@ -255,6 +259,10 @@ def _response_and_error_events(
                     "condition": result.get("condition", "n/a"),
                     "correct": correct,
                     "error_type": error_type,
+                    "reaction_time_s": reaction_time,
+                    "surprise_index": result.get("surprise_index"),
+                    "habituation_level": result.get("habituation_level"),
+                    "readaptation_latency": result.get("readaptation_latency"),
                 },
             )
         )

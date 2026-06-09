@@ -21,6 +21,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from brain_core.analysis.reports import build_trial_observation_rows
+
 from .gui_state import GuiState
 from .plotting import (
     draw_activity_with_stimulus_channels,
@@ -546,7 +548,17 @@ class ObservationPanel(QWidget):
             Raport analityczny zwrócony przez silnik, bez odtwarzania logiki tasków.
         """
         roving_report = analysis_report.get("roving_oddball", {})
-        observations = self._build_observations(events, clinical_profile, roving_report)
+        trial_rows = build_trial_observation_rows(
+            events,
+            clinical_profile=clinical_profile,
+            max_trials=3,
+        )
+        observations = self._build_observations(
+            events,
+            clinical_profile,
+            roving_report,
+            trial_rows,
+        )
         self.summary_label.setText("\n".join(f"• {item}" for item in observations))
         importance = self._build_importance_points(
             events, clinical_profile, roving_report
@@ -606,8 +618,9 @@ class ObservationPanel(QWidget):
         events: list[dict[str, Any]],
         clinical_profile: dict[str, Any],
         roving_report: dict[str, Any],
+        trial_rows: list[dict[str, str]],
     ) -> list[str]:
-        """Zbuduj krótkie polskie obserwacje z gotowych wyników eksperymentu."""
+        """Zbuduj obserwacje z tych samych pól triali co eksport raportu."""
         observations: list[str] = []
         if events:
             event_types = sorted(
@@ -624,6 +637,19 @@ class ObservationPanel(QWidget):
                     description=first_event.get("description_pl", "brak opisu"),
                 )
             )
+            if trial_rows:
+                first_trial = trial_rows[0]
+                observations.append(
+                    "Pierwszy trial: czas={time_s} s, warunek={condition}, "
+                    "aktywne regiony={active_regions}.".format(**first_trial)
+                )
+                observations.append(
+                    "Wynik behawioralny: {behavioral_outcome}; "
+                    "najważniejsze metryki: {key_metrics}.".format(**first_trial)
+                )
+                observations.append(
+                    "Komentarz raportowy: {comment_pl}".format(**first_trial)
+                )
         else:
             observations.append("Oś czasu zdarzeń jest pusta dla bieżącego wyniku.")
 

@@ -159,6 +159,241 @@ def _format_polish_list(values: list[str]) -> str:
     return ", ".join(cleaned_values[:-1]) + f" oraz {cleaned_values[-1]}"
 
 
+CONDITION_LABELS_PL = {
+    "standard": "standard",
+    "deviant": "dewiant",
+    "congruent": "zgodny",
+    "incongruent": "niezgodny",
+    "go": "go",
+    "nogo": "no-go",
+    "target": "cel",
+    "non_target": "bodziec niecelowy",
+}
+TRIAL_METRIC_KEYS = (
+    "reaction_time_s",
+    "correct",
+    "error_type",
+    "surprise_index",
+    "habituation_level",
+    "readaptation_latency",
+    "tone_hz",
+    "abs_delta",
+)
+
+
+def _condition_label_pl(condition: Any) -> str:
+    """Zwróć polską etykietę warunku eksperymentalnego.
+
+    Parameters
+    ----------
+    condition:
+        Techniczna nazwa warunku zapisana w zdarzeniu albo wyniku trialu.
+
+    Returns
+    -------
+    str
+        Polska etykieta warunku przeznaczona do raportu użytkownika.
+    """
+    condition_text = str(condition or "n/a")
+    return CONDITION_LABELS_PL.get(condition_text, condition_text)
+
+
+def _clinical_profile_label(clinical_profile: dict[str, Any] | None) -> str:
+    """Zbuduj krótki opis profilu klinicznego do wiersza trialu.
+
+    Parameters
+    ----------
+    clinical_profile:
+        Metadane profilu klinicznego z konfiguracji eksperymentu.
+
+    Returns
+    -------
+    str
+        Jednowierszowy opis profilu lub ``n/a``, gdy profil nie jest dostępny.
+    """
+    if not isinstance(clinical_profile, dict) or not clinical_profile:
+        return "n/a"
+    profile_name = clinical_profile.get("display_name") or clinical_profile.get("id")
+    mechanism = clinical_profile.get("mechanism")
+    if profile_name and mechanism:
+        return f"{profile_name} — {mechanism}"
+    return str(profile_name or mechanism or "n/a")
+
+
+def _format_trial_metric_value(value: Any) -> str:
+    """Sformatuj wartość metryki trialu w sposób czytelny po polsku.
+
+    Parameters
+    ----------
+    value:
+        Wartość metryki zapisana w szczegółach zdarzenia.
+
+    Returns
+    -------
+    str
+        Krótki tekst metryki bez utraty istotnych cyfr.
+    """
+    if isinstance(value, bool):
+        return "tak" if value else "nie"
+    if isinstance(value, float):
+        return f"{value:.6g}"
+    return str(value)
+
+
+def _metric_summary_from_mapping(mapping: dict[str, Any]) -> list[str]:
+    """Wyciągnij najważniejsze metryki trialu z pojedynczego słownika.
+
+    Parameters
+    ----------
+    mapping:
+        Słownik szczegółów zdarzenia lub payload bodźca.
+
+    Returns
+    -------
+    list[str]
+        Lista krótkich opisów ``nazwa=wartość`` w stabilnej kolejności.
+    """
+    metrics: list[str] = []
+    for metric_name in TRIAL_METRIC_KEYS:
+        if metric_name in mapping and mapping[metric_name] not in {None, "n/a"}:
+            metrics.append(
+                f"{metric_name}={_format_trial_metric_value(mapping[metric_name])}"
+            )
+    return metrics
+
+
+def _build_trial_comment(row: dict[str, str]) -> str:
+    """Zbuduj krótki komentarz dydaktyczny dla trialu.
+
+    Parameters
+    ----------
+    row:
+        Ujednolicony wiersz trialu z polami używanymi w eksporcie i GUI.
+
+    Returns
+    -------
+    str
+        Jednozdaniowy komentarz po polsku łączący warunek, zachowanie i aktywność.
+    """
+    condition = row.get("condition", "n/a")
+    behavior = row.get("behavioral_outcome", "n/a")
+    active_regions = row.get("active_regions", "n/a")
+    if "niepopraw" in behavior.lower() or "błąd" in behavior.lower():
+        return (
+            f"Trial w warunku {condition} wymaga omówienia błędu razem z aktywnością: "
+            f"{active_regions}."
+        )
+    if active_regions not in {"n/a", "brak aktywnych regionów", "brak wskazanych elementów"}:
+        return (
+            f"Trial w warunku {condition} łączy wynik behawioralny z regionami: "
+            f"{active_regions}."
+        )
+    return (
+        f"Trial w warunku {condition} interpretuj głównie przez wynik behawioralny: "
+        f"{behavior}."
+    )
+
+
+def build_trial_observation_rows(
+    event_timeline: list[dict[str, Any]],
+    *,
+    clinical_profile: dict[str, Any] | None = None,
+    max_trials: int = 20,
+) -> list[dict[str, str]]:
+    """Zbuduj wspólne wiersze obserwacji triali dla Markdown, eksportu i GUI.
+
+    Parameters
+    ----------
+    event_timeline:
+        Chronologiczna oś czasu zdarzeń wygenerowana przez silnik symulacji.
+    clinical_profile:
+        Profil kliniczny użyty w eksperymencie; wartość trafia do każdego wiersza,
+        aby raport i panel obserwacji pokazywały ten sam kontekst kliniczny.
+    max_trials:
+        Maksymalna liczba triali opisywana w raporcie.
+
+    Returns
+    -------
+    list[dict[str, str]]
+        Wiersze z polami: czas, warunek, aktywne regiony, profil kliniczny,
+        wynik behawioralny, najważniejsze metryki i komentarz po polsku.
+    """
+    groups = _group_event_timeline_by_trial(event_timeline)
+    profile_label = _clinical_profile_label(clinical_profile)
+    rows: list[dict[str, str]] = []
+    for group in groups[:max_trials]:
+        stimulus = group.get("stimulus") or {}
+        response = group.get("response") or {}
+        correctness = group.get("correctness") or {}
+        activity_changes = group.get("activity_changes") or []
+        stimulus_details = stimulus.get("details") or {}
+        response_details = response.get("details") or {}
+        correctness_details = correctness.get("details") or {}
+
+        active_regions: list[str] = []
+        regional_input = stimulus_details.get("regional_input") or {}
+        if isinstance(regional_input, dict):
+            for region, value in regional_input.items():
+                if float(value or 0.0) != 0.0:
+                    active_regions.append(
+                        f"{region} ({_format_trial_metric_value(value)})"
+                    )
+        for event in activity_changes[:3]:
+            details = event.get("details") or {}
+            region = details.get("region")
+            if region:
+                active_regions.append(str(region))
+
+        metric_items: list[str] = []
+        for mapping in (
+            stimulus_details.get("payload") or {},
+            response_details,
+            correctness_details,
+        ):
+            if isinstance(mapping, dict):
+                metric_items.extend(_metric_summary_from_mapping(mapping))
+        for event in activity_changes[:2]:
+            details = event.get("details") or {}
+            if isinstance(details, dict):
+                metric_items.extend(_metric_summary_from_mapping(details))
+        unique_metrics = list(dict.fromkeys(metric_items))
+
+        if correctness:
+            behavioral_outcome = str(
+                correctness.get("description_pl")
+                or response.get("description_pl")
+                or "n/a"
+            )
+        else:
+            behavioral_outcome = str(response.get("description_pl") or "brak wyniku")
+
+        row = {
+            "trial_id": str(group.get("trial_id", "n/a")),
+            "time_s": _format_trial_metric_value(group.get("first_time_s", "n/a")),
+            "condition": _condition_label_pl(group.get("condition", "n/a")),
+            "stimulus": str(stimulus.get("description_pl") or "brak zapisanego bodźca"),
+            "response": str(
+                response.get("description_pl") or "brak zapisanej odpowiedzi"
+            ),
+            "correctness": str(
+                correctness.get("description_pl") or "brak oceny poprawności"
+            ),
+            "activity": "; ".join(
+                str(event.get("description_pl") or "brak opisu")
+                for event in activity_changes[:3]
+            )
+            or "brak istotnej zmiany w progu raportu",
+            "active_regions": _format_polish_list(list(dict.fromkeys(active_regions))),
+            "clinical_profile": profile_label,
+            "behavioral_outcome": behavioral_outcome,
+            "key_metrics": "; ".join(unique_metrics[:8]) or "brak metryk trialu",
+            "comment_pl": "",
+        }
+        row["comment_pl"] = _build_trial_comment(row)
+        rows.append(row)
+    return rows
+
+
 def _group_event_timeline_by_trial(
     event_timeline: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
@@ -214,7 +449,11 @@ def _group_event_timeline_by_trial(
     return sorted(grouped.values(), key=lambda item: float(item["first_time_s"]))
 
 
-def _trial_group_markdown_lines(event_timeline: list[dict[str, Any]]) -> list[str]:
+def _trial_group_markdown_lines(
+    event_timeline: list[dict[str, Any]],
+    *,
+    clinical_profile: dict[str, Any] | None = None,
+) -> list[str]:
     """Buduje polskie linie Markdown z grupami triali i komentarzem mechanizmu.
 
     Parameters
@@ -228,57 +467,30 @@ def _trial_group_markdown_lines(event_timeline: list[dict[str, Any]]) -> list[st
         Linie raportu w kolejności: bodziec, odpowiedź, poprawność/błąd,
         zmiana aktywności i komentarz mechanizmu.
     """
+    rows = build_trial_observation_rows(
+        event_timeline,
+        clinical_profile=clinical_profile,
+        max_trials=20,
+    )
     groups = _group_event_timeline_by_trial(event_timeline)
-    if not groups:
+    if not rows:
         return ["- Brak triali możliwych do pogrupowania."]
 
     lines: list[str] = []
-    for group in groups[:20]:
-        trial_id = group.get("trial_id", "n/a")
-        condition = group.get("condition", "n/a")
-        lines.append(f"- **Trial {trial_id}** ({condition})")
-        stimulus = group.get("stimulus") or {}
-        response = group.get("response") or {}
-        correctness = group.get("correctness") or {}
-        activity_changes = group.get("activity_changes") or []
-        mechanism_comments = group.get("mechanism_comments") or []
+    for row in rows:
         lines.append(
-            "  - **bodziec**: "
-            f"{stimulus.get('description_pl') or 'brak zapisanego bodźca'}"
+            f"- **Trial {row['trial_id']}** — czas: {row['time_s']} s; "
+            f"warunek: {row['condition']}"
         )
-        lines.append(
-            "  - **odpowiedź**: "
-            f"{response.get('description_pl') or 'brak zapisanej odpowiedzi'}"
-        )
-        lines.append(
-            "  - **błąd/poprawność**: "
-            f"{correctness.get('description_pl') or 'brak oceny poprawności'}"
-        )
-        if activity_changes:
-            lines.append(
-                "  - **zmiana aktywności**: "
-                + "; ".join(
-                    str(event.get("description_pl") or "brak opisu")
-                    for event in activity_changes[:3]
-                )
-            )
-        else:
-            lines.append(
-                "  - **zmiana aktywności**: brak istotnej zmiany w progu raportu"
-            )
-        if mechanism_comments:
-            lines.append(
-                "  - **komentarz mechanizmu**: "
-                + "; ".join(
-                    str(event.get("description_pl") or "brak opisu")
-                    for event in mechanism_comments[:3]
-                )
-            )
-        else:
-            lines.append(
-                "  - **komentarz mechanizmu**: interpretuj trial przez warunek, "
-                "poprawność i lokalne zmiany aktywności."
-            )
+        lines.append(f"  - **bodziec**: {row['stimulus']}")
+        lines.append(f"  - **odpowiedź**: {row['response']}")
+        lines.append(f"  - **błąd/poprawność**: {row['correctness']}")
+        lines.append(f"  - **zmiana aktywności**: {row['activity']}")
+        lines.append(f"  - **aktywne regiony**: {row['active_regions']}")
+        lines.append(f"  - **profil kliniczny**: {row['clinical_profile']}")
+        lines.append(f"  - **wynik behawioralny**: {row['behavioral_outcome']}")
+        lines.append(f"  - **najważniejsze metryki**: {row['key_metrics']}")
+        lines.append(f"  - **komentarz mechanizmu**: {row['comment_pl']}")
     if len(groups) > 20:
         lines.append(f"- ... pominięto {len(groups) - 20} dalszych triali.")
     return lines
@@ -989,7 +1201,12 @@ class AnalysisReport:
                     "### Grupy triali: bodziec → odpowiedź → wynik → aktywność → mechanizm",
                 ]
             )
-            lines.extend(_trial_group_markdown_lines(event_timeline))
+            lines.extend(
+                _trial_group_markdown_lines(
+                    event_timeline,
+                    clinical_profile=self.payload.get("clinical_profile", {}),
+                )
+            )
             lines.extend(["", "### Chronologiczny skrót zdarzeń"])
             for event in event_timeline[:30]:
                 lines.append(

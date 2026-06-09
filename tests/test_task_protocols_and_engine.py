@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from brain_core.analysis.reports import AnalysisReport
+from brain_core.analysis.reports import AnalysisReport, build_trial_observation_rows
 from brain_core.cognition.mapping import functions_for_task, regions_for_task
 from brain_core.experiments.protocols import (
     GoNoGoTask,
@@ -418,6 +418,23 @@ def test_roving_oddball_event_timeline_has_trials_order_and_polish_labels() -> A
     assert all(event["label_pl"] for event in trial_events)
     assert any(event["label_pl"] == "poprawność" for event in trial_events)
     assert any("Początek bodźca" in event["description_pl"] for event in trial_events)
+
+    trial_rows = build_trial_observation_rows(
+        event_timeline,
+        clinical_profile=result["clinical_profile"],
+    )
+    assert trial_rows
+    assert {row["condition"] for row in trial_rows} >= {"standard", "dewiant"}
+    assert any("SAL" in row["active_regions"] for row in trial_rows)
+    assert all(row["clinical_profile"] != "n/a" for row in trial_rows)
+    assert any("reaction_time_s" in row["key_metrics"] for row in trial_rows)
+
+    report = AnalysisReport(result["analysis_report"]).to_markdown()
+    assert "**aktywne regiony**" in report
+    assert "**profil kliniczny**" in report
+    assert "**wynik behawioralny**" in report
+    assert "**najważniejsze metryki**" in report
+    assert "dewiant" in report
 
 
 def test_clinical_profile_yaml_metadata_is_complete_for_examples() -> Any:
