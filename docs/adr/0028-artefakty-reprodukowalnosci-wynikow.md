@@ -1,4 +1,4 @@
-# ADR-0027: Artefakty reprodukowalności w katalogu wynikowym
+# ADR-0028: Artefakty reprodukowalności w katalogu wynikowym
 
 **Status:** proposed
 **Data:** 2026-06-08
