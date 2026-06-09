@@ -5,9 +5,10 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).parent.parent
 CLI_EXPERIMENT_PATHS = (
-    Path("main.py"),
-    Path("brain_core/simulation/run.py"),
+    REPO_ROOT / "main.py",
+    REPO_ROOT / "brain_core/simulation/run.py",
 )
 
 
