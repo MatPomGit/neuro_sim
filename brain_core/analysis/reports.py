@@ -278,7 +278,7 @@ def _build_trial_comment(row: dict[str, str]) -> str:
     condition = row.get("condition", "n/a")
     behavior = row.get("behavioral_outcome", "n/a")
     active_regions = row.get("active_regions", "n/a")
-    if "niepopraw" in behavior or "błąd" in behavior.lower():
+    if "niepopraw" in behavior.lower() or "błąd" in behavior.lower():
         return (
             f"Trial w warunku {condition} wymaga omówienia błędu razem z aktywnością: "
             f"{active_regions}."
