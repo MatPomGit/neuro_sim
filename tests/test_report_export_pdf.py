@@ -6,7 +6,13 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-from brain_model.report_export import export_experiment_pdf
+from brain_model.report_export import (
+    _experiment_report_markdown,
+    _trial_observation_lines,
+    export_experiment_pdf,
+    export_experiment_report,
+    export_teaching_package,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 QT_APP_PATH = REPO_ROOT / "brain_model" / "qt_app.py"
@@ -48,6 +54,133 @@ def test_export_experiment_pdf_writes_described_results_and_keeps_plot_open(
     assert output_path.stat().st_size > 0
     assert plt.fignum_exists(figure.number)
     plt.close(figure)
+
+
+def _sample_trial_timeline() -> list[dict[str, object]]:
+    """Zwróć minimalną oś czasu z jednym trialem do testów eksportu."""
+    return [
+        {
+            "time_s": 0.1,
+            "event_type": "stimulus_onset",
+            "trial_id": 1,
+            "condition": "deviant",
+            "label_pl": "początek bodźca",
+            "description_pl": "Początek bodźca dewiacyjnego.",
+            "source": "task",
+            "details": {
+                "regional_input": {"ACC": 0.8, "PFC": 0.4},
+                "payload": {"surprise_index": 1.0, "tone_hz": 660},
+            },
+        },
+        {
+            "time_s": 0.42,
+            "event_type": "response",
+            "trial_id": 1,
+            "condition": "deviant",
+            "label_pl": "odpowiedź",
+            "description_pl": "Odpowiedź w trialu 1: poprawna.",
+            "source": "task_scoring",
+            "details": {
+                "reaction_time_s": 0.32,
+                "correct": True,
+                "error_type": "none",
+            },
+        },
+        {
+            "time_s": 0.42,
+            "event_type": "correctness",
+            "trial_id": 1,
+            "condition": "deviant",
+            "label_pl": "poprawność",
+            "description_pl": "Trial 1: odpowiedź poprawna.",
+            "source": "task_scoring",
+            "details": {"correct": True, "reaction_time_s": 0.32},
+        },
+    ]
+
+
+def test_export_reports_include_detailed_trial_observations(tmp_path: Path) -> None:
+    """Markdown, HTML, PDF i pakiet zajęciowy zawierają te same pola trialu."""
+    event_timeline = _sample_trial_timeline()
+    clinical_profile = {
+        "display_name": "Profil testowy",
+        "mechanism": "Kontrolowany mechanizm kliniczny.",
+    }
+    analysis_report = {"metrics": {"prediction_error_mean": 0.12}}
+
+    markdown = _experiment_report_markdown(
+        title="Raport testowy",
+        status_message="OK",
+        summary_text="prediction_error_mean: 0.12",
+        state_config={"scenario": "roving_oddball"},
+        event_timeline=event_timeline,
+        clinical_profile=clinical_profile,
+        analysis_report=analysis_report,
+    )
+    assert "| Trial | Warunek | Bodziec | Odpowiedź | Wynik |" in markdown
+    assert "dewiant" in markdown
+    assert "Profil testowy" in markdown
+    assert "Wynik behawioralny" in markdown
+    assert "reaction_time_s=0.32" in markdown
+    assert "prediction_error_mean" in markdown
+
+    html_path = tmp_path / "raport.html"
+    md_path = tmp_path / "raport.md"
+    export_experiment_report(
+        html_path,
+        status_message="OK",
+        summary_text="prediction_error_mean: 0.12",
+        state_config={"scenario": "roving_oddball"},
+        event_timeline=event_timeline,
+        clinical_profile=clinical_profile,
+        analysis_report=analysis_report,
+    )
+    export_experiment_report(
+        md_path,
+        status_message="OK",
+        summary_text="prediction_error_mean: 0.12",
+        state_config={"scenario": "roving_oddball"},
+        event_timeline=event_timeline,
+        clinical_profile=clinical_profile,
+        analysis_report=analysis_report,
+    )
+    assert "Aktywne regiony" in html_path.read_text(encoding="utf-8")
+    assert "Najważniejsze metryki" in md_path.read_text(encoding="utf-8")
+
+    figure, axis = plt.subplots()
+    axis.plot([0.0, 1.0], [0.1, 0.2])
+    pdf_path = export_experiment_pdf(
+        tmp_path / "raport.pdf",
+        status_message="OK",
+        summary_text="prediction_error_mean: 0.12",
+        state_config={"scenario": "roving_oddball"},
+        event_timeline=event_timeline,
+        clinical_profile=clinical_profile,
+        analysis_report=analysis_report,
+        plots=[("Aktywacje", figure)],
+    )
+    assert pdf_path.exists()
+    assert "Najważniejsze metryki" in "\n".join(
+        _trial_observation_lines(event_timeline, clinical_profile)
+    )
+    plt.close(figure)
+
+    package_dir = export_teaching_package(
+        tmp_path / "pakiet",
+        status_message="OK",
+        summary_text="prediction_error_mean: 0.12",
+        state_config={"scenario": "roving_oddball"},
+        event_timeline=event_timeline,
+        clinical_profile=clinical_profile,
+        analysis_report=analysis_report,
+        plots=[],
+    )
+    observations_text = (package_dir / "obserwacje_triali.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Obserwacje triali" in observations_text
+    assert "Trial 1" in observations_text
+    assert "ACC" in observations_text
 
 
 def test_qt_gui_exposes_pdf_export_action_and_uses_plot_figures() -> None:

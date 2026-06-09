@@ -14,7 +14,7 @@ from typing import Any
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 
-from brain_core.analysis.reports import AnalysisReport
+from brain_core.analysis.reports import AnalysisReport, build_trial_observation_rows
 
 A4_FIGSIZE = (8.27, 11.69)
 TEXT_LEFT = 0.07
@@ -248,53 +248,65 @@ def _plot_description(title: str) -> str:
     )
 
 
-def _trial_table_rows(events: list[dict[str, Any]]) -> list[dict[str, str]]:
-    """Zbuduj wiersze tabeli triali z ujednoliconej osi czasu.
+def _trial_table_rows(
+    events: list[dict[str, Any]],
+    clinical_profile: dict[str, Any] | None = None,
+) -> list[dict[str, str]]:
+    """Zbuduj wiersze tabeli triali z tych samych pól co raport analityczny.
 
     Parameters
     ----------
     events:
         Lista zdarzeń z polami ``trial_id``, ``condition`` i polskimi opisami.
+    clinical_profile:
+        Profil kliniczny dopisywany do każdego wiersza obserwacji trialu.
 
     Returns
     -------
     list[dict[str, str]]
-        Wiersze tabeli zawierające trial, warunek, bodziec, odpowiedź i wynik.
+        Wiersze zawierające czas, warunek, aktywne regiony, profil kliniczny,
+        wynik behawioralny, metryki i komentarz po polsku.
     """
-    grouped: dict[str, dict[str, str]] = {}
-    for event in events:
-        trial_id = event.get("trial_id", "n/a")
-        if trial_id in {None, "n/a"}:
-            continue
-        key = str(trial_id)
-        row = grouped.setdefault(
-            key,
-            {
-                "trial_id": key,
-                "condition": str(event.get("condition", "n/a")),
-                "stimulus": "n/a",
-                "response": "n/a",
-                "correctness": "n/a",
-                "activity": "n/a",
-            },
+    return build_trial_observation_rows(events, clinical_profile=clinical_profile)
+
+
+def _trial_observation_lines(
+    events: list[dict[str, Any]],
+    clinical_profile: dict[str, Any] | None = None,
+) -> list[str]:
+    """Zwróć opisowe linie triali do PDF i materiałów zajęciowych.
+
+    Parameters
+    ----------
+    events:
+        Oś czasu zdarzeń wygenerowana przez silnik.
+    clinical_profile:
+        Profil kliniczny użyty w eksperymencie.
+
+    Returns
+    -------
+    list[str]
+        Linie tekstowe z tymi samymi polami co tabela Markdown.
+    """
+    rows = _trial_table_rows(events, clinical_profile)
+    if not rows:
+        return ["Brak triali w osi czasu."]
+    lines: list[str] = []
+    for row in rows:
+        lines.extend(
+            [
+                (
+                    f"Trial {row['trial_id']} | czas: {row['time_s']} s | "
+                    f"warunek: {row['condition']}"
+                ),
+                f"  Aktywne regiony: {row['active_regions']}",
+                f"  Profil kliniczny: {row['clinical_profile']}",
+                f"  Wynik behawioralny: {row['behavioral_outcome']}",
+                f"  Najważniejsze metryki: {row['key_metrics']}",
+                f"  Komentarz: {row['comment_pl']}",
+            ]
         )
-        event_type = str(event.get("event_type", ""))
-        description = str(event.get("description_pl") or "n/a")
-        if event_type == "stimulus_onset":
-            row["stimulus"] = description
-        elif event_type == "response":
-            row["response"] = description
-        elif event_type in {"correctness", "error"}:
-            row["correctness"] = description
-        elif event_type == "significant_region_activity_change":
-            row["activity"] = description
-    return [
-        grouped[key]
-        for key in sorted(
-            grouped,
-            key=lambda value: (0, int(value)) if value.isdigit() else (1, value),
-        )
-    ]
+    return lines
 
 
 def _metrics_summary_lines(
@@ -398,20 +410,34 @@ def _experiment_report_markdown(
                 "{interpretation} | {limitations} |".format(**escaped_item)
             )
         lines.append("")
-    lines.extend(["## Tabela triali", ""])
-    rows = _trial_table_rows(event_timeline)
+    lines.extend(
+        [
+            "## Tabela triali",
+            "",
+            "Kolumna **Wynik** opisuje Wynik behawioralny trialu.",
+            "",
+        ]
+    )
+    rows = _trial_table_rows(event_timeline, clinical_profile)
     if rows:
         lines.extend(
             [
-                "| Trial | Warunek | Bodziec | Odpowiedź | Wynik | Zmiana aktywności |",
-                "| --- | --- | --- | --- | --- | --- |",
+                (
+                    "| Trial | Warunek | Bodziec | Odpowiedź | Wynik | "
+                    "Czas [s] | Aktywne regiony | Profil kliniczny | "
+                    "Najważniejsze metryki | Komentarz |"
+                ),
+                "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
             ]
         )
         for row in rows:
             escaped_row = {k: str(v).replace("|", "\\|") for k, v in row.items()}
             lines.append(
                 "| {trial_id} | {condition} | {stimulus} | {response} | "
-                "{correctness} | {activity} |".format(**escaped_row)
+                "{behavioral_outcome} | {time_s} | {active_regions} | "
+                "{clinical_profile} | {key_metrics} | {comment_pl} |".format(
+                    **escaped_row
+                )
             )
     else:
         lines.append("Brak triali w osi czasu.")
@@ -586,6 +612,12 @@ def export_experiment_pdf(
             pdf,
             "Oś czasu zdarzeń",
             _event_timeline_lines(event_timeline),
+            footer=footer,
+        )
+        _draw_wrapped_text_page(
+            pdf,
+            "Szczegóły triali",
+            _trial_observation_lines(event_timeline, clinical_profile),
             footer=footer,
         )
         _draw_wrapped_text_page(
@@ -781,6 +813,16 @@ def export_teaching_package(
     }
     (package_dir / "metadata_uruchomienia.json").write_text(
         json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    (package_dir / "obserwacje_triali.md").write_text(
+        "\n".join(
+            [
+                "# Obserwacje triali",
+                "",
+                *_trial_observation_lines(event_timeline, clinical_profile),
+            ]
+        ),
+        encoding="utf-8",
     )
     (package_dir / "pytania_kontrolne.md").write_text(
         "\n".join(_control_question_lines(analysis_report)), encoding="utf-8"
