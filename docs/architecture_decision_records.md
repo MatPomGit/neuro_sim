@@ -89,6 +89,7 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0025 | proposed | Raport amplituda-latencja dla roving oddball | [`docs/adr/0025-raport-amplituda-latencja-roving-oddball.md`](adr/0025-raport-amplituda-latencja-roving-oddball.md) | — |
 | ADR-0026 | proposed | Pakiety zajęciowe GUI oparte na presetach YAML | [`docs/adr/0026-pakiety-zajeciowe-gui-yaml.md`](adr/0026-pakiety-zajeciowe-gui-yaml.md) | — |
 | ADR-0027 | proposed | Etykiety GUI bez zależności od tkinter | [`docs/adr/0027-etykiety-gui-bez-zaleznosci-tkinter.md`](adr/0027-etykiety-gui-bez-zaleznosci-tkinter.md) | — |
+| ADR-0028 | proposed | Artefakty reprodukowalności w katalogu wynikowym | [`docs/adr/0028-artefakty-reprodukowalnosci-wynikow.md`](adr/0028-artefakty-reprodukowalnosci-wynikow.md) | — |
 
 ## Procedura dodawania kolejnego ADR
 
