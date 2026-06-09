@@ -283,7 +283,7 @@ def _build_trial_comment(row: dict[str, str]) -> str:
             f"Trial w warunku {condition} wymaga omówienia błędu razem z aktywnością: "
             f"{active_regions}."
         )
-    if active_regions not in {"n/a", "brak aktywnych regionów"}:
+    if active_regions not in {"n/a", "brak aktywnych regionów", "brak wskazanych elementów"}:
         return (
             f"Trial w warunku {condition} łączy wynik behawioralny z regionami: "
             f"{active_regions}."
