@@ -1,6 +1,7 @@
 import argparse
 import time as pytime
 
+from brain_core.simulation.logging_utils import configure_simulation_logger
 from brain_model.io import build_output_dir, save_run
 from brain_model.model import CognitiveBrainModel
 from brain_model.plotting import (
@@ -39,6 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     """Główna funkcja uruchamiająca symulację na podstawie parametrów z CLI."""
     args = build_parser().parse_args()
+    logger = configure_simulation_logger(name="neuro_sim.main")
     model = CognitiveBrainModel(seed=args.seed, stimulus=args.scenario)
     start = pytime.perf_counter()
     time, activity, diagnostics, oscillations = model.simulate(T=args.time)
@@ -59,9 +61,15 @@ def main() -> None:
                 seed=args.seed,
                 duration_s=elapsed,
             )
-            print(f"Saved run to: {saved['output_dir']}")
+            logger = configure_simulation_logger(
+                name="neuro_sim.main",
+                log_file=saved["output_dir"],
+            )
+            logger.info(
+                "Zapisano wyniki symulacji w katalogu: %s.", saved["output_dir"]
+            )
         except Exception as exc:
-            print(f"Warning: Failed to save run results: {exc}")
+            logger.warning("Nie udało się zapisać wyników symulacji: %s.", exc)
 
     plot_activity(time, activity, model.names, model.idx)
     plot_diagnostics(time, diagnostics)
