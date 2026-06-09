@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from importlib import import_module
 from typing import TYPE_CHECKING, Any, Literal
 
-from .gui_forms import COMMAND_LABELS, COMMAND_VALUES, PARAMETER_DESCRIPTIONS
+from .gui_labels import COMMAND_LABELS, COMMAND_VALUES, PARAMETER_DESCRIPTIONS
 from .gui_state import GuiState
 from .qt_config import (
     label_for_scenario_yaml_path,
