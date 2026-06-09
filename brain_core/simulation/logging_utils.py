@@ -48,6 +48,8 @@ def configure_simulation_logger(
 def _normalize_log_file(log_file: str | Path) -> Path:
     """Znormalizuj ścieżkę logu do konkretnego pliku `run.log`."""
     log_path = Path(log_file)
+    if log_path.is_dir():
+        return log_path / "run.log"
     if log_path.suffix:
         return log_path
     return log_path / "run.log"
