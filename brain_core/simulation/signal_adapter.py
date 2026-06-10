@@ -59,7 +59,7 @@ class SNNPopulationMapping:
 
     def __post_init__(self) -> None:
         """Waliduje, że pilotaż SNN obejmuje dokładnie jeden obwód HIP."""
-        if self.snn_region_names != (DEMO_SNN_REGION_NAME,):
+        if tuple(self.snn_region_names) != (DEMO_SNN_REGION_NAME,):
             raise ValueError(
                 "Bieżący pilotaż SNN obsługuje dokładnie jeden obwód "
                 f"demonstracyjny: {DEMO_SNN_REGION_NAME}"
