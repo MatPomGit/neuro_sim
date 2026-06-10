@@ -90,6 +90,7 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0026 | proposed | Pakiety zajęciowe GUI oparte na presetach YAML | [`docs/adr/0026-pakiety-zajeciowe-gui-yaml.md`](adr/0026-pakiety-zajeciowe-gui-yaml.md) | — |
 | ADR-0027 | proposed | Etykiety GUI bez zależności od tkinter | [`docs/adr/0027-etykiety-gui-bez-zaleznosci-tkinter.md`](adr/0027-etykiety-gui-bez-zaleznosci-tkinter.md) | — |
 | ADR-0028 | proposed | Artefakty reprodukowalności w katalogu wynikowym | [`docs/adr/0028-artefakty-reprodukowalnosci-wynikow.md`](adr/0028-artefakty-reprodukowalnosci-wynikow.md) | — |
+| ADR-0029 | proposed | Tryb porównania profili Qt i stabilne API batch | [`docs/adr/0029-tryb-porownania-profili-qt-i-api-batch.md`](adr/0029-tryb-porownania-profili-qt-i-api-batch.md) | — |
 
 ## Procedura dodawania kolejnego ADR
 

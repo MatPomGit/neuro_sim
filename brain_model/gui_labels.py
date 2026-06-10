@@ -112,9 +112,15 @@ def __getattr__(name: str) -> str:
             _APP_VERSION = build_app_version()
         return _APP_VERSION
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
 LAST_UPDATED = "2026-05-25"
 APP_AUTHOR = "dr inż. Mateusz Pomianek"
 
 RULE_FIELDS = ("semantic_rule", "value_rule", "connectivity_adaptation")
-COMMAND_LABELS = {"run": "uruchom", "batch": "seria uruchomień"}
+COMMAND_LABELS = {
+    "run": "uruchom",
+    "batch": "seria uruchomień",
+    "compare_profiles": "porównaj profile",
+}
 COMMAND_VALUES = {label: command for command, label in COMMAND_LABELS.items()}

@@ -9,6 +9,10 @@ from typing import TYPE_CHECKING, Any, Literal
 from .gui_labels import COMMAND_LABELS, COMMAND_VALUES, PARAMETER_DESCRIPTIONS
 from .gui_state import GuiState
 from .qt_config import (
+    comparison_config_description_for_label,
+    comparison_config_path_for_label,
+    comparison_config_preset_labels,
+    label_for_comparison_config_path,
     label_for_scenario_yaml_path,
     load_scenario_yaml_config,
     scenario_yaml_description_for_label,
@@ -214,6 +218,9 @@ def write_combo_box(control: QComboBox, value: object) -> None:
 CONTROL_BINDINGS: dict[str, tuple[ControlBinding, ...]] = {
     "quick_start": (
         ControlBinding("scenario_config_path", "scenario_config_combo", "combo_box"),
+        ControlBinding(
+            "comparison_config_path", "comparison_config_combo", "combo_box"
+        ),
         ControlBinding("scenario", "scenario_combo", "combo_box"),
         ControlBinding("T", "T_edit", "line_edit"),
         ControlBinding("save_results", "save_results_check", "check_box"),
@@ -333,6 +340,32 @@ class QtSections:
         apply_yaml_button.clicked.connect(self.apply_scenario_yaml_config)
         layout.addRow(apply_yaml_button)
 
+        self.comparison_config_combo = QComboBox()
+        self.comparison_config_combo.addItems(comparison_config_preset_labels())
+        self.comparison_config_combo.setCurrentText(
+            label_for_comparison_config_path(self.state.comparison_config_path)
+        )
+        self.comparison_config_combo.setToolTip(
+            "Zestaw wybiera zdrowy profil referencyjny oraz 1–2 profile zaburzeń "
+            "lub uszkodzeń."
+        )
+        self.comparison_config_combo.currentTextChanged.connect(
+            lambda _text: self.refresh_comparison_config_description()
+        )
+        layout.addRow("zestaw porównania profili", self.comparison_config_combo)
+
+        self.comparison_config_description_label = QLabel("")
+        self.comparison_config_description_label.setObjectName("hintLabel")
+        self.comparison_config_description_label.setWordWrap(True)
+        layout.addRow("co porównasz", self.comparison_config_description_label)
+
+        compare_profiles_button = QPushButton("Porównaj profile")
+        compare_profiles_button.setToolTip(
+            "Ustawia tryb batch/clinical comparison ze wspólnym seedem i sekwencją bodźców."
+        )
+        compare_profiles_button.clicked.connect(self.apply_profile_comparison_mode)
+        layout.addRow(compare_profiles_button)
+
         self.scenario_combo = QComboBox()
         self.scenario_combo.addItems(list_scenarios())
         self.scenario_combo.setCurrentText(self.state.scenario)
@@ -362,6 +395,7 @@ class QtSections:
         layout.addRow(self.scenario_details_label)
         self.refresh_scenario_details()
         self.refresh_scenario_config_description()
+        self.refresh_comparison_config_description()
         return group
 
     def apply_ready_lesson(self) -> None:
@@ -388,6 +422,31 @@ class QtSections:
             return
         write_combo_box(self.scenario_config_combo, lesson_config_label)
         self.refresh_scenario_config_description()
+
+    def apply_profile_comparison_mode(self) -> None:
+        """Włącz jasny tryb „Porównaj profile” dla wybranego zestawu YAML."""
+        if hasattr(self, "command_combo"):
+            write_combo_box(self.command_combo, COMMAND_LABELS["compare_profiles"])
+        self.state.command = "compare_profiles"
+        self.state.comparison_config_path = str(
+            comparison_config_path_for_label(self.comparison_config_combo.currentText())
+        )
+        self.refresh_comparison_config_description()
+        status_callback = self.callbacks.get("show_status")
+        if status_callback is not None:
+            status_callback(
+                "Włączono tryb „Porównaj profile”: zdrowy profil referencyjny "
+                "oraz 1–2 profile zaburzeń/uszkodzeń."
+            )
+
+    def refresh_comparison_config_description(self) -> None:
+        """Odśwież opis zestawu profili wybranego do porównania."""
+        if not hasattr(self, "comparison_config_combo"):
+            return
+        selected_label = self.comparison_config_combo.currentText()
+        self.comparison_config_description_label.setText(
+            comparison_config_description_for_label(selected_label)
+        )
 
     def build_advanced_options_section(self) -> QWidget:
         """Zbuduj sekcję „Opcje zaawansowane” z parametrami technicznymi."""
@@ -519,6 +578,8 @@ class QtSections:
                 return COMMAND_VALUES.get(value, value)
             if binding.state_field == "scenario_config_path":
                 return str(scenario_yaml_path_for_label(value))
+            if binding.state_field == "comparison_config_path":
+                return str(comparison_config_path_for_label(value))
             return value
         raise ValueError(f"Nieobsługiwany typ kontrolki: {binding.control_kind}")
 
@@ -537,6 +598,8 @@ class QtSections:
             value = COMMAND_LABELS.get(value, value)
         if binding.state_field == "scenario_config_path":
             value = label_for_scenario_yaml_path(str(value))
+        if binding.state_field == "comparison_config_path":
+            value = label_for_comparison_config_path(str(value))
 
         signals_were_blocked = control.blockSignals(True)
         try:
@@ -634,6 +697,7 @@ class QtSections:
         self.sync_plot_preset_from_checks(mark_custom=False)
         self.refresh_scenario_details()
         self.refresh_scenario_config_description()
+        self.refresh_comparison_config_description()
 
     def apply_scenario_yaml_config(self) -> None:
         """Wczytaj wybraną konfigurację YAML i przepisz jej bezpieczne pola do GUI."""

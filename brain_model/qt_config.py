@@ -13,13 +13,14 @@ import yaml
 from brain_core.simulation.config_loader import load_config as load_engine_config
 from brain_core.simulation.config_schema import ExperimentConfig
 
-from .gui_labels import RULE_FIELDS
+from .gui_labels import APP_VERSION, RULE_FIELDS
 from .gui_state import GuiState
 
 TDataclass = TypeVar("TDataclass")
 CONFIG_FORMAT = "brain-model-gui-config-v1"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CONFIGS_DIR = REPO_ROOT / "configs"
+COMPARISONS_DIR = CONFIGS_DIR / "comparisons"
 
 
 def _humanize_config_stem(stem: str) -> str:
@@ -61,6 +62,80 @@ def _discover_scenario_yaml_presets() -> tuple[tuple[str, Path], ...]:
     if not presets:
         presets.append(("Domyślna konfiguracja", Path("configs/default.yaml")))
     return tuple(presets)
+
+
+def _comparison_config_label(path: Path) -> str:
+    """Zbuduj polską etykietę zestawu porównawczego profili."""
+    try:
+        payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        payload = {}
+    if isinstance(payload, dict) and payload.get("label_pl"):
+        return str(payload["label_pl"])
+    return _humanize_config_stem(path.stem)
+
+
+def _discover_comparison_presets() -> tuple[tuple[str, Path], ...]:
+    """Odczytaj zestawy porównawcze z `configs/comparisons`."""
+    presets: list[tuple[str, Path]] = []
+    for config_path in sorted(COMPARISONS_DIR.glob("*.yaml")):
+        presets.append(
+            (_comparison_config_label(config_path), config_path.relative_to(REPO_ROOT))
+        )
+    if not presets:
+        presets.append(
+            (
+                "Porównaj profile — roving oddball",
+                Path("configs/comparisons/roving_oddball_profiles.yaml"),
+            )
+        )
+    return tuple(presets)
+
+
+COMPARISON_CONFIG_PRESETS: tuple[tuple[str, Path], ...] = _discover_comparison_presets()
+
+
+def comparison_config_preset_labels() -> list[str]:
+    """Zwróć polskie etykiety zestawów trybu „Porównaj profile”."""
+    return [label for label, _path in COMPARISON_CONFIG_PRESETS]
+
+
+def label_for_comparison_config_path(path: str | Path) -> str:
+    """Dopasuj ścieżkę zestawu porównawczego do etykiety GUI."""
+    normalized = Path(path)
+    for label, preset_path in COMPARISON_CONFIG_PRESETS:
+        if normalized == preset_path or normalized == REPO_ROOT / preset_path:
+            return label
+    return str(path)
+
+
+def comparison_config_path_for_label(label: str) -> Path:
+    """Zwróć ścieżkę zestawu porównawczego wskazanego etykietą GUI."""
+    for preset_label, preset_path in COMPARISON_CONFIG_PRESETS:
+        if label == preset_label:
+            return preset_path
+    candidate = Path(label)
+    if candidate.suffix in {".yaml", ".yml"}:
+        return candidate
+    raise ValueError(f"Nieznany zestaw porównawczy profili: {label}")
+
+
+def comparison_config_description_for_label(label: str) -> str:
+    """Zwróć opis zestawu porównawczego widoczny w GUI."""
+    path = REPO_ROOT / comparison_config_path_for_label(label)
+    try:
+        payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+    description = str(payload.get("description_pl", ""))
+    profiles = payload.get("clinical_profiles", [])
+    profile_count = len(profiles) if isinstance(profiles, list) else "n/a"
+    return (
+        f"{description} Profile w zestawie: {profile_count}. "
+        f"Plik YAML: {comparison_config_path_for_label(label)}"
+    ).strip()
 
 
 SCENARIO_YAML_PRESETS: tuple[tuple[str, Path], ...] = _discover_scenario_yaml_presets()
@@ -230,6 +305,7 @@ def state_to_config(state: GuiState) -> dict[str, Any]:
         "sensitivity_delta": state.sensitivity_delta,
         "scenario": state.scenario,
         "scenario_config_path": state.scenario_config_path,
+        "comparison_config_path": state.comparison_config_path,
         "save_results": state.save_results,
         "brain_params": {
             **editable_dataclass_values(state.brain_params, exclude=set(RULE_FIELDS)),
@@ -258,6 +334,9 @@ def apply_config_to_state(state: GuiState, config: dict[str, Any]) -> GuiState:
     state.scenario = str(config.get("scenario", state.scenario))
     state.scenario_config_path = str(
         config.get("scenario_config_path", state.scenario_config_path)
+    )
+    state.comparison_config_path = str(
+        config.get("comparison_config_path", state.comparison_config_path)
     )
     state.save_results = bool(config.get("save_results", state.save_results))
     state.brain_params = dataclass_with_updates(

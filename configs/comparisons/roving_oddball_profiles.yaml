@@ -1,0 +1,9 @@
+id: roving_oddball_profiles
+task_name: roving_oddball
+label_pl: Porównaj profile — roving oddball
+description_pl: Zdrowy profil referencyjny zestawiony z dysregulacją GABA i uszkodzeniem hipokampa przy wspólnym seedzie oraz identycznej sekwencji bodźców.
+base_config: configs/roving_oddball_healthy.yaml
+clinical_profiles:
+  - configs/clinical_profiles/healthy_v1.yaml
+  - configs/clinical_profiles/gaba_dysregulation.yaml
+  - configs/clinical_profiles/hippocampal_lesion.yaml

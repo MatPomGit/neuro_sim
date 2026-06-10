@@ -11,7 +11,7 @@ from brain_core.experiments.protocols import (
     StroopTask,
     get_task,
 )
-from brain_core.simulation.config_loader import load_config
+from brain_core.simulation.config_loader import load_config, load_profile_comparison_set
 from brain_core.simulation.config_schema import ExperimentConfig
 from brain_core.simulation.engine import (
     run_experiment,
@@ -487,3 +487,88 @@ def test_clinical_profile_batch_reuses_seed_and_stimulus_sequence() -> Any:
         assert item["observed_direction"]
         assert item["educational_comment"]
         assert "nie stanowi diagnozy" in item["non_diagnostic_disclaimer"]
+
+
+def test_profile_comparison_sets_cover_required_tasks() -> Any:
+    """Zestawy porównawcze wskazują healthy_v1 oraz 1–2 profile kliniczne."""
+    expected_tasks = {"roving_oddball", "stroop", "go_nogo", "n_back"}
+    loaded_tasks: set[str] = set()
+    for path in (
+        "configs/comparisons/roving_oddball_profiles.yaml",
+        "configs/comparisons/stroop_profiles.yaml",
+        "configs/comparisons/go_nogo_profiles.yaml",
+        "configs/comparisons/n_back_profiles.yaml",
+    ):
+        comparison_set = load_profile_comparison_set(path)
+        loaded_tasks.add(comparison_set["task_name"])
+        profiles = comparison_set["clinical_profiles"]
+
+        assert len(profiles) in {2, 3}
+        assert profiles[0].endswith("healthy_v1.yaml")
+        assert all(
+            profile.startswith("configs/clinical_profiles/") for profile in profiles
+        )
+
+    assert loaded_tasks == expected_tasks
+
+
+def test_clinical_profile_batch_returns_stable_api_and_report_table() -> Any:
+    """API batch zwraca podpis bodźców, profile, różnice i tabelę raportową."""
+    pytest.importorskip("yaml")
+    from pathlib import Path
+
+    import yaml
+
+    base_config = ExperimentConfig(
+        seed=17,
+        task={"name": "go_nogo", "scenario": "go_nogo", "duration": 3.0},
+        output={"save_results": False},
+    )
+    profile_paths = (
+        Path("configs/clinical_profiles/healthy_v1.yaml"),
+        Path("configs/clinical_profiles/gaba_dysregulation.yaml"),
+        Path("configs/clinical_profiles/dlpfc_weakening.yaml"),
+    )
+    profiles = [
+        yaml.safe_load(path.read_text(encoding="utf-8")) for path in profile_paths
+    ]
+
+    first_batch = run_task_across_clinical_profiles(base_config, profiles)
+    second_batch = run_task_across_clinical_profiles(base_config, profiles)
+    report_payload = first_batch["clinical_difference_report"]
+    markdown = AnalysisReport(report_payload).to_markdown()
+
+    assert first_batch["same_seed"] is True
+    assert first_batch["same_stimulus_sequence"] is True
+    assert (
+        first_batch["stimulus_sequence_signature"]
+        == second_batch["stimulus_sequence_signature"]
+    )
+    assert first_batch["profiles"] == second_batch["profiles"]
+    assert first_batch["metric_differences"] == second_batch["metric_differences"]
+    assert len(first_batch["profiles"]) == 3
+    assert len(first_batch["metric_differences"]) == 2
+    assert len(first_batch["profile_comparison_table"]) == 2
+    assert first_batch["educational_comments"]
+    assert (
+        report_payload["stimulus_sequence_signature"]
+        == first_batch["stimulus_sequence_signature"]
+    )
+    assert report_payload["profiles"] == first_batch["profiles"]
+    assert report_payload["metric_differences"] == first_batch["metric_differences"]
+    assert "## Tabela porównania profili" in markdown
+    assert (
+        "| Profil | Oczekiwany kierunek | Obserwowany kierunek | Próg jakościowy | Interpretacja |"
+        in markdown
+    )
+
+    for row in first_batch["profile_comparison_table"]:
+        assert set(row) == {
+            "profile",
+            "expected_direction",
+            "observed_direction",
+            "qualitative_threshold",
+            "interpretation",
+        }
+        assert row["profile"] in {"gaba_dysregulation", "dlpfc_weakening"}
+        assert row["interpretation"]
