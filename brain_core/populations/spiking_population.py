@@ -78,8 +78,8 @@ class Brian2SpikingPopulationAdapter:
         Raises:
             ValueError: Jeśli region_names nie wskazuje dokładnie ``HIP`` lub dt <= 0.
         """
-        normalized_region_names = list(region_names)
-        if normalized_region_names != [DEMO_SNN_REGION_NAME]:
+        region_names_list = list(region_names)
+        if region_names_list != [DEMO_SNN_REGION_NAME]:
             raise ValueError(
                 "Bieżący adapter SNN obsługuje wyłącznie jeden obwód "
                 f"demonstracyjny: {DEMO_SNN_REGION_NAME}"
@@ -87,13 +87,11 @@ class Brian2SpikingPopulationAdapter:
         if dt <= 0:
             raise ValueError("dt musi być > 0")
 
-        self.region_names: list[str] = normalized_region_names
+        self.region_names: list[str] = region_names_list
         self.dt: float = float(dt)
-        self._firing_rate_hz: np.ndarray = np.zeros(
-            len(normalized_region_names), dtype=float
-        )
+        self._firing_rate_hz: np.ndarray = np.zeros(len(region_names_list), dtype=float)
         self._membrane_mv: np.ndarray = np.full(
-            len(normalized_region_names), -65.0, dtype=float
+            len(region_names_list), -65.0, dtype=float
         )
 
     def step(self, signal: NeuralMassToSNNInput) -> SNNToNeuralMassOutput:

@@ -51,7 +51,7 @@ def test_pilot_circuit_is_single_deterministic_hippocampus_demo() -> Any:
     )
 
 
-def test_adapter_accepts_single_hip_region_as_tuple() -> Any:
+def test_adapter_accepts_single_hip_region_as_tuple() -> None:
     """Adapter akceptuje jednoelementową krotkę z regionem HIP."""
     adapter = Brian2SpikingPopulationAdapter(region_names=("HIP",), dt=0.001)
 
