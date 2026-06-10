@@ -301,7 +301,10 @@ def run_profile_comparison(
         "same_seed": batch["same_seed"],
         "same_stimulus_sequence": batch["same_stimulus_sequence"],
     }
-    reference_result["analysis_report"] = analysis_report
+    reference_result["analysis_report"] = {
+        **reference_result.get("analysis_report", {}),
+        **analysis_report,
+    }
     reference_result["profile_batch"] = {
         key: value for key, value in batch.items() if key != "runs"
     }
