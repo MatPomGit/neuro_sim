@@ -129,13 +129,8 @@ pathology:
   scenario: null
   mutations: []
 snn:
-  enabled: true
-  sync_dt: 0.01
-  circuits:
-  - region: hippocampus
-    backend: brian2
-    neurons: 800
-    coupling_gain: 1.0
+  enabled: false
+  circuits: []
 analysis:
   sets:
   - spectral

@@ -495,7 +495,16 @@ def _run_local_snn_comparison(
         }
 
     return {
-        "status_pl": "włączony lokalny obwód SNN",
+        "status_pl": "włączony demonstracyjny obwód SNN hipokampa",
+        "comparison_scope_pl": (
+            "SNN jest raportowany jako deterministyczne porównanie "
+            "demonstracyjne lokalnego obwodu HIP, a nie jako pełny model "
+            "biologiczny."
+        ),
+        "comparison_note_pl": (
+            "closed_loop_snn jest dodatkowym wariantem porównawczym liczonym "
+            "obok baseline i report_only_snn."
+        ),
         "regions": list(snn_regions),
         "neural_mass_regions": list(region_names),
         "requested_mode": requested_mode,

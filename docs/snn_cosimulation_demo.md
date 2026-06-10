@@ -3,13 +3,17 @@
 Ten dokument opisuje demonstracyjny moduł współsymulacji neural-mass z lokalnym
 obwodem SNN używany przez konfigurację `configs/snn_hippocampus_demo.yaml`.
 Celem modułu jest pokazanie jawnego kontraktu wymiany sygnałów, walidowalnego
-mapowania regionów oraz raportu porównującego przebieg bazowy bez SNN,
-wariant report-only SNN i wariant closed-loop SNN.
+mapowania regionu `HIP` oraz raportu porównującego przebieg bazowy bez SNN,
+wariant report-only SNN i wariant closed-loop SNN. Raport traktuje SNN jako
+deterministyczne porównanie demonstracyjne, a nie jako pełny model biologiczny
+hipokampa.
 
 ## Zakres i odpowiedzialności
 
-Współsymulacja jest celowo ograniczona do małego, testowalnego przypadku
-pilotażowego. Nie zastępuje pełnej sieci kolców całego mózgu.
+Współsymulacja jest celowo ograniczona do jednego małego, testowalnego
+przypadku pilotażowego: lokalnego obwodu demonstracyjnego hipokampa `HIP`. Nie
+zastępuje pełnej sieci kolców całego mózgu ani pełnego modelu biologicznego
+hipokampa.
 
 Główne elementy:
 
@@ -18,7 +22,8 @@ Główne elementy:
   sygnałów między neural-mass oraz SNN.
 - `brain_core/populations/spiking_population.py` — zawiera kontrakty
   `NeuralMassToSNNInput`, `SNNToNeuralMassOutput` oraz startowy adapter
-  `Brian2SpikingPopulationAdapter` z deterministycznym backendem zastępczym.
+  `Brian2SpikingPopulationAdapter` dla pojedynczego obwodu `HIP` z
+  deterministycznym backendem zastępczym.
 - `brain_core/simulation/config_schema.py` — waliduje sekcję `snn`, w tym
   `sync_dt`, jednostki i spójność mapowania regionów.
 - `brain_core/simulation/engine.py` — uruchamia demonstracyjne porównanie
@@ -77,8 +82,10 @@ Znaczenie pól:
   normalizowane do aktywności regionalnej z zakresu `[0, 1]`.
 - `neural_mass_regions` zapisuje kolejność regionów neural-mass używaną przez
   `SNNPopulationMapping`.
-- `circuits[].region` musi występować w `neural_mass_regions`; w demo jest to
-  region `HIP`.
+- `circuits[].region` musi występować w `neural_mass_regions`; w bieżącym
+  pilotażu dozwolony jest dokładnie jeden obwód i musi to być region `HIP`.
+- `circuits[].backend` pozostaje pojedynczą wartością `brian2`; demo nie dodaje
+  alternatywnych backendów.
 - `coupling_gain` określa udział lokalnej aktywności SNN przy obliczaniu
   porównawczego przebiegu `report_only_snn`; w trybie `closed_loop` ten sam
   kontrakt służy do ograniczonego amplitudowo wejścia zwrotnego.
@@ -87,20 +94,22 @@ Znaczenie pól:
 
 Adapter wymiany sygnałów stosuje następujący kontrakt:
 
-1. Neural-mass przekazuje do SNN wektory:
-   - `excitatory_drive_hz`,
-   - `inhibitory_drive_hz`,
-   - `sync_dt`.
-2. Lokalny adapter SNN zwraca:
-   - `firing_rate_hz`,
-   - `mean_membrane_potential_mv`,
-   - `sync_dt`.
+1. Neural-mass przekazuje do SNN jednoelementowe wektory dla obwodu `HIP`:
+   - `excitatory_drive_hz` — częstość pobudzenia ekscytującego w hercach [Hz],
+   - `inhibitory_drive_hz` — częstość pobudzenia hamującego w hercach [Hz],
+   - `sync_dt` — krok synchronizacji w sekundach [s].
+2. Lokalny adapter SNN zwraca jednoelementowe wektory dla obwodu `HIP`:
+   - `firing_rate_hz` — częstość wyładowań w hercach [Hz],
+   - `mean_membrane_potential_mv` — średni potencjał błonowy w miliwoltach [mV],
+   - `sync_dt` — ten sam krok synchronizacji w sekundach [s].
 3. `CouplingSignalAdapter` konwertuje `firing_rate_hz` do znormalizowanej
    aktywności regionalnej `fraction`, przycinanej do zakresu `[0, 1]`.
 
 Mapowanie jest wyłącznie nazwane: region obwodu SNN nie jest dopasowywany po
 indeksie z konfiguracji, dopóki `SNNPopulationMapping` nie potwierdzi, że nazwa
-regionu istnieje w wektorze regionów neural-mass.
+regionu istnieje w wektorze regionów neural-mass. Próba skonfigurowania wielu
+obwodów albo obwodu innego niż `HIP` jest odrzucana jako wyjście poza zakres
+pilotażu.
 
 ## Uruchomienie
 
@@ -118,13 +127,15 @@ z etykietą `snn-hippocampus-demo`. Raport analizy zapisuje sekcję
 
 Sekcja `snn_comparison` zawiera:
 
-- status lokalnego obwodu SNN,
+- status demonstracyjnego obwodu SNN hipokampa,
 - listę mapowanych regionów SNN,
 - `sync_dt_s`,
 - jednostki wejścia i wyjścia,
 - backend adaptera,
 - `requested_mode`, czyli tryb żądany w konfiguracji,
 - `computed_modes`, czyli warianty faktycznie policzone w raporcie,
+- `comparison_scope_pl`, czyli polską uwagę, że SNN jest porównaniem
+  demonstracyjnym, a nie pełnym modelem biologicznym,
 - `comparison_note_pl`, czyli polską uwagę, że `closed_loop_snn` jest dodatkowym
   wariantem porównawczym, a nie nadpisaniem żądanego trybu,
 - osobne metryki dla `baseline`, `report_only_snn` i `closed_loop_snn`, w tym
@@ -149,13 +160,14 @@ Spójność konfiguracji jest sprawdzana statycznie przez walidator konfiguracji
 
 - `sync_dt` musi być dodatnią wielokrotnością `timestep`,
 - jednostki muszą odpowiadać kontraktowi `Hz` oraz `fraction`,
-- regiony w `snn.circuits` muszą być niepuste i unikalne,
+- `snn.circuits` może zawierać tylko jeden obwód demonstracyjny `HIP`,
+- `snn.circuits[].backend` musi mieć wartość `brian2`,
 - region obwodu SNN musi istnieć w `snn.neural_mass_regions`.
 
 Testy obejmujące ten moduł:
 
 ```bash
-PYTHONPATH=. pytest tests/test_config_schema.py tests/test_spiking_population_adapter.py
+PYTHONPATH=. pytest tests/test_config_schema.py tests/test_spiking_population_adapter.py tests/test_multiscale_engine.py
 ```
 
 Najważniejsze przypadki testowe sprawdzają konfigurację demo, indeks mapowania
@@ -165,9 +177,10 @@ rozdzielenie trybu żądanego od wariantów faktycznie policzonych.
 ## Ograniczenia pilotażu
 
 - Adapter `Brian2SpikingPopulationAdapter` nadal używa deterministycznego
-  backendu zastępczego; pełna sieć Brian2/NEST jest osobnym krokiem rozwoju.
-- Demo obejmuje jeden lokalny obwód hipokampa, aby zachować prostą walidację i
-  czytelny raport.
+  backendu zastępczego `brian2`; pełna sieć biologiczna jest osobnym krokiem
+  rozwoju.
+- Demo obejmuje jeden lokalny obwód hipokampa `HIP`, aby zachować prostą
+  walidację, deterministyczność i czytelny raport.
 - Closed-loop jest MVP demonstracyjnym dla HIP; przed użyciem badawczym wymaga
   dalszej walidacji stabilności, porównania kosztu `report_only` vs
-  `closed_loop` oraz pełniejszego backendu biologicznego.
+  `closed_loop` oraz kalibracji biologicznej.

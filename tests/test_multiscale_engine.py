@@ -127,3 +127,43 @@ def test_closed_loop_feedback_path_applies_snn_drive_one_step_later() -> Any:
     assert first_drive == 0.0
     assert second_drive == 0.15
     assert np.isfinite(second_drive)
+
+
+def test_multiscale_engine_counts_are_deterministic_for_repeated_runs() -> Any:
+    """Scheduler zachowuje deterministyczne liczniki i stabilne metryki."""
+    observed_counts: list[dict[str, int]] = []
+    observed_metrics: list[float] = []
+
+    for _ in range(2):
+        fast = CounterModule()
+        slow = CounterModule()
+        contract = MultiScaleIOContract(
+            base_dt=0.001,
+            snn_sync_dt=0.004,
+            rate_unit="Hz",
+            activity_unit="fraction",
+            mapped_populations=("HIP",),
+        )
+        engine = MultiScaleEngine(
+            0.001,
+            [
+                TimeScaleTask("neural_mass", fast, 0.001),
+                TimeScaleTask("snn_sync", slow, 0.004),
+            ],
+            io_contract=contract,
+        )
+        state = SimulationState()
+        last_counts: dict[str, int] = {}
+
+        for _step_index in range(16):
+            last_counts = engine.run_step(state)
+
+        observed_counts.append({"fast": fast.steps, "slow": slow.steps, **last_counts})
+        observed_metrics.append(state.metrics["acc"])
+
+    assert observed_counts[0] == observed_counts[1]
+    assert observed_counts[0]["fast"] == 16
+    assert observed_counts[0]["slow"] == 4
+    assert observed_counts[0]["neural_mass"] == 1
+    assert np.all(np.isfinite(observed_metrics))
+    assert observed_metrics[0] == observed_metrics[1]

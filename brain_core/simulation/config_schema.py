@@ -10,6 +10,7 @@ from typing import Any
 
 from brain_core.simulation.signal_adapter import (
     ALLOWED_SNN_COUPLING_MODES,
+    DEMO_SNN_REGION_NAME,
     SNNPopulationMapping,
 )
 
@@ -608,6 +609,19 @@ def _validate_snn_config(cfg: ExperimentConfig) -> None:
 
     if len(circuit_regions) != len(set(circuit_regions)):
         raise ConfigValidationError("snn.circuits.region musi zawierać unikalne nazwy")
+    if circuit_regions and circuit_regions != [DEMO_SNN_REGION_NAME]:
+        raise ConfigValidationError(
+            "Bieżący pilotaż SNN obsługuje dokładnie jeden obwód "
+            f"demonstracyjny: {DEMO_SNN_REGION_NAME}"
+        )
+    for idx, circuit in enumerate(circuits):
+        backend = str(circuit.get("backend", "brian2"))
+        if backend != "brian2":
+            raise ConfigValidationError(
+                f"snn.circuits[{idx}].backend musi mieć wartość 'brian2' "
+                "w bieżącym pilotażu"
+            )
+        circuit["backend"] = backend
 
     sync_dt_val = cfg.snn.get("sync_dt")
     if sync_dt_val is None:
