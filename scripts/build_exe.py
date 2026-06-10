@@ -61,7 +61,15 @@ def build() -> None:
         str(SPEC_FILE),
     ]
     print(f"Uruchamiam: {' '.join(str(c) for c in cmd)}")
-    result = subprocess.run(cmd, cwd=str(REPO_ROOT))
+    try:
+        result = subprocess.run(cmd, cwd=str(REPO_ROOT))
+    except (FileNotFoundError, OSError) as exc:
+        print(
+            f"Błąd: nie można uruchomić PyInstaller ({exc}).\n"
+            "Upewnij się, że PyInstaller jest zainstalowany i dostępny w PATH.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     if result.returncode != 0:
         print("Błąd: budowanie EXE nie powiodło się.", file=sys.stderr)
         sys.exit(result.returncode)
