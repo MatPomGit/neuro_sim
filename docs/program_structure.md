@@ -145,6 +145,7 @@ brain_core/physiology/
 - `spiking_population.py` zawiera pilotażowy kontrakt wymiany neural-mass ↔ SNN oraz startowy adapter lokalnej populacji SNN.
 - `synapses/` grupuje neuromodulatory i stan synaptyczny.
 - `physiology/` dostarcza aproksymacje EEG/BOLD i sprzężenia neuro-naczyniowego.
+- Szczegółowe kontrakty danych między `anatomy`, `networks`, `populations`, `synapses` i `physiology` są utrzymywane w `docs/data_contracts.md`.
 
 ### 4.5. Analiza i raporty
 
