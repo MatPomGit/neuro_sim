@@ -641,7 +641,7 @@ def _build_stimulus_sequence_signature(
             "onset_s": stimulus.onset_s,
             "duration_s": stimulus.duration_s,
             "condition": stimulus.condition,
-            "payload": {key: stimulus.payload[key] for key in sorted(stimulus.payload)},
+            "payload": {key: stimulus.payload[key] for key in sorted(stimulus.payload)} if isinstance(stimulus.payload, dict) else {},
         }
         for stimulus in stimulus_sequence
     ]
