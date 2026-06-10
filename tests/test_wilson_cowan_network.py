@@ -75,3 +75,79 @@ def test_structural_network_coupling() -> Any:
     net = StructuralNetwork(["A", "B"], np.array([[0.0, 1.0], [0.5, 0.0]]))
     out = net.coupling(np.array([0.2, 0.7]))
     assert np.allclose(out, np.array([0.7, 0.1]))
+
+
+def test_network_population_synapse_contract_shapes_ranges_and_rng() -> None:
+    """Sprawdza kontrakt sieci, populacji i neuromodulacji dla kształtów oraz RNG."""
+    regions = ["R1", "R2", "R3"]
+    params = {region: RegionWilsonCowanParams() for region in regions}
+    neuromodulators = {
+        "dopamine": np.array([0.2, 0.3, 0.4]),
+        "noradrenaline": np.array([0.1, 0.2, 0.3]),
+        "acetylcholine": np.array([0.4, 0.5, 0.6]),
+        "serotonin": np.array([0.3, 0.3, 0.3]),
+        "gaba": np.array([0.5, 0.4, 0.3]),
+        "glutamate": np.array([0.2, 0.3, 0.4]),
+        "cortisol": np.array([0.1, 0.1, 0.2]),
+        "adrenaline": np.array([0.2, 0.1, 0.2]),
+    }
+    external_e = np.array([0.2, 0.1, 0.3])
+    external_i = np.array([0.1, 0.2, 0.1])
+
+    first_model = RegionWilsonCowanModel(region_names=regions, params=params)
+    second_model = RegionWilsonCowanModel(region_names=regions, params=params)
+    first_e, first_i = first_model.step(
+        0.001,
+        external_e=external_e,
+        external_i=external_i,
+        neuromodulators=neuromodulators,
+        rng=np.random.default_rng(123),
+    )
+    second_e, second_i = second_model.step(
+        0.001,
+        external_e=external_e,
+        external_i=external_i,
+        neuromodulators=neuromodulators,
+        rng=np.random.default_rng(123),
+    )
+
+    neuromodulation_matrix = RegionWilsonCowanModel.neuromodulation_vector(neuromodulators)
+    assert neuromodulation_matrix.shape == (len(regions), 8)
+    assert np.all((neuromodulation_matrix >= 0.0) & (neuromodulation_matrix <= 1.0))
+    assert first_e.shape == (len(regions),)
+    assert first_i.shape == (len(regions),)
+    assert np.all((first_e >= 0.0) & (first_e <= 1.0))
+    assert np.all((first_i >= 0.0) & (first_i <= 1.0))
+    assert np.allclose(first_e, second_e)
+    assert np.allclose(first_i, second_i)
+
+
+def test_delay_buffer_contract_shapes_and_value_ranges() -> None:
+    """Sprawdza kontrakt macierzy opóźnień i sprzężenia opóźnionego."""
+    connectivity = np.array(
+        [
+            [0.0, 0.4, -0.2],
+            [0.1, 0.0, 0.3],
+            [0.2, -0.1, 0.0],
+        ]
+    )
+    delays_steps = np.array([[0, 1, 2], [2, 0, 1], [1, 2, 0]])
+    buffer = DelayBuffer(n_regions=3, delays_steps=delays_steps)
+
+    for activity in (
+        np.array([0.1, 0.2, 0.3]),
+        np.array([0.2, 0.3, 0.4]),
+        np.array([0.3, 0.4, 0.5]),
+    ):
+        buffer.push(activity)
+
+    delayed_matrix = buffer.delayed_activity_matrix()
+    coupling = delayed_coupling(connectivity, delayed_matrix)
+
+    assert buffer.delays_steps.shape == connectivity.shape
+    assert np.issubdtype(buffer.delays_steps.dtype, np.integer)
+    assert np.all(buffer.delays_steps >= 0)
+    assert delayed_matrix.shape == connectivity.shape
+    assert np.all((delayed_matrix >= 0.0) & (delayed_matrix <= 0.5))
+    assert coupling.shape == (3,)
+    assert np.all(np.isfinite(coupling))

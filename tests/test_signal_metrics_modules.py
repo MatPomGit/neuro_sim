@@ -116,3 +116,78 @@ def test_physiology_docstrings_describe_units_and_methodology() -> None:
     assert "sekund" in docstrings
     assert "hrf" in docstrings
     assert "bold" in docstrings
+
+
+def test_signal_metric_contract_shapes_and_value_ranges() -> None:
+    """Sprawdza kontrakt kształtów i zakresów metryk EEG/sieciowych."""
+    fs = 128.0
+    time = np.arange(0.0, 2.0, 1.0 / fs)
+    signals = np.column_stack(
+        [
+            np.sin(2 * np.pi * 10.0 * time),
+            np.sin(2 * np.pi * 10.0 * time + np.pi / 4.0),
+            np.cos(2 * np.pi * 6.0 * time),
+        ]
+    )
+
+    spectral = compute_band_powers(signals[:, 0], fs)
+    phase = compute_phase_locking(signals[:, 0], signals[:, 1])
+    connectivity = compute_connectivity(signals)
+    flow = compute_information_flow(signals)
+
+    expected_rfft_shape = (signals.shape[0] // 2 + 1,)
+    assert spectral.series["frequencies"].shape == expected_rfft_shape
+    assert spectral.series["power_spectrum"].shape == expected_rfft_shape
+    assert all(value >= 0.0 for value in spectral.summary.values())
+    assert phase.series["phase_diff"].shape == (signals.shape[0],)
+    assert 0.0 <= phase.summary["plv"] <= 1.0
+    assert connectivity.series["correlation"].shape == (3, 3)
+    assert connectivity.series["pli_proxy"].shape == (3, 3)
+    assert connectivity.series["region_strength"].shape == (3,)
+    assert np.all(np.abs(connectivity.series["correlation"]) <= 1.0)
+    assert np.all(connectivity.series["pli_proxy"] >= 0.0)
+    assert np.all(connectivity.series["pli_proxy"] <= 1.0)
+    assert flow.series["directional_matrix"].shape == (3, 3)
+    assert flow.series["outgoing_strength"].shape == (3,)
+    assert np.allclose(np.diag(flow.series["directional_matrix"]), 0.0)
+    assert np.all(flow.series["outgoing_strength"] >= 0.0)
+
+
+def test_physiology_contract_shapes_ranges_and_deterministic_noise() -> None:
+    """Sprawdza kontrakt fizjologii EEG/BOLD oraz deterministyczny szum EEG."""
+    from brain_core.physiology.bold_hrf import canonical_hrf, convolve_with_hrf
+    from brain_core.physiology.eeg_forward_model import (
+        EEGForwardModel,
+        ForwardModelConfig,
+    )
+    from brain_core.physiology.neurovascular_coupling import neural_drive_from_activity
+
+    source_activity = np.array(
+        [
+            [0.1, 0.2, 0.3],
+            [0.2, 0.3, 0.4],
+            [0.3, 0.2, 0.1],
+            [0.4, 0.1, 0.2],
+        ]
+    )
+    leadfield = np.array([[1.0, 0.5, 0.2], [0.1, 0.7, 1.0]])
+    model = EEGForwardModel(
+        leadfield,
+        config=ForwardModelConfig(sensor_noise_std=0.01, reference="average"),
+    )
+
+    first_eeg = model.project(source_activity, rng=np.random.default_rng(77))
+    second_eeg = model.project(source_activity, rng=np.random.default_rng(77))
+    neural_drive = neural_drive_from_activity(source_activity, baseline=0.2)
+    hrf = canonical_hrf(length=8, dt=0.5)
+    bold = convolve_with_hrf(neural_drive, hrf)
+
+    assert first_eeg.shape == (source_activity.shape[0], leadfield.shape[0])
+    assert np.allclose(first_eeg, second_eeg)
+    assert np.allclose(np.mean(first_eeg, axis=1), 0.0)
+    assert neural_drive.shape == source_activity.shape
+    assert np.all(neural_drive >= 0.0)
+    assert hrf.shape == (8,)
+    assert np.isclose(np.sum(np.abs(hrf)), 1.0)
+    assert bold.shape == source_activity.shape
+    assert np.all(np.isfinite(bold))
