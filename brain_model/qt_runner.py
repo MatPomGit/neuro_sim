@@ -3,19 +3,30 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 from PySide6.QtCore import QObject, Signal, Slot
 
-from brain_core.simulation.config_loader import load_config_from_string
+from brain_core.simulation.config_loader import (
+    load_clinical_profiles,
+    load_config,
+    load_config_from_string,
+    load_profile_comparison_set,
+)
 from brain_core.simulation.config_schema import ExperimentConfig
-from brain_core.simulation.engine import run_experiment
+
+# Kontrakt statyczny GUI: from brain_core.simulation.engine import run_experiment
+from brain_core.simulation.engine import (
+    run_experiment,
+    run_task_across_clinical_profiles,
+)
 
 from .gui_state import GuiState
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
-from .qt_config import load_scenario_yaml_document
+from .qt_config import load_scenario_yaml_document, resolve_repo_path
 
 RunPayload = tuple[str, str, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]
 BatchPayload = tuple[list[dict[str, float | int]], dict[str, Any]]
@@ -72,6 +83,18 @@ def run_simulation(
         )
         summary_text = summarize_metrics(
             [extract_metrics(result["diagnostics"], result["behavior"])]
+        )
+    elif state.command == "compare_profiles":
+        result = run_profile_comparison(
+            state, T, seed, dt, progress_callback=progress_callback
+        )
+        table = result.get("analysis_report", {}).get("profile_comparison_table", [])
+        profile_batch = result.get("profile_batch", {})
+        same_stimulus_sequence = profile_batch.get("same_stimulus_sequence", "n/a")
+        summary_text = (
+            "Porównanie profili zakończone: "
+            f"wiersze tabeli={len(table)}, "
+            f"wspólna sekwencja={same_stimulus_sequence}."
         )
     else:
         runs, result = run_batch(
@@ -211,6 +234,81 @@ def _dump_json_compatible(config_doc: dict[str, Any]) -> str:
     import json
 
     return json.dumps(config_doc, ensure_ascii=False)
+
+
+def _resolve_comparison_path(path: str | Path) -> Path:
+    """Zamień ścieżkę zestawu porównawczego na ścieżkę repozytoryjną."""
+    return resolve_repo_path(path)
+
+
+def run_profile_comparison(
+    state: GuiState,
+    T: float,
+    seed: int,
+    dt: float,
+    progress_callback: Any,
+) -> dict[str, Any]:
+    """Uruchom tryb GUI „Porównaj profile” przez API batch silnika.
+
+    Parameters
+    ----------
+    state:
+        Stan GUI wskazujący plik `configs/comparisons/*.yaml`.
+    T:
+        Czas symulacji nadpisujący czas konfiguracji bazowej.
+    seed:
+        Wspólny seed przepisywany do konfiguracji bazowej.
+    dt:
+        Krok czasowy używany we wszystkich profilach.
+    progress_callback:
+        Callback postępu przekazywany do silnika.
+
+    Returns
+    -------
+    dict[str, Any]
+        Wynik referencyjny rozszerzony o raport batch bez ciężkich obiektów w
+        sekcji `analysis_report`.
+    """
+    comparison_set = load_profile_comparison_set(
+        _resolve_comparison_path(state.comparison_config_path)
+    )
+    base_config = load_config(resolve_repo_path(comparison_set["base_config"]))
+    base_config = replace(
+        base_config,
+        timestep=dt,
+        seed=seed,
+        rng_seed=seed,
+        task={**base_config.task, "duration": T},
+        output={**base_config.output, "save_results": state.save_results},
+    )
+    profile_paths = [
+        resolve_repo_path(profile_path)
+        for profile_path in comparison_set["clinical_profiles"]
+    ]
+    clinical_profiles = load_clinical_profiles(profile_paths)
+    batch = run_task_across_clinical_profiles(
+        base_config, clinical_profiles, progress_callback=progress_callback
+    )
+    reference_id = str(batch["reference_profile_id"])
+    reference_result = dict(batch["runs"][reference_id])
+    analysis_report = dict(batch["clinical_difference_report"])
+    analysis_report["profile_batch_summary"] = {
+        "id": comparison_set["id"],
+        "label_pl": comparison_set["label_pl"],
+        "task_name": comparison_set["task_name"],
+        "description_pl": comparison_set["description_pl"],
+        "reference_profile_id": reference_id,
+        "same_seed": batch["same_seed"],
+        "same_stimulus_sequence": batch["same_stimulus_sequence"],
+    }
+    reference_result["analysis_report"] = {
+        **reference_result.get("analysis_report", {}),
+        **analysis_report,
+    }
+    reference_result["profile_batch"] = {
+        key: value for key, value in batch.items() if key != "runs"
+    }
+    return reference_result
 
 
 def run_single_experiment(

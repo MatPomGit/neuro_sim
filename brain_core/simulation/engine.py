@@ -618,34 +618,32 @@ def _simulate_task_trials(
 
 
 def _build_stimulus_sequence_signature(
-    trial_results: list[dict[str, Any]],
+    stimulus_sequence: list[TrialStimulus],
 ) -> list[dict[str, Any]]:
     """Zbuduj stabilny podpis sekwencji bodźców do porównań profili.
 
     Parameters
     ----------
-    trial_results:
-        Wyniki triali zawierające identyfikator, warunek oraz opcjonalne pola
-        bodźcowe zapisane przez protokół zadania.
+    stimulus_sequence:
+        Bodźce wygenerowane raz dla wspólnego seeda i przekazywane do wszystkich
+        profili klinicznych w porównaniu.
 
     Returns
     -------
     list[dict[str, Any]]
         Minimalna lista pól determinujących sekwencję bodźców, bez wyników modelu
-        i bez metadanych profilu klinicznego.
+        i bez metadanych profilu klinicznego. Payload jest sortowany po kluczach,
+        aby podpis był stabilny dla wszystkich tasków, nie tylko roving oddball.
     """
-    signature_fields = (
-        "trial_id",
-        "condition",
-        "tone_hz",
-        "previous_standard_hz",
-        "run_index",
-        "repetition_index",
-        "is_new_standard",
-    )
     return [
-        {field: trial[field] for field in signature_fields if field in trial}
-        for trial in trial_results
+        {
+            "trial_id": stimulus.trial_id,
+            "onset_s": stimulus.onset_s,
+            "duration_s": stimulus.duration_s,
+            "condition": stimulus.condition,
+            "payload": {key: stimulus.payload[key] for key in sorted(stimulus.payload)} if isinstance(stimulus.payload, dict) else {},
+        }
+        for stimulus in stimulus_sequence
     ]
 
 
@@ -696,10 +694,17 @@ def run_experiment(
     )
     elapsed = pytime.perf_counter() - start
 
-    trial_events, trial_results = _simulate_task_trials(
-        config, stimulus_sequence=stimulus_sequence
+    task_stimulus_sequence = (
+        list(stimulus_sequence)
+        if stimulus_sequence is not None
+        else _generate_task_stimuli(config)
     )
-    stimulus_sequence_signature = _build_stimulus_sequence_signature(trial_results)
+    trial_events, trial_results = _simulate_task_trials(
+        config, stimulus_sequence=task_stimulus_sequence
+    )
+    stimulus_sequence_signature = _build_stimulus_sequence_signature(
+        task_stimulus_sequence
+    )
     task_activation = _build_task_activation_summary(
         str(config.task.get("name", "stroop")), trial_events
     )
@@ -1034,6 +1039,93 @@ def _build_roving_profile_comparison(
     }
 
 
+def _summarize_batch_profiles(runs: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    """Zwraca stabilne metadane profili obecnych w porównaniu batch.
+
+    Parameters
+    ----------
+    runs:
+        Wyniki uruchomień per identyfikator profilu klinicznego.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Lista profili bez ciężkich artefaktów numerycznych i obiektów modelu.
+    """
+    profiles: list[dict[str, Any]] = []
+    for profile_id, result in runs.items():
+        profile = result.get("clinical_profile") or {}
+        profiles.append(
+            {
+                "profile_id": str(profile.get("id", profile_id)),
+                "display_name": str(profile.get("display_name", profile_id)),
+                "mechanism": str(profile.get("mechanism", "n/a")),
+                "affected_regions": list(profile.get("affected_regions") or []),
+                "cognitive_functions": list(
+                    profile.get("cognitive_functions")
+                    or result.get("task_activation", {}).get("functions", [])
+                ),
+                "expected_direction": str(
+                    profile.get("expected_direction", "stable_reference")
+                ),
+            }
+        )
+    return profiles
+
+
+def _build_profile_comparison_table(
+    clinical_differences: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Normalizuje różnice kliniczne do tabeli raportowej porównania profili.
+
+    Parameters
+    ----------
+    clinical_differences:
+        Wiersze raportu różnic zwrócone przez ``build_clinical_difference_report``.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Wiersze: profil, oczekiwany kierunek, obserwowany kierunek, próg
+        jakościowy i interpretacja dydaktyczna.
+    """
+    rows: list[dict[str, Any]] = []
+    for item in clinical_differences:
+        rows.append(
+            {
+                "profile": item.get("compared_profile")
+                or item.get("profile_id", "n/a"),
+                "expected_direction": item.get("expected_direction", "n/a"),
+                "observed_direction": item.get("observed_direction", "n/a"),
+                "qualitative_threshold": item.get("qualitative_threshold", "n/a"),
+                "interpretation": item.get("educational_comment", "n/a"),
+            }
+        )
+    return rows
+
+
+def _build_batch_educational_comments(
+    clinical_differences: list[dict[str, Any]],
+) -> list[str]:
+    """Wyodrębnia komentarze dydaktyczne do stabilnego API batch.
+
+    Parameters
+    ----------
+    clinical_differences:
+        Wiersze różnic klinicznych zawierające komentarz edukacyjny.
+
+    Returns
+    -------
+    list[str]
+        Lista komentarzy po polsku w kolejności profili porównywanych.
+    """
+    return [
+        str(item["educational_comment"])
+        for item in clinical_differences
+        if item.get("educational_comment") is not None and str(item["educational_comment"]).strip()
+    ]
+
+
 def apply_clinical_profile_config(
     base_config: ExperimentConfig,
     profile_config: dict[str, Any],
@@ -1128,6 +1220,20 @@ def run_task_across_clinical_profiles(
     reference_id = "healthy_v1" if "healthy_v1" in runs else next(iter(runs))
     compared = {key: value for key, value in runs.items() if key != reference_id}
     difference_report = build_clinical_difference_report(runs[reference_id], compared)
+    clinical_differences = list(
+        difference_report.payload.get("clinical_differences", [])
+    )
+    profiles = _summarize_batch_profiles(runs)
+    profile_comparison_table = _build_profile_comparison_table(clinical_differences)
+    educational_comments = _build_batch_educational_comments(clinical_differences)
+    difference_report.payload["stimulus_sequence_signature"] = reference_signature
+    difference_report.payload["same_seed"] = True
+    difference_report.payload["same_stimulus_sequence"] = same_stimulus_sequence
+    difference_report.payload["reference_profile_id"] = reference_id
+    difference_report.payload["profiles"] = profiles
+    difference_report.payload["metric_differences"] = clinical_differences
+    difference_report.payload["profile_comparison_table"] = profile_comparison_table
+    difference_report.payload["educational_comments"] = educational_comments
     batch_report: dict[str, Any] = {
         "seed": base_config.seed,
         "same_seed": True,
@@ -1136,6 +1242,10 @@ def run_task_across_clinical_profiles(
         "shared_stimulus_sequence_reused": True,
         "task": dict(base_config.task),
         "reference_profile_id": reference_id,
+        "profiles": profiles,
+        "metric_differences": clinical_differences,
+        "profile_comparison_table": profile_comparison_table,
+        "educational_comments": educational_comments,
         "runs": runs,
         "clinical_difference_report": difference_report.payload,
     }

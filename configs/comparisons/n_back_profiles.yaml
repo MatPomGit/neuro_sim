@@ -1,0 +1,9 @@
+id: n_back_profiles
+task_name: n_back
+label_pl: Porównaj profile — n-back
+description_pl: Zdrowy profil referencyjny zestawiony z deficytem dopaminowym i uszkodzeniem hipokampa w zadaniu pamięci roboczej.
+base_config: configs/n_back.yaml
+clinical_profiles:
+  - configs/clinical_profiles/healthy_v1.yaml
+  - configs/clinical_profiles/dopamine_deficit.yaml
+  - configs/clinical_profiles/hippocampal_lesion.yaml

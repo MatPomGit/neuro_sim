@@ -19,6 +19,7 @@ class GuiState:
     command: str = "run"
     scenario: str = "baseline"
     scenario_config_path: str = "configs/roving_oddball_healthy.yaml"
+    comparison_config_path: str = "configs/comparisons/roving_oddball_profiles.yaml"
     save_results: bool = True
     brain_params: BrainParams = field(default_factory=BrainParams)
     oscillator_params: WilsonCowanParams = field(default_factory=WilsonCowanParams)

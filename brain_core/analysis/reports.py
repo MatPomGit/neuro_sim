@@ -1420,6 +1420,23 @@ class AnalysisReport:
                         f"{item.get('educational_comment', 'n/a')}"
                     )
 
+        profile_comparison_table = self.payload.get("profile_comparison_table", [])
+        if profile_comparison_table:
+            lines.extend(["", "## Tabela porównania profili"])
+            lines.append(
+                "| Profil | Oczekiwany kierunek | Obserwowany kierunek | "
+                "Próg jakościowy | Interpretacja |"
+            )
+            lines.append("| --- | --- | --- | --- | --- |")
+            for row in profile_comparison_table:
+                lines.append(
+                    f"| {row.get('profile', 'n/a')} "
+                    f"| {row.get('expected_direction', 'n/a')} "
+                    f"| {row.get('observed_direction', 'n/a')} "
+                    f"| {row.get('qualitative_threshold', 'n/a')} "
+                    f"| {row.get('interpretation', 'n/a')} |"
+                )
+
         clinical_differences = self.payload.get("clinical_differences", [])
         if clinical_differences:
             lines.extend(["", "## Raport różnic profili klinicznych"])
@@ -1733,6 +1750,17 @@ class AnalysisReport:
                             "value": str(value),
                         }
                     )
+
+        for row in self.payload.get("profile_comparison_table", []):
+            profile_id = row.get("profile", "n/a")
+            for metric, value in row.items():
+                rows.append(
+                    {
+                        "section": "profile_comparison_table",
+                        "metric": f"{profile_id}_{metric}",
+                        "value": str(value),
+                    }
+                )
 
         for item in self.payload.get("clinical_differences", []):
             profile_id = item.get("profile_id", "n/a")

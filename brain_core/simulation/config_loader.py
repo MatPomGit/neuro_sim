@@ -126,3 +126,61 @@ def load_clinical_profiles(paths: list[str | Path]) -> list[dict[str, Any]]:
         Lista zweryfikowanych fragmentów konfiguracji profili klinicznych.
     """
     return [load_clinical_profile(path) for path in paths]
+
+
+def load_profile_comparison_set(path: str | Path) -> dict[str, Any]:
+    """Wczytaj zestaw porównawczy tasku i profili klinicznych.
+
+    Parameters
+    ----------
+    path:
+        Ścieżka do pliku YAML/JSON z polami ``base_config`` i
+        ``clinical_profiles``.
+
+    Returns
+    -------
+    dict[str, Any]
+        Znormalizowany opis zestawu: metadane, ścieżka konfiguracji bazowej oraz
+        lista 2–3 profili klinicznych z pierwszym profilem referencyjnym.
+
+    Raises
+    ------
+    ConfigValidationError
+        Gdy zestaw nie wskazuje profilu referencyjnego i co najmniej jednego
+        profilu porównywanego.
+    """
+    set_path = Path(path)
+    payload = _parse_payload(
+        set_path.read_text(encoding="utf-8"), suffix=set_path.suffix
+    )
+    profiles = payload.get("clinical_profiles")
+    if not isinstance(profiles, list) or not 2 <= len(profiles) <= 3:
+        raise ConfigValidationError(
+            "Zestaw porównawczy musi zawierać 2–3 profile: zdrowy referencyjny "
+            "oraz 1–2 profile zaburzeń lub uszkodzeń."
+        )
+    base_config = payload.get("base_config")
+    if not isinstance(base_config, str) or not base_config.strip():
+        raise ConfigValidationError(
+            "Zestaw porównawczy musi wskazywać ścieżkę base_config."
+        )
+    normalized_profiles: list[str] = []
+    for profile_path in profiles:
+        if not isinstance(profile_path, str) or not profile_path.strip():
+            raise ConfigValidationError(
+                "Każdy profil w clinical_profiles musi być ścieżką tekstową."
+            )
+        normalized_profiles.append(profile_path)
+    if "healthy_v1" not in normalized_profiles[0]:
+        raise ConfigValidationError(
+            "Pierwszy profil zestawu porównawczego musi być zdrowym profilem "
+            "referencyjnym healthy_v1."
+        )
+    return {
+        "id": str(payload.get("id", set_path.stem)),
+        "label_pl": str(payload.get("label_pl", set_path.stem)),
+        "task_name": str(payload.get("task_name", "")),
+        "base_config": base_config,
+        "clinical_profiles": normalized_profiles,
+        "description_pl": str(payload.get("description_pl", "")),
+    }
