@@ -1120,9 +1120,9 @@ def _build_batch_educational_comments(
         Lista komentarzy po polsku w kolejności profili porównywanych.
     """
     return [
-        str(item.get("educational_comment", ""))
+        str(item["educational_comment"])
         for item in clinical_differences
-        if str(item.get("educational_comment", "")).strip()
+        if item.get("educational_comment") is not None and str(item["educational_comment"]).strip()
     ]
 
 
