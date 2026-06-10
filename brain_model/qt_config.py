@@ -138,6 +138,105 @@ def comparison_config_description_for_label(label: str) -> str:
     ).strip()
 
 
+def _scenario_yaml_teaching_goal(
+    task: dict[str, Any], clinical_profile: dict[str, Any]
+) -> str:
+    """Opisz użytkownikowi cel dydaktyczny wybranej konfiguracji YAML.
+
+    Parameters
+    ----------
+    task:
+        Sekcja `task` z pliku YAML zawierająca identyfikator scenariusza silnika.
+    clinical_profile:
+        Sekcja `clinical_profile` z pliku YAML opisująca profil odniesienia.
+
+    Returns
+    -------
+    str
+        Krótki opis po polsku wyjaśniający, po co wybrać daną konfigurację.
+    """
+
+    scenario_id = str(task.get("scenario", ""))
+    profile_id = str(clinical_profile.get("id", ""))
+    if scenario_id == "roving_oddball" and profile_id == "healthy_v1":
+        return (
+            "Wybierz, aby zobaczyć bazową lekcję roving oddball: standard, "
+            "dewiant, narastanie habituacji i readaptację bez patologii."
+        )
+    if scenario_id == "roving_oddball" and profile_id == "gaba_dysregulation":
+        return (
+            "Wybierz do porównania z wariantem zdrowym, gdy chcesz pokazać, "
+            "jak dysregulacja GABA zmienia odpowiedź na dewiant i stabilność "
+            "habituacji."
+        )
+    if scenario_id == "roving_oddball" and profile_id == "hippocampal_lesion":
+        return (
+            "Wybierz do omówienia wpływu uszkodzenia hipokampa na przewidywanie "
+            "bodźców i readaptację po zmianie standardu."
+        )
+    if "snn" in profile_id or "hippocampus" in profile_id:
+        return (
+            "Wybierz jako demonstrację współsymulacji, w której lokalny obwód SNN "
+            "uzupełnia model masowy hipokampa."
+        )
+    if profile_id == "gaba_dysregulation":
+        return (
+            "Wybierz do lekcji o kontroli hamowania i skutkach obniżonej inhibicji "
+            "w zadaniu przeciążenia sensorycznego lub go/no-go."
+        )
+    if profile_id == "dopamine_deficit":
+        return (
+            "Wybierz do lekcji o deficycie dopaminowym, uczeniu ze wzmocnieniem "
+            "i aktualizacji informacji w pamięci roboczej."
+        )
+    if profile_id == "serotonin_imbalance":
+        return (
+            "Wybierz do lekcji o epizodzie stresu, wygaszaniu pobudzenia i roli "
+            "równowagi serotoninowej."
+        )
+    if profile_id == "dlpfc_weakening":
+        return (
+            "Wybierz do lekcji o kontroli wykonawczej, monitorowaniu konfliktu i "
+            "osłabieniu DLPFC."
+        )
+    return (
+        "Wybierz jako punkt odniesienia lub prosty przebieg pokazowy dla danego "
+        "scenariusza silnika."
+    )
+
+
+def _scenario_yaml_difference_hint(
+    task: dict[str, Any], clinical_profile: dict[str, Any]
+) -> str:
+    """Wskaż najważniejszą różnicę tej konfiguracji względem pozostałych YAML.
+
+    Parameters
+    ----------
+    task:
+        Sekcja `task` z pliku YAML.
+    clinical_profile:
+        Sekcja `clinical_profile` z pliku YAML.
+
+    Returns
+    -------
+    str
+        Jednozdaniowa podpowiedź różnicująca preset w GUI.
+    """
+
+    scenario_id = str(task.get("scenario", "n/a"))
+    profile_name = str(clinical_profile.get("display_name", "profil n/a"))
+    affected_regions = clinical_profile.get("affected_regions", [])
+    if isinstance(affected_regions, list) and affected_regions:
+        regions_text = ", ".join(str(region) for region in affected_regions[:3])
+        return (
+            f"Różni się profilem „{profile_name}” i akcentuje regiony: "
+            f"{regions_text}."
+        )
+    return (
+        f"Różni się scenariuszem silnika „{scenario_id}” i profilem „{profile_name}”."
+    )
+
+
 SCENARIO_YAML_PRESETS: tuple[tuple[str, Path], ...] = _discover_scenario_yaml_presets()
 
 
@@ -154,13 +253,17 @@ def _scenario_yaml_descriptions() -> dict[str, str]:
             payload = {}
         task = payload.get("task", {})
         clinical_profile = payload.get("clinical_profile", {})
-        parts = []
-        if isinstance(task, dict):
-            scenario_id = task.get("scenario", "n/a")
-            duration = task.get("duration", "n/a")
-            parts.append(
-                f"Scenariusz silnika: {scenario_id}; czas z YAML: {duration} s."
-            )
+        if not isinstance(task, dict):
+            task = {}
+        if not isinstance(clinical_profile, dict):
+            clinical_profile = {}
+        parts = [
+            _scenario_yaml_teaching_goal(task, clinical_profile),
+            _scenario_yaml_difference_hint(task, clinical_profile),
+        ]
+        scenario_id = task.get("scenario", "n/a")
+        duration = task.get("duration", "n/a")
+        parts.append(f"Scenariusz silnika: {scenario_id}; czas z YAML: {duration} s.")
         if isinstance(clinical_profile, dict):
             mechanism = clinical_profile.get("mechanism")
             if mechanism:
@@ -173,7 +276,10 @@ def _scenario_yaml_descriptions() -> dict[str, str]:
                 parts.append("Profil skutków uszkodzenia hipokampa.")
             if clinical_profile.get("id") == "dlpfc_weakening":
                 parts.append("Profil osłabienia DLPFC.")
-            if clinical_profile.get("id") == "gaba_dysregulation":
+            if (
+                clinical_profile.get("id") == "gaba_dysregulation"
+                and scenario_id != "roving_oddball"
+            ):
                 parts.append("Lekcja hamowania reakcji.")
             if clinical_profile.get("id") == "dopamine_deficit":
                 parts.append("Lekcja pokazuje deficyt dopaminowy.")

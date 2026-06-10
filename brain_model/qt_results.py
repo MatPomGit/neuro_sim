@@ -576,7 +576,7 @@ class ObservationPanel(QWidget):
         super().__init__(parent)
         self.glossary_terms = _load_glossary_terms()
         layout = QVBoxLayout(self)
-        observation_group = QGroupBox("Co obserwujesz teraz?")
+        observation_group = QGroupBox("Co obserwujesz?")
         observation_group.setToolTip(
             "Co obserwujesz? Zobacz bieżące artefakty silnika."
         )
@@ -799,11 +799,14 @@ class RovingOddballQuestionsPanel(QWidget):
         )
         hint.setWordWrap(True)
         layout.addWidget(hint)
+        questions_group = QGroupBox("Panel pytań kontrolnych: roving oddball")
+        questions_layout = QVBoxLayout(questions_group)
         self.table = QTableWidget(0, 2)
         self.table.setHorizontalHeaderLabels(["pytanie", "odpowiedź z raportu"])
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.table.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(self.table, 1)
+        questions_layout.addWidget(self.table, 1)
+        layout.addWidget(questions_group, 1)
         self.set_report({})
 
     def set_report(self, analysis_report: dict[str, Any] | None) -> None:
