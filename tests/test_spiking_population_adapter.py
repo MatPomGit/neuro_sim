@@ -51,6 +51,13 @@ def test_pilot_circuit_is_single_deterministic_hippocampus_demo() -> Any:
     )
 
 
+def test_adapter_accepts_single_hip_region_as_tuple() -> Any:
+    """Adapter akceptuje jednoelementową krotkę z regionem HIP."""
+    adapter = Brian2SpikingPopulationAdapter(region_names=("HIP",), dt=0.001)
+
+    assert adapter.region_names == ["HIP"]
+
+
 def test_coupling_adapter_roundtrip_mapping_and_units() -> Any:
     """Opis funkcji test_coupling_adapter_roundtrip_mapping_and_units."""
     mapping = SNNPopulationMapping(

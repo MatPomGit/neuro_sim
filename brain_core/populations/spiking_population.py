@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -66,18 +67,19 @@ class Brian2SpikingPopulationAdapter:
 
     backend_name: str = "brian2"
 
-    def __init__(self, region_names: list[str], dt: float = 0.001) -> None:
+    def __init__(self, region_names: Sequence[str], dt: float = 0.001) -> None:
         """
         Inicjalizuje adapter SNN.
 
         Args:
-            region_names (list[str]): Jednoelementowa lista z nazwą ``HIP``.
+            region_names (Sequence[str]): Jednoelementowa sekwencja z nazwą ``HIP``.
             dt (float): Krok symulacji [s].
 
         Raises:
             ValueError: Jeśli region_names nie wskazuje dokładnie ``HIP`` lub dt <= 0.
         """
-        if region_names != [DEMO_SNN_REGION_NAME]:
+        normalized_region_names = list(region_names)
+        if normalized_region_names != [DEMO_SNN_REGION_NAME]:
             raise ValueError(
                 "Bieżący adapter SNN obsługuje wyłącznie jeden obwód "
                 f"demonstracyjny: {DEMO_SNN_REGION_NAME}"
@@ -85,10 +87,14 @@ class Brian2SpikingPopulationAdapter:
         if dt <= 0:
             raise ValueError("dt musi być > 0")
 
-        self.region_names: list[str] = list(region_names)
+        self.region_names: list[str] = normalized_region_names
         self.dt: float = float(dt)
-        self._firing_rate_hz: np.ndarray = np.zeros(len(region_names), dtype=float)
-        self._membrane_mv: np.ndarray = np.full(len(region_names), -65.0, dtype=float)
+        self._firing_rate_hz: np.ndarray = np.zeros(
+            len(normalized_region_names), dtype=float
+        )
+        self._membrane_mv: np.ndarray = np.full(
+            len(normalized_region_names), -65.0, dtype=float
+        )
 
     def step(self, signal: NeuralMassToSNNInput) -> SNNToNeuralMassOutput:
         """Wykonuje deterministyczny krok demonstracyjnego obwodu SNN HIP.
