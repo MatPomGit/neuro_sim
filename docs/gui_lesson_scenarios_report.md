@@ -4,16 +4,31 @@
 
 Desktopowe GUI `neuro_sim` jest przeznaczone do prowadzenia krótkich lekcji z użyciem gotowych konfiguracji eksperymentów. Interfejs nie tworzy osobnego schematu konfiguracji: wybiera istniejący plik `configs/*.yaml`, pokazuje jego opis i przekazuje go do silnika `brain_core`, gdzie odbywa się walidacja konfiguracji.
 
+## Struktura lekcji
+
+Każda lekcja w GUI powinna być omawiana w stałej kolejności, aby prowadzący mógł powiązać wynik z konfiguracją, profilem i obserwacją:
+
+1. **Cel** — jednozdaniowe wyjaśnienie, czego uczestnicy mają się nauczyć, np. rozpoznania habituacji, hamowania reakcji albo obciążenia pamięci roboczej.
+2. **Scenariusz YAML** — wskazanie pliku `configs/*.yaml`, ziarna losowości, czasu symulacji i pola `task.scenario`. To plik YAML pozostaje źródłem prawdy dla silnika.
+3. **Profil** — omówienie `clinical_profile`: nazwy profilu, mechanizmu, regionów i funkcji poznawczych, które będą użyte do interpretacji wyniku.
+4. **Przewidywanie** — zapis oczekiwanego kierunku efektu przed uruchomieniem, np. wyższy błąd predykcji, słabsze hamowanie reakcji albo gorsza aktualizacja pamięci roboczej.
+5. **Obserwacja** — wspólne przejrzenie osi czasu, tabeli triali, panelu „Co obserwujesz?” i metryk raportu analitycznego.
+6. **Pytania kontrolne** — krótkie pytania sprawdzające, czy uczestnicy potrafią uzasadnić wynik na podstawie konfiguracji, profilu i obserwacji.
+
 ## Wybór lekcji
 
 1. Otwórz aplikację przez `neuro-sim-gui`, `main_gui.py` albo punkt wejścia `brain_model.gui:run_gui`.
-2. W zakładce **Konfiguracja** użyj pola **gotowa lekcja**, jeżeli chcesz rozpocząć od przygotowanego przebiegu dydaktycznego.
-3. Lekcja ustawia pole **konfiguracja YAML** na jeden z presetów z katalogu `configs/`.
-4. Pole **po co ten wybór** opisuje, jaki scenariusz silnika, czas oraz mechanizm profilu klinicznego znajdują się w pliku YAML.
+2. W zakładce **Konfiguracja** użyj pola **Lekcja**, jeżeli chcesz rozpocząć od przygotowanego przebiegu dydaktycznego.
+3. Lekcja jest wyborem nadrzędnym nad pojedynczym scenariuszem: ustawia pole **konfiguracja YAML**, a dopiero wybrany plik YAML określa scenariusz silnika, czas, seed i profil.
+4. Dostępne gotowe lekcje obejmują co najmniej:
+   - **roving oddball** — standard, dewiant, habituacja i readaptacja;
+   - **go/no-go** — hamowanie reakcji i wpływ dysregulacji GABA;
+   - **n-back** — pamięć robocza, aktualizacja wartości i deficyt dopaminowy.
+5. Pole **po co ten wybór** opisuje, jaki scenariusz silnika, czas oraz mechanizm profilu klinicznego znajdują się w pliku YAML.
 
 ## Wybór i uruchomienie scenariusza
 
-1. W polu **konfiguracja YAML** wybierz preset z katalogu `configs/`.
+1. W polu **konfiguracja YAML** wybierz preset z katalogu `configs/`, jeżeli nie korzystasz z gotowej lekcji albo chcesz ręcznie zmienić plik po wyborze lekcji.
 2. Kliknij **Zastosuj konfigurację YAML**, aby przepisać do formularza bezpieczne pola podglądu: scenariusz, czas, krok czasowy, seed i opcję zapisu wyników.
 3. Jeżeli zmieniasz czas albo seed, pamiętaj, że GUI zapisuje te wartości w migawce uruchomienia i przekazuje dokument do walidacji `brain_core`.
 4. Kliknij **Uruchom symulację**.
@@ -41,7 +56,8 @@ Po zakończeniu symulacji dostępne są dwie akcje:
    - kopię wybranego pliku `configs/*.yaml`, jeżeli jest dostępny;
    - `metadata_uruchomienia.json` — czas eksportu, seed, scenariusz, ścieżkę konfiguracji i informacje o środowisku;
    - `pytania_kontrolne.md` — pytania dla studentów z odpowiedziami z raportu, gdy są dostępne;
-   - `skrot_dla_prowadzacego.md` — skrót scenariusza, profilu i metryk do omówienia.
+   - `skrot_dla_prowadzacego.md` — skrót scenariusza, profilu i metryk do omówienia;
+   - `plan_lekcji.md` — przebieg lekcji w strukturze: cel, scenariusz YAML, profil, przewidywanie, obserwacja, pytania kontrolne oraz opcjonalna tabela **Co zmienić w kolejnym uruchomieniu**.
 
 ## Interpretacja raportu
 
