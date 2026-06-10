@@ -92,6 +92,7 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0028 | proposed | Artefakty reprodukowalności w katalogu wynikowym | [`docs/adr/0028-artefakty-reprodukowalnosci-wynikow.md`](adr/0028-artefakty-reprodukowalnosci-wynikow.md) | — |
 | ADR-0029 | proposed | Tryb porównania profili Qt i stabilne API batch | [`docs/adr/0029-tryb-porownania-profili-qt-i-api-batch.md`](adr/0029-tryb-porownania-profili-qt-i-api-batch.md) | — |
 | ADR-0030 | proposed | Kontrakty danych między modułami `brain_core` | [`docs/adr/0030-kontrakty-danych-brain-core.md`](adr/0030-kontrakty-danych-brain-core.md) | — |
+| ADR-0031 | proposed | Pakiet wykonywalny EXE budowany przez PyInstaller | [`docs/adr/0031-pakiet-exe-pyinstaller.md`](adr/0031-pakiet-exe-pyinstaller.md) | — |
 
 ## Procedura dodawania kolejnego ADR
 
