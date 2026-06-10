@@ -336,7 +336,7 @@ def apply_config_to_state(state: GuiState, config: dict[str, Any]) -> GuiState:
         config.get("scenario_config_path", state.scenario_config_path)
     )
     state.comparison_config_path = str(
-        config.get("comparison_config_path", state.comparison_config_path)
+        config.get("comparison_config_path") or state.comparison_config_path
     )
     state.save_results = bool(config.get("save_results", state.save_results))
     state.brain_params = dataclass_with_updates(
