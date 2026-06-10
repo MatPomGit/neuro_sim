@@ -38,3 +38,21 @@ Koszty:
 - `brain_model/qt_runner.py`
 - `brain_model/report_export.py`
 - `docs/gui_lesson_scenarios_report.md`
+
+## Uzupełnienie 2026-06-10
+
+Panel szybkiego startu pokazuje opis każdej konfiguracji YAML wprost w GUI:
+cel dydaktyczny, różnicę względem pozostałych presetów, scenariusz silnika,
+czas z pliku YAML oraz profil kliniczny. Opis pozostaje warstwą prezentacji —
+nie zmienia konfiguracji i nie odtwarza logiki tasków.
+
+Pole „scenariusze serii (batch)” w opcjach zaawansowanych nie jest drugim
+wyborem pojedynczego scenariusza. Służy wyłącznie do wielu uruchomień w trybie
+serii i ma oddzielną podpowiedź, aby uniknąć mylenia go z wyborem
+„konfiguracja YAML” w szybkim starcie.
+
+Panel „Co obserwujesz?” i panel pytań kontrolnych dla roving oddball korzystają
+z `event_timeline`, `clinical_profile` i `analysis_report` zwróconych przez
+`run_experiment()`. GUI nadal nie importuje `brain_core.experiments.protocols`
+ani nie rekonstruuje standardów, dewiantów, habituacji lub readaptacji poza
+prezentacją gotowych pól raportu.

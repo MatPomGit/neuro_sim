@@ -99,6 +99,12 @@ def test_qt_sections_describe_each_yaml_configuration() -> None:
 
     assert set(SCENARIO_YAML_DESCRIPTIONS) == preset_labels
     assert all(SCENARIO_YAML_DESCRIPTIONS[label] for label in preset_labels)
+    assert all(
+        "Wybierz" in SCENARIO_YAML_DESCRIPTIONS[label] for label in preset_labels
+    )
+    assert all(
+        "Różni się" in SCENARIO_YAML_DESCRIPTIONS[label] for label in preset_labels
+    )
     assert "self.scenario_config_description_label" in source
     assert "scenario_yaml_description_for_label(selected_label)" in description_source
     assert "scenario_yaml_path_for_label(selected_label)" in description_source
@@ -168,6 +174,7 @@ def test_qt_results_have_teacher_observation_and_roving_questions_panels() -> No
         or 'analysis_report.get("roving_oddball", {})' in source
     )
     assert "class RovingOddballQuestionsPanel" in source
+    assert "Panel pytań kontrolnych: roving oddball" in source
     assert "standard" in source
     assert "dewiant" in source
     assert "habituację" in source
