@@ -33,6 +33,13 @@ VALIDATION_REGISTRY_COLUMNS = (
     "limitations",
     "status",
 )
+VALIDATION_METRIC_REGISTRY_COLUMNS = (
+    "technical_name",
+    "polish_label",
+    "validation_data_source",
+    "interpretation_range",
+    "limitations",
+)
 
 
 def _metric_catalog_by_name() -> dict[str, dict[str, object]]:
@@ -283,7 +290,11 @@ def _build_trial_comment(row: dict[str, str]) -> str:
             f"Trial w warunku {condition} wymaga omówienia błędu razem z aktywnością: "
             f"{active_regions}."
         )
-    if active_regions not in {"n/a", "brak aktywnych regionów", "brak wskazanych elementów"}:
+    if active_regions not in {
+        "n/a",
+        "brak aktywnych regionów",
+        "brak wskazanych elementów",
+    }:
         return (
             f"Trial w warunku {condition} łączy wynik behawioralny z regionami: "
             f"{active_regions}."
@@ -846,6 +857,127 @@ def _clean_registry_cell(value: str) -> str:
     return value.strip().strip("`").strip()
 
 
+def load_validation_metric_registry(
+    registry_path: str | Path = DEFAULT_VALIDATION_REGISTRY_PATH,
+) -> dict[str, dict[str, str]]:
+    """Załaduj rejestr metryk raportowych z dokumentu walidacji.
+
+    Parameters
+    ----------
+    registry_path:
+        Ścieżka do pliku ``docs/validation_registry.md`` zawierającego tabelę
+        metryk z polskimi etykietami, źródłem danych walidacyjnych, zakresem
+        interpretacji i ograniczeniami.
+
+    Returns
+    -------
+    dict[str, dict[str, str]]
+        Rejestr indeksowany techniczną nazwą metryki raportowanej.
+
+    Raises
+    ------
+    ValueError
+        Gdy plik rejestru nie istnieje albo tabela metryk jest pusta.
+    """
+    path = Path(registry_path)
+    if not path.exists():
+        return {}
+
+    entries: dict[str, dict[str, str]] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped_line = line.strip()
+        if not stripped_line.startswith("|") or "---" in stripped_line:
+            continue
+        cells = [cell.strip() for cell in stripped_line.strip("|").split("|")]
+        if len(cells) != len(VALIDATION_METRIC_REGISTRY_COLUMNS):
+            continue
+        if cells[0].lower() == "nazwa techniczna":
+            continue
+
+        row = {
+            column: _clean_registry_cell(value)
+            for column, value in zip(VALIDATION_METRIC_REGISTRY_COLUMNS, cells)
+        }
+        metric_name = row["technical_name"]
+        if metric_name:
+            entries[metric_name] = row
+
+    if not entries:
+        raise ValueError(f"Rejestr walidacji nie zawiera wpisów metryk: {path}")
+    return entries
+
+
+def _collect_interpretation_limitations(
+    metrics: dict[str, Any],
+    registry_path: str | Path = DEFAULT_VALIDATION_REGISTRY_PATH,
+) -> list[dict[str, str]]:
+    """Zbierz ograniczenia interpretacji dla metryk obecnych w raporcie.
+
+    Parameters
+    ----------
+    metrics:
+        Słownik metryk raportowanych w sekcji ``metrics``.
+    registry_path:
+        Ścieżka do rejestru walidacji z tabelą metryk.
+
+    Returns
+    -------
+    list[dict[str, str]]
+        Wiersze z techniczną nazwą, polską etykietą, zakresem interpretacji
+        i ograniczeniami metryki.
+
+    Raises
+    ------
+    ValueError
+        Gdy raportowana metryka nie ma wpisu w rejestrze metryk.
+    """
+    registry = load_validation_metric_registry(registry_path)
+    rows: list[dict[str, str]] = []
+    for metric_name in metrics:
+        registry_entry = registry.get(str(metric_name))
+        if registry_entry is None:
+            raise ValueError(
+                "Brak wpisu w rejestrze walidacji dla metryki: " f"{metric_name}"
+            )
+        rows.append(
+            {
+                "metric": str(metric_name),
+                "polish_label": registry_entry.get("polish_label", "n/a"),
+                "interpretation_range": registry_entry.get(
+                    "interpretation_range", "n/a"
+                ),
+                "limitations": registry_entry.get("limitations", "n/a"),
+            }
+        )
+    return rows
+
+
+def _resolve_interpretation_limitations(
+    payload: dict[str, Any],
+) -> list[dict[str, str]]:
+    """Zwróć sekcję ograniczeń interpretacji dla aktualnego payloadu raportu.
+
+    Parameters
+    ----------
+    payload:
+        Dane raportu zawierające metryki albo gotową sekcję
+        ``interpretation_limitations``.
+
+    Returns
+    -------
+    list[dict[str, str]]
+        Wiersze sekcji „Ograniczenia interpretacji”.
+    """
+    existing_rows = payload.get("interpretation_limitations")
+    if existing_rows is not None:
+        return list(existing_rows)
+
+    metrics = payload.get("metrics", {})
+    if not metrics:
+        return []
+    return _collect_interpretation_limitations(metrics)
+
+
 def load_validation_registry(
     registry_path: str | Path = DEFAULT_VALIDATION_REGISTRY_PATH,
 ) -> dict[str, dict[str, str]]:
@@ -1077,6 +1209,22 @@ class AnalysisReport:
         for name, value in metrics.items():
             lines.append(f"- **{name}**: {value}")
         lines.append("")
+
+        interpretation_limitations = _resolve_interpretation_limitations(self.payload)
+        if interpretation_limitations:
+            lines.append("## Ograniczenia interpretacji")
+            lines.append(
+                "| Metryka | Polska etykieta | Zakres interpretacji | Ograniczenia |"
+            )
+            lines.append("| --- | --- | --- | --- |")
+            for item in interpretation_limitations:
+                lines.append(
+                    f"| {item.get('metric', 'n/a')} "
+                    f"| {item.get('polish_label', 'n/a')} "
+                    f"| {item.get('interpretation_range', 'n/a')} "
+                    f"| {item.get('limitations', 'n/a')} |"
+                )
+            lines.append("")
 
         eeg_bold_sections = self.payload.get("eeg_bold_sections", [])
         if eeg_bold_sections:
@@ -1495,6 +1643,16 @@ class AnalysisReport:
         for section in ("metrics", "comparison"):
             for key, value in self.payload.get(section, {}).items():
                 rows.append({"section": section, "metric": key, "value": str(value)})
+        for item in _resolve_interpretation_limitations(self.payload):
+            metric_name = item.get("metric", "n/a")
+            for field_name in ("polish_label", "interpretation_range", "limitations"):
+                rows.append(
+                    {
+                        "section": "interpretation_limitations",
+                        "metric": f"{metric_name}_{field_name}",
+                        "value": str(item.get(field_name, "n/a")),
+                    }
+                )
         for item in self.payload.get("eeg_bold_sections", []):
             metric_name = str(item.get("metric", "n/a"))
             rows.append(
@@ -2048,6 +2206,7 @@ def build_analysis_report(
         "metrics": metrics,
         "comparison": comparison,
         "eeg_bold_sections": _build_eeg_bold_report_sections(metrics),
+        "interpretation_limitations": _collect_interpretation_limitations(metrics),
     }
     if benchmark_metadata is not None:
         payload["benchmark_metadata"] = benchmark_metadata

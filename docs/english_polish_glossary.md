@@ -231,3 +231,22 @@ Użyj poniższego formatu przy rozszerzaniu słownika:
 | English (kod) | Polski (UI/opis) | Kontekst użycia |
 |---|---|---|
 | example_identifier | przykład etykiety | np. panel konfiguracji |
+| band_power_delta | moc pasma delta | Metryka EEG/BOLD raportowana użytkownikowi |
+| band_power_theta | moc pasma theta | Metryka EEG/BOLD raportowana użytkownikowi |
+| band_power_alpha | moc pasma alfa | Metryka EEG/BOLD raportowana użytkownikowi |
+| band_power_beta | moc pasma beta | Metryka EEG/BOLD raportowana użytkownikowi |
+| band_power_gamma | moc pasma gamma | Metryka EEG/BOLD raportowana użytkownikowi |
+| erp_proxy_peak_to_peak | zakres odpowiedzi ERP proxy | Metryka EEG/BOLD raportowana użytkownikowi |
+| phase_locking_value | wartość synchronizacji fazowej | Metryka EEG/BOLD raportowana użytkownikowi |
+| connectivity_mean | średnia konektywność | Metryka EEG/BOLD raportowana użytkownikowi |
+| connectivity_abs_mean | średnia bezwzględna konektywność | Metryka EEG/BOLD raportowana użytkownikowi |
+| pli_proxy_mean | średnia proxy indeksu opóźnienia fazy | Metryka EEG/BOLD raportowana użytkownikowi |
+| region_strength_mean | średnia siła regionu | Metryka EEG/BOLD raportowana użytkownikowi |
+| directional_mean | średni kierunkowy przepływ informacji | Metryka EEG/BOLD raportowana użytkownikowi |
+| directional_abs_mean | średni bezwzględny kierunkowy przepływ informacji | Metryka EEG/BOLD raportowana użytkownikowi |
+| outgoing_mean | średni wypływ informacji | Metryka EEG/BOLD raportowana użytkownikowi |
+| behavior_mean | średnia metryka behawioralna | Metryka behawioralna raportowana użytkownikowi |
+| behavior_std | odchylenie standardowe metryki behawioralnej | Metryka behawioralna raportowana użytkownikowi |
+| fmri_mean | średnia aktywność BOLD | Metryka BOLD raportowana użytkownikowi |
+| bold_peak_to_peak | zakres sygnału BOLD | Metryka BOLD raportowana użytkownikowi |
+| prediction_error_mean | średni błąd predykcji | Metryka diagnostyczna raportowana użytkownikowi |

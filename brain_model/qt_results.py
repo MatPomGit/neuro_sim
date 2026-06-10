@@ -86,6 +86,77 @@ def _glossary_context(terms: dict[str, tuple[str, str]], key: str) -> str:
     return terms.get(key, (key, "brak opisu w słowniku"))[1]
 
 
+METRIC_WARNING_GROUPS = {
+    "EEG": (
+        "band_power_delta",
+        "band_power_theta",
+        "band_power_alpha",
+        "band_power_beta",
+        "band_power_gamma",
+        "erp_proxy_peak_to_peak",
+        "phase_locking_value",
+        "connectivity_mean",
+        "connectivity_abs_mean",
+        "pli_proxy_mean",
+        "region_strength_mean",
+        "directional_mean",
+        "directional_abs_mean",
+        "outgoing_mean",
+    ),
+    "BOLD": ("fmri_mean", "bold_peak_to_peak"),
+    "behavior": ("behavior_mean", "behavior_std"),
+}
+METRIC_WARNING_TEXT_PL = {
+    "EEG": (
+        "Metryki EEG są opisem symulacji i benchmarku technicznego; nie są "
+        "zapisem pacjenta ani podstawą rozpoznania klinicznego."
+    ),
+    "BOLD": (
+        "Metryki BOLD pokazują syntetyczną odpowiedź hemodynamiczną modelu; "
+        "nie zastępują analizy fMRI ani interpretacji lekarskiej."
+    ),
+    "behavior": (
+        "Metryki behawioralne mają charakter edukacyjny; nie są normą "
+        "psychometryczną ani wynikiem diagnostycznym."
+    ),
+}
+
+
+def _metric_educational_warnings(
+    analysis_report: dict[str, Any], terms: dict[str, tuple[str, str]]
+) -> list[str]:
+    """Zbuduj krótkie ostrzeżenia edukacyjne dla widocznych grup metryk.
+
+    Parameters
+    ----------
+    analysis_report:
+        Raport analityczny zwrócony przez silnik symulacji.
+    terms:
+        Słownik EN→PL używany do spójnych nazw metryk w interfejsie.
+
+    Returns
+    -------
+    list[str]
+        Lista ostrzeżeń po polsku, bez sugestii diagnozy klinicznej.
+    """
+    metrics = analysis_report.get("metrics", {}) if analysis_report else {}
+    if not isinstance(metrics, dict) or not metrics:
+        return ["Uruchom analizę, aby zobaczyć ostrzeżenia przy metrykach."]
+
+    warnings: list[str] = []
+    for group_name, metric_names in METRIC_WARNING_GROUPS.items():
+        present_metrics = [name for name in metric_names if name in metrics]
+        if not present_metrics:
+            continue
+        labels = ", ".join(
+            _glossary_label(terms, metric_name) for metric_name in present_metrics[:3]
+        )
+        if len(present_metrics) > 3:
+            labels = f"{labels} i inne"
+        warnings.append(f"{group_name}: {labels}. {METRIC_WARNING_TEXT_PL.get(group_name, '')}")
+    return warnings
+
+
 def _extract_tones(
     roving_report: dict[str, Any],
     condition: str | None = None,
@@ -526,8 +597,17 @@ class ObservationPanel(QWidget):
         self.importance_label.setWordWrap(True)
         importance_layout.addWidget(self.importance_label)
 
+        warnings_group = QGroupBox("Ostrzeżenia edukacyjne przy metrykach")
+        warnings_layout = QVBoxLayout(warnings_group)
+        self.metric_warnings_label = QLabel(
+            "Uruchom analizę, aby zobaczyć ostrzeżenia przy metrykach."
+        )
+        self.metric_warnings_label.setWordWrap(True)
+        warnings_layout.addWidget(self.metric_warnings_label)
+
         layout.addWidget(observation_group)
         layout.addWidget(importance_group)
+        layout.addWidget(warnings_group)
         layout.addStretch(1)
 
     def set_context(
@@ -564,6 +644,13 @@ class ObservationPanel(QWidget):
             events, clinical_profile, roving_report
         )
         self.importance_label.setText("\n".join(f"• {item}" for item in importance))
+        metric_warnings = _metric_educational_warnings(
+            analysis_report,
+            self.glossary_terms,
+        )
+        self.metric_warnings_label.setText(
+            "\n".join(f"• {item}" for item in metric_warnings)
+        )
 
     def _build_importance_points(
         self,
