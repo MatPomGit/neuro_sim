@@ -15,43 +15,47 @@ from brain_core.simulation.signal_adapter import (
 
 def test_signal_contract_and_shape_validation() -> Any:
     """Opis funkcji test_signal_contract_and_shape_validation."""
-    adapter = Brian2SpikingPopulationAdapter(
-        region_names=["hippocampus", "dlpfc"], dt=0.001
-    )
+    adapter = Brian2SpikingPopulationAdapter(region_names=["HIP"], dt=0.001)
     signal = NeuralMassToSNNInput(
-        excitatory_drive_hz=np.array([18.0, 14.0]),
-        inhibitory_drive_hz=np.array([6.0, 5.0]),
+        excitatory_drive_hz=np.array([18.0]),
+        inhibitory_drive_hz=np.array([6.0]),
         sync_dt=0.01,
     )
 
     out = adapter.step(signal)
 
-    assert out.firing_rate_hz.shape == (2,)
-    assert out.mean_membrane_potential_mv.shape == (2,)
+    assert out.firing_rate_hz.shape == (1,)
+    assert out.mean_membrane_potential_mv.shape == (1,)
     assert out.sync_dt == 0.01
     assert np.all(out.firing_rate_hz >= 0.0)
 
 
-def test_pilot_circuits_only_hippocampus_dlpfc() -> Any:
-    """Opis funkcji test_pilot_circuits_only_hippocampus_dlpfc."""
-    adapter = Brian2SpikingPopulationAdapter(
-        region_names=["hippocampus", "dlpfc"], dt=0.001
-    )
+def test_pilot_circuit_is_single_deterministic_hippocampus_demo() -> Any:
+    """Adapter SNN ma deterministyczne wyjście dla pojedynczego obwodu HIP."""
     signal = NeuralMassToSNNInput(
-        excitatory_drive_hz=np.array([25.0, 15.0]),
-        inhibitory_drive_hz=np.array([7.0, 8.0]),
+        excitatory_drive_hz=np.array([25.0]),
+        inhibitory_drive_hz=np.array([7.0]),
         sync_dt=0.005,
     )
+    first_adapter = Brian2SpikingPopulationAdapter(region_names=["HIP"], dt=0.001)
+    second_adapter = Brian2SpikingPopulationAdapter(region_names=["HIP"], dt=0.001)
 
-    out = adapter.step(signal)
-    assert out.firing_rate_hz[0] > out.firing_rate_hz[1]
+    first_out = first_adapter.step(signal)
+    second_out = second_adapter.step(signal)
+
+    assert first_out.firing_rate_hz.shape == (1,)
+    assert np.allclose(first_out.firing_rate_hz, second_out.firing_rate_hz)
+    assert np.allclose(
+        first_out.mean_membrane_potential_mv,
+        second_out.mean_membrane_potential_mv,
+    )
 
 
 def test_coupling_adapter_roundtrip_mapping_and_units() -> Any:
     """Opis funkcji test_coupling_adapter_roundtrip_mapping_and_units."""
     mapping = SNNPopulationMapping(
-        snn_region_names=("hippocampus",),
-        neural_mass_region_names=("hippocampus", "acc", "pcc"),
+        snn_region_names=("HIP",),
+        neural_mass_region_names=("HIP", "ACC", "PCC"),
     )
     adapter = CouplingSignalAdapter(mapping=mapping, sync_dt=0.01)
 
@@ -131,6 +135,8 @@ def test_snn_report_section_compares_baseline_and_local_circuit() -> Any:
         "closed_loop_snn",
     }
     assert "HIP" in snn_comparison["mode_metrics"]["baseline"]
+    assert "demonstracyjne" in snn_comparison["comparison_scope_pl"]
+    assert "pełny model biologiczny" in snn_comparison["comparison_scope_pl"]
 
 
 def test_snn_closed_loop_report_is_stable_and_deterministic() -> Any:
@@ -191,7 +197,7 @@ def test_snn_markdown_report_names_requested_and_computed_modes() -> Any:
     report = AnalysisReport(
         {
             "snn_comparison": {
-                "status_pl": "włączony lokalny obwód SNN",
+                "status_pl": "włączony demonstracyjny obwód SNN hipokampa",
                 "regions": ["HIP"],
                 "requested_mode": "report_only",
                 "computed_modes": [
@@ -202,6 +208,10 @@ def test_snn_markdown_report_names_requested_and_computed_modes() -> Any:
                 "comparison_note_pl": (
                     "closed_loop_snn jest dodatkowym wariantem porównawczym "
                     "liczonym także dla report_only."
+                ),
+                "comparison_scope_pl": (
+                    "SNN jest porównaniem demonstracyjnym, a nie pełnym modelem "
+                    "biologicznym."
                 ),
                 "sync_dt_s": 0.01,
                 "max_feedback_amplitude": 0.15,
@@ -225,6 +235,8 @@ def test_snn_markdown_report_names_requested_and_computed_modes() -> Any:
     assert (
         "policzone warianty**: baseline, report_only_snn, closed_loop_snn" in markdown
     )
+    assert "zakres porównania**" in markdown
+    assert "pełnym modelem biologicznym" in markdown
     assert "uwaga porównawcza**" in markdown
     assert "dodatkowym wariantem porównawczym" in markdown
     assert "baseline" in markdown

@@ -686,6 +686,9 @@ Dodatkowo:
 
 **Status:** accepted
 **Data:** 2026-06-03
+**Aktualizacja:** 2026-06-10 — zakres pilotażu SNN pozostaje ograniczony do
+jednego demonstracyjnego obwodu `HIP`; raport ma opisywać SNN jako porównanie
+demonstracyjne, nie pełny model biologiczny.
 
 ### Kontekst
 
@@ -707,7 +710,7 @@ Dodajemy dwa jawne tryby sekcji `snn.mode`:
 Granice odpowiedzialności pozostają rozdzielone:
 
 - `CouplingSignalAdapter` odpowiada za mapowanie jednostek i ograniczenie
-  amplitudy wejścia zwrotnego;
+  amplitudy wejścia zwrotnego dla pojedynczego obwodu demonstracyjnego `HIP`;
 - `MultiScaleEngine` udostępnia generyczną ścieżkę opóźnionego sprzężenia
   SNN -> neural-mass;
 - `engine.py` buduje metryki raportu dla `baseline`, `report_only_snn` oraz
@@ -719,6 +722,8 @@ Granice odpowiedzialności pozostają rozdzielone:
 
 - wariant closed-loop jest jawnie konfigurowalny i testowalny;
 - raport rozróżnia metryki baseline, raportowe SNN i rzeczywiste sprzężenie;
+- raport jawnie wskazuje, że SNN jest porównaniem demonstracyjnym, a nie
+  pełnym modelem biologicznym hipokampa;
 - amplituda sprzężenia jest ograniczona parametrem `snn.max_feedback_amplitude`,
   co zmniejsza ryzyko niestabilności numerycznej.
 
@@ -726,7 +731,9 @@ Granice odpowiedzialności pozostają rozdzielone:
 
 - uruchomienie raportu SNN wykonuje dodatkową symulację closed-loop;
 - demo nadal używa deterministycznego adaptera startowego SNN zamiast pełnej
-  sieci neuronów impulsowych.
+  sieci neuronów impulsowych;
+- konfiguracje z wieloma obwodami SNN albo obwodem innym niż `HIP` są poza
+  bieżącym zakresem i wymagają osobnej decyzji architektonicznej.
 
 ### Alternatywy rozważane
 

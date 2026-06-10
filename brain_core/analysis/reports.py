@@ -1389,7 +1389,14 @@ class AnalysisReport:
                 f"- **policzone warianty**: "
                 f"{', '.join(computed_modes) if computed_modes else 'n/a'}"
             )
-            if snn_comparison.get("requested_mode") == "report_only":
+            lines.append(
+                "- **zakres porównania**: "
+                f"{snn_comparison.get('comparison_scope_pl', 'n/a')}"
+            )
+            comparison_note = snn_comparison.get("comparison_note_pl")
+            if comparison_note:
+                lines.append(f"- **uwaga porównawcza**: {comparison_note}")
+            elif snn_comparison.get("requested_mode") == "report_only":
                 lines.append(
                     "- **uwaga porównawcza**: "
                     "closed_loop_snn jest dodatkowym wariantem porównawczym liczonym "
@@ -1785,6 +1792,8 @@ class AnalysisReport:
                 "requested_mode",
                 "sync_dt_s",
                 "max_feedback_amplitude",
+                "comparison_scope_pl",
+                "comparison_note_pl",
             ):
                 rows.append(
                     {

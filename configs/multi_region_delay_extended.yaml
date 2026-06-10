@@ -197,17 +197,8 @@ pathology:
   scenario: null
   mutations: []
 snn:
-  enabled: true
-  sync_dt: 0.01
-  circuits:
-  - region: ACC
-    backend: brian2
-    neurons: 1200
-    coupling_gain: 0.8
-  - region: PCC
-    backend: brian2
-    neurons: 1000
-    coupling_gain: 0.7
+  enabled: false
+  circuits: []
 analysis:
   sets:
   - spectral
