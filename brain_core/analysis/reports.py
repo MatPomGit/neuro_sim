@@ -881,7 +881,7 @@ def load_validation_metric_registry(
     """
     path = Path(registry_path)
     if not path.exists():
-        raise ValueError(f"Rejestr walidacji nie istnieje: {path}")
+        return {}
 
     entries: dict[str, dict[str, str]] = {}
     for line in path.read_text(encoding="utf-8").splitlines():
