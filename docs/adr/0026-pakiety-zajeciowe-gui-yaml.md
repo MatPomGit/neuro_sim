@@ -9,7 +9,7 @@ Desktopowe GUI PySide6 ma wspierać prowadzenie lekcji, wybór scenariusza i eks
 
 ## Decyzja
 
-GUI traktuje pliki `configs/*.yaml` jako źródło wyboru scenariuszy. Widok lekcji mapuje gotową lekcję na etykietę istniejącego presetu YAML, a worker przekazuje dokument do loadera i schematu `brain_core`. Eksport zajęciowy jest realizowany przez `brain_model/report_export.py` jako pakiet zawierający raport HTML/PDF, migawkę konfiguracji GUI, kopię YAML, seed, metadane uruchomienia, pytania kontrolne i skrót dla prowadzącego.
+GUI traktuje pliki `configs/*.yaml` jako źródło wyboru scenariuszy. Widok lekcji mapuje gotową lekcję na etykietę istniejącego presetu YAML, a worker przekazuje dokument do loadera i schematu `brain_core`. Wybór **Lekcja** jest nadrzędny wobec pojedynczego scenariusza: wskazuje gotowy przebieg dydaktyczny, który ustawia konfigurację YAML, a scenariusz silnika wynika dopiero z tego pliku. Eksport zajęciowy jest realizowany przez `brain_model/report_export.py` jako pakiet zawierający raport HTML/PDF, migawkę konfiguracji GUI, kopię YAML, seed, metadane uruchomienia, pytania kontrolne, skrót dla prowadzącego i `plan_lekcji.md` z opcjonalną tabelą „Co zmienić w kolejnym uruchomieniu”.
 
 ## Konsekwencje
 
@@ -17,12 +17,14 @@ Pozytywne:
 
 - jedno źródło prawdy dla scenariuszy i walidacji pozostaje w konfiguracjach oraz `brain_core`;
 - raport zajęciowy zawiera artefakty potrzebne do odtworzenia przebiegu lekcji;
+- `plan_lekcji.md` porządkuje zajęcia według stałej struktury: cel, scenariusz YAML, profil, przewidywanie, obserwacja i pytania kontrolne;
 - GUI zachowuje odpowiedzialność prezentacyjną i nie odtwarza logiki protokołów zadaniowych.
 
 Koszty:
 
 - etykiety scenariuszy zależą od poprawnego utrzymania metadanych w plikach YAML;
-- eksport pakietu zapisuje kilka plików pomocniczych, więc testy statyczne muszą pilnować spójności kontraktu I/O.
+- eksport pakietu zapisuje kilka plików pomocniczych, więc testy statyczne muszą pilnować spójności kontraktu I/O;
+- prowadzący, który chce tabeli zmian na kolejne uruchomienie, musi przekazać ją jawnie do eksportu zamiast polegać na ukrytych domysłach GUI.
 
 ## Alternatywy rozważane
 

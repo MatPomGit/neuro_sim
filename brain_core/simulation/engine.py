@@ -641,7 +641,11 @@ def _build_stimulus_sequence_signature(
             "onset_s": stimulus.onset_s,
             "duration_s": stimulus.duration_s,
             "condition": stimulus.condition,
-            "payload": {key: stimulus.payload[key] for key in sorted(stimulus.payload)} if isinstance(stimulus.payload, dict) else {},
+            "payload": (
+                {key: stimulus.payload[key] for key in sorted(stimulus.payload)}
+                if isinstance(stimulus.payload, dict)
+                else {}
+            ),
         }
         for stimulus in stimulus_sequence
     ]
@@ -1122,7 +1126,8 @@ def _build_batch_educational_comments(
     return [
         str(item["educational_comment"])
         for item in clinical_differences
-        if item.get("educational_comment") is not None and str(item["educational_comment"]).strip()
+        if item.get("educational_comment") is not None
+        and str(item["educational_comment"]).strip()
     ]
 
 

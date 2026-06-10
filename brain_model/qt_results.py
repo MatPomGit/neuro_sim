@@ -153,7 +153,9 @@ def _metric_educational_warnings(
         )
         if len(present_metrics) > 3:
             labels = f"{labels} i inne"
-        warnings.append(f"{group_name}: {labels}. {METRIC_WARNING_TEXT_PL.get(group_name, '')}")
+        warnings.append(
+            f"{group_name}: {labels}. {METRIC_WARNING_TEXT_PL.get(group_name, '')}"
+        )
     return warnings
 
 

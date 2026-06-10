@@ -261,17 +261,27 @@ PLOT_LABELS = {
 READY_LESSON_PRESETS: tuple[tuple[str, str, str], ...] = (
     (
         "roving_oddball_intro",
-        "Wprowadzenie: standard, dewiant i habituacja",
+        "Lekcja: roving oddball — standard, dewiant i habituacja",
         label_for_scenario_yaml_path("configs/roving_oddball_healthy.yaml"),
     ),
     (
+        "go_nogo_inhibition",
+        "Lekcja: go/no-go — hamowanie reakcji",
+        label_for_scenario_yaml_path("configs/scenario_yaml_go_nogo_gaba.yaml"),
+    ),
+    (
+        "n_back_working_memory",
+        "Lekcja: n-back — pamięć robocza i aktualizacja",
+        label_for_scenario_yaml_path("configs/scenario_yaml_n_back_dopamine.yaml"),
+    ),
+    (
         "gaba_disorder_comparison",
-        "Porównanie: dysregulacja GABA i odpowiedź na dewiant",
+        "Rozszerzenie: dysregulacja GABA i odpowiedź na dewiant",
         label_for_scenario_yaml_path("configs/roving_oddball_disorder_gaba.yaml"),
     ),
     (
         "hippocampal_lesion_comparison",
-        "Porównanie: lezja hipokampa i readaptacja",
+        "Rozszerzenie: lezja hipokampa i readaptacja",
         label_for_scenario_yaml_path("configs/roving_oddball_lesion_hippocampus.yaml"),
     ),
 )
@@ -307,12 +317,13 @@ class QtSections:
             self.ready_lesson_combo.addItem(lesson_label, lesson_id)
         self.ready_lesson_combo.setCurrentIndex(-1)
         self.ready_lesson_combo.setToolTip(
-            "Gotowa lekcja wybiera wyłącznie istniejącą konfigurację YAML."
+            "Lekcja jest wyborem nadrzędnym: ustawia istniejącą konfigurację YAML, "
+            "a dopiero z niej wynika pojedynczy scenariusz silnika."
         )
         self.ready_lesson_combo.currentTextChanged.connect(
             lambda _text: self.apply_ready_lesson()
         )
-        layout.addRow("gotowa lekcja", self.ready_lesson_combo)
+        layout.addRow("Lekcja", self.ready_lesson_combo)
 
         self.scenario_config_combo = QComboBox()
         self.scenario_config_combo.addItems(scenario_yaml_preset_labels())
@@ -401,8 +412,9 @@ class QtSections:
     def apply_ready_lesson(self) -> None:
         """Wybierz konfigurację YAML przypisaną do gotowej lekcji dydaktycznej.
 
-        Gotowa lekcja nie zawiera logiki tasku; jest jedynie mapowaniem
-        identyfikatora lekcji na preset YAML wykonywany później przez silnik.
+        Lekcja jest nadrzędna wobec pojedynczego scenariusza: nie zawiera
+        logiki tasku, tylko mapuje identyfikator lekcji na preset YAML
+        wykonywany później przez silnik.
         """
         if not hasattr(self, "scenario_config_combo"):
             return

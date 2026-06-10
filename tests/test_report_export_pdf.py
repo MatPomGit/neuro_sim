@@ -169,11 +169,23 @@ def test_export_reports_include_detailed_trial_observations(tmp_path: Path) -> N
         tmp_path / "pakiet",
         status_message="OK",
         summary_text="prediction_error_mean: 0.12",
-        state_config={"scenario": "roving_oddball"},
+        state_config={
+            "scenario": "roving_oddball",
+            "scenario_config_path": "configs/roving_oddball_healthy.yaml",
+            "seed": "42",
+        },
         event_timeline=event_timeline,
         clinical_profile=clinical_profile,
         analysis_report=analysis_report,
         plots=[],
+        next_run_changes=[
+            {
+                "element": "seed",
+                "current_value": "42",
+                "next_value": "43",
+                "reason": "pokazanie wpływu sekwencji bodźców",
+            }
+        ],
     )
     observations_text = (package_dir / "obserwacje_triali.md").read_text(
         encoding="utf-8"
@@ -181,6 +193,25 @@ def test_export_reports_include_detailed_trial_observations(tmp_path: Path) -> N
     assert "# Obserwacje triali" in observations_text
     assert "Trial 1" in observations_text
     assert "ACC" in observations_text
+
+    expected_package_files = {
+        "raport_zajeciowy.html",
+        "raport_zajeciowy.pdf",
+        "konfiguracja_gui.json",
+        "pytania_kontrolne.md",
+        "skrot_dla_prowadzacego.md",
+        "plan_lekcji.md",
+    }
+    assert expected_package_files <= {path.name for path in package_dir.iterdir()}
+    lesson_plan = (package_dir / "plan_lekcji.md").read_text(encoding="utf-8")
+    assert "## Cel" in lesson_plan
+    assert "## Scenariusz YAML" in lesson_plan
+    assert "## Profil" in lesson_plan
+    assert "## Przewidywanie" in lesson_plan
+    assert "## Obserwacja" in lesson_plan
+    assert "## Pytania kontrolne" in lesson_plan
+    assert "## Co zmienić w kolejnym uruchomieniu" in lesson_plan
+    assert "pokazanie wpływu sekwencji bodźców" in lesson_plan
 
 
 def test_qt_gui_exposes_pdf_export_action_and_uses_plot_figures() -> None:

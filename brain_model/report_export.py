@@ -726,6 +726,120 @@ def _instructor_summary_lines(
     ]
 
 
+def _next_run_change_table_lines(
+    next_run_changes: list[dict[str, Any]] | None,
+) -> list[str]:
+    """Zbuduj opcjonalną tabelę zmian do kolejnego uruchomienia lekcji.
+
+    Parameters
+    ----------
+    next_run_changes:
+        Lista propozycji zmian. Każdy słownik może zawierać pola ``element``,
+        ``current_value``, ``next_value`` i ``reason``.
+
+    Returns
+    -------
+    list[str]
+        Linie Markdown z tabelą albo pusta lista, gdy nie podano propozycji.
+    """
+    if not next_run_changes:
+        return []
+
+    lines = [
+        "## Co zmienić w kolejnym uruchomieniu",
+        "",
+        "| Element | Obecnie | Następnie | Uzasadnienie |",
+        "| --- | --- | --- | --- |",
+    ]
+    for item in next_run_changes:
+        element = str(item.get("element", "n/a")).replace("|", "\\|")
+        current_value = _stringify_value(item.get("current_value", "n/a")).replace(
+            "|", "\\|"
+        )
+        next_value = _stringify_value(item.get("next_value", "n/a")).replace("|", "\\|")
+        reason = str(item.get("reason", "brak uzasadnienia")).replace("|", "\\|")
+        lines.append(f"| {element} | {current_value} | {next_value} | {reason} |")
+    lines.append("")
+    return lines
+
+
+def _lesson_plan_lines(
+    *,
+    status_message: str,
+    summary_text: str,
+    state_config: dict[str, Any],
+    event_timeline: list[dict[str, Any]],
+    clinical_profile: dict[str, Any],
+    analysis_report: dict[str, Any],
+    next_run_changes: list[dict[str, Any]] | None = None,
+) -> list[str]:
+    """Zbuduj plan lekcji zgodny ze strukturą raportu zajęciowego.
+
+    Parameters
+    ----------
+    status_message:
+        Status zakończonego uruchomienia.
+    summary_text:
+        Krótki opis metryk widoczny w GUI.
+    state_config:
+        Migawka konfiguracji GUI/YAML.
+    event_timeline:
+        Oś czasu zdarzeń używana do obserwacji.
+    clinical_profile:
+        Profil kliniczny omawiany w lekcji.
+    analysis_report:
+        Raport analityczny z przewidywaniami i metrykami.
+    next_run_changes:
+        Opcjonalne propozycje zmian do kolejnego uruchomienia.
+
+    Returns
+    -------
+    list[str]
+        Linie Markdown pliku ``plan_lekcji.md``.
+    """
+    scenario_id = state_config.get("scenario", "n/a")
+    scenario_path = state_config.get("scenario_config_path", "n/a")
+    seed = state_config.get("seed", "n/a")
+    profile_name = clinical_profile.get("display_name") or clinical_profile.get(
+        "id", "n/a"
+    )
+    mechanism = clinical_profile.get("mechanism", "brak opisu mechanizmu")
+    first_observations = _trial_observation_lines(event_timeline, clinical_profile)[:6]
+    lines = [
+        "# Plan lekcji",
+        "",
+        "## Cel",
+        (
+            "Uczestnicy łączą konfigurację YAML, profil kliniczny, przewidywanie "
+            "modelu, obserwacje triali i pytania kontrolne w jeden replikowalny "
+            "przebieg zajęć."
+        ),
+        "",
+        "## Scenariusz YAML",
+        f"- Plik: {scenario_path}",
+        f"- Scenariusz silnika: {scenario_id}",
+        f"- Ziarno losowości: {seed}",
+        f"- Status uruchomienia: {status_message}",
+        "",
+        "## Profil",
+        f"- Profil kliniczny: {profile_name}",
+        f"- Mechanizm: {mechanism}",
+        "",
+        "## Przewidywanie",
+        f"- Skrót metryk: {summary_text or 'brak'}",
+        *_metrics_summary_lines(analysis_report),
+        "",
+        "## Obserwacja",
+        *first_observations,
+        "",
+        "## Pytania kontrolne",
+        *_control_question_lines(analysis_report)[2:],
+        "",
+    ]
+    lines.extend(_next_run_change_table_lines(next_run_changes))
+    return lines
+
+
 def export_teaching_package(
     output_dir: str | Path,
     *,
@@ -737,6 +851,7 @@ def export_teaching_package(
     analysis_report: dict[str, Any],
     plots: list[tuple[str, Figure]],
     plot_descriptions: dict[str, str] | None = None,
+    next_run_changes: list[dict[str, Any]] | None = None,
 ) -> Path:
     """Wyeksportuj kompletny pakiet zajęciowy HTML/PDF z metadanymi.
 
@@ -760,6 +875,8 @@ def export_teaching_package(
         Wykresy z panelu GUI do raportu PDF.
     plot_descriptions:
         Opcjonalne opisy wykresów.
+    next_run_changes:
+        Opcjonalna lista zmian do tabeli „co zmienić w kolejnym uruchomieniu”.
 
     Returns
     -------
@@ -826,6 +943,20 @@ def export_teaching_package(
     )
     (package_dir / "pytania_kontrolne.md").write_text(
         "\n".join(_control_question_lines(analysis_report)), encoding="utf-8"
+    )
+    (package_dir / "plan_lekcji.md").write_text(
+        "\n".join(
+            _lesson_plan_lines(
+                status_message=status_message,
+                summary_text=summary_text,
+                state_config=state_config,
+                event_timeline=event_timeline,
+                clinical_profile=clinical_profile,
+                analysis_report=analysis_report,
+                next_run_changes=next_run_changes,
+            )
+        ),
+        encoding="utf-8",
     )
     (package_dir / "skrot_dla_prowadzacego.md").write_text(
         "\n".join(

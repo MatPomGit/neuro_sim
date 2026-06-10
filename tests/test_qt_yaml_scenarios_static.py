@@ -78,6 +78,8 @@ def test_qt_sections_expose_ready_lessons_as_yaml_presets() -> None:
 
     assert "READY_LESSON_PRESETS" in source
     assert "roving_oddball_intro" in source
+    assert "go_nogo_inhibition" in source
+    assert "n_back_working_memory" in source
     assert "gaba_disorder_comparison" in source
     assert "hippocampal_lesion_comparison" in source
     assert "self.ready_lesson_combo" in source

@@ -188,7 +188,7 @@ def test_quick_start_has_lesson_and_yaml_selection() -> None:
     source = _method_source(QT_SECTIONS_PATH, "build_quick_start_section")
 
     assert "self.ready_lesson_combo = QComboBox()" in source
-    assert "gotowa lekcja" in source
+    assert "Lekcja" in source
     assert "self.scenario_config_combo = QComboBox()" in source
     assert "scenario_yaml_preset_labels()" in source
     assert "konfiguracja YAML" in source
@@ -203,6 +203,10 @@ def test_ready_lessons_point_to_yaml_labels() -> None:
         'label_for_scenario_yaml_path("configs/roving_oddball_healthy.yaml")' in source
     )
     assert (
-        'label_for_scenario_yaml_path("configs/roving_oddball_disorder_gaba.yaml")'
+        'label_for_scenario_yaml_path("configs/scenario_yaml_go_nogo_gaba.yaml")'
+        in source
+    )
+    assert (
+        'label_for_scenario_yaml_path("configs/scenario_yaml_n_back_dopamine.yaml")'
         in source
     )
