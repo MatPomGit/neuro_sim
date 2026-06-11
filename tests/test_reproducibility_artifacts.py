@@ -68,8 +68,6 @@ def test_save_run_writes_reproducibility_artifacts(tmp_path: Path) -> None:
         config={"rng_seed": 7, "task": {"name": "test"}},
         metrics={"metrics": {"behavior_mean": 0.5}},
     )
-    event_timeline_path = tmp_path / "event_timeline.json"
-    event_timeline_path.write_text("[]", encoding="utf-8")
 
     for artifact_name in REPRODUCIBILITY_ARTIFACTS:
         assert (tmp_path / artifact_name).exists(), artifact_name
@@ -80,12 +78,14 @@ def test_save_run_writes_reproducibility_artifacts(tmp_path: Path) -> None:
     environment = _read_json(tmp_path / "environment.json")
     git_info = _read_json(tmp_path / "git_info.json")
     metrics = _read_json(tmp_path / "metrics.json")
+    event_timeline = _read_json(tmp_path / "event_timeline.json")
 
     assert {"python_version", "platform", "dependencies"}.issubset(environment)
     assert {"commit", "branch", "is_dirty"}.issubset(git_info)
     assert metrics["metrics"]["behavior_mean"] == 0.5
+    assert event_timeline == []
 
 
-def _read_json(path: Path) -> dict[str, Any]:
+def _read_json(path: Path) -> Any:
     """Odczytuje pomocniczy plik JSON utworzony przez test zapisu."""
     return json.loads(path.read_text(encoding="utf-8"))
