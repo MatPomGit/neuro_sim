@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import datetime
+import hashlib
 import html
 import json
-import platform
 import shutil
 import textwrap
 from pathlib import Path
@@ -15,6 +15,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 
 from brain_core.analysis.reports import AnalysisReport, build_trial_observation_rows
+from brain_model.io import REPO_ROOT, collect_environment_info, collect_git_info
 
 A4_FIGSIZE = (8.27, 11.69)
 TEXT_LEFT = 0.07
@@ -1101,6 +1102,108 @@ def _lesson_plan_lines(
     return lines
 
 
+def _sha256_file(path: Path) -> str:
+    """Oblicz hash SHA-256 pliku źródłowego konfiguracji.
+
+    Parameters
+    ----------
+    path:
+        Ścieżka do pliku, którego integralność ma być opisana w pakiecie.
+
+    Returns
+    -------
+    str
+        Szesnastkowy skrót SHA-256 zawartości pliku.
+    """
+    digest = hashlib.sha256()
+    with path.open("rb") as file_handle:
+        for chunk in iter(lambda: file_handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _resolve_scenario_config_path(scenario_path: object) -> Path | None:
+    """Zamień ścieżkę konfiguracji scenariusza na istniejący plik YAML.
+
+    Parameters
+    ----------
+    scenario_path:
+        Wartość pola konfiguracji GUI opisującego użyty plik YAML.
+
+    Returns
+    -------
+    Path | None
+        Bezwzględna ścieżka do istniejącego pliku albo ``None``, gdy ścieżka
+        nie została podana lub plik nie istnieje.
+    """
+    if not scenario_path:
+        return None
+
+    source = Path(str(scenario_path))
+    if not source.is_absolute():
+        source = REPO_ROOT / source
+    if not source.exists() or not source.is_file():
+        return None
+    return source
+
+
+def _teaching_package_readme_lines(
+    *,
+    metadata: dict[str, Any],
+    yaml_copy_name: str | None,
+) -> list[str]:
+    """Przygotuj polski README opisujący odtworzenie pakietu zajęciowego.
+
+    Parameters
+    ----------
+    metadata:
+        Metadane uruchomienia zapisane w pakiecie.
+    yaml_copy_name:
+        Nazwa skopiowanego pliku YAML, jeśli konfiguracja była dostępna.
+
+    Returns
+    -------
+    list[str]
+        Linie dokumentu Markdown gotowe do zapisu w ``README_pakietu.md``.
+    """
+    commit = metadata.get("git_commit") or "brak informacji"
+    dirty = metadata.get("git_is_dirty")
+    dirty_text = "nieznany" if dirty is None else ("tak" if dirty else "nie")
+    yaml_hash = metadata.get("scenario_config_sha256") or "brak pliku YAML"
+    yaml_name = yaml_copy_name or "brak skopiowanego pliku YAML"
+    return [
+        "# README pakietu zajęciowego",
+        "",
+        "Ten pakiet zawiera artefakty potrzebne do omówienia i odtworzenia "
+        "uruchomienia neuro_sim na zajęciach.",
+        "",
+        "## Zawartość",
+        "- `raport_zajeciowy.html` i `raport_zajeciowy.pdf` — raport z wyniku.",
+        "- `konfiguracja_gui.json` — migawka ustawień z interfejsu.",
+        f"- `{yaml_name}` — kopia użytego pliku YAML.",
+        "- `environment.json` — wersja Pythona, platforma i wersje zależności.",
+        "- `git_info.json` — commit, gałąź i status niezacommitowanych zmian.",
+        "- `metadata_uruchomienia.json` — skrót metadanych reprodukcji.",
+        "",
+        "## Jak odtworzyć uruchomienie",
+        "1. Przywróć kod projektu do commita zapisanego w `git_info.json`.",
+        "2. Odtwórz środowisko Pythona zgodne z `environment.json`.",
+        "3. Zweryfikuj integralność pliku YAML przez porównanie SHA-256 z "
+        "`metadata_uruchomienia.json`.",
+        "4. Uruchom scenariusz z tym samym seedem i konfiguracją GUI zapisaną "
+        "w `konfiguracja_gui.json`.",
+        "5. Porównaj metryki i obserwacje z raportami w pakiecie.",
+        "",
+        "## Kluczowe metadane",
+        f"- Commit Git: `{commit}`",
+        f"- Repozytorium dirty podczas eksportu: `{dirty_text}`",
+        f"- Plik YAML: `{yaml_name}`",
+        f"- SHA-256 YAML: `{yaml_hash}`",
+        f"- Seed: `{metadata.get('seed') if metadata.get('seed') is not None else 'brak'}`",
+        "",
+    ]
+
+
 def export_teaching_package(
     output_dir: str | Path,
     *,
@@ -1173,24 +1276,56 @@ def export_teaching_package(
     (package_dir / "konfiguracja_gui.json").write_text(
         json.dumps(state_config, ensure_ascii=False, indent=2), encoding="utf-8"
     )
-    scenario_path = state_config.get("scenario_config_path")
-    if scenario_path:
-        source = Path(str(scenario_path))
-        if not source.is_absolute():
-            source = Path(__file__).resolve().parents[1] / source
-        if source.exists():
-            shutil.copy2(source, package_dir / source.name)
+
+    scenario_source = _resolve_scenario_config_path(
+        state_config.get("scenario_config_path")
+    )
+    yaml_copy_name = None
+    yaml_sha256 = None
+    if scenario_source is not None:
+        yaml_copy_name = scenario_source.name
+        yaml_sha256 = _sha256_file(scenario_source)
+        dest_path = package_dir / yaml_copy_name
+        if scenario_source.resolve() != dest_path.resolve():
+            shutil.copy2(scenario_source, dest_path)
+
+    environment_info = collect_environment_info()
+    git_info = collect_git_info(REPO_ROOT)
+    (package_dir / "environment.json").write_text(
+        json.dumps(environment_info, ensure_ascii=False, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    (package_dir / "git_info.json").write_text(
+        json.dumps(git_info, ensure_ascii=False, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
 
     metadata = {
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "seed": state_config.get("seed"),
         "scenario": state_config.get("scenario"),
         "scenario_config_path": state_config.get("scenario_config_path"),
-        "python_version": platform.python_version(),
-        "platform": platform.platform(),
+        "scenario_config_copy": yaml_copy_name,
+        "scenario_config_sha256": yaml_sha256,
+        "python_version": environment_info["python_version"],
+        "platform": environment_info["platform"],
+        "dependency_versions": environment_info["dependencies"],
+        "git_commit": git_info["commit"],
+        "git_branch": git_info["branch"],
+        "git_is_dirty": git_info["is_dirty"],
     }
     (package_dir / "metadata_uruchomienia.json").write_text(
-        json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps(metadata, ensure_ascii=False, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    (package_dir / "README_pakietu.md").write_text(
+        "\n".join(
+            _teaching_package_readme_lines(
+                metadata=metadata,
+                yaml_copy_name=yaml_copy_name,
+            )
+        ),
+        encoding="utf-8",
     )
     (package_dir / "obserwacje_triali.md").write_text(
         "\n".join(
