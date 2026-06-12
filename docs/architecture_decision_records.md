@@ -93,6 +93,7 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0029 | accepted | Tryb porównania profili Qt i stabilne API batch | [`docs/adr/0029-tryb-porownania-profili-qt-i-api-batch.md`](adr/0029-tryb-porownania-profili-qt-i-api-batch.md) | — |
 | ADR-0030 | accepted | Kontrakty danych między modułami `brain_core` | [`docs/adr/0030-kontrakty-danych-brain-core.md`](adr/0030-kontrakty-danych-brain-core.md) | — |
 | ADR-0031 | proposed | Limit tabeli triali w raportach | [`docs/adr/0031-limit-tabeli-triali-w-raportach.md`](adr/0031-limit-tabeli-triali-w-raportach.md) | — |
+| ADR-0032 | proposed | Szybkie walidatory kontraktów danych | [`docs/adr/0032-walidatory-kontraktow-danych.md`](adr/0032-walidatory-kontraktow-danych.md) | — |
 
 ## Procedura dodawania kolejnego ADR
 

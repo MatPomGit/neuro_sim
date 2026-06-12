@@ -2,6 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 
+from brain_core.data_contracts import (
+    CONTRACT_B_NETWORKS_POPULATIONS,
+    validate_delay_steps_contract,
+    validate_regional_vector_contract,
+    validate_square_matrix_contract,
+)
+
 
 class DelayBuffer:
     """
@@ -25,12 +32,9 @@ class DelayBuffer:
         Raises:
             ValueError: Jeśli macierz ma nieprawidłowy rozmiar lub zawiera wartości ujemne.
         """
-        if delays_steps.shape != (n_regions, n_regions):
-            raise ValueError("delays_steps musi mieć rozmiar [n_regions, n_regions]")
-        if np.any(delays_steps < 0):
-            raise ValueError("delays_steps nie może zawierać wartości ujemnych")
-
-        self.delays_steps: np.ndarray = delays_steps.astype(int)
+        self.delays_steps: np.ndarray = validate_delay_steps_contract(
+            delays_steps, n_regions
+        )
         self.max_delay: int = int(np.max(self.delays_steps))
         self._history: np.ndarray = np.zeros(
             (self.max_delay + 1, n_regions), dtype=float
@@ -47,8 +51,9 @@ class DelayBuffer:
         Raises:
             ValueError: Jeśli wektor ma nieprawidłowy rozmiar.
         """
-        if activity.shape != (self._history.shape[1],):
-            raise ValueError("activity musi mieć rozmiar [n_regions]")
+        activity = validate_regional_vector_contract(
+            activity, self._history.shape[1], "activity"
+        )
         self._cursor = (self._cursor + 1) % self._history.shape[0]
         self._history[self._cursor] = activity
 
@@ -85,8 +90,17 @@ def delayed_coupling(
     Raises:
         ValueError: Jeśli macierze mają różne rozmiary.
     """
-    if connectivity.shape != delayed_matrix.shape:
+    try:
+        connectivity_arr = np.asarray(connectivity, dtype=float)
+    except (TypeError, ValueError) as error:
         raise ValueError(
-            "connectivity i delayed_matrix muszą mieć ten sam rozmiar [n_regions, n_regions]"
-        )
-    return np.sum(connectivity * delayed_matrix, axis=1)
+            f"{CONTRACT_B_NETWORKS_POPULATIONS}: connectivity musi być macierzą numeryczną."
+        ) from error
+    n_regions = int(connectivity_arr.shape[0]) if connectivity_arr.ndim == 2 else 0
+    connectivity_arr = validate_square_matrix_contract(
+        connectivity_arr, n_regions, "connectivity", CONTRACT_B_NETWORKS_POPULATIONS
+    )
+    delayed_arr = validate_square_matrix_contract(
+        delayed_matrix, n_regions, "delayed_matrix", CONTRACT_B_NETWORKS_POPULATIONS
+    )
+    return np.sum(connectivity_arr * delayed_arr, axis=1)

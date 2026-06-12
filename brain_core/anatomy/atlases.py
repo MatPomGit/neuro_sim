@@ -5,6 +5,12 @@ from pathlib import Path
 
 import numpy as np
 
+from brain_core.data_contracts import (
+    CONTRACT_A_ANATOMY_NETWORKS,
+    validate_connectome_contract,
+    validate_region_atlas_contract,
+)
+
 from .connectome import Connectome
 from .regions import BrainRegion, RegionAtlas
 
@@ -31,9 +37,9 @@ def load_region_atlas(path: str | Path | None = None) -> RegionAtlas:
             BrainRegion(name=row["region"].strip(), tau=float(row["tau"]))
             for row in reader
         )
-    if not regions:
-        raise ValueError("Atlas region file is empty")
-    return RegionAtlas(regions=regions)
+    atlas = RegionAtlas(regions=regions)
+    validate_region_atlas_contract(atlas)
+    return atlas
 
 
 def _load_square_matrix(path: Path, expected_names: tuple[str, ...]) -> np.ndarray:
@@ -55,17 +61,21 @@ def _load_square_matrix(path: Path, expected_names: tuple[str, ...]) -> np.ndarr
         rows = list(reader)
 
     if not rows:
-        raise ValueError(f"Matrix file {path.name} is empty")
+        raise ValueError(
+            f"{CONTRACT_A_ANATOMY_NETWORKS}: Matrix file {path.name} is empty"
+        )
 
     header = tuple(cell.strip() for cell in rows[0][1:])
     if header != expected_names:
-        raise ValueError(f"Matrix header mismatch for {path.name}")
+        raise ValueError(
+            f"{CONTRACT_A_ANATOMY_NETWORKS}: Matrix header mismatch for {path.name}"
+        )
 
     if len(rows) - 1 != len(expected_names):
         expected_count = len(expected_names)
         actual_count = len(rows) - 1
         raise ValueError(
-            f"Matrix row count mismatch for {path.name}: "
+            f"{CONTRACT_A_ANATOMY_NETWORKS}: Matrix row count mismatch for {path.name}: "
             f"expected {expected_count}, got {actual_count}"
         )
 
@@ -74,7 +84,13 @@ def _load_square_matrix(path: Path, expected_names: tuple[str, ...]) -> np.ndarr
         row_name = row[0].strip()
         if row_name != expected_names[i]:
             raise ValueError(
-                f"Row order mismatch for {path.name}: expected {expected_names[i]}, got {row_name}"
+                f"{CONTRACT_A_ANATOMY_NETWORKS}: Row order mismatch for {path.name}: "
+                f"expected {expected_names[i]}, got {row_name}"
+            )
+        if len(row) - 1 != len(expected_names):
+            raise ValueError(
+                f"{CONTRACT_A_ANATOMY_NETWORKS}: Matrix column count mismatch for {path.name}: "
+                f"expected {len(expected_names)}, got {len(row) - 1}"
             )
         matrix[i, :] = np.array([float(v) for v in row[1:]], dtype=float)
     return matrix
@@ -97,7 +113,11 @@ def load_connectome(
     region_names = atlas.names
     weights = _load_square_matrix(root / "weights.csv", region_names)
     lengths = _load_square_matrix(root / "fiber_lengths.csv", region_names)
-    return Connectome(region_names=region_names, weights=weights, fiber_lengths=lengths)
+    connectome = Connectome(
+        region_names=region_names, weights=weights, fiber_lengths=lengths
+    )
+    validate_connectome_contract(connectome, expected_region_names=region_names)
+    return connectome
 
 
 def validate_atlas_connectome_consistency(
@@ -113,13 +133,5 @@ def validate_atlas_connectome_consistency(
     Raises:
         ValueError: Jeśli występuje niezgodność nazw, kształtów lub wartości.
     """
-    region_names = atlas.names
-    if connectome.region_names != region_names:
-        raise ValueError("Region names in connectome do not match atlas")
-    if connectome.weights.shape != (len(region_names), len(region_names)):
-        raise ValueError("Connectivity matrix has invalid shape")
-    if connectome.fiber_lengths.shape != connectome.weights.shape:
-        raise ValueError("Fiber length matrix shape must match connectivity matrix")
-    for region in atlas.regions:
-        if region.tau <= 0:
-            raise ValueError(f"Region {region.name} has non-positive tau")
+    validate_region_atlas_contract(atlas)
+    validate_connectome_contract(connectome, expected_region_names=atlas.names)

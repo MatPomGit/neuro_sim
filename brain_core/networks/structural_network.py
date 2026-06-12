@@ -2,6 +2,12 @@ from __future__ import annotations
 
 import numpy as np
 
+from brain_core.data_contracts import (
+    CONTRACT_B_NETWORKS_POPULATIONS,
+    validate_regional_vector_contract,
+    validate_square_matrix_contract,
+)
+
 
 class StructuralNetwork:
     """
@@ -24,10 +30,13 @@ class StructuralNetwork:
             ValueError: Jeśli macierz ma nieprawidłowy rozmiar.
         """
         n = len(region_names)
-        if connectivity.shape != (n, n):
-            raise ValueError("connectivity musi mieć rozmiar [n_regions, n_regions]")
-        self.region_names: list[str] = region_names
-        self.connectivity: np.ndarray = connectivity.astype(float)
+        self.region_names: list[str] = list(region_names)
+        self.connectivity: np.ndarray = validate_square_matrix_contract(
+            connectivity,
+            n,
+            "StructuralNetwork.connectivity",
+            CONTRACT_B_NETWORKS_POPULATIONS,
+        )
 
     def coupling(self, delayed_activity: np.ndarray) -> np.ndarray:
         """
@@ -42,6 +51,7 @@ class StructuralNetwork:
         Raises:
             ValueError: Jeśli wektor ma nieprawidłowy rozmiar.
         """
-        if delayed_activity.shape != (len(self.region_names),):
-            raise ValueError("delayed_activity musi mieć rozmiar [n_regions]")
+        delayed_activity = validate_regional_vector_contract(
+            delayed_activity, len(self.region_names), "delayed_activity"
+        )
         return self.connectivity @ delayed_activity
