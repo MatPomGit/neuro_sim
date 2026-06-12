@@ -464,6 +464,7 @@ def _trial_group_markdown_lines(
     event_timeline: list[dict[str, Any]],
     *,
     clinical_profile: dict[str, Any] | None = None,
+    max_trials: int = 20,
 ) -> list[str]:
     """Buduje polskie linie Markdown z grupami triali i komentarzem mechanizmu.
 
@@ -471,6 +472,8 @@ def _trial_group_markdown_lines(
     ----------
     event_timeline:
         Chronologiczna lista zdarzeń eksperymentu.
+    max_trials:
+        Maksymalna liczba triali opisywana w sekcji Markdown.
 
     Returns
     -------
@@ -481,13 +484,18 @@ def _trial_group_markdown_lines(
     rows = build_trial_observation_rows(
         event_timeline,
         clinical_profile=clinical_profile,
-        max_trials=20,
+        max_trials=max_trials,
     )
     groups = _group_event_timeline_by_trial(event_timeline)
-    if not rows:
+    if not groups:
         return ["- Brak triali możliwych do pogrupowania."]
+    if not rows:
+        return [f"- Limit raportu triali wynosi 0; pominięto {len(groups)} triali."]
 
-    lines: list[str] = []
+    lines: list[str] = [
+        f"- Liczba triali: {len(groups)}; pokazano: {len(rows)}; "
+        f"limit: {max_trials}; pominięto: {max(0, len(groups) - len(rows))}."
+    ]
     for row in rows:
         lines.append(
             f"- **Trial {row['trial_id']}** — czas: {row['time_s']} s; "
@@ -502,8 +510,8 @@ def _trial_group_markdown_lines(
         lines.append(f"  - **wynik behawioralny**: {row['behavioral_outcome']}")
         lines.append(f"  - **najważniejsze metryki**: {row['key_metrics']}")
         lines.append(f"  - **komentarz mechanizmu**: {row['comment_pl']}")
-    if len(groups) > 20:
-        lines.append(f"- ... pominięto {len(groups) - 20} dalszych triali.")
+    if len(groups) > max_trials:
+        lines.append(f"- ... pominięto {len(groups) - max_trials} dalszych triali.")
     return lines
 
 
@@ -1349,10 +1357,19 @@ class AnalysisReport:
                     "### Grupy triali: bodziec → odpowiedź → wynik → aktywność → mechanizm",
                 ]
             )
+            analysis_config = self.payload.get("analysis", {})
+            max_report_trials = 20
+            if isinstance(analysis_config, dict):
+                configured_limit = analysis_config.get("max_report_trials", 20)
+                if isinstance(configured_limit, int) and not isinstance(
+                    configured_limit, bool
+                ):
+                    max_report_trials = max(0, configured_limit)
             lines.extend(
                 _trial_group_markdown_lines(
                     event_timeline,
                     clinical_profile=self.payload.get("clinical_profile", {}),
+                    max_trials=max_report_trials,
                 )
             )
             lines.extend(["", "### Chronologiczny skrót zdarzeń"])
