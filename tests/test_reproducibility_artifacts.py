@@ -67,6 +67,7 @@ def test_save_run_writes_reproducibility_artifacts(tmp_path: Path) -> None:
         duration_s=0.2,
         config={"rng_seed": 7, "task": {"name": "test"}},
         metrics={"metrics": {"behavior_mean": 0.5}},
+        event_timeline=[{"time_s": 0.1, "event_type": "test_event"}],
     )
 
     for artifact_name in REPRODUCIBILITY_ARTIFACTS:
