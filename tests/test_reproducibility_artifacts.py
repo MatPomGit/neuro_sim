@@ -84,7 +84,7 @@ def test_save_run_writes_reproducibility_artifacts(tmp_path: Path) -> None:
     assert {"python_version", "platform", "dependencies"}.issubset(environment)
     assert {"commit", "branch", "is_dirty"}.issubset(git_info)
     assert metrics["metrics"]["behavior_mean"] == 0.5
-    assert event_timeline == []
+    assert event_timeline == [{"time_s": 0.1, "event_type": "test_event"}]
 
 
 def _read_json(path: Path) -> Any:
