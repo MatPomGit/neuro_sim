@@ -248,9 +248,89 @@ def _plot_description(title: str) -> str:
     )
 
 
+def _resolve_max_report_trials(state_config: dict[str, Any]) -> int:
+    """Odczytaj limit triali raportu z konfiguracji analizy.
+
+    Parameters
+    ----------
+    state_config:
+        Migawka konfiguracji GUI/YAML, opcjonalnie z polem
+        ``analysis.max_report_trials``.
+
+    Returns
+    -------
+    int
+        Nieujemny limit triali dla skróconych sekcji raportowych.
+    """
+    analysis_config = state_config.get("analysis")
+    if isinstance(analysis_config, dict) and "max_report_trials" in analysis_config:
+        limit_value = analysis_config["max_report_trials"]
+        if isinstance(limit_value, int) and not isinstance(limit_value, bool):
+            return max(0, limit_value)
+    output_config = state_config.get("output")
+    if isinstance(output_config, dict) and "max_report_trials" in output_config:
+        limit_value = output_config["max_report_trials"]
+        if isinstance(limit_value, int) and not isinstance(limit_value, bool):
+            return max(0, limit_value)
+    return 20
+
+
+def _trial_limit_summary(
+    *, total_trials: int, shown_trials: int, max_trials: int | None, full_table: bool
+) -> str:
+    """Zbuduj jawne podsumowanie kompletności tabeli triali.
+
+    Parameters
+    ----------
+    total_trials:
+        Liczba triali wykrytych w osi czasu.
+    shown_trials:
+        Liczba triali pokazanych w bieżącej sekcji raportu.
+    max_trials:
+        Limit użyty w sekcji; ``None`` oznacza brak limitu.
+    full_table:
+        Czy sekcja jest pełną tabelą bez skracania.
+
+    Returns
+    -------
+    str
+        Polski opis liczby triali pokazanych i pominiętych.
+    """
+    omitted_trials = max(0, total_trials - shown_trials)
+    if full_table:
+        return (
+            "Tryb eksportu: pełna tabela triali; "
+            f"liczba triali: {total_trials}; pokazano: {shown_trials}; "
+            f"pominięto: {omitted_trials}."
+        )
+    return (
+        f"Tryb eksportu: tabela ograniczona do {max_trials} triali; "
+        f"liczba triali: {total_trials}; pokazano: {shown_trials}; "
+        f"pominięto: {omitted_trials}."
+    )
+
+
+def _escape_markdown_table_cell(value: object) -> str:
+    """Zabezpiecz wartość komórki przed rozbiciem tabeli Markdown.
+
+    Parameters
+    ----------
+    value:
+        Wartość raportowa umieszczana w tabeli.
+
+    Returns
+    -------
+    str
+        Tekst bez pionowych separatorów tabeli i znaków nowej linii.
+    """
+    return str(value).replace("|", "\\|").replace("\n", " ")
+
+
 def _trial_table_rows(
     events: list[dict[str, Any]],
     clinical_profile: dict[str, Any] | None = None,
+    *,
+    max_trials: int | None = 20,
 ) -> list[dict[str, str]]:
     """Zbuduj wiersze tabeli triali z tych samych pól co raport analityczny.
 
@@ -260,6 +340,8 @@ def _trial_table_rows(
         Lista zdarzeń z polami ``trial_id``, ``condition`` i polskimi opisami.
     clinical_profile:
         Profil kliniczny dopisywany do każdego wiersza obserwacji trialu.
+    max_trials:
+        Maksymalna liczba triali w tabeli. Wartość ``None`` oznacza pełną tabelę.
 
     Returns
     -------
@@ -267,12 +349,19 @@ def _trial_table_rows(
         Wiersze zawierające czas, warunek, aktywne regiony, profil kliniczny,
         wynik behawioralny, metryki i komentarz po polsku.
     """
-    return build_trial_observation_rows(events, clinical_profile=clinical_profile)
+    effective_limit = len(events) if max_trials is None else max_trials
+    return build_trial_observation_rows(
+        events,
+        clinical_profile=clinical_profile,
+        max_trials=effective_limit,
+    )
 
 
 def _trial_observation_lines(
     events: list[dict[str, Any]],
     clinical_profile: dict[str, Any] | None = None,
+    *,
+    max_trials: int = 20,
 ) -> list[str]:
     """Zwróć opisowe linie triali do PDF i materiałów zajęciowych.
 
@@ -282,16 +371,31 @@ def _trial_observation_lines(
         Oś czasu zdarzeń wygenerowana przez silnik.
     clinical_profile:
         Profil kliniczny użyty w eksperymencie.
+    max_trials:
+        Maksymalna liczba triali opisywana w skróconej sekcji PDF.
 
     Returns
     -------
     list[str]
         Linie tekstowe z tymi samymi polami co tabela Markdown.
     """
-    rows = _trial_table_rows(events, clinical_profile)
-    if not rows:
+    rows = _trial_table_rows(events, clinical_profile, max_trials=max_trials)
+    total_rows = len(_trial_table_rows(events, clinical_profile, max_trials=None))
+    if total_rows == 0:
         return ["Brak triali w osi czasu."]
-    lines: list[str] = []
+
+    lines: list[str] = [
+        _trial_limit_summary(
+            total_trials=total_rows,
+            shown_trials=len(rows),
+            max_trials=max_trials,
+            full_table=False,
+        )
+    ]
+    if not rows:
+        lines.append("Nie pokazano szczegółów triali, ponieważ limit raportu wynosi 0.")
+        return lines
+
     for row in rows:
         lines.extend(
             [
@@ -299,6 +403,10 @@ def _trial_observation_lines(
                     f"Trial {row['trial_id']} | czas: {row['time_s']} s | "
                     f"warunek: {row['condition']}"
                 ),
+                f"  Bodziec: {row['stimulus']}",
+                f"  Odpowiedź: {row['response']}",
+                f"  Błąd/poprawność: {row['correctness']}",
+                f"  Zmiana aktywności: {row['activity']}",
                 f"  Aktywne regiony: {row['active_regions']}",
                 f"  Profil kliniczny: {row['clinical_profile']}",
                 f"  Wynik behawioralny: {row['behavioral_outcome']}",
@@ -363,6 +471,7 @@ def _experiment_report_markdown(
     event_timeline: list[dict[str, Any]],
     clinical_profile: dict[str, Any],
     analysis_report: dict[str, Any],
+    full_trial_table: bool = True,
 ) -> str:
     """Złóż raport eksperymentu w formacie Markdown.
 
@@ -382,6 +491,9 @@ def _experiment_report_markdown(
         Profil kliniczny użyty w eksperymencie.
     analysis_report:
         Raport analityczny z metrykami.
+    full_trial_table:
+        Gdy ``True``, eksport Markdown/HTML zapisuje wszystkie triale; gdy
+        ``False``, stosuje ``analysis.max_report_trials`` z konfiguracji.
 
     Returns
     -------
@@ -403,7 +515,7 @@ def _experiment_report_markdown(
         )
         for item in eeg_bold_sections:
             escaped_item = {
-                key: str(value).replace("|", "\\|") for key, value in item.items()
+                key: _escape_markdown_table_cell(value) for key, value in item.items()
             }
             lines.append(
                 "| {modality} | {metric} | {region_or_band} | {value} | "
@@ -418,7 +530,24 @@ def _experiment_report_markdown(
             "",
         ]
     )
-    rows = _trial_table_rows(event_timeline, clinical_profile)
+    max_report_trials = _resolve_max_report_trials(state_config)
+    rows = _trial_table_rows(
+        event_timeline,
+        clinical_profile,
+        max_trials=None if full_trial_table else max_report_trials,
+    )
+    total_rows = len(
+        _trial_table_rows(event_timeline, clinical_profile, max_trials=None)
+    )
+    lines.append(
+        _trial_limit_summary(
+            total_trials=total_rows,
+            shown_trials=len(rows),
+            max_trials=max_report_trials,
+            full_table=full_trial_table,
+        )
+    )
+    lines.append("")
     if rows:
         lines.extend(
             [
@@ -431,7 +560,7 @@ def _experiment_report_markdown(
             ]
         )
         for row in rows:
-            escaped_row = {k: str(v).replace("|", "\\|") for k, v in row.items()}
+            escaped_row = {k: _escape_markdown_table_cell(v) for k, v in row.items()}
             lines.append(
                 "| {trial_id} | {condition} | {stimulus} | {response} | "
                 "{behavioral_outcome} | {time_s} | {active_regions} | "
@@ -440,15 +569,97 @@ def _experiment_report_markdown(
                 )
             )
     else:
-        lines.append("Brak triali w osi czasu.")
+        if total_rows > 0:
+            lines.append(
+                "Nie pokazano wierszy triali, ponieważ limit raportu wynosi 0."
+            )
+        else:
+            lines.append("Brak triali w osi czasu.")
     lines.extend(["", "## Konfiguracja", *_flatten_mapping(state_config), ""])
     lines.extend(["## Profil kliniczny", *_flatten_mapping(clinical_profile), ""])
     lines.extend(["## Polski słownik pojęć", *_glossary_markdown_lines(), ""])
     return "\n".join(lines)
 
 
+def _split_markdown_table_row(line: str) -> list[str]:
+    """Podziel wiersz tabeli Markdown, respektując sekwencję ``\\|``.
+
+    Parameters
+    ----------
+    line:
+        Pojedynczy wiersz tabeli Markdown.
+
+    Returns
+    -------
+    list[str]
+        Lista komórek bez zewnętrznych separatorów tabeli.
+    """
+    stripped_line = line.strip()
+    if stripped_line.startswith("|"):
+        stripped_line = stripped_line[1:]
+    if stripped_line.endswith("|"):
+        stripped_line = stripped_line[:-1]
+
+    cells: list[str] = []
+    current_chars: list[str] = []
+    escaped = False
+    for char in stripped_line:
+        if escaped:
+            current_chars.append(char)
+            escaped = False
+            continue
+        if char == "\\":
+            escaped = True
+            continue
+        if char == "|":
+            cells.append("".join(current_chars).strip())
+            current_chars = []
+            continue
+        current_chars.append(char)
+    if escaped:
+        current_chars.append("\\")
+    cells.append("".join(current_chars).strip())
+    return cells
+
+
+def _markdown_table_to_html(table_lines: list[str]) -> str:
+    """Przekształć prostą tabelę Markdown na semantyczny HTML.
+
+    Parameters
+    ----------
+    table_lines:
+        Kolejne linie tabeli Markdown z nagłówkiem i separatorem.
+
+    Returns
+    -------
+    str
+        Fragment HTML z elementami ``table``, ``thead`` i ``tbody``.
+    """
+    rows: list[list[str]] = []
+    for line in table_lines:
+        cells = _split_markdown_table_row(line)
+        if cells and all(set(cell) <= {"-", " ", ":"} for cell in cells):
+            continue
+        rows.append(cells)
+    if not rows:
+        return ""
+
+    header = rows[0]
+    body_rows = rows[1:]
+    html_lines = ["<table>", "<thead><tr>"]
+    html_lines.extend(f"<th>{html.escape(cell)}</th>" for cell in header)
+    html_lines.append("</tr></thead>")
+    html_lines.append("<tbody>")
+    for row in body_rows:
+        html_lines.append("<tr>")
+        html_lines.extend(f"<td>{html.escape(cell)}</td>" for cell in row)
+        html_lines.append("</tr>")
+    html_lines.extend(["</tbody>", "</table>"])
+    return "\n".join(html_lines)
+
+
 def _markdown_to_simple_html(markdown: str) -> str:
-    """Przekształć ograniczony Markdown raportu do samodzielnego HTML.
+    """Przekształć ograniczony Markdown raportu do czytelnego HTML.
 
     Parameters
     ----------
@@ -458,13 +669,55 @@ def _markdown_to_simple_html(markdown: str) -> str:
     Returns
     -------
     str
-        Prosty dokument HTML z zachowaniem treści tabelarycznych w bloku tekstowym.
+        Samodzielny dokument HTML z nagłówkami, listami i tabelami raportu.
     """
-    escaped = html.escape(markdown)
+    body_lines: list[str] = []
+    lines = markdown.splitlines()
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        stripped = line.strip()
+        if not stripped:
+            index += 1
+            continue
+        if stripped.startswith("| "):
+            table_lines: list[str] = []
+            while index < len(lines) and lines[index].strip().startswith("|"):
+                table_lines.append(lines[index])
+                index += 1
+            body_lines.append(_markdown_table_to_html(table_lines))
+            continue
+        if stripped.startswith("### "):
+            body_lines.append(f"<h3>{html.escape(stripped[4:])}</h3>")
+        elif stripped.startswith("## "):
+            body_lines.append(f"<h2>{html.escape(stripped[3:])}</h2>")
+        elif stripped.startswith("# "):
+            body_lines.append(f"<h1>{html.escape(stripped[2:])}</h1>")
+        elif stripped.startswith("- "):
+            items: list[str] = []
+            while index < len(lines) and lines[index].strip().startswith("- "):
+                item = lines[index].strip()[2:]
+                items.append(f"<li>{html.escape(item)}</li>")
+                index += 1
+            body_lines.append("<ul>" + "".join(items) + "</ul>")
+            continue
+        else:
+            body_lines.append(f"<p>{html.escape(stripped)}</p>")
+        index += 1
+
     return (
         '<!doctype html><html lang="pl"><head><meta charset="utf-8">'
-        "<title>Raport eksperymentu neuro_sim</title></head><body>"
-        f"<pre>{escaped}</pre></body></html>"
+        '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        "<title>Raport eksperymentu neuro_sim</title>"
+        "<style>"
+        "body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;line-height:1.5;"
+        "max-width:1200px;margin:2rem auto;padding:0 1rem;color:#1f2933;}"
+        "h1,h2,h3{color:#102a43;}table{border-collapse:collapse;width:100%;"
+        "margin:1rem 0;font-size:.92rem;}th,td{border:1px solid #bcccdc;"
+        "padding:.45rem;text-align:left;vertical-align:top;}th{background:#f0f4f8;}"
+        "tr:nth-child(even){background:#f8fafc;}"
+        "</style></head><body>"
+        f"{''.join(body_lines)}</body></html>"
     )
 
 
@@ -478,6 +731,7 @@ def export_experiment_report(
     clinical_profile: dict[str, Any],
     analysis_report: dict[str, Any],
     title: str = "Raport eksperymentu neuro_sim",
+    full_trial_table: bool = True,
 ) -> Path:
     """Eksportuj raport `.md` albo `.html` z tabelą triali, metrykami i słownikiem.
 
@@ -499,6 +753,8 @@ def export_experiment_report(
         Raport analityczny z metrykami.
     title:
         Tytuł raportu.
+    full_trial_table:
+        Opcja „pełna tabela triali” dla eksportu Markdown/HTML.
 
     Returns
     -------
@@ -520,6 +776,7 @@ def export_experiment_report(
         event_timeline=event_timeline,
         clinical_profile=clinical_profile,
         analysis_report=analysis_report,
+        full_trial_table=full_trial_table,
     )
     suffix = target.suffix.lower()
     if suffix == ".md":
@@ -617,7 +874,11 @@ def export_experiment_pdf(
         _draw_wrapped_text_page(
             pdf,
             "Szczegóły triali",
-            _trial_observation_lines(event_timeline, clinical_profile),
+            _trial_observation_lines(
+                event_timeline,
+                clinical_profile,
+                max_trials=_resolve_max_report_trials(state_config),
+            ),
             footer=footer,
         )
         _draw_wrapped_text_page(
