@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import time as pytime
 from copy import deepcopy
 from dataclasses import replace
@@ -815,14 +814,9 @@ def run_experiment(
                 "metrics": analysis_report.payload.get("metrics", {}),
                 "comparison": analysis_report.payload.get("comparison", {}),
             },
+            event_timeline=event_timeline,
         )
         save_info["analysis_report_files"] = report_files
-        event_timeline_path = Path(out_dir) / "event_timeline.json"
-        event_timeline_path.write_text(
-            json.dumps(event_timeline, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-        save_info["event_timeline"] = str(event_timeline_path)
 
     return {
         "model": model,
