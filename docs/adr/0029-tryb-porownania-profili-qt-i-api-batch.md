@@ -1,7 +1,13 @@
 # ADR-0029: Tryb porównania profili Qt i stabilne API batch
 
-**Status:** proposed  
+**Status:** accepted  
 **Data:** 2026-06-09
+
+## Status implementacji
+
+Implementacja jest docelowa: API batch zwraca wspólną sygnaturę sekwencji
+bodźców i tabelę porównawczą, a tryb Qt „Porównaj profile” korzysta z
+wersjonowanych zestawów YAML bez duplikowania logiki eksperymentalnej.
 
 ## Kontekst
 

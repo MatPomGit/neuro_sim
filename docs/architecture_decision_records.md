@@ -88,10 +88,10 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0024 | proposed | Docelowy schemat konfiguracji eksperymentu symulacyjnego | [`docs/adr/0024-docelowy-schemat-konfiguracji-eksperymentu.md`](adr/0024-docelowy-schemat-konfiguracji-eksperymentu.md) | — |
 | ADR-0025 | proposed | Raport amplituda-latencja dla roving oddball | [`docs/adr/0025-raport-amplituda-latencja-roving-oddball.md`](adr/0025-raport-amplituda-latencja-roving-oddball.md) | — |
 | ADR-0026 | proposed | Pakiety zajęciowe GUI oparte na presetach YAML | [`docs/adr/0026-pakiety-zajeciowe-gui-yaml.md`](adr/0026-pakiety-zajeciowe-gui-yaml.md) | — |
-| ADR-0027 | proposed | Etykiety GUI bez zależności od tkinter | [`docs/adr/0027-etykiety-gui-bez-zaleznosci-tkinter.md`](adr/0027-etykiety-gui-bez-zaleznosci-tkinter.md) | — |
-| ADR-0028 | proposed | Artefakty reprodukowalności w katalogu wynikowym | [`docs/adr/0028-artefakty-reprodukowalnosci-wynikow.md`](adr/0028-artefakty-reprodukowalnosci-wynikow.md) | — |
-| ADR-0029 | proposed | Tryb porównania profili Qt i stabilne API batch | [`docs/adr/0029-tryb-porownania-profili-qt-i-api-batch.md`](adr/0029-tryb-porownania-profili-qt-i-api-batch.md) | — |
-| ADR-0030 | proposed | Kontrakty danych między modułami `brain_core` | [`docs/adr/0030-kontrakty-danych-brain-core.md`](adr/0030-kontrakty-danych-brain-core.md) | — |
+| ADR-0027 | accepted | Etykiety GUI bez zależności od tkinter | [`docs/adr/0027-etykiety-gui-bez-zaleznosci-tkinter.md`](adr/0027-etykiety-gui-bez-zaleznosci-tkinter.md) | — |
+| ADR-0028 | accepted | Artefakty reprodukowalności w katalogu wynikowym | [`docs/adr/0028-artefakty-reprodukowalnosci-wynikow.md`](adr/0028-artefakty-reprodukowalnosci-wynikow.md) | — |
+| ADR-0029 | accepted | Tryb porównania profili Qt i stabilne API batch | [`docs/adr/0029-tryb-porownania-profili-qt-i-api-batch.md`](adr/0029-tryb-porownania-profili-qt-i-api-batch.md) | — |
+| ADR-0030 | accepted | Kontrakty danych między modułami `brain_core` | [`docs/adr/0030-kontrakty-danych-brain-core.md`](adr/0030-kontrakty-danych-brain-core.md) | — |
 
 ## Procedura dodawania kolejnego ADR
 
