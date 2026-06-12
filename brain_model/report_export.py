@@ -938,7 +938,7 @@ def _teaching_package_readme_lines(
         f"- Repozytorium dirty podczas eksportu: `{dirty_text}`",
         f"- Plik YAML: `{yaml_name}`",
         f"- SHA-256 YAML: `{yaml_hash}`",
-        f"- Seed: `{metadata.get('seed')}`",
+        f"- Seed: `{metadata.get('seed') if metadata.get('seed') is not None else 'brak'}`",
         "",
     ]
 
