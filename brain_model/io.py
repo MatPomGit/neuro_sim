@@ -23,10 +23,22 @@ REPRODUCIBILITY_ARTIFACTS = (
     "event_timeline.json",
 )
 KEY_DEPENDENCIES = ("numpy", "matplotlib", "PyYAML", "PySide6")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _to_jsonable(value: Any) -> Any:
-    """Opis funkcji _to_jsonable."""
+    """Przekształć wartości projektu do struktur możliwych do zapisu w JSON.
+
+    Parameters
+    ----------
+    value:
+        Dowolna wartość metadanych, konfiguracji albo wyniku symulacji.
+
+    Returns
+    -------
+    Any
+        Wartość złożona wyłącznie z typów obsługiwanych przez ``json.dumps``.
+    """
     if is_dataclass(value):
         return _to_jsonable(asdict(value))
     if isinstance(value, Path):
@@ -70,8 +82,15 @@ def _run_git_command(args: list[str], *, repo_path: Path | None = None) -> str |
 
 
 def _git_commit_hash() -> str | None:
-    """Opis funkcji _git_commit_hash."""
-    return _run_git_command(["rev-parse", "HEAD"])
+    """Zwróć hash bieżącego commita repozytorium projektu.
+
+    Returns
+    -------
+    str | None
+        Pełny hash commita Git albo ``None``, gdy katalog projektu nie jest
+        dostępny jako repozytorium Git.
+    """
+    return _run_git_command(["rev-parse", "HEAD"], repo_path=REPO_ROOT)
 
 
 def collect_git_info(
@@ -151,7 +170,7 @@ def _write_run_log(
 ) -> None:
     """Zapisuje krótki dziennik uruchomienia do katalogu wynikowego."""
     lines = [
-        f"Zapis wynikŃw neuro-sim: {datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')}",
+        f"Zapis wyników neuro-sim: {datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')}",
         f"Ziarno losowości: {seed if seed is not None else 'n/a'}",
         f"Czas wykonania symulacji [s]: {duration_s if duration_s is not None else 'n/a'}",
         "Artefakty:",
@@ -165,7 +184,22 @@ def _write_run_log(
 def build_output_dir(
     scenario: str, label: str | None = None, root: str | Path = "outputs"
 ) -> Path:
-    """Opis funkcji build_output_dir."""
+    """Utwórz jednoznaczny katalog wyników dla uruchomienia symulacji.
+
+    Parameters
+    ----------
+    scenario:
+        Techniczna nazwa scenariusza, używana w nazwie katalogu.
+    label:
+        Opcjonalna etykieta uruchomienia odróżniająca powtórzenia scenariusza.
+    root:
+        Katalog bazowy, w którym zostanie utworzony katalog wynikowy.
+
+    Returns
+    -------
+    Path
+        Ścieżka istniejącego katalogu wynikowego z prefiksem czasu UTC.
+    """
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     safe_scenario = (scenario or "scenario").replace("/", "-").replace(" ", "-")
     safe_label = (label or "run").replace("/", "-").replace(" ", "-")
@@ -189,8 +223,46 @@ def save_run(
     extra_metadata: dict[str, Any] | None = None,
     config: Any = None,
     metrics: dict[str, Any] | None = None,
+    event_timeline: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Zapisuje wyniki symulacji i metadane do plików NPZ oraz JSON."""
+    """Zapisz wyniki symulacji i artefakty reprodukowalności.
+
+    Parameters
+    ----------
+    output_dir:
+        Katalog docelowy dla plików uruchomienia.
+    time:
+        Wektor czasu symulacji.
+    activity:
+        Macierz aktywności modułów modelu.
+    diagnostics:
+        Diagnostyki numeryczne lub zagnieżdżone metadane diagnostyczne.
+    oscillations:
+        Sygnały oscylacyjne i konfiguracja pasm.
+    model_params:
+        Parametry modelu zapisywane w metadanych.
+    oscillator_params:
+        Parametry oscylatorów zapisywane w metadanych.
+    scenario:
+        Metadane scenariusza symulacji.
+    seed:
+        Ziarno losowości użyte w uruchomieniu.
+    duration_s:
+        Czas wykonania symulacji w sekundach.
+    extra_metadata:
+        Dodatkowe metadane specyficzne dla wywołującego kodu.
+    config:
+        Konfiguracja uruchomienia zapisywana jako ``config.json``.
+    metrics:
+        Metryki uruchomienia zapisywane jako ``metrics.json``.
+    event_timeline:
+        Oś czasu zdarzeń. Gdy ``None``, zapisywana jest pusta lista.
+
+    Returns
+    -------
+    dict[str, Any]
+        Ścieżki do zapisanych artefaktów reprodukowalności.
+    """
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -201,6 +273,7 @@ def save_run(
     environment_path = out / "environment.json"
     git_info_path = out / "git_info.json"
     run_log_path = out / "run.log"
+    event_timeline_path = out / "event_timeline.json"
 
     arrays = {
         "time": np.asarray(time),
@@ -255,12 +328,16 @@ def save_run(
         "environment.json": str(environment_path),
         "git_info.json": str(git_info_path),
         "run.log": str(run_log_path),
+        "event_timeline.json": str(event_timeline_path),
     }
     _write_json(meta_path, metadata)
     _write_json(config_path, config if config is not None else {})
     _write_json(metrics_path, metrics if metrics is not None else {})
     _write_json(environment_path, collect_environment_info())
-    _write_json(git_info_path, collect_git_info(Path.cwd()))
+    _write_json(git_info_path, collect_git_info(REPO_ROOT))
+    _write_json(
+        event_timeline_path, event_timeline if event_timeline is not None else []
+    )
     _write_run_log(
         run_log_path,
         seed=seed,
@@ -277,11 +354,30 @@ def save_run(
         "environment": str(environment_path),
         "git_info": str(git_info_path),
         "run_log": str(run_log_path),
+        "event_timeline": str(event_timeline_path),
     }
 
 
-def load_run(output_dir: str | Path) -> dict:
-    """Opis funkcji load_run."""
+def load_run(output_dir: str | Path) -> dict[str, Any]:
+    """Wczytaj zapisane wyniki symulacji z katalogu artefaktów.
+
+    Parameters
+    ----------
+    output_dir:
+        Katalog zawierający ``run_data.npz`` i ``metadata.json`` utworzone przez
+        ``save_run``.
+
+    Returns
+    -------
+    dict[str, Any]
+        Dane czasu, aktywności, diagnostyk, oscylacji, metadanych oraz ścieżka
+        katalogu uruchomienia.
+
+    Raises
+    ------
+    FileNotFoundError
+        Gdy wymagane artefakty nie istnieją w katalogu wynikowym.
+    """
     out = Path(output_dir)
     npz_path = out / "run_data.npz"
     meta_path = out / "metadata.json"

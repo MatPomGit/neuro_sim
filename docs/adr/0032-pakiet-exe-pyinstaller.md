@@ -1,4 +1,4 @@
-# ADR-0031: Pakiet wykonywalny EXE budowany przez PyInstaller
+# ADR-0032: Pakiet wykonywalny EXE budowany przez PyInstaller
 
 **Status:** proposed  
 **Data:** 2026-06-10

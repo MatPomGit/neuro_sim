@@ -1,7 +1,13 @@
 # ADR-0028: Artefakty reprodukowalności w katalogu wynikowym
 
-**Status:** proposed
+**Status:** accepted
 **Data:** 2026-06-08
+
+## Status implementacji
+
+Implementacja jest docelowa: warstwa I/O zapisuje stabilny zestaw artefaktów
+reprodukowalności w katalogu wyniku, a testy statyczne i integracyjne
+weryfikują obecność wymaganych plików oraz kluczy kontraktu.
 
 ## Kontekst
 

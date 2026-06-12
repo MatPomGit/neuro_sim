@@ -206,6 +206,25 @@ def test_invalid_analysis_set_type_reports_field_path() -> None:
         validate_config(payload)
 
 
+def test_analysis_max_report_trials_is_validated_as_non_negative_int() -> None:
+    """Konfiguracja raportu przyjmuje jawny nieujemny limit triali."""
+    payload = _valid_config_payload()
+    payload["analysis"]["max_report_trials"] = 1
+
+    cfg = validate_config(payload)
+
+    assert cfg.analysis["max_report_trials"] == 1
+
+
+def test_analysis_max_report_trials_rejects_negative_value() -> None:
+    """Ujemny limit triali ma dawać czytelny błąd walidacji konfiguracji."""
+    payload = _valid_config_payload()
+    payload["analysis"]["max_report_trials"] = -1
+
+    with pytest.raises(ConfigValidationError, match="analysis.max_report_trials"):
+        validate_config(payload)
+
+
 def test_validate_config_does_not_mutate_raw_payload() -> None:
     """Walidacja nie może dopisywać domyślnych pól do surowej konfiguracji."""
     payload = _valid_config_payload()

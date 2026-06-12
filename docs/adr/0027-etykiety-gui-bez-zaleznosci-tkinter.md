@@ -1,7 +1,13 @@
 # ADR-0027: Etykiety GUI bez zależności od tkinter
 
-**Status:** proposed  
+**Status:** accepted  
 **Data:** 2026-06-07
+
+## Status implementacji
+
+Implementacja jest docelowa: współdzielone polskie etykiety znajdują się w
+`brain_model/gui_labels.py`, aktywne moduły Qt nie importują `gui_forms.py`, a
+test statyczny pilnuje braku zależności nowych przepływów Qt od `tkinter`.
 
 ## Kontekst
 

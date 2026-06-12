@@ -138,7 +138,8 @@ class ExperimentConfig:
     )
     analysis: dict[str, Any] = field(
         default_factory=lambda: {
-            "sets": ["spectral", "phase_locking", "connectivity", "information_flow"]
+            "sets": ["spectral", "phase_locking", "connectivity", "information_flow"],
+            "max_report_trials": 20,
         }
     )
     output: dict[str, Any] = field(
@@ -690,6 +691,10 @@ def _validate_analysis_config(cfg: ExperimentConfig) -> None:
     if unknown:
         raise ConfigValidationError(f"Nieznane analysis.sets: {unknown}")
     cfg.analysis["sets"] = sets_val
+    if "max_report_trials" in cfg.analysis:
+        cfg.analysis["max_report_trials"] = _require_non_negative_int(
+            cfg.analysis["max_report_trials"], "analysis.max_report_trials"
+        )
 
 
 def _validate_output_config(cfg: ExperimentConfig) -> None:
