@@ -1024,7 +1024,9 @@ def export_teaching_package(
     if scenario_source is not None:
         yaml_copy_name = scenario_source.name
         yaml_sha256 = _sha256_file(scenario_source)
-        shutil.copy2(scenario_source, package_dir / yaml_copy_name)
+        dest_path = package_dir / yaml_copy_name
+        if scenario_source.resolve() != dest_path.resolve():
+            shutil.copy2(scenario_source, dest_path)
 
     environment_info = collect_environment_info()
     git_info = collect_git_info(REPO_ROOT)
