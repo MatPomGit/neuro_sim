@@ -1,7 +1,13 @@
 # ADR-0030: Kontrakty danych między modułami `brain_core`
 
-**Status:** proposed  
+**Status:** accepted  
 **Data:** 2026-06-10
+
+## Status implementacji
+
+Implementacja jest docelowa: `docs/data_contracts.md` jest źródłem kontraktów
+danych między modułami `brain_core`, a istniejące testy kształtów, zakresów i
+metryk pełnią rolę lekkiej straży regresji.
 
 ## Kontekst
 
