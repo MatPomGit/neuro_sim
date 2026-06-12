@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -198,11 +200,37 @@ def test_export_reports_include_detailed_trial_observations(tmp_path: Path) -> N
         "raport_zajeciowy.html",
         "raport_zajeciowy.pdf",
         "konfiguracja_gui.json",
+        "metadata_uruchomienia.json",
+        "environment.json",
+        "git_info.json",
+        "README_pakietu.md",
+        "roving_oddball_healthy.yaml",
         "pytania_kontrolne.md",
         "skrot_dla_prowadzacego.md",
         "plan_lekcji.md",
     }
     assert expected_package_files <= {path.name for path in package_dir.iterdir()}
+
+    metadata = json.loads(
+        (package_dir / "metadata_uruchomienia.json").read_text(encoding="utf-8")
+    )
+    environment = json.loads(
+        (package_dir / "environment.json").read_text(encoding="utf-8")
+    )
+    git_info = json.loads((package_dir / "git_info.json").read_text(encoding="utf-8"))
+    yaml_copy = package_dir / "roving_oddball_healthy.yaml"
+    assert metadata["scenario_config_copy"] == yaml_copy.name
+    assert (
+        metadata["scenario_config_sha256"]
+        == hashlib.sha256(yaml_copy.read_bytes()).hexdigest()
+    )
+    assert {"git_commit", "git_is_dirty", "dependency_versions"} <= set(metadata)
+    assert metadata["dependency_versions"] == environment["dependencies"]
+    assert metadata["git_commit"] == git_info["commit"]
+    assert metadata["git_is_dirty"] == git_info["is_dirty"]
+    readme_text = (package_dir / "README_pakietu.md").read_text(encoding="utf-8")
+    assert "Jak odtworzyć uruchomienie" in readme_text
+    assert "SHA-256 YAML" in readme_text
     lesson_plan = (package_dir / "plan_lekcji.md").read_text(encoding="utf-8")
     assert "## Cel" in lesson_plan
     assert "## Scenariusz YAML" in lesson_plan

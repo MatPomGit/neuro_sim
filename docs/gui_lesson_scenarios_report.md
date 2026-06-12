@@ -54,7 +54,10 @@ Po zakończeniu symulacji dostępne są dwie akcje:
    - `raport_zajeciowy.pdf` — wersję PDF do dystrybucji;
    - `konfiguracja_gui.json` — migawkę wyborów GUI, w tym seed;
    - kopię wybranego pliku `configs/*.yaml`, jeżeli jest dostępny;
-   - `metadata_uruchomienia.json` — czas eksportu, seed, scenariusz, ścieżkę konfiguracji i informacje o środowisku;
+   - `environment.json` — wersję Pythona, platformę i wersje kluczowych zależności;
+   - `git_info.json` — hash commita, gałąź i status dirty repozytorium;
+   - `metadata_uruchomienia.json` — czas eksportu, seed, scenariusz, ścieżkę konfiguracji, hash SHA-256 YAML, commit Git i wersje zależności;
+   - `README_pakietu.md` — instrukcję odtworzenia uruchomienia z artefaktów pakietu;
    - `pytania_kontrolne.md` — pytania dla studentów z odpowiedziami z raportu, gdy są dostępne;
    - `skrot_dla_prowadzacego.md` — skrót scenariusza, profilu i metryk do omówienia;
    - `plan_lekcji.md` — przebieg lekcji w strukturze: cel, scenariusz YAML, profil, przewidywanie, obserwacja, pytania kontrolne oraz opcjonalna tabela **Co zmienić w kolejnym uruchomieniu**.
