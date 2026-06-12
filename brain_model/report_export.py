@@ -680,7 +680,7 @@ def _markdown_to_simple_html(markdown: str) -> str:
         if not stripped:
             index += 1
             continue
-        if stripped.startswith("| "):
+        if stripped.startswith("|"):
             table_lines: list[str] = []
             while index < len(lines) and lines[index].strip().startswith("|"):
                 table_lines.append(lines[index])
