@@ -597,7 +597,7 @@ def _split_markdown_table_row(line: str) -> list[str]:
     stripped_line = line.strip()
     if stripped_line.startswith("|"):
         stripped_line = stripped_line[1:]
-    if stripped_line.endswith("|"):
+    if stripped_line.endswith("|") and not stripped_line.endswith("\\|"):
         stripped_line = stripped_line[:-1]
 
     cells: list[str] = []
