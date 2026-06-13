@@ -194,7 +194,7 @@ def comparison_profile_rows_for_label(label: str) -> list[dict[str, str]]:
                     or relative_path.stem
                 ),
                 "expected_direction": str(
-                    profile.get("expected_direction", "stable_reference")
+                    profile.get("expected_direction") or "stable_reference"
                 ),
                 "path": relative_path.as_posix(),
             }
