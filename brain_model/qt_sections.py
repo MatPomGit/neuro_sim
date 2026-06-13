@@ -12,6 +12,7 @@ from .qt_config import (
     comparison_config_description_for_label,
     comparison_config_path_for_label,
     comparison_config_preset_labels,
+    comparison_profile_list_text_for_label,
     label_for_comparison_config_path,
     label_for_scenario_yaml_path,
     load_scenario_yaml_config,
@@ -300,6 +301,8 @@ class QtSections:
         self.plot_details_toggle: QToolButton | None = None
         self.plot_details_group: QGroupBox | None = None
         self.advanced_group: QGroupBox | None = None
+        self.single_experiment_radio: QRadioButton | None = None
+        self.comparison_mode_radio: QRadioButton | None = None
 
     def build_quick_start_section(self) -> QGroupBox:
         """Zbuduj sekcję „Szybki start” z minimalnymi decyzjami użytkownika."""
@@ -311,6 +314,20 @@ class QtSections:
         )
         hint.setObjectName("hintLabel")
         layout.addRow(hint)
+
+        mode_group = QGroupBox("Tryb pracy")
+        mode_layout = QHBoxLayout(mode_group)
+        self.mode_button_group = QButtonGroup(mode_group)
+        self.single_experiment_radio = QRadioButton("Pojedynczy eksperyment")
+        self.comparison_mode_radio = QRadioButton("Porównaj profile")
+        self.mode_button_group.addButton(self.single_experiment_radio)
+        self.mode_button_group.addButton(self.comparison_mode_radio)
+        self.single_experiment_radio.toggled.connect(self.on_run_mode_changed)
+        self.comparison_mode_radio.toggled.connect(self.on_run_mode_changed)
+        mode_layout.addWidget(self.single_experiment_radio)
+        mode_layout.addWidget(self.comparison_mode_radio)
+        mode_layout.addStretch(1)
+        layout.addRow("Pojedynczy eksperyment / Porównaj profile", mode_group)
 
         self.ready_lesson_combo = QComboBox()
         for lesson_id, lesson_label, _config_label in READY_LESSON_PRESETS:
@@ -370,6 +387,14 @@ class QtSections:
         self.comparison_config_description_label.setWordWrap(True)
         layout.addRow("co porównasz", self.comparison_config_description_label)
 
+        self.comparison_profiles_label = QLabel("")
+        self.comparison_profiles_label.setObjectName("hintLabel")
+        self.comparison_profiles_label.setWordWrap(True)
+        self.comparison_profiles_label.setToolTip(
+            "Lista profili pochodzi bezpośrednio z pola clinical_profiles w YAML."
+        )
+        layout.addRow("profile z YAML", self.comparison_profiles_label)
+
         compare_profiles_button = QPushButton("Porównaj profile")
         compare_profiles_button.setToolTip(
             "Ustawia tryb batch/clinical comparison ze wspólnym seedem i sekwencją bodźców."
@@ -407,7 +432,35 @@ class QtSections:
         self.refresh_scenario_details()
         self.refresh_scenario_config_description()
         self.refresh_comparison_config_description()
+        self.sync_run_mode_controls_from_state()
         return group
+
+    def on_run_mode_changed(self, _checked: bool) -> None:
+        """Przełącz jawnie między pojedynczym eksperymentem i porównaniem profili."""
+        if (
+            self.comparison_mode_radio is not None
+            and self.comparison_mode_radio.isChecked()
+        ):
+            self.apply_profile_comparison_mode()
+            return
+        self.state.command = "run"
+        if hasattr(self, "command_combo"):
+            write_combo_box(self.command_combo, COMMAND_LABELS["run"])
+        status_callback = self.callbacks.get("show_status")
+        if status_callback is not None:
+            status_callback("Włączono tryb „Pojedynczy eksperyment”.")
+
+    def sync_run_mode_controls_from_state(self) -> None:
+        """Zaznacz radiobutton odpowiadający aktualnemu trybowi uruchomienia."""
+        if self.single_experiment_radio is None or self.comparison_mode_radio is None:
+            return
+        is_comparison = self.state.command == "compare_profiles"
+        self.single_experiment_radio.blockSignals(True)
+        self.comparison_mode_radio.blockSignals(True)
+        self.single_experiment_radio.setChecked(not is_comparison)
+        self.comparison_mode_radio.setChecked(is_comparison)
+        self.single_experiment_radio.blockSignals(False)
+        self.comparison_mode_radio.blockSignals(False)
 
     def apply_ready_lesson(self) -> None:
         """Wybierz konfigurację YAML przypisaną do gotowej lekcji dydaktycznej.
@@ -440,6 +493,8 @@ class QtSections:
         if hasattr(self, "command_combo"):
             write_combo_box(self.command_combo, COMMAND_LABELS["compare_profiles"])
         self.state.command = "compare_profiles"
+        if self.comparison_mode_radio is not None:
+            self.comparison_mode_radio.setChecked(True)
         self.state.comparison_config_path = str(
             comparison_config_path_for_label(self.comparison_config_combo.currentText())
         )
@@ -458,6 +513,13 @@ class QtSections:
         selected_label = self.comparison_config_combo.currentText()
         self.comparison_config_description_label.setText(
             comparison_config_description_for_label(selected_label)
+        )
+        if hasattr(self, "comparison_profiles_label"):
+            self.comparison_profiles_label.setText(
+                comparison_profile_list_text_for_label(selected_label)
+            )
+        self.state.comparison_config_path = str(
+            comparison_config_path_for_label(selected_label)
         )
 
     def build_advanced_options_section(self) -> QWidget:
@@ -710,6 +772,7 @@ class QtSections:
         self.refresh_scenario_details()
         self.refresh_scenario_config_description()
         self.refresh_comparison_config_description()
+        self.sync_run_mode_controls_from_state()
 
     def apply_scenario_yaml_config(self) -> None:
         """Wczytaj wybraną konfigurację YAML i przepisz jej bezpieczne pola do GUI."""

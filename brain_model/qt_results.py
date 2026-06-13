@@ -786,6 +786,66 @@ class ObservationPanel(QWidget):
         return observations
 
 
+class ProfileComparisonPanel(QWidget):
+    """Panel tabeli porównawczej profili klinicznych zwróconej przez silnik."""
+
+    HEADERS = [
+        "profil",
+        "oczekiwany kierunek",
+        "obserwowany kierunek",
+        "próg jakościowy",
+        "interpretacja",
+    ]
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Utwórz tabelę dla trybu „Porównaj profile” z polskimi nagłówkami."""
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        hint = QLabel(
+            "Tabela jest wypełniana z `profile_comparison_table` raportu silnika: "
+            "profil, oczekiwany kierunek, obserwowany kierunek, próg jakościowy "
+            "i interpretacja."
+        )
+        hint.setWordWrap(True)
+        layout.addWidget(hint)
+
+        self.table = QTableWidget(0, len(self.HEADERS))
+        self.table.setHorizontalHeaderLabels(self.HEADERS)
+        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.table.horizontalHeader().setStretchLastSection(True)
+        layout.addWidget(self.table, 1)
+        self.set_report({})
+
+    def set_report(self, analysis_report: dict[str, Any] | None) -> None:
+        """Odśwież tabelę porównania na podstawie raportu analitycznego.
+
+        Parameters
+        ----------
+        analysis_report:
+            Słownik zwrócony przez silnik z opcjonalnym kluczem
+            ``profile_comparison_table``.
+        """
+        safe_report = analysis_report or {}
+        rows = safe_report.get("profile_comparison_table", [])
+        if not isinstance(rows, list):
+            rows = []
+        self.table.setRowCount(len(rows))
+        keys = (
+            "profile",
+            "expected_direction",
+            "observed_direction",
+            "qualitative_threshold",
+            "interpretation",
+        )
+        for row_index, row_payload in enumerate(rows):
+            row = row_payload if isinstance(row_payload, dict) else {}
+            for column_index, key in enumerate(keys):
+                item = QTableWidgetItem(str(row.get(key, "n/a")))
+                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                self.table.setItem(row_index, column_index, item)
+        self.table.resizeColumnsToContents()
+
+
 class RovingOddballQuestionsPanel(QWidget):
     """Panel pytań kontrolnych dla lekcji roving oddball z odpowiedziami z raportu."""
 

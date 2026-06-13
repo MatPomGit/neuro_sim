@@ -111,7 +111,9 @@ def test_network_population_synapse_contract_shapes_ranges_and_rng() -> None:
         rng=np.random.default_rng(123),
     )
 
-    neuromodulation_matrix = RegionWilsonCowanModel.neuromodulation_vector(neuromodulators)
+    neuromodulation_matrix = RegionWilsonCowanModel.neuromodulation_vector(
+        neuromodulators
+    )
     assert neuromodulation_matrix.shape == (len(regions), 8)
     assert np.all((neuromodulation_matrix >= 0.0) & (neuromodulation_matrix <= 1.0))
     assert first_e.shape == (len(regions),)

@@ -17,7 +17,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SPEC_FILE = REPO_ROOT / "neuro_sim_gui.spec"
 
@@ -76,10 +75,7 @@ def build() -> None:
 
     exe_suffix = ".exe" if sys.platform == "win32" else ""
     exe_path = REPO_ROOT / "dist" / "NeuroSim" / f"NeuroSim{exe_suffix}"
-    print(
-        "\nBudowanie zakończone pomyślnie.\n"
-        f"Plik wykonywalny: {exe_path}"
-    )
+    print("\nBudowanie zakończone pomyślnie.\n" f"Plik wykonywalny: {exe_path}")
 
 
 if __name__ == "__main__":
