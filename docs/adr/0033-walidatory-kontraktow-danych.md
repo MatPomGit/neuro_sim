@@ -1,4 +1,4 @@
-# ADR-0032: Szybkie walidatory kontraktów danych
+# ADR-0033: Szybkie walidatory kontraktów danych
 
 **Status:** proposed  
 **Data:** 2026-06-12

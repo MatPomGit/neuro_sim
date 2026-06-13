@@ -56,3 +56,20 @@ z `event_timeline`, `clinical_profile` i `analysis_report` zwróconych przez
 `run_experiment()`. GUI nadal nie importuje `brain_core.experiments.protocols`
 ani nie rekonstruuje standardów, dewiantów, habituacji lub readaptacji poza
 prezentacją gotowych pól raportu.
+
+## Uzupełnienie 2026-06-12
+
+Pakiet zajęciowy eksportowany przez `export_teaching_package()` zapisuje jawny
+zestaw artefaktów reprodukowalności obok raportów dydaktycznych:
+`environment.json`, `git_info.json`, rozszerzone `metadata_uruchomienia.json`,
+kopię użytego pliku YAML wraz z hashem SHA-256 oraz `README_pakietu.md` z
+instrukcją odtworzenia uruchomienia. Decyzja utrzymuje prosty kontrakt I/O bez
+osobnego formatu archiwum: każdy artefakt pozostaje czytelnym plikiem w katalogu
+pakietu.
+
+Konsekwencją jest większy katalog eksportu, ale prowadzący może powiązać raport
+z commitem, statusem dirty repozytorium, wersjami zależności i integralnością
+konfiguracji YAML bez uruchamiania dodatkowych narzędzi. Odrzucono zapis tych
+informacji wyłącznie w `metadata_uruchomienia.json`, ponieważ oddzielne pliki
+`environment.json` i `git_info.json` są spójne z pozostałymi artefaktami
+reprodukowalności projektu.
