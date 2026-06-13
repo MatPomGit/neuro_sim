@@ -146,6 +146,7 @@ class ExperimentConfig:
         default_factory=lambda: {
             "sets": ["spectral", "phase_locking", "connectivity", "information_flow"],
             "max_report_trials": 20,
+            "include_full_trial_table": True,
         }
     )
     output: dict[str, Any] = field(
@@ -762,6 +763,11 @@ def _validate_analysis_config(cfg: ExperimentConfig) -> None:
     if "max_report_trials" in cfg.analysis:
         cfg.analysis["max_report_trials"] = _require_non_negative_int(
             cfg.analysis["max_report_trials"], "analysis.max_report_trials"
+        )
+    if "include_full_trial_table" in cfg.analysis:
+        cfg.analysis["include_full_trial_table"] = _require_bool(
+            cfg.analysis["include_full_trial_table"],
+            "analysis.include_full_trial_table",
         )
 
 

@@ -24,3 +24,14 @@ def test_cli_experiment_paths_do_not_use_print() -> None:
                 print_calls.append(f"{source_path}:{node.lineno}")
 
     assert print_calls == []
+
+
+def test_simulation_cli_exposes_dry_run_and_manifest_flags() -> None:
+    """CLI eksperymentu pozwala walidować konfigurację i wskazać manifest."""
+    source = (REPO_ROOT / "brain_core/simulation/run.py").read_text(encoding="utf-8")
+
+    assert "--dry-run" in source
+    assert "--manifest" in source
+    assert "run_experiment(cfg)" in source
+    assert "if args.dry_run" in source
+    assert source.index("if args.dry_run") < source.index("run_experiment(cfg)")

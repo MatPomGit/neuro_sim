@@ -27,6 +27,7 @@ def test_reproducibility_manifest_lists_required_artifacts() -> None:
         "metadata.json",
         "run_data.npz",
         "event_timeline.json",
+        "run_manifest.json",
     }
 
     assert required_artifacts.issubset(set(REPRODUCIBILITY_ARTIFACTS))
@@ -72,19 +73,29 @@ def test_save_run_writes_reproducibility_artifacts(tmp_path: Path) -> None:
 
     for artifact_name in REPRODUCIBILITY_ARTIFACTS:
         assert (tmp_path / artifact_name).exists(), artifact_name
-    assert {"config", "metrics", "environment", "git_info", "run_log"}.issubset(
-        save_info
-    )
+    assert {
+        "config",
+        "metrics",
+        "environment",
+        "git_info",
+        "run_log",
+        "manifest",
+    }.issubset(save_info)
 
     environment = _read_json(tmp_path / "environment.json")
     git_info = _read_json(tmp_path / "git_info.json")
     metrics = _read_json(tmp_path / "metrics.json")
     event_timeline = _read_json(tmp_path / "event_timeline.json")
+    manifest = _read_json(tmp_path / "run_manifest.json")
 
     assert {"python_version", "platform", "dependencies"}.issubset(environment)
     assert {"commit", "branch", "is_dirty"}.issubset(git_info)
     assert metrics["metrics"]["behavior_mean"] == 0.5
     assert event_timeline == [{"time_s": 0.1, "event_type": "test_event"}]
+    assert manifest["format"] == "neuro-sim-run-manifest-v1"
+    assert manifest["artifacts"]["config.json"] == str(tmp_path / "config.json")
+    assert "config.json" in manifest["artifact_sha256"]
+    assert "run_manifest.json" not in manifest["artifact_sha256"]
 
 
 def _read_json(path: Path) -> Any:

@@ -1,6 +1,6 @@
 # ADR-0026: Pakiety zajęciowe GUI oparte na presetach YAML
 
-**Status:** proposed  
+**Status:** proposed
 **Data:** 2026-06-06
 
 ## Kontekst
@@ -73,3 +73,15 @@ konfiguracji YAML bez uruchamiania dodatkowych narzędzi. Odrzucono zapis tych
 informacji wyłącznie w `metadata_uruchomienia.json`, ponieważ oddzielne pliki
 `environment.json` i `git_info.json` są spójne z pozostałymi artefaktami
 reprodukowalności projektu.
+## Uzupełnienie 2026-06-13
+
+Dodajemy katalog `configs/lessons/` jako lekki katalog gotowych lekcji. Pliki
+lekcji nie zastępują konfiguracji eksperymentów: wskazują istniejący
+`scenario_config`, opcjonalny `comparison_config`, cel dydaktyczny, pytania
+przed i po uruchomieniu, oczekiwane obserwacje oraz propozycje zmian do
+kolejnego przebiegu. Dzięki temu tryb nauczyciela może rozwijać się bez
+tworzenia równoległego schematu silnika symulacji.
+
+Minimalny katalog obejmuje lekcje dla `roving_oddball`, `go_nogo`, `n_back` i
+`stroop`; testy statyczne pilnują kompletności pól oraz istnienia wskazanych
+plików YAML.

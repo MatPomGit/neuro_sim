@@ -1,0 +1,21 @@
+id: stroop_conflict_control
+label_pl: Lekcja — konflikt poznawczy w Stroopie
+level_pl: średni
+estimated_duration_min: 60
+scenario_config: configs/stroop.yaml
+comparison_config: configs/comparisons/stroop_profiles.yaml
+learning_goal_pl: Uczestnik wyjaśnia różnicę między warunkiem congruent i incongruent oraz rolę kontroli wykonawczej w raporcie porównawczym.
+pre_run_questions_pl:
+  - Dlaczego warunek incongruent powinien wymagać większej kontroli wykonawczej?
+  - Jakie metryki mogą pokazać wzrost konfliktu?
+expected_observations_pl:
+  - Raport trial-by-trial pokazuje bodziec, odpowiedź, poprawność i komentarz mechanizmu.
+  - Profil DLPFC weakening powinien być interpretowany jako jakościowy scenariusz dydaktyczny, nie diagnoza.
+post_run_questions_pl:
+  - Jak różnią się triale congruent i incongruent?
+  - Czy obserwowany kierunek różnicy jest zgodny z opisem profilu?
+next_run_changes:
+  - element: Profil kliniczny
+    current_value: healthy_v1
+    next_value: dlpfc_weakening
+    reason: Pokazanie wpływu osłabienia DLPFC na kontrolę konfliktu.

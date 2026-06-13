@@ -1,0 +1,21 @@
+id: roving_oddball_prediction
+label_pl: Lekcja — predykcja i readaptacja w roving oddball
+level_pl: podstawowy
+estimated_duration_min: 45
+scenario_config: configs/roving_oddball_healthy.yaml
+comparison_config: configs/comparisons/roving_oddball_profiles.yaml
+learning_goal_pl: Uczestnik wyjaśnia różnicę między standardem, dewiantem i nowym standardem oraz interpretuje habituację i readaptację jako jakościowe efekty modelu.
+pre_run_questions_pl:
+  - Co powinno stać się z odpowiedzią modelu po serii powtarzalnych standardów?
+  - Dlaczego dewiant powinien zwiększyć sygnał nowości lub błędu predykcji?
+expected_observations_pl:
+  - Raport pokazuje standardy, dewianty i nowe standardy na wspólnej osi czasu.
+  - Metryki habituacji i readaptacji są interpretowane jako proxy dydaktyczne, nie jako pomiar kliniczny.
+post_run_questions_pl:
+  - Które triale najlepiej pokazują przejście standard → dewiant → nowy standard?
+  - Czy obserwowany kierunek zmian jest zgodny z oczekiwaniem profilu?
+next_run_changes:
+  - element: Profil kliniczny
+    current_value: healthy_v1
+    next_value: gaba_dysregulation
+    reason: Pokazanie wpływu dysregulacji GABA na amplitudę proxy i readaptację.

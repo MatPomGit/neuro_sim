@@ -1,0 +1,21 @@
+id: n_back_working_memory
+label_pl: Lekcja — pamięć robocza w n-back
+level_pl: średni
+estimated_duration_min: 60
+scenario_config: configs/n_back.yaml
+comparison_config: configs/comparisons/n_back_profiles.yaml
+learning_goal_pl: Uczestnik interpretuje trafienia target/non-target oraz wpływ profilu dopaminowego i hipokampalnego na metryki zadania.
+pre_run_questions_pl:
+  - Jakie regiony i funkcje powinny być aktywne przy utrzymaniu informacji w pamięci roboczej?
+  - Jak deficyt dopaminowy może zmienić stabilność odpowiedzi modelu?
+expected_observations_pl:
+  - Raport pokazuje warunki target/non-target, odpowiedzi i metryki behawioralne.
+  - Porównanie profili wykorzystuje ten sam seed oraz tę samą sekwencję bodźców.
+post_run_questions_pl:
+  - Czy targety są widoczne w osi czasu i metrykach triali?
+  - Który profil daje największą różnicę względem healthy_v1?
+next_run_changes:
+  - element: Profil kliniczny
+    current_value: healthy_v1
+    next_value: dopamine_deficit
+    reason: Pokazanie wpływu dopaminy na utrzymanie i aktualizację reprezentacji.
