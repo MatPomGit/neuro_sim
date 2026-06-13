@@ -96,7 +96,11 @@ def delayed_coupling(
         raise ValueError(
             f"{CONTRACT_B_NETWORKS_POPULATIONS}: connectivity musi być macierzą numeryczną."
         ) from error
-    n_regions = int(connectivity_arr.shape[0]) if connectivity_arr.ndim == 2 else 0
+    if connectivity_arr.ndim != 2 or connectivity_arr.shape[0] != connectivity_arr.shape[1]:
+        raise ValueError(
+            f"{CONTRACT_B_NETWORKS_POPULATIONS}: connectivity musi być kwadratową macierzą 2D."
+        )
+    n_regions = connectivity_arr.shape[0]
     connectivity_arr = validate_square_matrix_contract(
         connectivity_arr, n_regions, "connectivity", CONTRACT_B_NETWORKS_POPULATIONS
     )
