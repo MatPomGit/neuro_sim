@@ -840,7 +840,8 @@ class ProfileComparisonPanel(QWidget):
         for row_index, row_payload in enumerate(rows):
             row = row_payload if isinstance(row_payload, dict) else {}
             for column_index, key in enumerate(keys):
-                item = QTableWidgetItem(str(row.get(key, "n/a")))
+                val = row.get(key)
+                item = QTableWidgetItem(str(val) if val is not None else "n/a")
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 self.table.setItem(row_index, column_index, item)
         self.table.resizeColumnsToContents()
