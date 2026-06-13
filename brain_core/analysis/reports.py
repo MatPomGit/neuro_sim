@@ -1424,11 +1424,41 @@ class AnalysisReport:
                 f"- **maksymalna amplituda sprzężenia**: "
                 f"{snn_comparison.get('max_feedback_amplitude', 'n/a')}"
             )
+            feedback_warning = (
+                snn_comparison.get("max_feedback_amplitude_warning") or {}
+            )
+            if feedback_warning:
+                lines.append(
+                    "- **limit ostrzegawczy amplitudy sprzężenia**: "
+                    f"{feedback_warning.get('level', 'n/a')} — "
+                    f"{feedback_warning.get('message_pl', 'n/a')} "
+                    f"(informacyjny ≥ {feedback_warning.get('notice_limit', 'n/a')}, "
+                    f"ostrzeżenie ≥ {feedback_warning.get('warning_limit', 'n/a')})"
+                )
             lines.append(
                 f"- **jednostki wejścia/wyjścia**: "
                 f"{snn_comparison.get('input_rate_unit', 'n/a')} / "
                 f"{snn_comparison.get('output_activity_unit', 'n/a')}"
             )
+            metric_disclaimer = snn_comparison.get(
+                "metric_disclaimer_pl",
+                "metryka demonstracyjna SNN; nie służy do interpretacji biologicznej",
+            )
+            lines.append(f"- **disclaimer metryk SNN**: {metric_disclaimer}")
+            mode_costs = snn_comparison.get("mode_costs") or {}
+            if mode_costs:
+                lines.append("- **koszt obliczeniowy wariantów SNN**")
+                for mode_name in ("baseline", "report_only_snn", "closed_loop_snn"):
+                    if mode_name in mode_costs:
+                        cost_stats = mode_costs[mode_name]
+                        lines.append(
+                            f"  - **{mode_name}**: "
+                            f"model_runs={cost_stats.get('model_runs', 'n/a')}, "
+                            f"simulated_steps={cost_stats.get('simulated_steps', 'n/a')}, "
+                            f"snn_updates={cost_stats.get('snn_updates', 'n/a')}, "
+                            f"feedback_applications="
+                            f"{cost_stats.get('feedback_applications', 'n/a')}"
+                        )
             mode_metrics = snn_comparison.get("mode_metrics") or {}
             if mode_metrics:
                 for mode_name in ("baseline", "report_only_snn", "closed_loop_snn"):
@@ -1437,7 +1467,10 @@ class AnalysisReport:
                         for region, stats in mode_metrics[mode_name].items():
                             lines.append(f"  - **{region}**")
                             for metric_name, metric_value in stats.items():
-                                lines.append(f"    - {metric_name}: {metric_value}")
+                                lines.append(
+                                    f"    - {metric_name}: {metric_value} "
+                                    f"({metric_disclaimer})"
+                                )
             else:
                 for region, stats in (
                     snn_comparison.get("region_differences") or {}
@@ -1445,19 +1478,23 @@ class AnalysisReport:
                     lines.append(f"- **{region}**")
                     lines.append(
                         f"  - średnia aktywność bez SNN: "
-                        f"{stats.get('mean_without_snn', 'n/a')}"
+                        f"{stats.get('mean_without_snn', 'n/a')} "
+                        f"({metric_disclaimer})"
                     )
                     lines.append(
                         f"  - średnia aktywność z SNN: "
-                        f"{stats.get('mean_with_snn', 'n/a')}"
+                        f"{stats.get('mean_with_snn', 'n/a')} "
+                        f"({metric_disclaimer})"
                     )
                     lines.append(
                         f"  - średnia różnica bezwzględna: "
-                        f"{stats.get('mean_abs_difference', 'n/a')}"
+                        f"{stats.get('mean_abs_difference', 'n/a')} "
+                        f"({metric_disclaimer})"
                     )
                     lines.append(
                         f"  - maksymalna różnica bezwzględna: "
-                        f"{stats.get('max_abs_difference', 'n/a')}"
+                        f"{stats.get('max_abs_difference', 'n/a')} "
+                        f"({metric_disclaimer})"
                     )
 
         roving_report = self.payload.get("roving_oddball")
@@ -1809,6 +1846,8 @@ class AnalysisReport:
                 "requested_mode",
                 "sync_dt_s",
                 "max_feedback_amplitude",
+                "max_feedback_amplitude_warning",
+                "metric_disclaimer_pl",
                 "comparison_scope_pl",
                 "comparison_note_pl",
             ):
@@ -1826,6 +1865,16 @@ class AnalysisReport:
                     "value": ",".join(snn_comparison.get("computed_modes") or []),
                 }
             )
+            mode_costs = snn_comparison.get("mode_costs") or {}
+            for mode_name, cost_stats in mode_costs.items():
+                for metric_name, metric_value in cost_stats.items():
+                    rows.append(
+                        {
+                            "section": "snn_comparison",
+                            "metric": f"{mode_name}_{metric_name}",
+                            "value": str(metric_value),
+                        }
+                    )
             mode_metrics = snn_comparison.get("mode_metrics") or {}
             if mode_metrics:
                 for mode_name, regions in mode_metrics.items():

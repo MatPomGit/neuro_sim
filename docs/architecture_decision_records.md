@@ -95,6 +95,7 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0031 | proposed | Limit tabeli triali w raportach | [`docs/adr/0031-limit-tabeli-triali-w-raportach.md`](adr/0031-limit-tabeli-triali-w-raportach.md) | — |
 | ADR-0032 | proposed | Pakiet wykonywalny EXE budowany przez PyInstaller | [`docs/adr/0032-pakiet-exe-pyinstaller.md`](adr/0032-pakiet-exe-pyinstaller.md) | — |
 | ADR-0033 | proposed | Szybkie walidatory kontraktów danych | [`docs/adr/0033-walidatory-kontraktow-danych.md`](adr/0033-walidatory-kontraktow-danych.md) | — |
+| ADR-0034 | proposed | Architektura docelowego backendu SNN opartego o `brian2.Network` | [`docs/adr/0034-architektura-snn-brian2-network.md`](adr/0034-architektura-snn-brian2-network.md) | `BACKLOG.md` P3 / 11 i Etap 6 |
 
 ## Procedura dodawania kolejnego ADR
 
