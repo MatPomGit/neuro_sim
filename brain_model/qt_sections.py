@@ -435,8 +435,10 @@ class QtSections:
         self.sync_run_mode_controls_from_state()
         return group
 
-    def on_run_mode_changed(self, _checked: bool) -> None:
+    def on_run_mode_changed(self, checked: bool) -> None:
         """Przełącz jawnie między pojedynczym eksperymentem i porównaniem profili."""
+        if not checked:
+            return
         if (
             self.comparison_mode_radio is not None
             and self.comparison_mode_radio.isChecked()
