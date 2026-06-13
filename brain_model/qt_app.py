@@ -45,6 +45,7 @@ from .qt_results import (
     ClinicalProfilePanel,
     EventTimelinePanel,
     ObservationPanel,
+    ProfileComparisonPanel,
     QtPlotPanel,
     RovingOddballQuestionsPanel,
     apply_run_result,
@@ -52,7 +53,11 @@ from .qt_results import (
 from .qt_runner import SimulationWorker
 from .qt_sections import QtSections
 from .qt_styles import apply_qt_styles
-from .report_export import export_experiment_pdf, export_teaching_package
+from .report_export import (
+    export_experiment_pdf,
+    export_experiment_report,
+    export_teaching_package,
+)
 
 
 class QtDataclassParameterDialog(QDialog):
@@ -202,6 +207,13 @@ class BrainModelQtWindow(QMainWindow):
         self.export_pdf_action = file_menu.addAction("Eksportuj raport PDF...")
         self.export_pdf_action.setEnabled(False)
         self.export_pdf_action.triggered.connect(self.export_current_pdf_report)
+        self.export_comparison_report_action = file_menu.addAction(
+            "Eksportuj porównanie profili HTML/PDF..."
+        )
+        self.export_comparison_report_action.setEnabled(False)
+        self.export_comparison_report_action.triggered.connect(
+            self.export_current_profile_comparison_report
+        )
         self.export_teaching_package_action = file_menu.addAction(
             "Eksportuj pakiet zajęciowy..."
         )
@@ -238,12 +250,14 @@ class BrainModelQtWindow(QMainWindow):
         timeline_tab = QWidget()
         clinical_tab = QWidget()
         observation_tab = QWidget()
+        comparison_tab = QWidget()
         questions_tab = QWidget()
         self.tabs.addTab(config_tab, "Konfiguracja")
         self.tabs.addTab(plots_tab, "Wykresy")
         self.tabs.addTab(timeline_tab, "Oś czasu zdarzeń")
         self.tabs.addTab(clinical_tab, "Profil kliniczny")
         self.tabs.addTab(observation_tab, "Co obserwujesz?")
+        self.tabs.addTab(comparison_tab, "Porównanie profili")
         self.tabs.addTab(questions_tab, "Pytania kontrolne")
 
         root = QVBoxLayout(config_tab)
@@ -281,6 +295,16 @@ class BrainModelQtWindow(QMainWindow):
             "Zapisuje gotowy PDF z opisem wyników i aktualnymi wykresami."
         )
         self.export_pdf_button.clicked.connect(self.export_current_pdf_report)
+        self.export_comparison_report_button = QPushButton(
+            "Eksportuj raport porównania HTML/PDF"
+        )
+        self.export_comparison_report_button.setEnabled(False)
+        self.export_comparison_report_button.setToolTip(
+            "Zapisuje raport_porownania_profili.html i raport_porownania_profili.pdf."
+        )
+        self.export_comparison_report_button.clicked.connect(
+            self.export_current_profile_comparison_report
+        )
         self.export_teaching_package_button = QPushButton("Eksportuj pakiet zajęciowy")
         self.export_teaching_package_button.setEnabled(False)
         self.export_teaching_package_button.setToolTip(
@@ -295,6 +319,7 @@ class BrainModelQtWindow(QMainWindow):
         actions.addStretch(1)
         actions.addWidget(run_button)
         actions.addWidget(self.export_pdf_button)
+        actions.addWidget(self.export_comparison_report_button)
         actions.addWidget(self.export_teaching_package_button)
         actions.addWidget(close_button)
         root.addLayout(actions)
@@ -327,6 +352,10 @@ class BrainModelQtWindow(QMainWindow):
         observation_layout = QVBoxLayout(observation_tab)
         self.observation_panel = ObservationPanel()
         observation_layout.addWidget(self.observation_panel)
+
+        comparison_layout = QVBoxLayout(comparison_tab)
+        self.profile_comparison_panel = ProfileComparisonPanel()
+        comparison_layout.addWidget(self.profile_comparison_panel)
 
         questions_layout = QVBoxLayout(questions_tab)
         self.roving_questions_panel = RovingOddballQuestionsPanel()
@@ -397,6 +426,8 @@ class BrainModelQtWindow(QMainWindow):
         self.last_run_state_config = None
         self.export_pdf_action.setEnabled(False)
         self.export_pdf_button.setEnabled(False)
+        self.export_comparison_report_action.setEnabled(False)
+        self.export_comparison_report_button.setEnabled(False)
         self.export_teaching_package_action.setEnabled(False)
         self.export_teaching_package_button.setEnabled(False)
         self.status_label.style().unpolish(self.status_label)
@@ -423,6 +454,8 @@ class BrainModelQtWindow(QMainWindow):
         self.last_run_state_config = state_to_config(self.state)
         self.export_pdf_action.setEnabled(False)
         self.export_pdf_button.setEnabled(False)
+        self.export_comparison_report_action.setEnabled(False)
+        self.export_comparison_report_button.setEnabled(False)
         self.export_teaching_package_action.setEnabled(False)
         self.export_teaching_package_button.setEnabled(False)
         self.status_label.setObjectName("statusLabel")
@@ -468,9 +501,17 @@ class BrainModelQtWindow(QMainWindow):
             self.clinical_profile_panel.set_profile(result[10])
         if len(result) >= 12:
             self.observation_panel.set_context(result[9], result[10], result[11])
+            self.profile_comparison_panel.set_report(result[11])
             self.roving_questions_panel.set_report(result[11])
+        has_comparison_table = bool(
+            len(result) >= 12
+            and isinstance(result[11], dict)
+            and result[11].get("profile_comparison_table")
+        )
         self.export_pdf_action.setEnabled(True)
         self.export_pdf_button.setEnabled(True)
+        self.export_comparison_report_action.setEnabled(has_comparison_table)
+        self.export_comparison_report_button.setEnabled(has_comparison_table)
         self.export_teaching_package_action.setEnabled(True)
         self.export_teaching_package_button.setEnabled(True)
         self.tabs.setCurrentIndex(1 if has_plots else 0)
@@ -567,6 +608,69 @@ class BrainModelQtWindow(QMainWindow):
             return
 
         self.status_label.setText(f"Zapisano pakiet zajęciowy: {package_path}")
+
+    def export_current_profile_comparison_report(self) -> None:
+        """Zapisz HTML i PDF z tabelą porównania profili klinicznych."""
+        result = self.last_result_payload
+        if result is None or len(result) < 12 or not isinstance(result[11], dict):
+            QMessageBox.information(
+                self,
+                "Brak porównania",
+                "Najpierw uruchom tryb „Porównaj profile”, aby wygenerować raport.",
+            )
+            return
+        analysis_report = dict(result[11])
+        if not analysis_report.get("profile_comparison_table"):
+            QMessageBox.information(
+                self,
+                "Brak tabeli",
+                "Bieżący wynik nie zawiera tabeli porównania profili.",
+            )
+            return
+
+        save_info = result[2] if isinstance(result[2], dict) else None
+        output_dir = save_info.get("output_dir") if save_info else None
+        default_dir = Path(output_dir) if output_dir else Path.cwd()
+        target = QFileDialog.getExistingDirectory(
+            self,
+            "Eksportuj raport porównania profili",
+            str(default_dir),
+        )
+        if not target:
+            return
+
+        report_dir = Path(target)
+        try:
+            html_path = export_experiment_report(
+                report_dir / "raport_porownania_profili.html",
+                status_message=str(result[0]),
+                summary_text=str(result[1]),
+                state_config=self.last_run_state_config or state_to_config(self.state),
+                event_timeline=list(result[9]),
+                clinical_profile=dict(result[10]),
+                analysis_report=analysis_report,
+                title="Raport porównania profili",
+                full_trial_table=False,
+            )
+            pdf_path = export_experiment_pdf(
+                report_dir / "raport_porownania_profili.pdf",
+                status_message=str(result[0]),
+                summary_text=str(result[1]),
+                state_config=self.last_run_state_config or state_to_config(self.state),
+                event_timeline=list(result[9]),
+                clinical_profile=dict(result[10]),
+                analysis_report=analysis_report,
+                plots=[],
+            )
+        except Exception as exc:
+            QMessageBox.critical(
+                self, "Błąd", f"Nie udało się zapisać raportu porównania: {exc}"
+            )
+            return
+
+        self.status_label.setText(
+            f"Zapisano raport porównania profili: {html_path}, {pdf_path}"
+        )
 
     def on_worker_finished(self) -> None:
         """Odłącz zakończony worker Qt i jego wątek od okna głównego."""

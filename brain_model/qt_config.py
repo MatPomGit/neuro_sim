@@ -138,6 +138,92 @@ def comparison_config_description_for_label(label: str) -> str:
     ).strip()
 
 
+def _read_yaml_mapping(path: Path) -> dict[str, Any]:
+    """Wczytaj dokument YAML jako słownik bez przerywania statycznych testów GUI.
+
+    Parameters
+    ----------
+    path:
+        Ścieżka do pliku YAML w repozytorium.
+
+    Returns
+    -------
+    dict[str, Any]
+        Zawartość YAML albo pusty słownik, gdy plik jest niedostępny lub ma
+        niepoprawną strukturę.
+    """
+    try:
+        payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def comparison_profile_rows_for_label(label: str) -> list[dict[str, str]]:
+    """Zwróć listę profili klinicznych wskazanych przez zestaw porównawczy YAML.
+
+    Parameters
+    ----------
+    label:
+        Polska etykieta zestawu z kontrolki ``comparison_config_combo`` albo
+        ścieżka do pliku ``configs/comparisons/*.yaml``.
+
+    Returns
+    -------
+    list[dict[str, str]]
+        Wiersze zawierające nazwę profilu, oczekiwany kierunek i ścieżkę YAML.
+    """
+    comparison_path = REPO_ROOT / comparison_config_path_for_label(label)
+    comparison_payload = _read_yaml_mapping(comparison_path)
+    profile_paths = comparison_payload.get("clinical_profiles", [])
+    if not isinstance(profile_paths, list):
+        return []
+
+    rows: list[dict[str, str]] = []
+    for profile_path in profile_paths:
+        relative_path = Path(str(profile_path))
+        payload = _read_yaml_mapping(REPO_ROOT / relative_path)
+        profile = payload.get("clinical_profile", {})
+        if not isinstance(profile, dict):
+            profile = {}
+        rows.append(
+            {
+                "profile": str(
+                    profile.get("display_name")
+                    or profile.get("id")
+                    or relative_path.stem
+                ),
+                "expected_direction": str(
+                    profile.get("expected_direction") or "stable_reference"
+                ),
+                "path": relative_path.as_posix(),
+            }
+        )
+    return rows
+
+
+def comparison_profile_list_text_for_label(label: str) -> str:
+    """Zbuduj polską listę profili z konfiguracji ``configs/comparisons``.
+
+    Parameters
+    ----------
+    label:
+        Polska etykieta albo ścieżka zestawu porównawczego.
+
+    Returns
+    -------
+    str
+        Wielowierszowy opis profili gotowy do pokazania w GUI.
+    """
+    rows = comparison_profile_rows_for_label(label)
+    if not rows:
+        return "Brak profili klinicznych w wybranej konfiguracji YAML."
+    return "\n".join(
+        "• {profile} — oczekiwany kierunek: {expected_direction} ({path})".format(**row)
+        for row in rows
+    )
+
+
 def _scenario_yaml_teaching_goal(
     task: dict[str, Any], clinical_profile: dict[str, Any]
 ) -> str:
