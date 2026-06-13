@@ -2,6 +2,7 @@ import time
 from typing import Any
 
 import numpy as np
+import pytest
 
 from brain_core.networks.delays import DelayBuffer
 from brain_core.simulation.multiscale_engine import (
@@ -167,3 +168,9 @@ def test_multiscale_engine_counts_are_deterministic_for_repeated_runs() -> Any:
     assert observed_counts[0]["neural_mass"] == 1
     assert np.all(np.isfinite(observed_metrics))
     assert observed_metrics[0] == observed_metrics[1]
+
+
+def test_delay_buffer_rejects_negative_delays_with_contract_name() -> None:
+    """Ujemne opóźnienia przewodzenia są błędem kontraktu B."""
+    with pytest.raises(ValueError, match="Kontrakt B"):
+        DelayBuffer(n_regions=2, delays_steps=np.array([[0, -1], [1, 0]]))

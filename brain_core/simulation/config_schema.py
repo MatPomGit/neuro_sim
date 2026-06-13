@@ -8,6 +8,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from brain_core.data_contracts import (
+    CONTRACT_B_NETWORKS_POPULATIONS,
+    validate_delay_steps_contract,
+    validate_regional_vector_contract,
+    validate_square_matrix_contract,
+)
 from brain_core.simulation.signal_adapter import (
     ALLOWED_SNN_COUPLING_MODES,
     DEMO_SNN_REGION_NAME,
@@ -213,6 +219,7 @@ def validate_config(
     cfg.rng_seed = _require_non_negative_int(cfg.rng_seed, "rng_seed")
 
     _validate_integrator_config(cfg)
+    _validate_model_config(cfg)
     _validate_task_config(cfg)
     _validate_stimulus_config(cfg)
     _validate_brain_profile_config(cfg)
@@ -315,6 +322,67 @@ def _coerce_string_tuple(value: Any, field_name: str) -> tuple[str, ...]:
     if not all(isinstance(item, str) and item.strip() for item in values):
         raise ConfigValidationError(f"{field_name} musi być listą niepustych tekstów")
     return tuple(str(item).strip() for item in values)
+
+
+def _validate_model_config(cfg: ExperimentConfig) -> None:
+    """Waliduje opcjonalne macierze regionalne modelu względem kontraktu B.
+
+    Parameters
+    ----------
+    cfg:
+        Konfiguracja eksperymentu po podstawowym sprawdzeniu typów sekcji.
+
+    Raises
+    ------
+    ConfigValidationError
+        Gdy lista regionów, konektywność, opóźnienia albo napędy regionalne
+        mają kształt niezgodny z kontraktem danych.
+    """
+    if "regions" not in cfg.model:
+        return
+
+    regions = _coerce_string_tuple(cfg.model["regions"], "model.regions")
+    if not regions:
+        raise ConfigValidationError(
+            "Kontrakt B: `networks` → `populations`: model.regions nie może być puste"
+        )
+    if len(set(regions)) != len(regions):
+        raise ConfigValidationError(
+            "Kontrakt B: `networks` → `populations`: model.regions musi być unikalne"
+        )
+    cfg.model["regions"] = list(regions)
+    n_regions = len(regions)
+
+    if "connectivity" in cfg.model:
+        try:
+            connectivity = validate_square_matrix_contract(
+                cfg.model["connectivity"],
+                n_regions,
+                "model.connectivity",
+                CONTRACT_B_NETWORKS_POPULATIONS,
+            )
+        except ValueError as error:
+            raise ConfigValidationError(str(error)) from error
+        cfg.model["connectivity"] = connectivity.tolist()
+
+    if "delays_steps" in cfg.model:
+        try:
+            delays_steps = validate_delay_steps_contract(
+                cfg.model["delays_steps"], n_regions
+            )
+        except ValueError as error:
+            raise ConfigValidationError(str(error)) from error
+        cfg.model["delays_steps"] = delays_steps.tolist()
+
+    for vector_field in ("external_drive_E", "external_drive_I"):
+        if vector_field in cfg.model:
+            try:
+                vector = validate_regional_vector_contract(
+                    cfg.model[vector_field], n_regions, f"model.{vector_field}"
+                )
+            except ValueError as error:
+                raise ConfigValidationError(str(error)) from error
+            cfg.model[vector_field] = vector.tolist()
 
 
 def _validate_integrator_config(cfg: ExperimentConfig) -> None:

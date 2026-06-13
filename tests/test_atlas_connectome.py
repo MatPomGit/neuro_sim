@@ -53,3 +53,44 @@ def test_atlas_connectome_contract_shapes_units_and_ranges() -> None:
     assert all(region.tau > 0.0 for region in atlas.regions)
 
     validate_atlas_connectome_consistency(atlas, connectome)
+
+
+def test_region_atlas_contract_rejects_empty_regions_with_contract_name() -> None:
+    """Pusty atlas ma raportować naruszony kontrakt danych anatomii."""
+    from brain_core.anatomy.regions import RegionAtlas
+    from brain_core.data_contracts import validate_region_atlas_contract
+
+    with pytest.raises(ValueError, match="Kontrakt A"):
+        validate_region_atlas_contract(RegionAtlas(regions=()))
+
+
+def test_connectome_contract_rejects_wrong_matrix_shape_with_contract_name() -> None:
+    """Zły kształt macierzy konektomu ma wskazywać kontrakt A."""
+    from brain_core.anatomy.connectome import Connectome
+    from brain_core.data_contracts import validate_connectome_contract
+
+    connectome = Connectome(
+        region_names=("A", "B"),
+        weights=np.zeros((2, 3)),
+        fiber_lengths=np.zeros((2, 2)),
+    )
+
+    with pytest.raises(ValueError, match="Kontrakt A"):
+        validate_connectome_contract(connectome)
+
+
+def test_connectome_contract_rejects_negative_fiber_lengths_with_contract_name() -> (
+    None
+):
+    """Ujemne długości włókien [mm] są błędem kontraktu konektomu."""
+    from brain_core.anatomy.connectome import Connectome
+    from brain_core.data_contracts import validate_connectome_contract
+
+    connectome = Connectome(
+        region_names=("A", "B"),
+        weights=np.zeros((2, 2)),
+        fiber_lengths=np.array([[0.0, -1.0], [2.0, 0.0]]),
+    )
+
+    with pytest.raises(ValueError, match="Kontrakt A"):
+        validate_connectome_contract(connectome)

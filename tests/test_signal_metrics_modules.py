@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from brain_core.analysis.connectivity import compute_connectivity
 from brain_core.analysis.information_flow import compute_information_flow
@@ -191,3 +192,16 @@ def test_physiology_contract_shapes_ranges_and_deterministic_noise() -> None:
     assert np.isclose(np.sum(np.abs(hrf)), 1.0)
     assert bold.shape == source_activity.shape
     assert np.all(np.isfinite(bold))
+
+
+def test_eeg_bold_validators_report_contract_names_for_edge_shapes() -> None:
+    """Walidatory wejść EEG/BOLD mają wskazywać nazwę kontraktu D."""
+    from brain_core.physiology.bold_hrf import convolve_with_hrf
+    from brain_core.physiology.eeg_forward_model import EEGForwardModel
+
+    model = EEGForwardModel(np.ones((2, 3)))
+
+    with pytest.raises(ValueError, match="Kontrakt D"):
+        model.project(np.ones((4, 2)))
+    with pytest.raises(ValueError, match="Kontrakt D"):
+        convolve_with_hrf(np.array([-0.1, 0.2]), np.ones(2))

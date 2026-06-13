@@ -8,6 +8,13 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from brain_core.data_contracts import (
+    CONTRACT_D_POPULATIONS_PHYSIOLOGY,
+    validate_eeg_signal_contract,
+    validate_leadfield_contract,
+    validate_source_activity_contract,
+)
+
 
 @dataclass(frozen=True)
 class ForwardModelConfig:
@@ -21,6 +28,19 @@ class ForwardModelConfig:
 
     sensor_noise_std: float = 0.0
     reference: str = "none"  # none | average
+
+    def __post_init__(self) -> None:
+        """Waliduje jednostki szumu EEG i obsługiwany typ referencji."""
+        if not np.isfinite(self.sensor_noise_std) or self.sensor_noise_std < 0.0:
+            raise ValueError(
+                f"{CONTRACT_D_POPULATIONS_PHYSIOLOGY}: sensor_noise_std musi być "
+                "skończoną amplitudą proxy >= 0."
+            )
+        if self.reference not in {"none", "average"}:
+            raise ValueError(
+                f"{CONTRACT_D_POPULATIONS_PHYSIOLOGY}: reference musi mieć wartość "
+                "'none' albo 'average'."
+            )
 
 
 class EEGForwardModel:
@@ -50,12 +70,7 @@ class EEGForwardModel:
         Raises:
             ValueError: Jeśli leadfield ma nieprawidłowy kształt lub jest pusta.
         """
-        lf = np.asarray(leadfield, dtype=float)
-        if lf.ndim != 2:
-            raise ValueError("Leadfield must be a 2D matrix [n_sensors, n_sources].")
-        if lf.shape[0] == 0 or lf.shape[1] == 0:
-            raise ValueError("Leadfield cannot be empty.")
-        self.leadfield: np.ndarray = lf
+        self.leadfield: np.ndarray = validate_leadfield_contract(leadfield)
         self.config: ForwardModelConfig = config or ForwardModelConfig()
 
     @property
@@ -108,21 +123,11 @@ class EEGForwardModel:
         Raises:
             ValueError: Jeśli wejście ma niepoprawny kształt.
         """
-        src = np.asarray(source_activity, dtype=float)
+        src = validate_source_activity_contract(source_activity, self.n_sources)
         if src.ndim == 1:
-            if src.shape[0] != self.n_sources:
-                raise ValueError("Source vector length must match number of sources.")
             eeg = self.leadfield @ src
-        elif src.ndim == 2:
-            if src.shape[1] != self.n_sources:
-                raise ValueError(
-                    "Source matrix second dimension must match number of sources."
-                )
-            eeg = src @ self.leadfield.T
         else:
-            raise ValueError(
-                "source_activity must be [n_sources] or [n_samples, n_sources]."
-            )
+            eeg = src @ self.leadfield.T
 
         if self.config.sensor_noise_std > 0.0:
             noise_rng = rng if rng is not None else np.random.default_rng(0)
@@ -150,10 +155,7 @@ class EEGInverseSolver:
         Raises:
             ValueError: Jeśli leadfield ma nieprawidłowy kształt.
         """
-        lf = np.asarray(leadfield, dtype=float)
-        if lf.ndim != 2:
-            raise ValueError("Leadfield must be a 2D matrix [n_sensors, n_sources].")
-        self.leadfield: np.ndarray = lf
+        self.leadfield: np.ndarray = validate_leadfield_contract(leadfield)
 
     def _solve(self, eeg: np.ndarray, operator: np.ndarray) -> np.ndarray:
         """
@@ -169,12 +171,10 @@ class EEGInverseSolver:
         Raises:
             ValueError: Jeśli wejście ma niepoprawny kształt.
         """
-        y = np.asarray(eeg, dtype=float)
+        y = validate_eeg_signal_contract(eeg, self.leadfield.shape[0])
         if y.ndim == 1:
             return operator @ y
-        if y.ndim == 2:
-            return y @ operator.T
-        raise ValueError("eeg must have shape [n_sensors] or [n_samples, n_sensors].")
+        return y @ operator.T
 
     def minimum_norm(self, eeg: np.ndarray, lam: float = 1e-2) -> np.ndarray:
         """

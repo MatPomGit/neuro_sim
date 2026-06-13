@@ -370,3 +370,24 @@ def test_snn_report_only_mode_is_preserved_as_requested_mode() -> None:
     assert cfg.snn["sync_dt"] == 0.02
     assert "requested_mode" not in cfg.snn
     assert "computed_modes" not in cfg.snn
+
+
+def test_model_regions_reject_empty_list_with_contract_name() -> None:
+    """Konfiguracja modelu nie może deklarować pustej listy regionów."""
+    payload = _valid_config_payload()
+    payload["model"] = {"regions": []}
+
+    with pytest.raises(ConfigValidationError, match="Kontrakt B"):
+        validate_config(payload)
+
+
+def test_model_delays_reject_inconsistent_region_count_with_contract_name() -> None:
+    """Macierz opóźnień musi mieć kształt zgodny z liczbą regionów."""
+    payload = _valid_config_payload()
+    payload["model"] = {
+        "regions": ["A", "B", "C"],
+        "delays_steps": [[0, 1], [1, 0]],
+    }
+
+    with pytest.raises(ConfigValidationError, match="Kontrakt B"):
+        validate_config(payload)
