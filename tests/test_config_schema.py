@@ -372,6 +372,21 @@ def test_snn_report_only_mode_is_preserved_as_requested_mode() -> None:
     assert "computed_modes" not in cfg.snn
 
 
+def test_snn_rejects_new_regions_until_hip_regression_is_stable() -> None:
+    """Pilotaż SNN nie przyjmuje regionów innych niż HIP bez stabilnej regresji HIP."""
+    payload = deepcopy(_valid_config_payload())
+    payload["snn"] = {
+        "enabled": True,
+        "mode": "report_only",
+        "sync_dt": 0.02,
+        "circuits": [{"region": "DLPFC"}],
+        "neural_mass_regions": ["VIS", "DLPFC", "HIP"],
+    }
+
+    with pytest.raises(ConfigValidationError, match="HIP"):
+        validate_config(payload)
+
+
 def test_model_regions_reject_empty_list_with_contract_name() -> None:
     """Konfiguracja modelu nie może deklarować pustej listy regionów."""
     payload = _valid_config_payload()

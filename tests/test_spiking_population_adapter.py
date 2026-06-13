@@ -132,6 +132,9 @@ def test_snn_report_section_compares_baseline_and_local_circuit() -> Any:
     assert "mode" not in snn_comparison
     assert snn_comparison["sync_dt_s"] == 0.010
     assert snn_comparison["max_feedback_amplitude"] == 0.15
+    assert snn_comparison["max_feedback_amplitude_warning"]["level"] == "ok"
+    assert snn_comparison["max_feedback_amplitude_warning"]["notice_limit"] == 0.20
+    assert snn_comparison["max_feedback_amplitude_warning"]["warning_limit"] == 0.30
     assert snn_comparison["input_rate_unit"] == "Hz"
     assert snn_comparison["output_activity_unit"] == "fraction"
     assert "HIP" in snn_comparison["region_differences"]
@@ -141,6 +144,7 @@ def test_snn_report_section_compares_baseline_and_local_circuit() -> Any:
         "report_only_snn",
         "closed_loop_snn",
     }
+    assert set(snn_comparison["mode_costs"]) == set(snn_comparison["mode_metrics"])
     assert "HIP" in snn_comparison["mode_metrics"]["baseline"]
     assert "demonstracyjne" in snn_comparison["comparison_scope_pl"]
     assert "pełny model biologiczny" in snn_comparison["comparison_scope_pl"]
@@ -172,6 +176,35 @@ def test_snn_closed_loop_report_is_stable_and_deterministic() -> Any:
         <= first_report["max_feedback_amplitude"]
     )
     assert first_report["mode_metrics"] == second_report["mode_metrics"]
+
+
+def test_snn_report_only_and_closed_loop_costs_and_metrics_are_compared() -> Any:
+    """Raport porównuje koszt i metryki wariantów report_only oraz closed-loop."""
+    from brain_core.simulation.config_loader import load_config
+    from brain_core.simulation.engine import run_experiment
+
+    cfg = load_config("configs/snn_hippocampus_demo.yaml")
+    cfg.output["save_results"] = False
+    cfg.task["duration"] = 1.0
+    cfg.snn["mode"] = "report_only"
+
+    result = run_experiment(cfg)
+    snn_comparison = result["analysis_report"]["snn_comparison"]
+    mode_costs = snn_comparison["mode_costs"]
+    mode_metrics = snn_comparison["mode_metrics"]
+    report_only_cost = mode_costs["report_only_snn"]
+    closed_loop_cost = mode_costs["closed_loop_snn"]
+    report_only_metrics = mode_metrics["report_only_snn"]["HIP"]
+    closed_loop_metrics = mode_metrics["closed_loop_snn"]["HIP"]
+
+    assert report_only_cost["model_runs"] == 0
+    assert closed_loop_cost["model_runs"] == 1
+    assert report_only_cost["snn_updates"] == closed_loop_cost["snn_updates"]
+    assert closed_loop_cost["feedback_applications"] == result["activity"].shape[0]
+    assert report_only_metrics["length"] == closed_loop_metrics["length"]
+    assert "mean_abs_difference_vs_baseline" in report_only_metrics
+    assert "mean_abs_difference_vs_baseline" in closed_loop_metrics
+    assert "max_abs_feedback_drive" in closed_loop_metrics
 
 
 def test_snn_report_only_request_marks_closed_loop_as_computed_variant() -> Any:
@@ -222,8 +255,28 @@ def test_snn_markdown_report_names_requested_and_computed_modes() -> Any:
                 ),
                 "sync_dt_s": 0.01,
                 "max_feedback_amplitude": 0.15,
+                "max_feedback_amplitude_warning": {
+                    "level": "notice",
+                    "notice_limit": 0.2,
+                    "warning_limit": 0.3,
+                    "message_pl": "próg informacyjny",
+                },
+                "metric_disclaimer_pl": "metryka demonstracyjna SNN",
                 "input_rate_unit": "Hz",
                 "output_activity_unit": "fraction",
+                "mode_costs": {
+                    mode_name: {
+                        "model_runs": 0,
+                        "simulated_steps": 5,
+                        "snn_updates": 5,
+                        "feedback_applications": 0,
+                    }
+                    for mode_name in (
+                        "baseline",
+                        "report_only_snn",
+                        "closed_loop_snn",
+                    )
+                },
                 "mode_metrics": {
                     mode_name: {"HIP": {"length": 5, "max_activity": 0.1}}
                     for mode_name in (
@@ -249,3 +302,7 @@ def test_snn_markdown_report_names_requested_and_computed_modes() -> Any:
     assert "baseline" in markdown
     assert "report_only_snn" in markdown
     assert "closed_loop_snn" in markdown
+    assert "limit ostrzegawczy amplitudy sprzężenia" in markdown
+    assert "disclaimer metryk SNN" in markdown
+    assert markdown.count("metryka demonstracyjna SNN") >= 7
+    assert "koszt obliczeniowy wariantów SNN" in markdown

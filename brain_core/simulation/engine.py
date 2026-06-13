@@ -37,6 +37,13 @@ from .scheduler import SimulationScheduler, TaskStimulusPlayer
 from .signal_adapter import CouplingSignalAdapter, SNNPopulationMapping
 from .state import SimulationState
 
+SNN_METRIC_DISCLAIMER_PL = (
+    "metryka demonstracyjna SNN; służy do kontroli kontraktu HIP, "
+    "a nie do interpretacji biologicznej"
+)
+SNN_FEEDBACK_NOTICE_LIMIT = 0.20
+SNN_FEEDBACK_WARNING_LIMIT = 0.30
+
 
 def _deterministic_observed_response(
     task_name: str,
@@ -280,11 +287,51 @@ def _summarize_trace_metrics(
     return metrics
 
 
+def _classify_snn_feedback_amplitude(
+    max_feedback_amplitude: float,
+) -> dict[str, str | float]:
+    """Klasyfikuje ostrzeżenie dla amplitudy sprzężenia SNN.
+
+    Parameters
+    ----------
+    max_feedback_amplitude:
+        Skonfigurowany limit bezwymiarowej amplitudy sprzężenia closed-loop.
+
+    Returns
+    -------
+    dict[str, str | float]
+        Poziom ostrzeżenia, progi i krótki opis po polsku.
+    """
+    if max_feedback_amplitude >= SNN_FEEDBACK_WARNING_LIMIT:
+        level = "warning"
+        message = (
+            "max_feedback_amplitude jest wysokie dla demonstracyjnego closed-loop; "
+            "wynik traktuj wyłącznie jako test stabilności kontraktu HIP."
+        )
+    elif max_feedback_amplitude >= SNN_FEEDBACK_NOTICE_LIMIT:
+        level = "notice"
+        message = (
+            "max_feedback_amplitude przekracza próg informacyjny; porównaj "
+            "metryki report_only_snn i closed_loop_snn przed interpretacją."
+        )
+    else:
+        level = "ok"
+        message = (
+            "max_feedback_amplitude mieści się poniżej progów ostrzegawczych demo."
+        )
+    return {
+        "level": level,
+        "notice_limit": SNN_FEEDBACK_NOTICE_LIMIT,
+        "warning_limit": SNN_FEEDBACK_WARNING_LIMIT,
+        "message_pl": message,
+    }
+
+
 def _simulate_closed_loop_snn_activity(
     *,
     config: ExperimentConfig,
     region_names: list[str],
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, dict[str, int]]:
     """Uruchamia wariant, w którym SNN modyfikuje wejście HIP w kolejnym kroku.
 
     Parameters
@@ -296,8 +343,9 @@ def _simulate_closed_loop_snn_activity(
 
     Returns
     -------
-    tuple[np.ndarray, np.ndarray]
-        Aktywność closed-loop oraz macierz zastosowanego wejścia zwrotnego.
+    tuple[np.ndarray, np.ndarray, dict[str, int]]
+        Aktywność closed-loop, macierz zastosowanego wejścia zwrotnego oraz
+        deterministyczne liczniki kosztu wariantu.
     """
     _, _, adapter, snn_population, _, gains = _build_snn_runtime(
         config=config,
@@ -307,6 +355,7 @@ def _simulate_closed_loop_snn_activity(
     max_feedback_amplitude = float(config.snn.get("max_feedback_amplitude", 0.15))
     pending_drive = np.zeros(len(region_names), dtype=float)
     applied_drives: list[np.ndarray] = []
+    snn_updates = 0
 
     def external_drive_callback(
         step_index: int,
@@ -316,7 +365,7 @@ def _simulate_closed_loop_snn_activity(
         inhibitory_activity: np.ndarray,
     ) -> np.ndarray:
         """Zwraca opóźnione wejście SNN i kolejkuje sygnał na następny krok."""
-        nonlocal pending_drive
+        nonlocal pending_drive, snn_updates
         applied_drive = pending_drive.copy()
         if step_index % sync_stride == 0:
             excitatory_source = excitatory_activity
@@ -328,6 +377,7 @@ def _simulate_closed_loop_snn_activity(
                 excitatory_rate_hz=excitatory_source * adapter.MAX_FIRING_RATE_HZ,
                 inhibitory_rate_hz=inhibitory_source * adapter.MAX_FIRING_RATE_HZ,
             )
+            snn_updates += 1
             snn_output = snn_population.step(signal)
             coupling_drive = adapter.spike_summary_to_closed_loop_drive(
                 snn_output=snn_output,
@@ -361,7 +411,13 @@ def _simulate_closed_loop_snn_activity(
         external_drive_callback=external_drive_callback,
     )
     feedback = np.asarray(applied_drives, dtype=float)
-    return closed_loop_activity, feedback
+    cost = {
+        "model_runs": 1,
+        "simulated_steps": int(closed_loop_activity.shape[0]),
+        "snn_updates": int(snn_updates),
+        "feedback_applications": int(feedback.shape[0]),
+    }
+    return closed_loop_activity, feedback, cost
 
 
 def _run_local_snn_comparison(
@@ -425,6 +481,7 @@ def _run_local_snn_comparison(
     snn_activity = np.zeros_like(activity, dtype=float)
     report_only_activity = np.array(activity, dtype=float, copy=True)
     last_regional = np.zeros(activity.shape[1], dtype=float)
+    report_only_snn_updates = 0
 
     for step_index in range(activity.shape[0]):
         if step_index % sync_stride == 0:
@@ -432,6 +489,7 @@ def _run_local_snn_comparison(
                 excitatory_rate_hz=excitatory[step_index] * adapter.MAX_FIRING_RATE_HZ,
                 inhibitory_rate_hz=inhibitory[step_index] * adapter.MAX_FIRING_RATE_HZ,
             )
+            report_only_snn_updates += 1
             snn_output = snn_population.step(signal)
             last_regional = adapter.spike_summary_to_regional_activity(
                 snn_output, n_regions=activity.shape[1]
@@ -447,14 +505,32 @@ def _run_local_snn_comparison(
     requested_mode = str(config.snn.get("mode", "report_only"))
     computed_modes = ["baseline", "report_only_snn", "closed_loop_snn"]
 
-    closed_loop_activity, feedback_drive = _simulate_closed_loop_snn_activity(
-        config=config,
-        region_names=region_names,
+    closed_loop_activity, feedback_drive, closed_loop_cost = (
+        _simulate_closed_loop_snn_activity(
+            config=config,
+            region_names=region_names,
+        )
     )
     if closed_loop_activity.shape != activity.shape:
         raise ValueError("Przebieg closed_loop_snn nie pasuje do baseline")
     if feedback_drive.shape != activity.shape:
         raise ValueError("Sygnał sprzężenia closed_loop_snn nie pasuje do baseline")
+
+    mode_costs = {
+        "baseline": {
+            "model_runs": 0,
+            "simulated_steps": int(activity.shape[0]),
+            "snn_updates": 0,
+            "feedback_applications": 0,
+        },
+        "report_only_snn": {
+            "model_runs": 0,
+            "simulated_steps": int(activity.shape[0]),
+            "snn_updates": int(report_only_snn_updates),
+            "feedback_applications": 0,
+        },
+        "closed_loop_snn": closed_loop_cost,
+    }
 
     region_differences: dict[str, dict[str, float]] = {}
     mode_metrics: dict[str, dict[str, dict[str, float]]] = {
@@ -510,9 +586,14 @@ def _run_local_snn_comparison(
         "computed_modes": computed_modes,
         "sync_dt_s": float(config.snn["sync_dt"]),
         "max_feedback_amplitude": float(config.snn.get("max_feedback_amplitude", 0.15)),
+        "max_feedback_amplitude_warning": _classify_snn_feedback_amplitude(
+            float(config.snn.get("max_feedback_amplitude", 0.15))
+        ),
         "input_rate_unit": str(config.snn.get("input_rate_unit", "Hz")),
         "output_activity_unit": str(config.snn.get("output_activity_unit", "fraction")),
         "backend": str(circuits[0].get("backend", "brian2")),
+        "metric_disclaimer_pl": SNN_METRIC_DISCLAIMER_PL,
+        "mode_costs": mode_costs,
         "mode_metrics": mode_metrics,
         "region_differences": region_differences,
     }

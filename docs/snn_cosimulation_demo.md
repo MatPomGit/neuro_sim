@@ -33,6 +33,32 @@ Główne elementy:
 - `brain_core/analysis/reports.py` — eksportuje `snn_comparison` do raportu
   Markdown oraz CSV.
 
+## Co oznacza „deterministyczny backend zastępczy `brian2`”
+
+Określenie „deterministyczny backend zastępczy `brian2`” jest nazwą
+kontraktu pilotażowego, a nie deklaracją pełnej symulacji biologicznej Brian2.
+W praktyce oznacza to, że:
+
+- konfiguracja i raport używają wartości `backend: brian2`, aby utrzymać
+  docelową nazwę integracji i stabilny kontrakt I/O;
+- obecna implementacja nie buduje jeszcze pełnego obiektu `brian2.Network` ani
+  nie symuluje realistycznej populacji neuronów kolcowych;
+- adapter wykonuje jawny, deterministyczny transfer wejścia neural-mass do
+  częstości wyładowań i potencjału błonowego, bez losowania i bez ukrytego
+  stanu zależnego od środowiska;
+- dla tej samej konfiguracji, seeda, sygnałów wejściowych i kolejności kroków
+  wynik adaptera ma być identyczny, co pozwala testować mapowanie `HIP`,
+  jednostki, limity amplitudy i format raportu;
+- metryki SNN w raporcie są metrykami demonstracyjnymi kontraktu i stabilności,
+  dlatego przy każdej metryce raport pokazuje krótki disclaimer.
+
+Pełna biologiczna sieć Brian2 pozostaje osobnym etapem rozwoju. Do czasu
+ustabilizowania testów regresyjnych `HIP` nie dodajemy kolejnych regionów SNN,
+żeby nie rozszerzać zakresu walidacji przed potwierdzeniem zachowania pilota.
+Konkretny plan warstw, konfiguracji, bramek testowych i przejścia do
+`brian2.Network` opisuje
+[`ADR-0034`](adr/0034-architektura-snn-brian2-network.md).
+
 ## Konfiguracja demonstracyjna
 
 Plik `configs/snn_hippocampus_demo.yaml` uruchamia jedno zadanie poznawcze
@@ -47,6 +73,7 @@ snn:
   sync_dt: 0.010
   input_rate_unit: Hz
   output_activity_unit: fraction
+  max_feedback_amplitude: 0.15
   neural_mass_regions:
     - VIS
     - AUD
@@ -80,6 +107,9 @@ Znaczenie pól:
   interpretowane jako częstość pobudzenia.
 - `output_activity_unit` musi mieć wartość `fraction`, ponieważ wyjście SNN jest
   normalizowane do aktywności regionalnej z zakresu `[0, 1]`.
+- `max_feedback_amplitude` ogranicza bezwymiarowe wejście zwrotne
+  `closed_loop_snn`; raport klasyfikuje wartość względem progów
+  ostrzegawczych `0.20` (poziom informacyjny) i `0.30` (ostrzeżenie).
 - `neural_mass_regions` zapisuje kolejność regionów neural-mass używaną przez
   `SNNPopulationMapping`.
 - `circuits[].region` musi występować w `neural_mass_regions`; w bieżącym
@@ -89,6 +119,18 @@ Znaczenie pól:
 - `coupling_gain` określa udział lokalnej aktywności SNN przy obliczaniu
   porównawczego przebiegu `report_only_snn`; w trybie `closed_loop` ten sam
   kontrakt służy do ograniczonego amplitudowo wejścia zwrotnego.
+
+## Docelowa architektura `brian2.Network`
+
+Planowana implementacja pełnego backendu Brian2 nie zmienia publicznego
+kontraktu `NeuralMassToSNNInput` / `SNNToNeuralMassOutput`. Nowe elementy mają
+być dodawane za tym interfejsem: fabryka sieci HIP buduje jawny `brian2.Network`,
+adapter przechowuje sieć przez cały przebieg eksperymentu i wykonuje
+`Network.run(sync_dt)` na każdym kroku synchronizacji, a silnik symulacji nadal
+decyduje, czy wynik jest użyty jako `report_only_snn` czy `closed_loop_snn`.
+Szczegółowy podział modułów, plan konfiguracji `implementation: brian2_network`,
+bramki deterministyczności i etapy wdrożenia są zapisane w
+[`ADR-0034`](adr/0034-architektura-snn-brian2-network.md).
 
 ## Kontrakt sygnałów i jednostek
 
@@ -138,6 +180,13 @@ Sekcja `snn_comparison` zawiera:
   demonstracyjnym, a nie pełnym modelem biologicznym,
 - `comparison_note_pl`, czyli polską uwagę, że `closed_loop_snn` jest dodatkowym
   wariantem porównawczym, a nie nadpisaniem żądanego trybu,
+- `max_feedback_amplitude_warning`, czyli poziom `ok`, `notice` albo `warning`
+  dla limitu amplitudy sprzężenia,
+- `mode_costs`, czyli deterministyczne liczniki kosztu wariantów
+  (`model_runs`, `simulated_steps`, `snn_updates`, `feedback_applications`)
+  używane do porównania `report_only_snn` z `closed_loop_snn`,
+- `metric_disclaimer_pl`, czyli krótki disclaimer dopisywany w raporcie
+  Markdown przy każdej metryce SNN,
 - osobne metryki dla `baseline`, `report_only_snn` i `closed_loop_snn`, w tym
   długość sygnału oraz amplitudę feedbacku dla wariantu closed-loop,
 - metryki różnic dla każdego mapowanego regionu:
@@ -162,7 +211,9 @@ Spójność konfiguracji jest sprawdzana statycznie przez walidator konfiguracji
 - jednostki muszą odpowiadać kontraktowi `Hz` oraz `fraction`,
 - `snn.circuits` może zawierać tylko jeden obwód demonstracyjny `HIP`,
 - `snn.circuits[].backend` musi mieć wartość `brian2`,
-- region obwodu SNN musi istnieć w `snn.neural_mass_regions`.
+- region obwodu SNN musi istnieć w `snn.neural_mass_regions`,
+- regiony inne niż `HIP` są odrzucane do czasu stabilnych testów regresyjnych
+  pilota `HIP`, nawet jeżeli istnieją w `snn.neural_mass_regions`.
 
 Testy obejmujące ten moduł:
 
@@ -171,8 +222,10 @@ PYTHONPATH=. pytest tests/test_config_schema.py tests/test_spiking_population_ad
 ```
 
 Najważniejsze przypadki testowe sprawdzają konfigurację demo, indeks mapowania
-`HIP`, jednostki, `sync_dt`, obecność sekcji raportu `snn_comparison` oraz
-rozdzielenie trybu żądanego od wariantów faktycznie policzonych.
+`HIP`, jednostki, `sync_dt`, limity ostrzegawcze `max_feedback_amplitude`,
+obecność sekcji raportu `snn_comparison`, koszt i metryki `report_only_snn` vs
+`closed_loop_snn` oraz rozdzielenie trybu żądanego od wariantów faktycznie
+policzonych.
 
 ## Ograniczenia pilotażu
 
@@ -180,7 +233,8 @@ rozdzielenie trybu żądanego od wariantów faktycznie policzonych.
   backendu zastępczego `brian2`; pełna sieć biologiczna jest osobnym krokiem
   rozwoju.
 - Demo obejmuje jeden lokalny obwód hipokampa `HIP`, aby zachować prostą
-  walidację, deterministyczność i czytelny raport.
+  walidację, deterministyczność i czytelny raport. Nie dodajemy nowych regionów
+  SNN, dopóki `HIP` nie ma stabilnych testów regresyjnych.
 - Closed-loop jest MVP demonstracyjnym dla HIP; przed użyciem badawczym wymaga
   dalszej walidacji stabilności, porównania kosztu `report_only` vs
   `closed_loop` oraz kalibracji biologicznej.
