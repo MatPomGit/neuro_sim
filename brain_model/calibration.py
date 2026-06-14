@@ -4,6 +4,7 @@ import argparse
 import csv
 import itertools
 import json
+import logging
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,8 @@ import numpy as np
 from .model import CognitiveBrainModel
 from .params import BrainParams
 from .validation import evaluate_run
+
+logger = logging.getLogger(__name__)
 
 SEARCH_SPACE = {
     "noise": [0.008, 0.012, 0.015, 0.02],
@@ -175,9 +178,13 @@ def main() -> None:
         output_dir=args.output,
     )
     passed = sum(1 for r in results if r["pass"])
-    print(
-        f"Completed {len(results)} trials for scenario='{args.scenario}'. "
-        f"Pass: {passed}/{len(results)}"
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
+    logger.info(
+        "Ukończono %s prób dla scenariusza='%s'. Poprawne: %s/%s",
+        len(results),
+        args.scenario,
+        passed,
+        len(results),
     )
 
 

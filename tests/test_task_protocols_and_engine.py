@@ -309,7 +309,7 @@ def test_roving_oddball_report_contains_conditions_and_habituation_metrics() -> 
     assert "deviant" in markdown
     assert "nowy standard" in markdown
     assert "tempo habituacji" in markdown
-    assert "latency readaptacji" in markdown
+    assert "latencja readaptacji" in markdown
 
 
 def test_roving_oddball_report_contains_amplitude_latency_mechanism_section() -> Any:

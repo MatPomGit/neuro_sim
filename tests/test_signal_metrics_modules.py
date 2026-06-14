@@ -190,6 +190,8 @@ def test_physiology_contract_shapes_ranges_and_deterministic_noise() -> None:
     assert np.all(neural_drive >= 0.0)
     assert hrf.shape == (8,)
     assert np.isclose(np.sum(np.abs(hrf)), 1.0)
+    with pytest.raises(ValueError, match="hrf.ratio"):
+        canonical_hrf(length=8, dt=0.5, ratio=-0.1)
     assert bold.shape == source_activity.shape
     assert np.all(np.isfinite(bold))
 

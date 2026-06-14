@@ -1,6 +1,6 @@
 # Struktura programu `neuro_sim`
 
-Ten dokument opisuje aktualny układ repozytorium na dzień 2026-06-02. Jest opisem stanu istniejącego, a nie docelowego szkicu architektury; plan najbliższych prac jest utrzymywany w `BACKLOG.md`.
+Ten dokument opisuje aktualny układ repozytorium na dzień 2026-06-02. Jest opisem stanu istniejącego, a nie docelowego szkicu architektury; plan najbliższych prac jest utrzymywany w `ROADMAP.md`.
 
 ## 1. Widok wysokiego poziomu
 
@@ -257,7 +257,7 @@ tests/
 └── test_wilson_cowan_network.py
 ```
 
-Testy obejmują obecnie m.in. konfigurację zadań, konektom, lesion, neuromodulację, metryki sygnałowe, adapter SNN i GUI. Bieżące wymagania jakościowe dla docstringów i adnotacji typów są opisane w `docs/docstring_typing_standard.md` oraz `docs/developer_quality_checks.md`, a przyszłe prace jakościowe pozostają śledzone w `BACKLOG.md`.
+Testy obejmują obecnie m.in. konfigurację zadań, konektom, lesion, neuromodulację, metryki sygnałowe, adapter SNN i GUI. Bieżące wymagania jakościowe dla docstringów i adnotacji typów są opisane w `docs/docstring_typing_standard.md` oraz `docs/developer_quality_checks.md`, a przyszłe prace jakościowe pozostają śledzone w `ROADMAP.md`.
 
 ## 8. Najbliższe konsekwencje dla struktury repozytorium
 
