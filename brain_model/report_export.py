@@ -299,11 +299,12 @@ def _resolve_full_trial_table(
     """
     if explicit_value is not None:
         return explicit_value
-    analysis_config = state_config.get("analysis")
-    if isinstance(analysis_config, dict):
-        configured = analysis_config.get("include_full_trial_table")
-        if isinstance(configured, bool):
-            return configured
+    if isinstance(state_config, dict):
+        analysis_config = state_config.get("analysis")
+        if isinstance(analysis_config, dict):
+            configured = analysis_config.get("include_full_trial_table")
+            if isinstance(configured, bool):
+                return configured
     return True
 
 
