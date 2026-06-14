@@ -1519,7 +1519,7 @@ class AnalysisReport:
                 f"{roving_report.get('habituation_rate', 'n/a')}"
             )
             lines.append(
-                f"- **latency readaptacji**: "
+                f"- **latencja readaptacji**: "
                 f"{roving_report.get('mean_readaptation_latency', 'n/a')}"
             )
             mechanism = roving_report.get("amplitude_latency_mechanism") or {}
@@ -1578,7 +1578,7 @@ class AnalysisReport:
                     f"{profile.get('habituation_rate', 'n/a')}"
                 )
                 lines.append(
-                    f"  - latency readaptacji: "
+                    f"  - latencja readaptacji: "
                     f"{profile.get('mean_readaptation_latency', 'n/a')}"
                 )
                 mechanism = profile.get("amplitude_latency_mechanism") or {}

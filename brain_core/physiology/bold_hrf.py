@@ -56,6 +56,10 @@ def canonical_hrf(
             "Parametry HRF (dt, peak_latency, undershoot_latency, ratio) "
             "muszą być skończone"
         )
+    if ratio < 0.0:
+        raise ValueError(
+            f"{CONTRACT_D_POPULATIONS_PHYSIOLOGY}: hrf.ratio musi być >= 0"
+        )
 
     t = np.arange(length, dtype=float) * dt
     peak = (t / peak_latency) ** 8 * np.exp(-(t - peak_latency) / peak_latency)
