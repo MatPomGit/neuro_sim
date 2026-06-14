@@ -261,9 +261,17 @@ class BrainModelQtWindow(QMainWindow):
         self.tabs.addTab(questions_tab, "Pytania kontrolne")
 
         root = QVBoxLayout(config_tab)
+        header_row = QHBoxLayout()
         header = QLabel("Laboratorium symulacji modelu poznawczego")
         header.setObjectName("headerTitle")
-        root.addWidget(header)
+        bids_help_button = QPushButton("Instrukcja BIDS")
+        bids_help_button.setToolTip(
+            "Wyjaśnia standard BIDS i podstawowe zasady organizacji danych."
+        )
+        bids_help_button.clicked.connect(self.show_bids_help)
+        header_row.addWidget(header, 1)
+        header_row.addWidget(bids_help_button)
+        root.addLayout(header_row)
         subtitle = QLabel(
             "Dobierz scenariusz, uruchom obliczenia i porównaj aktywność modułów "
             "oraz oscylatorów Wilsona-Cowana w jednym przepływie pracy."
@@ -746,6 +754,23 @@ class BrainModelQtWindow(QMainWindow):
             "1. Wybierz scenariusz i czas symulacji.\n"
             "2. Opcjonalnie rozwiń opcje zaawansowane.\n"
             "3. Uruchom symulację i przejdź do zakładki Wykresy.",
+        )
+
+    def show_bids_help(self) -> None:
+        """Pokaż instrukcję standardu BIDS dla danych mózgowych i EEG."""
+        QMessageBox.information(
+            self,
+            "Instrukcja BIDS",
+            "BIDS (Brain Imaging Data Structure) to standard organizacji danych "
+            "neuroobrazowych, EEG i danych behawioralnych powiązanych z badaniem.\n\n"
+            "Po co go używać:\n"
+            "• ułatwia odtworzenie eksperymentu i audyt wyników;\n"
+            "• porządkuje katalogi, nazwy plików i metadane;\n"
+            "• oddziela dane surowe od wyników w katalogu derivatives/;\n"
+            "• pozwala sprawdzać zbiory narzędziem BIDS Validator.\n\n"
+            "Minimalnie sprawdź, czy zbiór ma dataset_description.json, "
+            "pliki zaczynają się od encji sub-, a metadane EEG lub obrazowania "
+            "opisują parametry potrzebne do interpretacji danych.",
         )
 
     def show_about(self) -> None:

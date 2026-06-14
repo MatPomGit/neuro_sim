@@ -142,6 +142,19 @@ def test_qt_plot_checkboxes_are_hidden_behind_customization_panel() -> None:
     assert "Aktywny zestaw: Niestandardowe" in source
 
 
+def test_qt_top_panel_has_bids_instruction_button() -> None:
+    """Sprawdź, że górny panel konfiguracji ma przycisk instrukcji BIDS."""
+    source = QT_APP_PATH.read_text(encoding="utf-8")
+
+    assert 'QPushButton("Instrukcja BIDS")' in source
+    assert "bids_help_button.clicked.connect(self.show_bids_help)" in source
+    assert "def show_bids_help(self) -> None:" in source
+    assert (
+        '"BIDS (Brain Imaging Data Structure) to standard organizacji danych "'
+        in source
+    )
+
+
 def test_qt_start_button_is_defined_once() -> None:
     """Sprawdź, że aktywne GUI Qt pokazuje jeden główny przycisk uruchamiania."""
     qt_button_count = QT_APP_PATH.read_text(encoding="utf-8").count(
