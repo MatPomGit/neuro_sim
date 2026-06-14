@@ -276,6 +276,38 @@ def _resolve_max_report_trials(state_config: dict[str, Any]) -> int:
     return 20
 
 
+def _resolve_full_trial_table(
+    state_config: dict[str, Any],
+    explicit_value: bool | None,
+) -> bool:
+    """Ustal tryb pełnej tabeli triali na podstawie konfiguracji analizy.
+
+    Parameters
+    ----------
+    state_config:
+        Migawka konfiguracji GUI/YAML, opcjonalnie z polem
+        ``analysis.include_full_trial_table``.
+    explicit_value:
+        Jawna wartość przekazana przez wywołujący kod; gdy nie jest ``None``,
+        ma pierwszeństwo przed konfiguracją.
+
+    Returns
+    -------
+    bool
+        ``True`` dla pełnej tabeli HTML/Markdown albo ``False`` dla tabeli
+        skróconej limitem ``analysis.max_report_trials``.
+    """
+    if explicit_value is not None:
+        return explicit_value
+    if isinstance(state_config, dict):
+        analysis_config = state_config.get("analysis")
+        if isinstance(analysis_config, dict):
+            configured = analysis_config.get("include_full_trial_table")
+            if isinstance(configured, bool):
+                return configured
+    return True
+
+
 def _trial_limit_summary(
     *, total_trials: int, shown_trials: int, max_trials: int | None, full_table: bool
 ) -> str:
@@ -472,7 +504,7 @@ def _experiment_report_markdown(
     event_timeline: list[dict[str, Any]],
     clinical_profile: dict[str, Any],
     analysis_report: dict[str, Any],
-    full_trial_table: bool = True,
+    full_trial_table: bool | None = None,
 ) -> str:
     """Złóż raport eksperymentu w formacie Markdown.
 
@@ -495,6 +527,7 @@ def _experiment_report_markdown(
     full_trial_table:
         Gdy ``True``, eksport Markdown/HTML zapisuje wszystkie triale; gdy
         ``False``, stosuje ``analysis.max_report_trials`` z konfiguracji.
+        Wartość ``None`` odczytuje ``analysis.include_full_trial_table``.
 
     Returns
     -------
@@ -531,11 +564,14 @@ def _experiment_report_markdown(
             "",
         ]
     )
+    resolved_full_trial_table = _resolve_full_trial_table(
+        state_config, full_trial_table
+    )
     max_report_trials = _resolve_max_report_trials(state_config)
     rows = _trial_table_rows(
         event_timeline,
         clinical_profile,
-        max_trials=None if full_trial_table else max_report_trials,
+        max_trials=None if resolved_full_trial_table else max_report_trials,
     )
     total_rows = len(
         _trial_table_rows(event_timeline, clinical_profile, max_trials=None)
@@ -545,7 +581,7 @@ def _experiment_report_markdown(
             total_trials=total_rows,
             shown_trials=len(rows),
             max_trials=max_report_trials,
-            full_table=full_trial_table,
+            full_table=resolved_full_trial_table,
         )
     )
     lines.append("")
@@ -732,7 +768,7 @@ def export_experiment_report(
     clinical_profile: dict[str, Any],
     analysis_report: dict[str, Any],
     title: str = "Raport eksperymentu neuro_sim",
-    full_trial_table: bool = True,
+    full_trial_table: bool | None = None,
 ) -> Path:
     """Eksportuj raport `.md` albo `.html` z tabelą triali, metrykami i słownikiem.
 
@@ -755,7 +791,8 @@ def export_experiment_report(
     title:
         Tytuł raportu.
     full_trial_table:
-        Opcja „pełna tabela triali” dla eksportu Markdown/HTML.
+        Opcja „pełna tabela triali” dla eksportu Markdown/HTML. Wartość
+        ``None`` odczytuje ``analysis.include_full_trial_table``.
 
     Returns
     -------

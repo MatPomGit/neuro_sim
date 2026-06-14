@@ -868,6 +868,7 @@ def run_experiment(
     analysis_report.payload["event_timeline"] = event_timeline
     analysis_report.payload["stimulus_sequence_signature"] = stimulus_sequence_signature
     analysis_report.payload["clinical_profile"] = dict(config.clinical_profile)
+    analysis_report.payload["analysis"] = dict(config.analysis)
 
     save_info: dict[str, Any] | None = None
     if config.output.get("save_results", False):

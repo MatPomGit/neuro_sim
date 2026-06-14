@@ -7,7 +7,7 @@
 
 Implementacja jest docelowa: warstwa I/O zapisuje stabilny zestaw artefaktów
 reprodukowalności w katalogu wyniku, a testy statyczne i integracyjne
-weryfikują obecność wymaganych plików oraz kluczy kontraktu.
+weryfikują obecność wymaganych plików, manifestu oraz kluczy kontraktu.
 
 ## Kontekst
 
@@ -28,11 +28,13 @@ reprodukowalności:
   `numpy`, `matplotlib`, `PyYAML` i `PySide6`;
 - `git_info.json` — commit, gałąź i informacja o niezacommitowanych zmianach;
 - `run.log` — krótki dziennik zapisu artefaktów po polsku;
+- `run_manifest.json` — nadrzędny indeks artefaktów, hashy SHA-256, seeda, środowiska i stanu Git;
 - dotychczasowe `metadata.json`, `run_data.npz` i `event_timeline.json`.
 
 Kontrakt zapisujemy w warstwie I/O (`brain_model/io.py`), a silnik symulacji
-przekazuje do niej konfigurację i metryki oraz zawsze zapisuje `event_timeline.json`
-w przypadku włączonego zapisu wyników.
+przekazuje do niej konfigurację, metryki oraz `event_timeline`. Warstwa I/O zapisuje
+`event_timeline.json` i `run_manifest.json`, dzięki czemu CLI, GUI i przyszłe
+pipeline'y mają jeden punkt wejścia do audytu uruchomienia.
 
 ## Konsekwencje
 
@@ -42,11 +44,13 @@ Pozytywne:
   audytu i powtórzenia uruchomienia;
 - testy mogą statycznie sprawdzać obecność kluczy i plików bez wykonywania
   ciężkich symulacji;
-- kontrakt jest jawny i może być używany przez GUI, CLI oraz przyszłe pipeline'y.
+- kontrakt jest jawny i może być używany przez GUI, CLI oraz przyszłe pipeline'y;
+- manifest pozwala szybko sprawdzić integralność artefaktów bez zgadywania listy plików.
 
 Koszty i ograniczenia:
 
 - katalog wyniku zawiera więcej małych plików JSON;
+- manifest dubluje część informacji z osobnych artefaktów, ale robi to jako indeks audytowy, nie jako zastępnik plików źródłowych;
 - gdy uruchomienie odbywa się poza repozytorium Git albo bez zainstalowanej
   zależności, odpowiednia wartość w artefakcie może być `null`, ale klucz
   pozostaje obecny;
@@ -57,8 +61,8 @@ Koszty i ograniczenia:
 
 - Pozostawienie tylko `metadata.json`: prostsze, ale miesza metadane modelu,
   środowisko i metryki oraz utrudnia automatyczną walidację kontraktu.
-- Zapis pojedynczego dużego manifestu: mniej plików, ale słabsza czytelność dla
-  użytkownika i trudniejsze porównywanie wybranych sekcji między uruchomieniami.
+- Zapis wyłącznie pojedynczego dużego manifestu: odrzucony, bo osłabia czytelność
+  poszczególnych sekcji. Przyjęto manifest indeksujący osobne pliki, a nie zastępujący je.
 - Wymuszanie `config.yaml`: zgodne z wieloma konfiguracjami wejściowymi, ale
   `config.json` jest wystarczający dla wymogu reprodukcji i łatwiejszy do
   stabilnej serializacji obiektów po walidacji.

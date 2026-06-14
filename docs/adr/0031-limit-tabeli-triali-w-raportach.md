@@ -1,6 +1,6 @@
 # ADR-0031: Limit tabeli triali w raportach
 
-**Status:** proposed  
+**Status:** accepted
 **Data:** 2026-06-12
 
 ## Kontekst
@@ -12,17 +12,17 @@ archiwizacji. PDF powinien pozostać krótszy i czytelny, ale bez ukrywania fakt
 
 ## Decyzja
 
-Dodajemy pole `analysis.max_report_trials` do schematu konfiguracji jako
-nieujemny limit skróconych sekcji raportowych. Eksport HTML/Markdown dostaje
-opcję „pełna tabela triali”, która domyślnie zapisuje komplet triali, a po
-wyłączeniu stosuje limit z konfiguracji. Eksport PDF zawsze stosuje limit i
-raportuje liczbę pominiętych triali.
+Dodajemy pola `analysis.max_report_trials` i
+`analysis.include_full_trial_table` do schematu konfiguracji. Pierwsze pole jest
+nieujemnym limitem skróconych sekcji raportowych, a drugie kontroluje, czy
+eksport HTML/Markdown ma domyślnie zapisać komplet triali. Eksport PDF zawsze
+stosuje limit i raportuje liczbę pominiętych triali.
 
 ## Konsekwencje
 
 - Konfiguracja kontroluje długość skróconych raportów bez zmiany danych
   źródłowych ani wyników symulacji.
-- HTML/Markdown mogą służyć jako pełniejszy artefakt audytowy trial-by-trial.
+- HTML/Markdown mogą służyć jako pełniejszy artefakt audytowy trial-by-trial, ale konfiguracja może świadomie przełączyć je w tryb skrócony.
 - PDF pozostaje zwięzły, ale jawnie informuje o pominięciach.
 - Wartość `0` jest dozwolona i oznacza świadome ukrycie wierszy triali w
   skróconym widoku.

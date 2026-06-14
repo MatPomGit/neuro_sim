@@ -6,6 +6,7 @@ import subprocess
 import sys
 from dataclasses import asdict, is_dataclass
 from datetime import datetime, timezone
+from hashlib import sha256
 from importlib import metadata as importlib_metadata
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,7 @@ REPRODUCIBILITY_ARTIFACTS = (
     "metadata.json",
     "run_data.npz",
     "event_timeline.json",
+    "run_manifest.json",
 )
 KEY_DEPENDENCIES = ("numpy", "matplotlib", "PyYAML", "PySide6")
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -181,6 +183,73 @@ def _write_run_log(
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def _file_sha256(path: Path) -> str:
+    """Policz skrót SHA-256 zapisanego artefaktu.
+
+    Parameters
+    ----------
+    path:
+        Ścieżka pliku, którego integralność ma być zapisana w manifeście
+        uruchomienia.
+
+    Returns
+    -------
+    str
+        Szesnastkowy skrót SHA-256 zawartości pliku.
+    """
+    digest = sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _write_run_manifest(
+    path: Path,
+    *,
+    artifact_paths: dict[str, str],
+    seed: int | None,
+    duration_s: float | None,
+    environment: dict[str, Any],
+    git_info: dict[str, str | bool | None],
+) -> None:
+    """Zapisz nadrzędny manifest artefaktów pojedynczego uruchomienia.
+
+    Parameters
+    ----------
+    path:
+        Docelowa ścieżka ``run_manifest.json``.
+    artifact_paths:
+        Mapa nazw artefaktów na ścieżki zapisane przez ``save_run``.
+    seed:
+        Ziarno losowości użyte w symulacji.
+    duration_s:
+        Czas wykonania symulacji w sekundach.
+    environment:
+        Informacje o środowisku uruchomieniowym zapisane także w
+        ``environment.json``.
+    git_info:
+        Informacje o commicie, gałęzi i stanie repozytorium zapisane także w
+        ``git_info.json``.
+    """
+    artifact_hashes = {
+        name: _file_sha256(Path(artifact_path))
+        for name, artifact_path in artifact_paths.items()
+        if Path(artifact_path).exists() and name != "run_manifest.json"
+    }
+    manifest = {
+        "format": "neuro-sim-run-manifest-v1",
+        "generated_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "seed": seed,
+        "duration_s": duration_s,
+        "git": git_info,
+        "environment": environment,
+        "artifacts": artifact_paths,
+        "artifact_sha256": artifact_hashes,
+    }
+    _write_json(path, manifest)
+
+
 def build_output_dir(
     scenario: str, label: str | None = None, root: str | Path = "outputs"
 ) -> Path:
@@ -274,6 +343,7 @@ def save_run(
     git_info_path = out / "git_info.json"
     run_log_path = out / "run.log"
     event_timeline_path = out / "event_timeline.json"
+    manifest_path = out / "run_manifest.json"
 
     arrays = {
         "time": np.asarray(time),
@@ -329,12 +399,15 @@ def save_run(
         "git_info.json": str(git_info_path),
         "run.log": str(run_log_path),
         "event_timeline.json": str(event_timeline_path),
+        "run_manifest.json": str(manifest_path),
     }
+    environment_info = collect_environment_info()
+    git_info = collect_git_info(REPO_ROOT)
     _write_json(meta_path, metadata)
     _write_json(config_path, config if config is not None else {})
     _write_json(metrics_path, metrics if metrics is not None else {})
-    _write_json(environment_path, collect_environment_info())
-    _write_json(git_info_path, collect_git_info(REPO_ROOT))
+    _write_json(environment_path, environment_info)
+    _write_json(git_info_path, git_info)
     _write_json(
         event_timeline_path, event_timeline if event_timeline is not None else []
     )
@@ -343,6 +416,14 @@ def save_run(
         seed=seed,
         duration_s=duration_s,
         artifact_paths=artifact_paths,
+    )
+    _write_run_manifest(
+        manifest_path,
+        artifact_paths=artifact_paths,
+        seed=seed,
+        duration_s=duration_s,
+        environment=environment_info,
+        git_info=git_info,
     )
 
     return {
@@ -355,6 +436,7 @@ def save_run(
         "git_info": str(git_info_path),
         "run_log": str(run_log_path),
         "event_timeline": str(event_timeline_path),
+        "manifest": str(manifest_path),
     }
 
 

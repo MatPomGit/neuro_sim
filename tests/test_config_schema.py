@@ -225,6 +225,27 @@ def test_analysis_max_report_trials_rejects_negative_value() -> None:
         validate_config(payload)
 
 
+def test_analysis_include_full_trial_table_is_validated_as_bool() -> None:
+    """Konfiguracja raportu kontroluje pełną tabelę triali jako wartość bool."""
+    payload = _valid_config_payload()
+    payload["analysis"]["include_full_trial_table"] = False
+
+    cfg = validate_config(payload)
+
+    assert cfg.analysis["include_full_trial_table"] is False
+
+
+def test_analysis_include_full_trial_table_rejects_non_bool() -> None:
+    """Niepoprawny typ trybu pełnej tabeli triali daje błąd domenowy."""
+    payload = _valid_config_payload()
+    payload["analysis"]["include_full_trial_table"] = "tak"
+
+    with pytest.raises(
+        ConfigValidationError, match="analysis.include_full_trial_table"
+    ):
+        validate_config(payload)
+
+
 def test_validate_config_does_not_mutate_raw_payload() -> None:
     """Walidacja nie może dopisywać domyślnych pól do surowej konfiguracji."""
     payload = _valid_config_payload()
