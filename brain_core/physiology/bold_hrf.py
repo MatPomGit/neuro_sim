@@ -52,7 +52,9 @@ def canonical_hrf(
         )
     if not np.all(np.isfinite([dt, peak_latency, undershoot_latency, ratio])):
         raise ValueError(
-            f"{CONTRACT_D_POPULATIONS_PHYSIOLOGY}: Parametry HRF (dt, peak_latency, undershoot_latency, ratio) muszą być skończone"
+            f"{CONTRACT_D_POPULATIONS_PHYSIOLOGY}: "
+            "Parametry HRF (dt, peak_latency, undershoot_latency, ratio) "
+            "muszą być skończone"
         )
 
     t = np.arange(length, dtype=float) * dt
