@@ -135,13 +135,17 @@ Punkty wejścia GUI są zgodne i delegują do jednej implementacji:
 `model.simulate()` zwraca:
 
 ```python
-time, activity, diagnostics, oscillations = model.simulate(T=45.0)
+time, activity, diagnostics, oscillations, behavior = model.simulate(T=45.0)
 ```
 
+- `time`: wektor czasu symulacji,
 - `activity`: aktywacje modułów poznawczych,
 - `diagnostics`: błąd predykcji, neuromodulacja, global workspace,
 - `oscillations["eeg"]`: sygnały E-I dla modułów,
-- `oscillations["band_power"]`: chwilowa moc theta/alpha/beta/gamma.
+- `oscillations["band_power"]`: chwilowa moc theta/alpha/beta/gamma,
+- `behavior`: decyzje, latencje, pewność i zdarzenia decyzyjne.
+
+Pipeline kalibracji parametrów jest opisany w `docs/calibration_pipeline.md`.
 
 ## GUI do konfiguracji parametrów
 
@@ -220,7 +224,7 @@ model = CognitiveBrainModel(
     seed=7,
 )
 
-time, activity, diagnostics, oscillations = model.simulate(T=45.0)
+time, activity, diagnostics, oscillations, behavior = model.simulate(T=45.0)
 ```
 
 ## Dokumentacja struktury programu

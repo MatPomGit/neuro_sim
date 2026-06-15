@@ -43,7 +43,7 @@ def main() -> None:
     logger = configure_simulation_logger(name="neuro_sim.main")
     model = CognitiveBrainModel(seed=args.seed, stimulus=args.scenario)
     start = pytime.perf_counter()
-    time, activity, diagnostics, oscillations = model.simulate(T=args.time)
+    time, activity, diagnostics, oscillations, _behavior = model.simulate(T=args.time)
     elapsed = pytime.perf_counter() - start
 
     if args.save:

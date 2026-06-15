@@ -65,6 +65,7 @@ brain_model/
 Najważniejsze odpowiedzialności:
 
 - `model.py` i `params.py` przechowują główny model poznawczy oraz parametry uruchomienia.
+- `calibration.py` udostępnia pomocniczy sweep parametrów; pełny przebieg, kontrakt danych i artefakty opisuje `docs/calibration_pipeline.md`.
 - `oscillators.py`, `connectivity.py`, `plasticity.py` i `stimuli.py` obsługują dynamikę, bodźce i mechanikę modelu.
 - `scenarios/` zawiera katalog scenariuszy oraz typy scenariuszy używane przez GUI i testy.
 - `gui_*` rozdzielają stan, układ, formularze i uruchamianie GUI; GUI nie powinno przejmować logiki domenowej.
