@@ -61,6 +61,35 @@ Interpretacja:
 
 ## Instalacja
 
+### Uruchomienie w środowisku venv
+
+Poniższe polecenia tworzą lokalne środowisko wirtualne, instalują pakiet i uruchamiają przykładowe symulacje oraz desktopowe GUI. Polecenie `python -m pip install .` instaluje zależności runtime z `pyproject.toml`, w tym `PySide6`, `numpy`, `matplotlib` i `PyYAML`.
+
+Linux/macOS:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install .
+
+# Uruchomienie symulacji (wybierz jedną z opcji):
+python -m brain_core.simulation.run --config configs/default.yaml
+# lub:
+neuro-sim-run --config configs/cognitive_demo.yaml
+
+# Uruchomienie GUI (wybierz jedną z opcji):
+python main_gui.py
+# lub:
+neuro-sim-gui
+```
+
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
 Instalacja pakietu pobiera zależności uruchomieniowe, w tym `numpy`, `matplotlib`, `PyYAML` oraz `PySide6` wymagane przez desktopowe GUI:
 
 ```bash
