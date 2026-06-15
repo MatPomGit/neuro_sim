@@ -62,9 +62,16 @@ def run_sweep(
         params = replace(BrainParams(), **param_set)
 
         model = CognitiveBrainModel(params=params, stimulus=scenario, seed=run_seed)
-        time, activity, diagnostics, oscillations = model.simulate(T=time_horizon)
+        time, activity, diagnostics, oscillations, behavior = model.simulate(
+            T=time_horizon
+        )
         evaluation = evaluate_run(
-            time, activity, diagnostics, oscillations, scenario=scenario
+            time,
+            activity,
+            diagnostics,
+            oscillations,
+            scenario=scenario,
+            behavior=behavior,
         )
 
         row = {
