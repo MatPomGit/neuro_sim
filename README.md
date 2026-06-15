@@ -61,6 +61,8 @@ Interpretacja:
 
 ## Instalacja
 
+Szybki przewodnik uruchomienia projektu w lokalnym środowisku `venv` znajduje się w [`docs/quickstart_venv.md`](docs/quickstart_venv.md).
+
 ### Uruchomienie w środowisku venv
 
 Poniższe polecenia tworzą lokalne środowisko wirtualne, instalują pakiet i uruchamiają przykładowe symulacje oraz desktopowe GUI. Polecenie `python -m pip install .` instaluje zależności runtime z `pyproject.toml`, w tym `PySide6`, `numpy`, `matplotlib` i `PyYAML`.
