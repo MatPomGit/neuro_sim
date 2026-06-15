@@ -110,6 +110,14 @@ pip install numpy matplotlib PyYAML PySide6
 python main.py
 ```
 
+### Punkty wejścia aplikacji
+
+| Cel | Polecenie w repozytorium | Polecenie po pip install . | Konfiguracja / Parametry | Uwagi |
+| --- | --- | --- | --- | --- |
+| CLI symulacji | `python -m brain_core.simulation.run --config configs/default.yaml` | `neuro-sim-run --config configs/cognitive_demo.yaml` | `configs/default.yaml`, `configs/cognitive_demo.yaml` | Zalecany punkt wejścia do uruchomień opartych o pliki YAML/JSON i wspólny silnik `brain_core.simulation`. |
+| Desktop GUI | `python main_gui.py` | `neuro-sim-gui` | Scenariusze i presety dostępne w GUI, w tym konfiguracje z katalogu `configs/`. | Nowe przepływy desktopowe powinny używać PySide6/Qt zgodnie z ADR-0016 i aktualnymi zasadami projektu. |
+| Główny punkt aplikacji | `python main.py` | `neuro-sim` | Parametry CLI, np. `--scenario reward-learning --time 45 --seed 7`. | Punkt wejścia pozostaje wspierany jako główne uruchomienie aplikacji i deleguje do klasycznego przepływu symulacji z wykresami. |
+
 ## Struktura
 
 Repozytorium jest podzielone na warstwę modelu poznawczego (`brain_model/`), warstwę eksperymentów i analiz (`brain_core/`), konfiguracje (`configs/`), dane (`data/`), dokumentację (`docs/`) oraz testy (`tests/`). Szczegółowy i aktualny opis znajduje się w `docs/program_structure.md`.
