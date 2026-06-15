@@ -163,7 +163,7 @@ następnie uzupełnia walidację, GUI oraz zakres dydaktyczny P1/P2.
   tests/test_gui_dependencies_static.py` oraz statyczna kontrola braku nowych
   przepływów `tkinter`.
 
-#### 6. P1/P2: `BL-EDU-01` i `BL-EDU-02` — katalog lekcji oraz tryb nauczyciela
+#### 6. P1: `BL-EDU-01` i `BL-EDU-02` — katalog lekcji oraz tryb nauczyciela
 
 - **Cel:** przygotować katalog lekcji i prowadzenie użytkownika przez hipotezę,
   uruchomienie, obserwację metryk oraz interpretację ograniczeń.
