@@ -112,7 +112,7 @@ python main.py
 
 ### Punkty wejścia aplikacji
 
-| Cel | Polecenie w repozytorium | Polecenie po pip install . | Przykładowa konfiguracja | Uwagi |
+| Cel | Polecenie w repozytorium | Polecenie po pip install . | Konfiguracja / Parametry | Uwagi |
 | --- | --- | --- | --- | --- |
 | CLI symulacji | `python -m brain_core.simulation.run --config configs/default.yaml` | `neuro-sim-run --config configs/cognitive_demo.yaml` | `configs/default.yaml`, `configs/cognitive_demo.yaml` | Zalecany punkt wejścia do uruchomień opartych o pliki YAML/JSON i wspólny silnik `brain_core.simulation`. |
 | Desktop GUI | `python main_gui.py` | `neuro-sim-gui` | Scenariusze i presety dostępne w GUI, w tym konfiguracje z katalogu `configs/`. | Nowe przepływy desktopowe powinny używać PySide6/Qt zgodnie z ADR-0016 i aktualnymi zasadami projektu. |
