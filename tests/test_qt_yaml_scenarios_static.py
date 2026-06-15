@@ -134,6 +134,26 @@ def test_teacher_panels_do_not_import_task_protocols() -> None:
     assert "TaskStimulusPlayer" not in source
 
 
+def test_qt_results_have_teacher_lesson_panel_without_task_protocols() -> None:
+    """Panel lekcji nauczyciela korzysta z YAML i artefaktów, nie z protokołów."""
+    source = _source(QT_RESULTS_PATH)
+
+    assert "class TeacherLessonPanel" in source
+    assert "Hipoteza przed uruchomieniem" in source
+    assert "Ograniczenia interpretacyjne" in source
+    assert "learning_goal_pl" in source
+    assert "pre_run_questions_pl" in source
+    assert "expected_observations_pl" in source
+    assert "post_run_questions_pl" in source
+    assert "next_run_changes" in source
+    assert "scenario_config" in source
+    assert "comparison_config" in source
+    assert "brain_core.experiments.protocols" not in source
+    assert "from brain_core.experiments" not in source
+    assert "get_task" not in source
+    assert "TaskStimulusPlayer" not in source
+
+
 def test_qt_runner_delegates_execution_to_brain_core_engine_only() -> None:
     """Worker GUI buduje konfigurację i deleguje wykonanie do `run_experiment`."""
     source = _source(QT_RUNNER_PATH)

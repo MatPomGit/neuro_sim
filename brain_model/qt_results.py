@@ -786,6 +786,187 @@ class ObservationPanel(QWidget):
         return observations
 
 
+class TeacherLessonPanel(QWidget):
+    """Panel lekcji nauczyciela budowany z metadanych YAML i artefaktów GUI."""
+
+    SECTION_TITLES = (
+        "Hipoteza przed uruchomieniem",
+        "Co uruchomiono",
+        "Co obserwujesz",
+        "Jak interpretować wynik",
+        "Ograniczenia interpretacyjne",
+        "Pytania kontrolne",
+        "Co zmienić w kolejnym uruchomieniu",
+    )
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Utwórz panel dydaktyczny bez importowania protokołów zadań."""
+        super().__init__(parent)
+        self.section_labels: dict[str, QLabel] = {}
+        layout = QVBoxLayout(self)
+        hint = QLabel(
+            "Panel korzysta wyłącznie z GuiState, event_timeline, profilu "
+            "klinicznego, raportu analizy oraz metadanych lekcji YAML."
+        )
+        hint.setWordWrap(True)
+        layout.addWidget(hint)
+
+        for title in self.SECTION_TITLES:
+            group = QGroupBox(title)
+            group_layout = QVBoxLayout(group)
+            label = QLabel("Uruchom lekcję, aby wypełnić tę sekcję.")
+            label.setWordWrap(True)
+            label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            self.section_labels[title] = label
+            group_layout.addWidget(label)
+            layout.addWidget(group)
+        layout.addStretch(1)
+
+    def set_context(
+        self,
+        lesson: dict[str, Any],
+        state: GuiState,
+        events: list[dict[str, Any]],
+        clinical_profile: dict[str, Any],
+        analysis_report: dict[str, Any],
+    ) -> None:
+        """Wypełnij lekcję z gotowych artefaktów GUI i wyników silnika.
+
+        Parameters
+        ----------
+        lesson:
+            Metadane lekcji wczytane z pliku ``configs/lessons/*.yaml``.
+        state:
+            Aktualny stan GUI z wybranym scenariuszem, konfiguracją i ziarnem.
+        events:
+            Oś czasu zdarzeń zwrócona przez silnik w polu ``event_timeline``.
+        clinical_profile:
+            Profil kliniczny z konfiguracji albo wyniku silnika.
+        analysis_report:
+            Raport analityczny zwrócony przez silnik po uruchomieniu scenariusza.
+        """
+        self.section_labels["Hipoteza przed uruchomieniem"].setText(
+            self._bullet_list(lesson.get("pre_run_questions_pl"))
+            or str(lesson.get("learning_goal_pl", "Brak celu lekcji w metadanych."))
+        )
+        self.section_labels["Co uruchomiono"].setText(
+            "\n".join(
+                (
+                    f"• Cel lekcji: {lesson.get('learning_goal_pl', 'n/a')}",
+                    f"• Scenariusz GUI: {state.scenario}",
+                    f"• Konfiguracja scenariusza: "
+                    f"{lesson.get('scenario_config') or state.scenario_config_path}",
+                    f"• Konfiguracja porównania: "
+                    f"{lesson.get('comparison_config') or state.comparison_config_path}",
+                    f"• Ziarno losowości z GUI: {state.seed}",
+                )
+            )
+        )
+        self.section_labels["Co obserwujesz"].setText(
+            self._build_observation_text(
+                lesson=lesson,
+                events=events,
+                clinical_profile=clinical_profile,
+                analysis_report=analysis_report,
+            )
+        )
+        self.section_labels["Jak interpretować wynik"].setText(
+            self._build_interpretation_text(lesson, clinical_profile, analysis_report)
+        )
+        self.section_labels["Ograniczenia interpretacyjne"].setText(
+            "\n".join(
+                (
+                    "• To jest dydaktyczna symulacja modelu, a nie wynik badania pacjenta.",
+                    "• Wnioski należy opierać na artefaktach bieżącego uruchomienia, "
+                    "nie na ukrytej logice protokołu zadania.",
+                    "• Metryki i profile kliniczne są jakościowymi wskazówkami "
+                    "edukacyjnymi, nie podstawą diagnozy klinicznej.",
+                )
+            )
+        )
+        self.section_labels["Pytania kontrolne"].setText(
+            self._bullet_list(lesson.get("post_run_questions_pl"))
+            or "• Brak pytań kontrolnych w metadanych lekcji."
+        )
+        self.section_labels["Co zmienić w kolejnym uruchomieniu"].setText(
+            self._format_next_run_changes(lesson.get("next_run_changes"))
+        )
+
+    def _build_observation_text(
+        self,
+        lesson: dict[str, Any],
+        events: list[dict[str, Any]],
+        clinical_profile: dict[str, Any],
+        analysis_report: dict[str, Any],
+    ) -> str:
+        """Zbuduj opis obserwacji z oczekiwań lekcji i artefaktów silnika."""
+        lines = self._bullet_list(lesson.get("expected_observations_pl")).splitlines()
+        lines.append(f"• Liczba zdarzeń na osi czasu: {len(events)}.")
+        if events:
+            event_types = sorted(
+                {str(event.get("event_type", "n/a")) for event in events}
+            )
+            lines.append(f"• Typy zdarzeń: {', '.join(event_types)}.")
+        profile_name = clinical_profile.get("display_name") or clinical_profile.get(
+            "id"
+        )
+        if profile_name:
+            lines.append(f"• Profil kliniczny w wyniku: {profile_name}.")
+        metrics = analysis_report.get("metrics", {}) if analysis_report else {}
+        if isinstance(metrics, dict) and metrics:
+            metric_names = ", ".join(str(name) for name in list(metrics)[:5])
+            lines.append(f"• Widoczne metryki raportu: {metric_names}.")
+        return "\n".join(lines) if lines else "• Brak obserwacji do pokazania."
+
+    def _build_interpretation_text(
+        self,
+        lesson: dict[str, Any],
+        clinical_profile: dict[str, Any],
+        analysis_report: dict[str, Any],
+    ) -> str:
+        """Zbuduj ostrożną interpretację z celu lekcji, profilu i raportu."""
+        lines = [f"• Odnieś wynik do celu: {lesson.get('learning_goal_pl', 'n/a')}."]
+        mechanism = clinical_profile.get("mechanism")
+        if mechanism:
+            lines.append(f"• Mechanizm profilu wskazuje, czego oczekiwać: {mechanism}.")
+        roving_report = (
+            analysis_report.get("roving_oddball", {}) if analysis_report else {}
+        )
+        if isinstance(roving_report, dict) and roving_report:
+            lines.append(
+                "• W roving oddball porównaj standardy, dewianty, habituację "
+                "i readaptację opisane w raporcie."
+            )
+        return "\n".join(lines)
+
+    def _bullet_list(self, value: Any) -> str:
+        """Sformatuj wartość YAML jako polską listę punktowaną."""
+        if isinstance(value, list):
+            return "\n".join(f"• {item}" for item in value)
+        if value:
+            return f"• {value}"
+        return ""
+
+    def _format_next_run_changes(self, value: Any) -> str:
+        """Sformatuj sugestie zmian kolejnego uruchomienia z metadanych lekcji."""
+        if not isinstance(value, list) or not value:
+            return "• Brak sugestii zmian w metadanych lekcji."
+        lines: list[str] = []
+        for change in value:
+            if isinstance(change, dict):
+                lines.append(
+                    "• {element}: {current} → {next_value}. Uzasadnienie: {reason}".format(
+                        element=el if (el := change.get("element")) is not None else "parametr",
+                        current=cur if (cur := change.get("current_value")) is not None else "n/a",
+                        next_value=nxt if (nxt := change.get("next_value")) is not None else "n/a",
+                        reason=reas if (reas := change.get("reason")) is not None else "brak uzasadnienia",
+                    )
+                )
+            else:
+                lines.append(f"• {change}")
+        return "\n".join(lines)
+
+
 class ProfileComparisonPanel(QWidget):
     """Panel tabeli porównawczej profili klinicznych zwróconej przez silnik."""
 

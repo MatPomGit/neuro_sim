@@ -34,6 +34,28 @@ Każda lekcja w GUI powinna być omawiana w stałej kolejności, aby prowadzący
 4. Kliknij **Uruchom symulację**.
 5. Po zakończeniu przejdź do zakładek **Wykresy**, **Oś czasu zdarzeń**, **Profil kliniczny**, **Co obserwujesz?** i **Pytania kontrolne**.
 
+## Tryb nauczyciela w wynikach
+
+Tryb nauczyciela w zakładkach wynikowych porządkuje lekcję po uruchomieniu scenariusza. Widok `TeacherLessonPanel` nie odtwarza logiki zadań i nie importuje protokołów z `brain_core.experiments`. Jego źródłem prawdy są wyłącznie artefakty dostępne już w GUI i wyniku silnika:
+
+- `GuiState` — aktualny scenariusz, ścieżka konfiguracji YAML, ścieżka konfiguracji porównania i seed widoczny w formularzu;
+- `event_timeline` — oś czasu zdarzeń wygenerowana przez silnik;
+- `clinical_profile` — profil kliniczny z konfiguracji albo raportu;
+- `analysis_report` — metryki i sekcje analityczne wygenerowane przez `run_experiment`;
+- `configs/lessons/*.yaml` — metadane lekcji: cel, pytania przed uruchomieniem, oczekiwane obserwacje, pytania po uruchomieniu i sugerowane zmiany następnego przebiegu.
+
+Panel ma stałą strukturę dydaktyczną zgodną z przebiegiem zajęć:
+
+1. **Hipoteza przed uruchomieniem** — wypełniana z `pre_run_questions_pl`, a pomocniczo z `learning_goal_pl`, aby uczestnicy zapisali oczekiwany kierunek efektu przed obejrzeniem wyniku.
+2. **Co uruchomiono** — pokazuje cel lekcji, scenariusz z `GuiState`, `scenario_config`, `comparison_config` i seed, czyli minimalny kontekst potrzebny do odtworzenia przebiegu.
+3. **Co obserwujesz** — łączy `expected_observations_pl` z liczbą i typami zdarzeń na osi czasu, profilem klinicznym oraz najważniejszymi metrykami raportu.
+4. **Jak interpretować wynik** — przypomina cel lekcji, mechanizm profilu i, jeżeli raport zawiera odpowiednią sekcję, wskazówki interpretacyjne dla roving oddball.
+5. **Ograniczenia interpretacyjne** — jasno zaznacza, że wynik jest dydaktyczną symulacją, nie badaniem pacjenta ani podstawą diagnozy klinicznej.
+6. **Pytania kontrolne** — korzystają z `post_run_questions_pl` i służą do sprawdzenia, czy uczestnicy potrafią uzasadnić wynik na podstawie artefaktów.
+7. **Co zmienić w kolejnym uruchomieniu** — formatuje `next_run_changes`, aby prowadzący mógł zaplanować porównanie profilu, parametru albo konfiguracji w następnym przebiegu.
+
+Takie rozdzielenie utrzymuje tryb nauczyciela jako warstwę prezentacji: GUI pokazuje i komentuje gotowe artefakty, natomiast wybór bodźców, walidacja konfiguracji, losowość i raport analityczny pozostają odpowiedzialnością silnika oraz plików YAML. Dzięki temu opis lekcji jest replikowalny i może być porównany z eksportowanym `plan_lekcji.md`.
+
 ## Jak czytać panel „Co obserwujesz teraz?”
 
 Panel **Co obserwujesz teraz?** syntetyzuje artefakty zwrócone przez silnik:
