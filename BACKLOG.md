@@ -61,9 +61,7 @@ Na dzień 2026-06-05 status nie jest prognozą wdrożenia, tylko krótką oceną
 | BL-TL-01 | P0 | Rozszerzyć timeline o grupowanie trial-by-trial i powiązania z wykresami. | Kompletność raportu trial-by-trial | Raport dla `roving_oddball` pokazuje numer triala, typ bodźca, odpowiedź, metryki i komentarz mechanizmu. |
 | BL-SNN-01 | P1 | Zmierzyć koszt `report_only` vs `closed_loop` SNN dla tej samej konfiguracji, seeda i czasu symulacji. | Koszt `closed_loop` SNN | Raport zawiera czas wykonania, długości sygnałów, amplitudę feedbacku i rekomendację, czy wariant nadaje się do GUI. |
 | BL-GUI-01 | P1 | Dodać w GUI dydaktyczne opisy presetów YAML dla `roving_oddball` i `snn_hippocampus_demo`. | Interpretacja benchmarków, koszt `closed_loop` SNN | Użytkownik widzi polski opis celu, oczekiwany efekt, ograniczenia i link do konfiguracji bez duplikowania logiki silnika. |
-| BL-EDU-01 | P1 | Zaprojektować profesjonalny katalog scenariuszy dydaktycznych: lekcja, cel, czas, poziom trudności, profil, task, pytania kontrolne i oczekiwany raport. | Gotowość aplikacji do zajęć | Co najmniej 3 scenariusze mają kartę lekcji, konfigurację YAML, oczekiwane obserwacje, pytania kontrolne i kryteria oceny odpowiedzi. |
-| BL-EDU-02 | P1 | Rozbudować tryb nauczyciela o prowadzenie użytkownika krok po kroku przez hipotezę, uruchomienie, obserwację metryk i interpretację ograniczeń. | Kompletność raportu trial-by-trial, interpretacja benchmarków | Widok nauczyciela pokazuje checklistę lekcji, komentarze per etap, ostrzeżenie przed interpretacją diagnostyczną i link do raportu porównawczego. |
-| BL-EDU-03 | P2 | Dodać eksport pakietu dydaktycznego dla zajęć: raport HTML/PDF, skrót dla prowadzącego, karta pracy studenta i metadane konfiguracji. | Replikowalność zajęć | Eksport zawiera konfigurację, seed, wersję kodu, metryki, wykresy, komentarze dydaktyczne i pytania kontrolne bez ręcznego kopiowania z GUI. |
+| BL-EDU-01 | P1 | Zaprojektować profesjonalny katalog scenariuszy dydaktycznych: lekcja, cel, czas, poziom trudności, profil, task, pytania kontrolne i oczekiwany raport. | Gotowość aplikacji do zajęć | Co najmniej 3 scenariusze mają kartę lekcji, konfigurację YAML, oczekiwane obserwacje, pytania kontrolne i kryteria oceny odpowiedzi; widoki i eksport przedstawiają metryki wyłącznie jako dydaktyczną interpretację modelu, nie jako diagnozę kliniczną. |\n| BL-EDU-02 | P1 | Rozbudować tryb nauczyciela o prowadzenie użytkownika krok po kroku przez hipotezę, uruchomienie, obserwację metryk i interpretację ograniczeń. | Kompletność raportu trial-by-trial, interpretacja benchmarków | Widok nauczyciela pokazuje checklistę lekcji, komentarze per etap, ostrzeżenie przed interpretacją diagnostyczną, link do raportu porównawczego oraz metryki opisane wyłącznie jako dydaktyczna interpretacja modelu, nie jako diagnoza kliniczna. |\n| BL-EDU-03 | P2 | Dodać eksport pakietu dydaktycznego dla zajęć: raport HTML/PDF, skrót dla prowadzącego, karta pracy studenta i metadane konfiguracji. | Replikowalność zajęć | Eksport zawiera konfigurację, seed, wersję kodu, metryki, wykresy, komentarze dydaktyczne i pytania kontrolne bez ręcznego kopiowania z GUI; widoki i eksport nie przedstawiają metryk jako diagnozy klinicznej, tylko jako dydaktyczną interpretację modelu. |
 | BL-VAL-01 | P1 | Uzupełnić rejestr walidacji o kryteria zgodności, źródła i poziomy walidacji per benchmark. | Interpretacja benchmarków | Rejestr wskazuje efekty odtworzone jakościowo, częściowo odtworzone i pozostające poza zakresem. |
 
 ### Plan najbliższej iteracji
@@ -167,8 +165,12 @@ następnie uzupełnia walidację, GUI oraz zakres dydaktyczny P1/P2.
 
 - **Cel:** przygotować katalog lekcji i prowadzenie użytkownika przez hipotezę,
   uruchomienie, obserwację metryk oraz interpretację ograniczeń.
-- **Zależności:** trial-by-trial timeline, porównanie `roving_oddball`, polskie
-  opisy presetów YAML i rejestr walidacji.
+- **Zależności:** przed pełną implementacją trybu nauczyciela muszą być
+  spełnione `BL-TL-01` (raport trial-by-trial dla `roving_oddball`),
+  `BL-ROV-01` (porównanie healthy/disorder/lesion na wspólnym seedzie),
+  `BL-CLIN-01` (skalibrowane progi clinical profiles) i `BL-VAL-01`
+  (rejestr walidacji z kryteriami zgodności); dodatkowo wymagane są polskie
+  opisy presetów YAML.
 - **Główne pliki:** `brain_model/qt_app.py`, `brain_model/qt_sections.py`,
   `brain_model/qt_state.py`, `brain_model/qt_config.py`,
   `docs/english_polish_glossary.md`, `docs/roving_oddball_guide.md`,
@@ -176,7 +178,9 @@ następnie uzupełnia walidację, GUI oraz zakres dydaktyczny P1/P2.
 - **Kryterium akceptacji:** co najmniej 3 scenariusze mają kartę lekcji,
   konfigurację YAML, oczekiwane obserwacje, pytania kontrolne i kryteria oceny;
   widok nauczyciela pokazuje checklistę, komentarze per etap, ostrzeżenie przed
-  interpretacją diagnostyczną i link do raportu porównawczego.
+  interpretacją diagnostyczną i link do raportu porównawczego; widoki i eksport
+  przedstawiają metryki wyłącznie jako dydaktyczną interpretację modelu, nie
+  jako diagnozę kliniczną.
 - **Minimalny zestaw testów lub kontroli statycznych:** `ruff check .`,
   `black --check .`, `pytest tests/test_qt_sections.py tests/test_gui_state.py
   tests/test_gui_layout_static.py` oraz kontrola zgodności pojęć z glosariuszem.
@@ -186,14 +190,17 @@ następnie uzupełnia walidację, GUI oraz zakres dydaktyczny P1/P2.
 - **Cel:** umożliwić eksport kompletnego pakietu zajęciowego: raportu HTML/PDF,
   skrótu dla prowadzącego, karty pracy studenta i metadanych konfiguracji.
 - **Zależności:** katalog lekcji i tryb nauczyciela z `BL-EDU-01`/`BL-EDU-02`,
-  raport porównawczy, timeline trial-by-trial oraz mechanizm eksportu raportów.
+  a przed pełną implementacją trybu nauczyciela także `BL-TL-01`, `BL-ROV-01`,
+  `BL-CLIN-01` i `BL-VAL-01`; wymagane są raport porównawczy, timeline
+  trial-by-trial oraz mechanizm eksportu raportów.
 - **Główne pliki:** `brain_model/report_export.py`, `brain_core/analysis/reports.py`,
   `brain_model/qt_sections.py`, `brain_model/qt_app.py`,
   `docs/roving_oddball_guide.md`, `tests/test_observation_and_analysis.py`,
   `tests/test_qt_sections.py`.
 - **Kryterium akceptacji:** eksport zawiera konfigurację, seed, wersję kodu,
   metryki, wykresy, komentarze dydaktyczne i pytania kontrolne bez ręcznego
-  kopiowania z GUI.
+  kopiowania z GUI; eksport nie przedstawia metryk jako diagnozy klinicznej,
+  tylko jako dydaktyczną interpretację modelu.
 - **Minimalny zestaw testów lub kontroli statycznych:** `ruff check .`,
   `black --check .`, `pytest tests/test_observation_and_analysis.py
   tests/test_qt_sections.py` oraz kontrola kompletności metadanych eksportu.
