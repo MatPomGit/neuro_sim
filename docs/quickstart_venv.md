@@ -74,7 +74,7 @@ neuro-sim-run --config configs/cognitive_demo.yaml
 
 ## Uruchomienie GUI
 
-Desktopowe GUI można uruchomić bezpośrednio z pliku wejściowego:
+Desktopowe GUI można uruchomić bezpośrednio ze skryptu głównego:
 
 ```bash
 python main_gui.py
