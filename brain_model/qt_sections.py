@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from .gui_labels import COMMAND_LABELS, COMMAND_VALUES, PARAMETER_DESCRIPTIONS
 from .gui_state import GuiState
+from .lesson_catalog import lesson_by_label, load_lesson_catalog
 from .qt_config import (
     comparison_config_description_for_label,
     comparison_config_path_for_label,
@@ -259,34 +260,6 @@ PLOT_LABELS = {
     "scenario_timeline": "oś czasu scenariusza (fazy i zdarzenia)",
 }
 
-READY_LESSON_PRESETS: tuple[tuple[str, str, str], ...] = (
-    (
-        "roving_oddball_intro",
-        "Lekcja: roving oddball — standard, dewiant i habituacja",
-        label_for_scenario_yaml_path("configs/roving_oddball_healthy.yaml"),
-    ),
-    (
-        "go_nogo_inhibition",
-        "Lekcja: go/no-go — hamowanie reakcji",
-        label_for_scenario_yaml_path("configs/scenario_yaml_go_nogo_gaba.yaml"),
-    ),
-    (
-        "n_back_working_memory",
-        "Lekcja: n-back — pamięć robocza i aktualizacja",
-        label_for_scenario_yaml_path("configs/scenario_yaml_n_back_dopamine.yaml"),
-    ),
-    (
-        "gaba_disorder_comparison",
-        "Rozszerzenie: dysregulacja GABA i odpowiedź na dewiant",
-        label_for_scenario_yaml_path("configs/roving_oddball_disorder_gaba.yaml"),
-    ),
-    (
-        "hippocampal_lesion_comparison",
-        "Rozszerzenie: lezja hipokampa i readaptacja",
-        label_for_scenario_yaml_path("configs/roving_oddball_lesion_hippocampus.yaml"),
-    ),
-)
-
 
 class QtSections:
     """Buduje sekcje formularza i synchronizuje je ze stanem GUI."""
@@ -330,8 +303,8 @@ class QtSections:
         layout.addRow("Pojedynczy eksperyment / Porównaj profile", mode_group)
 
         self.ready_lesson_combo = QComboBox()
-        for lesson_id, lesson_label, _config_label in READY_LESSON_PRESETS:
-            self.ready_lesson_combo.addItem(lesson_label, lesson_id)
+        for lesson in load_lesson_catalog():
+            self.ready_lesson_combo.addItem(lesson.label_pl, lesson.id)
         self.ready_lesson_combo.setCurrentIndex(-1)
         self.ready_lesson_combo.setToolTip(
             "Lekcja jest wyborem nadrzędnym: ustawia istniejącą konfigurację YAML, "
@@ -474,16 +447,10 @@ class QtSections:
         if not hasattr(self, "scenario_config_combo"):
             return
         selected_label = self.ready_lesson_combo.currentText()
-        lesson_config_label = next(
-            (
-                config_label
-                for _lesson_id, lesson_label, config_label in READY_LESSON_PRESETS
-                if lesson_label == selected_label
-            ),
-            "",
-        )
-        if not lesson_config_label:
+        lesson = lesson_by_label(selected_label)
+        if lesson is None:
             return
+        lesson_config_label = label_for_scenario_yaml_path(lesson.scenario_config)
         if self.scenario_config_combo.currentText() == lesson_config_label:
             self.apply_scenario_yaml_config()
             return

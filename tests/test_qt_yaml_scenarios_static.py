@@ -76,13 +76,11 @@ def test_qt_sections_expose_ready_lessons_as_yaml_presets() -> None:
     source = _source(QT_SECTIONS_PATH)
     lesson_source = _function_source(QT_SECTIONS_PATH, "apply_ready_lesson")
 
-    assert "READY_LESSON_PRESETS" in source
-    assert "roving_oddball_intro" in source
-    assert "go_nogo_inhibition" in source
-    assert "n_back_working_memory" in source
-    assert "gaba_disorder_comparison" in source
-    assert "hippocampal_lesion_comparison" in source
+    assert "load_lesson_catalog" in source
+    assert "lesson_by_label" in source
+    assert "READY_LESSON_PRESETS" not in source
     assert "self.ready_lesson_combo" in source
+    assert "label_for_scenario_yaml_path(lesson.scenario_config)" in lesson_source
     assert (
         "write_combo_box(self.scenario_config_combo, lesson_config_label)"
         in lesson_source
