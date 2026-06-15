@@ -217,6 +217,7 @@ Nowy przepływ pracy w GUI składa się z kilku kroków:
 3. **Wyniki i wykresy** – po zakończeniu symulacji przejrzyj podsumowanie metryk, zapisane wyniki oraz wykresy aktywności, diagnostyki i pasm EEG.
 4. **Presety wykresów** – użyj gotowych zestawów wykresów, aby szybko przełączać się między widokiem przeglądowym, diagnostycznym i EEG bez ręcznego zaznaczania każdej serii.
 5. **Sugerowany czas scenariusza** – GUI podpowiada czas symulacji dopasowany do wybranego scenariusza, który można zaakceptować albo zmienić ręcznie.
+6. **Tryb nauczyciela** – panel lekcji w wynikach porządkuje hipotezę, uruchomioną konfigurację, obserwacje, interpretację, ograniczenia, pytania kontrolne i sugestie kolejnego przebiegu na podstawie `GuiState`, `event_timeline`, `clinical_profile`, `analysis_report` oraz metadanych `configs/lessons/*.yaml`; GUI nie importuje w tym celu protokołów zadań z `brain_core.experiments`.
 
 ### Komendy GUI do eksperymentów badawczych
 
