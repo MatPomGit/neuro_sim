@@ -956,10 +956,10 @@ class TeacherLessonPanel(QWidget):
             if isinstance(change, dict):
                 lines.append(
                     "• {element}: {current} → {next_value}. Uzasadnienie: {reason}".format(
-                        element=change.get("element", "parametr"),
-                        current=change.get("current_value", "n/a"),
-                        next_value=change.get("next_value", "n/a"),
-                        reason=change.get("reason", "brak uzasadnienia"),
+                        element=el if (el := change.get("element")) is not None else "parametr",
+                        current=cur if (cur := change.get("current_value")) is not None else "n/a",
+                        next_value=nxt if (nxt := change.get("next_value")) is not None else "n/a",
+                        reason=reas if (reas := change.get("reason")) is not None else "brak uzasadnienia",
                     )
                 )
             else:
