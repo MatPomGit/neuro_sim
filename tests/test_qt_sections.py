@@ -195,18 +195,15 @@ def test_quick_start_has_lesson_and_yaml_selection() -> None:
 
 
 def test_ready_lessons_point_to_yaml_labels() -> None:
-    """Gotowe lekcje wskazują etykiety presetów YAML zamiast własnej konfiguracji."""
+    """Gotowe lekcje wskazują etykiety presetów YAML przez katalog lekcji."""
     source = QT_SECTIONS_PATH.read_text(encoding="utf-8")
+    lesson_source = _method_source(QT_SECTIONS_PATH, "apply_ready_lesson")
 
-    assert "READY_LESSON_PRESETS" in source
+    assert "load_lesson_catalog" in source
+    assert "lesson_by_label" in source
+    assert "READY_LESSON_PRESETS" not in source
+    assert "label_for_scenario_yaml_path(lesson.scenario_config)" in lesson_source
     assert (
-        'label_for_scenario_yaml_path("configs/roving_oddball_healthy.yaml")' in source
-    )
-    assert (
-        'label_for_scenario_yaml_path("configs/scenario_yaml_go_nogo_gaba.yaml")'
-        in source
-    )
-    assert (
-        'label_for_scenario_yaml_path("configs/scenario_yaml_n_back_dopamine.yaml")'
-        in source
+        "write_combo_box(self.scenario_config_combo, lesson_config_label)"
+        in lesson_source
     )
