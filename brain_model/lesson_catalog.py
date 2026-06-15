@@ -226,8 +226,9 @@ def _lesson_from_payload(path: Path, payload: dict[str, Any]) -> LessonCatalogIt
         if not isinstance(payload[field_name], str) or not payload[field_name].strip():
             raise ValueError(f"Lekcja {lesson_name} ma niepoprawne pole {field_name}.")
     comparison_config = payload["comparison_config"]
-    if comparison_config is not None and not isinstance(comparison_config, str):
-        raise ValueError(f"Lekcja {lesson_name} ma niepoprawne pole comparison_config.")
+    if comparison_config is not None:
+        if not isinstance(comparison_config, str) or not comparison_config.strip():
+            raise ValueError(f"Lekcja {lesson_name} ma niepoprawne pole comparison_config.")
     estimated_duration_min = payload["estimated_duration_min"]
     if not isinstance(estimated_duration_min, int) or estimated_duration_min <= 0:
         raise ValueError(
