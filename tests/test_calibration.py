@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from brain_model.calibration import run_sweep
 
 
-def test_run_sweep_accepts_current_simulation_result_contract(tmp_path: Any) -> None:
+def test_run_sweep_accepts_current_simulation_result_contract(tmp_path: Path) -> None:
     """Sweep kalibracyjny używa pełnego kontraktu wyniku symulacji z zachowaniem."""
     results = run_sweep(
         scenario="reward-learning",
