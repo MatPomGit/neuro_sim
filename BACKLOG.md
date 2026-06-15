@@ -66,6 +66,138 @@ Na dzień 2026-06-05 status nie jest prognozą wdrożenia, tylko krótką oceną
 | BL-EDU-03 | P2 | Dodać eksport pakietu dydaktycznego dla zajęć: raport HTML/PDF, skrót dla prowadzącego, karta pracy studenta i metadane konfiguracji. | Replikowalność zajęć | Eksport zawiera konfigurację, seed, wersję kodu, metryki, wykresy, komentarze dydaktyczne i pytania kontrolne bez ręcznego kopiowania z GUI. |
 | BL-VAL-01 | P1 | Uzupełnić rejestr walidacji o kryteria zgodności, źródła i poziomy walidacji per benchmark. | Interpretacja benchmarków | Rejestr wskazuje efekty odtworzone jakościowo, częściowo odtworzone i pozostające poza zakresem. |
 
+### Plan najbliższej iteracji
+
+Poniższy plan porządkuje najbliższą iterację bez zmiany istniejących statusów
+backlogu. Kolejność najpierw domyka fundament raportowania i porównań P0, a
+następnie uzupełnia walidację, GUI oraz zakres dydaktyczny P1/P2.
+
+#### 1. P0: `BL-TL-01` — trial-by-trial timeline dla `roving_oddball`
+
+- **Cel:** rozszerzyć raport timeline tak, aby użytkownik widział przebieg
+  `roving_oddball` per trial: numer triala, typ bodźca, odpowiedź, metryki i
+  komentarz mechanizmu.
+- **Zależności:** istniejący `event_timeline`, generator protokołu
+  `roving_oddball`, raporty analityczne oraz eksport raportów; brak zależności
+  od kalibracji progów klinicznych.
+- **Główne pliki:** `brain_core/simulation/events.py`,
+  `brain_core/simulation/engine.py`, `brain_core/analysis/reports.py`,
+  `brain_model/report_export.py`, `tests/test_task_protocols_and_engine.py`,
+  `tests/test_observation_and_analysis.py`.
+- **Kryterium akceptacji:** raport dla `roving_oddball` grupuje zdarzenia per
+  trial i pokazuje standard, deviant, nowy standard, odpowiedź, metryki oraz
+  komentarz mechanizmu profilu w jednej osi czasu.
+- **Minimalny zestaw testów lub kontroli statycznych:** `ruff check .`,
+  `black --check .`, `pytest tests/test_task_protocols_and_engine.py
+  tests/test_observation_and_analysis.py`.
+
+#### 2. P0: `BL-ROV-01` — porównanie healthy/disorder/lesion na wspólnym seedzie
+
+- **Cel:** uruchomić i opisać porównanie profili healthy, disorder i lesion dla
+  `roving_oddball` na tym samym seedzie, z metrykami habituacji, readaptacji,
+  amplitudy i latencji.
+- **Zależności:** trial-by-trial timeline z `BL-TL-01`, konfiguracje
+  `roving_oddball_*`, metryki analityczne oraz raport porównawczy.
+- **Główne pliki:** `configs/roving_oddball_healthy.yaml`,
+  `configs/roving_oddball_disorder_gaba.yaml`,
+  `configs/roving_oddball_lesion_hippocampus.yaml`,
+  `brain_core/experiments/protocols.py`, `brain_core/analysis/reports.py`,
+  `docs/roving_oddball_guide.md`, `tests/test_task_protocols_and_engine.py`.
+- **Kryterium akceptacji:** raport porównawczy zawiera tabelę metryk dla trzech
+  profili, jawny wspólny seed i komentarz amplitude-latency-mechanism bez
+  sugerowania interpretacji diagnostycznej.
+- **Minimalny zestaw testów lub kontroli statycznych:** `ruff check .`,
+  `black --check .`, `pytest tests/test_task_protocols_and_engine.py` oraz
+  kontrolne uruchomienie scenariuszy `roving_oddball` na wspólnym seedzie.
+
+#### 3. P0: `BL-CLIN-01` — kalibracja progów profili klinicznych względem benchmarków
+
+- **Cel:** doprecyzować progi clinical profiles względem benchmarków, tolerancje,
+  kierunek oczekiwanej zmiany i zakres stosowalności.
+- **Zależności:** wyniki porównania `BL-ROV-01`, metadane benchmarków oraz
+  rejestr walidacji; zależność logiczna od wspólnego sposobu raportowania
+  metryk.
+- **Główne pliki:** `configs/clinical_profiles/*.yaml`,
+  `data/validation/benchmark_metadata.json`,
+  `brain_core/analysis/benchmark_loader.py`, `brain_core/analysis/reports.py`,
+  `brain_core/simulation/config_schema.py`, `tests/test_observation_and_analysis.py`.
+- **Kryterium akceptacji:** każdy próg ma źródło, tolerancję, zakres
+  stosowalności i test regresji albo jawne uzasadnienie braku testu; każdy profil
+  clinical ma `expected_direction`, `primary_metric`, `severity_level` i komentarz
+  w raporcie porównawczym.
+- **Minimalny zestaw testów lub kontroli statycznych:** `ruff check .`,
+  `black --check .`, `pytest tests/test_observation_and_analysis.py` oraz testy
+  walidacji konfiguracji profili klinicznych.
+
+#### 4. P1: `BL-VAL-01` — uzupełnienie rejestru walidacji o kryteria zgodności
+
+- **Cel:** opisać kryteria zgodności, źródła i poziomy walidacji per benchmark,
+  aby interpretacja wyników była jawna i wersjonowalna.
+- **Zależności:** benchmark metadata, kalibracja progów z `BL-CLIN-01` oraz
+  ograniczenia interpretacyjne scenariuszy `roving_oddball`.
+- **Główne pliki:** `docs/validation_registry.md`,
+  `data/validation/benchmark_metadata.json`,
+  `brain_core/analysis/benchmark_loader.py`, `tests/test_observation_and_analysis.py`.
+- **Kryterium akceptacji:** rejestr wskazuje efekty odtworzone jakościowo,
+  częściowo odtworzone i pozostające poza zakresem, wraz z kryteriami zgodności
+  oraz źródłami.
+- **Minimalny zestaw testów lub kontroli statycznych:** `ruff check .`,
+  `black --check .`, `pytest tests/test_observation_and_analysis.py` oraz
+  kontrola spójności pól benchmark metadata z rejestrem walidacji.
+
+#### 5. P1: `BL-GUI-01` — polskie opisy presetów YAML w GUI
+
+- **Cel:** dodać polskie, dydaktyczne opisy presetów YAML dla `roving_oddball` i
+  `snn_hippocampus_demo` bez duplikowania logiki silnika.
+- **Zależności:** ustalone ograniczenia interpretacyjne z `BL-VAL-01`, słownik
+  pojęć EN→PL oraz istniejąca lista presetów w GUI PySide6.
+- **Główne pliki:** `brain_model/qt_app.py`, `brain_model/qt_sections.py`,
+  `brain_model/qt_config.py`, `brain_model/qt_plotting.py`,
+  `docs/english_polish_glossary.md`, `configs/roving_oddball_healthy.yaml`,
+  `configs/snn_hippocampus_demo.yaml`, `tests/test_qt_config.py`,
+  `tests/test_qt_sections.py`, `tests/test_gui_dependencies_static.py`.
+- **Kryterium akceptacji:** użytkownik widzi polski opis celu, oczekiwanego
+  efektu, ograniczeń i link do konfiguracji dla każdego presetu.
+- **Minimalny zestaw testów lub kontroli statycznych:** `ruff check .`,
+  `black --check .`, `pytest tests/test_qt_config.py tests/test_qt_sections.py
+  tests/test_gui_dependencies_static.py` oraz statyczna kontrola braku nowych
+  przepływów `tkinter`.
+
+#### 6. P1: `BL-EDU-01` i `BL-EDU-02` — katalog lekcji oraz tryb nauczyciela
+
+- **Cel:** przygotować katalog lekcji i prowadzenie użytkownika przez hipotezę,
+  uruchomienie, obserwację metryk oraz interpretację ograniczeń.
+- **Zależności:** trial-by-trial timeline, porównanie `roving_oddball`, polskie
+  opisy presetów YAML i rejestr walidacji.
+- **Główne pliki:** `brain_model/qt_app.py`, `brain_model/qt_sections.py`,
+  `brain_model/qt_state.py`, `brain_model/qt_config.py`,
+  `docs/english_polish_glossary.md`, `docs/roving_oddball_guide.md`,
+  `configs/*.yaml`, `tests/test_qt_sections.py`, `tests/test_gui_state.py`.
+- **Kryterium akceptacji:** co najmniej 3 scenariusze mają kartę lekcji,
+  konfigurację YAML, oczekiwane obserwacje, pytania kontrolne i kryteria oceny;
+  widok nauczyciela pokazuje checklistę, komentarze per etap, ostrzeżenie przed
+  interpretacją diagnostyczną i link do raportu porównawczego.
+- **Minimalny zestaw testów lub kontroli statycznych:** `ruff check .`,
+  `black --check .`, `pytest tests/test_qt_sections.py tests/test_gui_state.py
+  tests/test_gui_layout_static.py` oraz kontrola zgodności pojęć z glosariuszem.
+
+#### 7. P2: `BL-EDU-03` — eksport pakietu dydaktycznego
+
+- **Cel:** umożliwić eksport kompletnego pakietu zajęciowego: raportu HTML/PDF,
+  skrótu dla prowadzącego, karty pracy studenta i metadanych konfiguracji.
+- **Zależności:** katalog lekcji i tryb nauczyciela z `BL-EDU-01`/`BL-EDU-02`,
+  raport porównawczy, timeline trial-by-trial oraz mechanizm eksportu raportów.
+- **Główne pliki:** `brain_model/report_export.py`, `brain_core/analysis/reports.py`,
+  `brain_model/qt_sections.py`, `brain_model/qt_app.py`,
+  `docs/roving_oddball_guide.md`, `tests/test_observation_and_analysis.py`,
+  `tests/test_qt_sections.py`.
+- **Kryterium akceptacji:** eksport zawiera konfigurację, seed, wersję kodu,
+  metryki, wykresy, komentarze dydaktyczne i pytania kontrolne bez ręcznego
+  kopiowania z GUI.
+- **Minimalny zestaw testów lub kontroli statycznych:** `ruff check .`,
+  `black --check .`, `pytest tests/test_observation_and_analysis.py
+  tests/test_qt_sections.py` oraz kontrola kompletności metadanych eksportu.
+
 ### Zrealizowane milestone’y
 
 Poniższe pozycje opisują funkcje ukończone lub częściowo ukończone na
