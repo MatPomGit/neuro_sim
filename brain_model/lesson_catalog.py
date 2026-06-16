@@ -1,41 +1,14 @@
-<<<<<<< HEAD
-"""Loader katalogu lekcji dydaktycznych z plików YAML."""
-
-from __future__ import annotations
-
-=======
 """Katalog lekcji dydaktycznych wczytywanych z konfiguracji YAML."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
->>>>>>> origin/main
 from pathlib import Path
 from typing import Any
 
 import yaml
 
-<<<<<<< HEAD
-REPO_ROOT = Path(__file__).resolve().parents[1]
-LESSON_CATALOG_DIR = REPO_ROOT / "configs" / "lessons"
-
-
-def load_lesson_catalog(
-    lesson_dir: Path = LESSON_CATALOG_DIR,
-) -> dict[str, dict[str, Any]]:
-    """Wczytaj katalog lekcji dydaktycznych z plików YAML.
-
-    Parameters
-    ----------
-    lesson_dir:
-        Katalog z plikami YAML opisującymi lekcje prezentowane w GUI.
-
-    Returns
-    -------
-    dict[str, dict[str, Any]]
-        Słownik lekcji indeksowany identyfikatorem z pola ``id``.
-=======
 LESSON_CONFIG_DIR = Path("configs/lessons")
 _REQUIRED_LESSON_FIELDS = {
     "id",
@@ -108,46 +81,10 @@ def _load_lesson_payload(path: Path) -> dict[str, Any]:
     -------
     dict[str, Any]
         Surowe mapowanie pól lekcji.
->>>>>>> origin/main
 
     Raises
     ------
     ValueError
-<<<<<<< HEAD
-        Gdy plik lekcji nie zawiera mapy YAML albo poprawnego identyfikatora.
-    """
-
-    lessons: dict[str, dict[str, Any]] = {}
-    for lesson_path in sorted(lesson_dir.glob("*.yaml")):
-        try:
-            payload = yaml.safe_load(lesson_path.read_text(encoding="utf-8"))
-            if not isinstance(payload, dict):
-                continue
-            lesson_id = payload.get("id")
-            if not isinstance(lesson_id, str) or not lesson_id.strip():
-                continue
-            lessons[lesson_id] = payload
-        except (OSError, yaml.YAMLError):
-            continue
-    return lessons
-
-
-def get_lesson_by_id(lesson_id: str) -> dict[str, Any] | None:
-    """Zwróć metadane lekcji z katalogu YAML.
-
-    Parameters
-    ----------
-    lesson_id:
-        Identyfikator lekcji z pola ``id`` w pliku YAML.
-
-    Returns
-    -------
-    dict[str, Any] | None
-        Dane lekcji albo ``None``, gdy identyfikator nie istnieje w katalogu.
-    """
-
-    return load_lesson_catalog().get(lesson_id)
-=======
         Gdy dokument YAML nie jest mapowaniem.
     yaml.YAMLError
         Gdy plik zawiera niepoprawną składnię YAML.
@@ -371,4 +308,3 @@ def lesson_by_label(label: str) -> LessonCatalogItem | None:
         if lesson.label_pl == label:
             return lesson
     return None
->>>>>>> origin/main

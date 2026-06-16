@@ -6,11 +6,9 @@ from dataclasses import dataclass
 from importlib import import_module
 from typing import TYPE_CHECKING, Any, Literal
 
-from brain_model.lesson_catalog import get_lesson_by_id, load_lesson_catalog
-
 from .gui_labels import COMMAND_LABELS, COMMAND_VALUES, PARAMETER_DESCRIPTIONS
 from .gui_state import GuiState
-from .lesson_catalog import lesson_by_label, load_lesson_catalog
+from .lesson_catalog import LessonCatalogItem, lesson_by_label, load_lesson_catalog
 from .qt_config import (
     comparison_config_description_for_label,
     comparison_config_path_for_label,
@@ -262,21 +260,18 @@ PLOT_LABELS = {
     "scenario_timeline": "oś czasu scenariusza (fazy i zdarzenia)",
 }
 
-<<<<<<< HEAD
 CLINICAL_INTERPRETATION_WARNING = (
     "Wynik jest interpretacją dydaktyczną modelu, nie diagnozą kliniczną."
 )
 
-READY_LESSON_ALIASES = {"roving_oddball_intro": "roving_oddball_prediction"}
 
-
-def _format_polish_bullets(values: object) -> str:
+def _format_polish_bullets(values: list[str]) -> str:
     """Sformatuj listę pytań lekcyjnych jako polskie wypunktowanie.
 
     Parameters
     ----------
     values:
-        Wartość z pola listowego w katalogu lekcji YAML.
+        Lista pytań lub obserwacji z katalogu lekcji.
 
     Returns
     -------
@@ -284,18 +279,18 @@ def _format_polish_bullets(values: object) -> str:
         Wielowierszowa lista pytań albo komunikat o braku pytań.
     """
 
-    if not isinstance(values, list) or not values:
+    if not values:
         return "• Brak pytań w katalogu lekcji YAML."
     return "\n".join(f"• {value}" for value in values)
 
 
-def format_lesson_preview(lesson: dict[str, Any]) -> str:
+def format_lesson_preview(lesson: LessonCatalogItem) -> str:
     """Zbuduj polski tekst podglądu lekcji z metadanych YAML.
 
     Parameters
     ----------
     lesson:
-        Słownik metadanych pojedynczej lekcji wczytany z ``configs/lessons``.
+        Element katalogu lekcji wczytany z ``configs/lessons``.
 
     Returns
     -------
@@ -303,61 +298,23 @@ def format_lesson_preview(lesson: dict[str, Any]) -> str:
         Gotowy tekst dla etykiety podglądu w sekcji szybkiego startu.
     """
 
-    comparison_config = lesson.get("comparison_config")
     comparison_line = (
-        f"Konfiguracja porównania: {comparison_config}"
-        if comparison_config
+        f"Konfiguracja porównania: {lesson.comparison_config}"
+        if lesson.comparison_config
         else "Konfiguracja porównania: brak w tej lekcji"
     )
     return "\n".join(
         [
-            f"Cel lekcji: {lesson.get('learning_goal_pl', 'Brak celu lekcji w YAML.')}",
-            f"Poziom: {lesson.get('level_pl', 'brak danych')}",
-            f"Szacowany czas: {lesson.get('estimated_duration_min', 'brak danych')} min",
+            f"Cel lekcji: {lesson.learning_goal_pl}",
+            f"Poziom: {lesson.level_pl}",
+            f"Szacowany czas: {lesson.estimated_duration_min} min",
             "Pytania przed uruchomieniem:",
-            _format_polish_bullets(lesson.get("pre_run_questions_pl")),
-            f"Konfiguracja scenariusza: {lesson.get('scenario_config', 'brak danych')}",
+            _format_polish_bullets(lesson.pre_run_questions_pl),
+            f"Konfiguracja scenariusza: {lesson.scenario_config}",
             comparison_line,
             CLINICAL_INTERPRETATION_WARNING,
         ]
     )
-
-
-READY_LESSON_PRESETS: tuple[tuple[str, str, str], ...] = (
-    (
-        "roving_oddball_intro",
-        "Lekcja: roving oddball — standard, dewiant i habituacja",
-        label_for_scenario_yaml_path("configs/roving_oddball_healthy.yaml"),
-    ),
-    (
-        "go_nogo_inhibition",
-        "Lekcja: go/no-go — hamowanie reakcji",
-        label_for_scenario_yaml_path("configs/scenario_yaml_go_nogo_gaba.yaml"),
-    ),
-    (
-        "n_back_working_memory",
-        "Lekcja: n-back — pamięć robocza i aktualizacja",
-        label_for_scenario_yaml_path("configs/scenario_yaml_n_back_dopamine.yaml"),
-    ),
-    (
-        "stroop_conflict_control",
-        "Lekcja: Stroop — konflikt poznawczy",
-        label_for_scenario_yaml_path("configs/scenario_yaml_stroop_dlpfc.yaml"),
-    ),
-    (
-        "gaba_disorder_comparison",
-        "Rozszerzenie: dysregulacja GABA i odpowiedź na dewiant",
-        label_for_scenario_yaml_path("configs/roving_oddball_disorder_gaba.yaml"),
-    ),
-    (
-        "hippocampal_lesion_comparison",
-        "Rozszerzenie: lezja hipokampa i readaptacja",
-        label_for_scenario_yaml_path("configs/roving_oddball_lesion_hippocampus.yaml"),
-    ),
-)
-
-=======
->>>>>>> origin/main
 
 class QtSections:
     """Buduje sekcje formularza i synchronizuje je ze stanem GUI."""
@@ -555,22 +512,10 @@ class QtSections:
         if not hasattr(self, "scenario_config_combo"):
             return
         selected_label = self.ready_lesson_combo.currentText()
-<<<<<<< HEAD
-        lesson_config_label = next(
-            (
-                config_label
-                for _lesson_id, lesson_label, config_label in READY_LESSON_PRESETS
-                if lesson_label == selected_label
-            ),
-            "",
-        )
+        lesson = lesson_by_label(selected_label)
         lesson_id = str(self.ready_lesson_combo.currentData() or "")
         self.refresh_lesson_preview(lesson_id)
-        if not lesson_config_label:
-=======
-        lesson = lesson_by_label(selected_label)
         if lesson is None:
->>>>>>> origin/main
             return
         lesson_config_label = label_for_scenario_yaml_path(lesson.scenario_config)
         if self.scenario_config_combo.currentText() == lesson_config_label:
@@ -590,10 +535,7 @@ class QtSections:
         if not hasattr(self, "lesson_preview_label"):
             return
         catalog = load_lesson_catalog()
-        normalized_lesson_id = READY_LESSON_ALIASES.get(lesson_id, lesson_id)
-        lesson = catalog.get(normalized_lesson_id) or get_lesson_by_id(
-            normalized_lesson_id
-        )
+        lesson = next((item for item in catalog if item.id == lesson_id), None)
         if lesson is None:
             self.lesson_preview_label.setText(
                 "Brak podglądu w katalogu lekcji YAML dla tej pozycji.\n"
