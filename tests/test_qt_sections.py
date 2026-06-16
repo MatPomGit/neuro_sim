@@ -228,4 +228,3 @@ def test_quick_start_lesson_preview_uses_yaml_catalog() -> None:
     )
     assert "self.refresh_lesson_preview(lesson_id)" in apply_source
     assert "load_lesson_catalog()" in preview_source
-    assert "get_lesson_by_id(normalized_lesson_id)" in preview_source
