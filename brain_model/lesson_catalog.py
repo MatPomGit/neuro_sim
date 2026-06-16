@@ -34,13 +34,16 @@ def load_lesson_catalog(
 
     lessons: dict[str, dict[str, Any]] = {}
     for lesson_path in sorted(lesson_dir.glob("*.yaml")):
-        payload = yaml.safe_load(lesson_path.read_text(encoding="utf-8"))
-        if not isinstance(payload, dict):
-            raise ValueError(f"Lekcja {lesson_path} nie zawiera mapy YAML.")
-        lesson_id = payload.get("id")
-        if not isinstance(lesson_id, str) or not lesson_id.strip():
-            raise ValueError(f"Lekcja {lesson_path} nie zawiera poprawnego pola id.")
-        lessons[lesson_id] = payload
+        try:
+            payload = yaml.safe_load(lesson_path.read_text(encoding="utf-8"))
+            if not isinstance(payload, dict):
+                continue
+            lesson_id = payload.get("id")
+            if not isinstance(lesson_id, str) or not lesson_id.strip():
+                continue
+            lessons[lesson_id] = payload
+        except (OSError, yaml.YAMLError):
+            continue
     return lessons
 
 
