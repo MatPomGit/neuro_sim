@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from .gui_labels import COMMAND_LABELS, COMMAND_VALUES, PARAMETER_DESCRIPTIONS
 from .gui_state import GuiState
-from .lesson_catalog import lesson_by_label, load_lesson_catalog
+from .lesson_catalog import LessonCatalogItem, lesson_by_label, load_lesson_catalog
 from .qt_config import (
     comparison_config_description_for_label,
     comparison_config_path_for_label,
@@ -260,6 +260,61 @@ PLOT_LABELS = {
     "scenario_timeline": "oś czasu scenariusza (fazy i zdarzenia)",
 }
 
+CLINICAL_INTERPRETATION_WARNING = (
+    "Wynik jest interpretacją dydaktyczną modelu, nie diagnozą kliniczną."
+)
+
+
+def _format_polish_bullets(values: list[str]) -> str:
+    """Sformatuj listę pytań lekcyjnych jako polskie wypunktowanie.
+
+    Parameters
+    ----------
+    values:
+        Lista pytań lub obserwacji z katalogu lekcji.
+
+    Returns
+    -------
+    str
+        Wielowierszowa lista pytań albo komunikat o braku pytań.
+    """
+
+    if not values:
+        return "• Brak pytań w katalogu lekcji YAML."
+    return "\n".join(f"• {value}" for value in values)
+
+
+def format_lesson_preview(lesson: LessonCatalogItem) -> str:
+    """Zbuduj polski tekst podglądu lekcji z metadanych YAML.
+
+    Parameters
+    ----------
+    lesson:
+        Element katalogu lekcji wczytany z ``configs/lessons``.
+
+    Returns
+    -------
+    str
+        Gotowy tekst dla etykiety podglądu w sekcji szybkiego startu.
+    """
+
+    comparison_line = (
+        f"Konfiguracja porównania: {lesson.comparison_config}"
+        if lesson.comparison_config
+        else "Konfiguracja porównania: brak w tej lekcji"
+    )
+    return "\n".join(
+        [
+            f"Cel lekcji: {lesson.learning_goal_pl}",
+            f"Poziom: {lesson.level_pl}",
+            f"Szacowany czas: {lesson.estimated_duration_min} min",
+            "Pytania przed uruchomieniem:",
+            _format_polish_bullets(lesson.pre_run_questions_pl),
+            f"Konfiguracja scenariusza: {lesson.scenario_config}",
+            comparison_line,
+            CLINICAL_INTERPRETATION_WARNING,
+        ]
+    )
 
 class QtSections:
     """Buduje sekcje formularza i synchronizuje je ze stanem GUI."""
@@ -314,6 +369,16 @@ class QtSections:
             lambda _text: self.apply_ready_lesson()
         )
         layout.addRow("Lekcja", self.ready_lesson_combo)
+
+        self.lesson_preview_label = QLabel(
+            "Wybierz lekcję, aby zobaczyć cel, poziom, pytania i pliki YAML."
+        )
+        self.lesson_preview_label.setObjectName("hintLabel")
+        self.lesson_preview_label.setWordWrap(True)
+        self.lesson_preview_label.setToolTip(
+            "Podgląd pochodzi z katalogu lekcji YAML w configs/lessons."
+        )
+        layout.addRow("podgląd lekcji", self.lesson_preview_label)
 
         self.scenario_config_combo = QComboBox()
         self.scenario_config_combo.addItems(scenario_yaml_preset_labels())
@@ -448,6 +513,8 @@ class QtSections:
             return
         selected_label = self.ready_lesson_combo.currentText()
         lesson = lesson_by_label(selected_label)
+        lesson_id = str(self.ready_lesson_combo.currentData() or "")
+        self.refresh_lesson_preview(lesson_id)
         if lesson is None:
             return
         lesson_config_label = label_for_scenario_yaml_path(lesson.scenario_config)
@@ -456,6 +523,26 @@ class QtSections:
             return
         write_combo_box(self.scenario_config_combo, lesson_config_label)
         self.refresh_scenario_config_description()
+
+    def refresh_lesson_preview(self, lesson_id: str) -> None:
+        """Odśwież polski podgląd lekcji na podstawie katalogu YAML.
+
+        Parameters
+        ----------
+        lesson_id:
+            Identyfikator lekcji wybranej w szybkim starcie GUI.
+        """
+        if not hasattr(self, "lesson_preview_label"):
+            return
+        catalog = load_lesson_catalog()
+        lesson = next((item for item in catalog if item.id == lesson_id), None)
+        if lesson is None:
+            self.lesson_preview_label.setText(
+                "Brak podglądu w katalogu lekcji YAML dla tej pozycji.\n"
+                f"{CLINICAL_INTERPRETATION_WARNING}"
+            )
+            return
+        self.lesson_preview_label.setText(format_lesson_preview(lesson))
 
     def apply_profile_comparison_mode(self) -> None:
         """Włącz jasny tryb „Porównaj profile” dla wybranego zestawu YAML."""

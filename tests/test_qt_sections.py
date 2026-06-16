@@ -207,3 +207,21 @@ def test_ready_lessons_point_to_yaml_labels() -> None:
         "write_combo_box(self.scenario_config_combo, lesson_config_label)"
         in lesson_source
     )
+
+
+def test_quick_start_lesson_preview_uses_yaml_catalog() -> None:
+    """Podgląd lekcji pochodzi z katalogu YAML i zawiera ostrzeżenie kliniczne."""
+    quick_start_source = _method_source(QT_SECTIONS_PATH, "build_quick_start_section")
+    apply_source = _method_source(QT_SECTIONS_PATH, "apply_ready_lesson", "QtSections")
+    preview_source = _method_source(
+        QT_SECTIONS_PATH, "refresh_lesson_preview", "QtSections"
+    )
+    module_source = QT_SECTIONS_PATH.read_text(encoding="utf-8")
+
+    assert "self.lesson_preview_label" in quick_start_source
+    assert (
+        "Wynik jest interpretacją dydaktyczną modelu, nie diagnozą kliniczną"
+        in module_source
+    )
+    assert "self.refresh_lesson_preview(lesson_id)" in apply_source
+    assert "load_lesson_catalog()" in preview_source
