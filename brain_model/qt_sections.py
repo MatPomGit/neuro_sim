@@ -10,6 +10,7 @@ from brain_model.lesson_catalog import get_lesson_by_id, load_lesson_catalog
 
 from .gui_labels import COMMAND_LABELS, COMMAND_VALUES, PARAMETER_DESCRIPTIONS
 from .gui_state import GuiState
+from .lesson_catalog import lesson_by_label, load_lesson_catalog
 from .qt_config import (
     comparison_config_description_for_label,
     comparison_config_path_for_label,
@@ -261,6 +262,7 @@ PLOT_LABELS = {
     "scenario_timeline": "oś czasu scenariusza (fazy i zdarzenia)",
 }
 
+<<<<<<< HEAD
 CLINICAL_INTERPRETATION_WARNING = (
     "Wynik jest interpretacją dydaktyczną modelu, nie diagnozą kliniczną."
 )
@@ -354,6 +356,8 @@ READY_LESSON_PRESETS: tuple[tuple[str, str, str], ...] = (
     ),
 )
 
+=======
+>>>>>>> origin/main
 
 class QtSections:
     """Buduje sekcje formularza i synchronizuje je ze stanem GUI."""
@@ -397,8 +401,8 @@ class QtSections:
         layout.addRow("Pojedynczy eksperyment / Porównaj profile", mode_group)
 
         self.ready_lesson_combo = QComboBox()
-        for lesson_id, lesson_label, _config_label in READY_LESSON_PRESETS:
-            self.ready_lesson_combo.addItem(lesson_label, lesson_id)
+        for lesson in load_lesson_catalog():
+            self.ready_lesson_combo.addItem(lesson.label_pl, lesson.id)
         self.ready_lesson_combo.setCurrentIndex(-1)
         self.ready_lesson_combo.setToolTip(
             "Lekcja jest wyborem nadrzędnym: ustawia istniejącą konfigurację YAML, "
@@ -551,6 +555,7 @@ class QtSections:
         if not hasattr(self, "scenario_config_combo"):
             return
         selected_label = self.ready_lesson_combo.currentText()
+<<<<<<< HEAD
         lesson_config_label = next(
             (
                 config_label
@@ -562,7 +567,12 @@ class QtSections:
         lesson_id = str(self.ready_lesson_combo.currentData() or "")
         self.refresh_lesson_preview(lesson_id)
         if not lesson_config_label:
+=======
+        lesson = lesson_by_label(selected_label)
+        if lesson is None:
+>>>>>>> origin/main
             return
+        lesson_config_label = label_for_scenario_yaml_path(lesson.scenario_config)
         if self.scenario_config_combo.currentText() == lesson_config_label:
             self.apply_scenario_yaml_config()
             return
