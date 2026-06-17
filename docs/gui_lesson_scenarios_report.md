@@ -19,12 +19,19 @@ Każda lekcja w GUI powinna być omawiana w stałej kolejności, aby prowadzący
 
 1. Otwórz aplikację przez `neuro-sim-gui`, `main_gui.py` albo punkt wejścia `brain_model.gui:run_gui`.
 2. W zakładce **Konfiguracja** użyj pola **Lekcja**, jeżeli chcesz rozpocząć od przygotowanego przebiegu dydaktycznego.
-3. Lekcja jest wyborem nadrzędnym nad pojedynczym scenariuszem: ustawia pole **konfiguracja YAML**, a dopiero wybrany plik YAML określa scenariusz silnika, czas, seed i profil.
-4. Dostępne gotowe lekcje obejmują co najmniej:
+3. Po wyborze lekcji przeczytaj panel **podgląd lekcji**. Panel jest wypełniany
+   bezpośrednio z katalogu `configs/lessons/*.yaml`, a nie z duplikowanej logiki
+   tasków. Zawiera cel `learning_goal_pl`, poziom `level_pl`, szacowany czas
+   `estimated_duration_min`, pytania `pre_run_questions_pl`, ścieżkę
+   `scenario_config`, opcjonalną ścieżkę `comparison_config` oraz stałe
+   ostrzeżenie: „Wynik jest interpretacją dydaktyczną modelu, nie diagnozą
+   kliniczną.”
+4. Lekcja jest wyborem nadrzędnym nad pojedynczym scenariuszem: ustawia pole **konfiguracja YAML**, a dopiero wybrany plik YAML określa scenariusz silnika, czas, seed i profil.
+5. Dostępne gotowe lekcje obejmują co najmniej:
    - **roving oddball** — standard, dewiant, habituacja i readaptacja;
    - **go/no-go** — hamowanie reakcji i wpływ dysregulacji GABA;
    - **n-back** — pamięć robocza, aktualizacja wartości i deficyt dopaminowy.
-5. Pole **po co ten wybór** opisuje, jaki scenariusz silnika, czas oraz mechanizm profilu klinicznego znajdują się w pliku YAML.
+6. Pole **po co ten wybór** opisuje, jaki scenariusz silnika, czas oraz mechanizm profilu klinicznego znajdują się w pliku YAML.
 
 ## Wybór i uruchomienie scenariusza
 

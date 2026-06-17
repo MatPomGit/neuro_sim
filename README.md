@@ -212,7 +212,13 @@ GUI wymaga zależności `PySide6`, `numpy` i `matplotlib`; standardowa instalacj
 
 Nowy przepływ pracy w GUI składa się z kilku kroków:
 
-1. **Szybki start** – wybierz podstawowy scenariusz, ustaw `seed` i zaakceptuj sugerowany czas scenariusza, aby szybko uruchomić referencyjną symulację.
+1. **Szybki start** – wybierz gotową lekcję lub podstawowy scenariusz,
+   sprawdź panel **podgląd lekcji** wypełniany z `configs/lessons/*.yaml`,
+   ustaw `seed` i zaakceptuj sugerowany czas scenariusza, aby szybko uruchomić
+   referencyjną symulację. Podgląd pokazuje cel lekcji, poziom, szacowany czas,
+   pytania przed uruchomieniem, `scenario_config`, opcjonalny
+   `comparison_config` oraz ostrzeżenie, że wynik jest interpretacją
+   dydaktyczną modelu, nie diagnozą kliniczną.
 2. **Opcje zaawansowane** – w razie potrzeby dopasuj parametry modelu, oscylatorów Wilsona-Cowana oraz ustawienia eksperymentu przed startem obliczeń.
 3. **Wyniki i wykresy** – po zakończeniu symulacji przejrzyj podsumowanie metryk, zapisane wyniki oraz wykresy aktywności, diagnostyki i pasm EEG.
 4. **Presety wykresów** – użyj gotowych zestawów wykresów, aby szybko przełączać się między widokiem przeglądowym, diagnostycznym i EEG bez ręcznego zaznaczania każdej serii.
