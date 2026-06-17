@@ -213,6 +213,7 @@ def test_quick_start_lesson_preview_uses_yaml_catalog() -> None:
     """Podgląd lekcji pochodzi z katalogu YAML i zawiera ostrzeżenie kliniczne."""
     quick_start_source = _method_source(QT_SECTIONS_PATH, "build_quick_start_section")
     apply_source = _method_source(QT_SECTIONS_PATH, "apply_ready_lesson", "QtSections")
+    format_source = _method_source(QT_SECTIONS_PATH, "format_lesson_preview")
     preview_source = _method_source(
         QT_SECTIONS_PATH, "refresh_lesson_preview", "QtSections"
     )
@@ -225,3 +226,9 @@ def test_quick_start_lesson_preview_uses_yaml_catalog() -> None:
     )
     assert "self.refresh_lesson_preview(lesson_id)" in apply_source
     assert "load_lesson_catalog()" in preview_source
+    assert "lesson.learning_goal_pl" in format_source
+    assert "lesson.level_pl" in format_source
+    assert "lesson.estimated_duration_min" in format_source
+    assert "lesson.pre_run_questions_pl" in format_source
+    assert "lesson.scenario_config" in format_source
+    assert "lesson.comparison_config" in format_source
