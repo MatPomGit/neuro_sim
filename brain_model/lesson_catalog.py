@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -228,7 +227,9 @@ def _lesson_from_payload(path: Path, payload: dict[str, Any]) -> LessonCatalogIt
     comparison_config = payload["comparison_config"]
     if comparison_config is not None:
         if not isinstance(comparison_config, str) or not comparison_config.strip():
-            raise ValueError(f"Lekcja {lesson_name} ma niepoprawne pole comparison_config.")
+            raise ValueError(
+                f"Lekcja {lesson_name} ma niepoprawne pole comparison_config."
+            )
     estimated_duration_min = payload["estimated_duration_min"]
     if not isinstance(estimated_duration_min, int) or estimated_duration_min <= 0:
         raise ValueError(

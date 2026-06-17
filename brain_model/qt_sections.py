@@ -316,6 +316,7 @@ def format_lesson_preview(lesson: LessonCatalogItem) -> str:
         ]
     )
 
+
 class QtSections:
     """Buduje sekcje formularza i synchronizuje je ze stanem GUI."""
 
