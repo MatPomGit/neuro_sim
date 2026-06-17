@@ -956,10 +956,26 @@ class TeacherLessonPanel(QWidget):
             if isinstance(change, dict):
                 lines.append(
                     "• {element}: {current} → {next_value}. Uzasadnienie: {reason}".format(
-                        element=el if (el := change.get("element")) is not None else "parametr",
-                        current=cur if (cur := change.get("current_value")) is not None else "n/a",
-                        next_value=nxt if (nxt := change.get("next_value")) is not None else "n/a",
-                        reason=reas if (reas := change.get("reason")) is not None else "brak uzasadnienia",
+                        element=(
+                            el
+                            if (el := change.get("element")) is not None
+                            else "parametr"
+                        ),
+                        current=(
+                            cur
+                            if (cur := change.get("current_value")) is not None
+                            else "n/a"
+                        ),
+                        next_value=(
+                            nxt
+                            if (nxt := change.get("next_value")) is not None
+                            else "n/a"
+                        ),
+                        reason=(
+                            reas
+                            if (reas := change.get("reason")) is not None
+                            else "brak uzasadnienia"
+                        ),
                     )
                 )
             else:
@@ -1028,6 +1044,83 @@ class ProfileComparisonPanel(QWidget):
         self.table.resizeColumnsToContents()
 
 
+class LessonQuestionsPanel(QWidget):
+    """Panel pytań kontrolnych wczytanych z metadanych wybranej lekcji."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Utwórz osobne tabele pytań przed uruchomieniem i po uruchomieniu."""
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        self.empty_label = QLabel(
+            "Wybierz lekcję w sekcji Szybki start, aby zobaczyć pytania kontrolne."
+        )
+        self.empty_label.setWordWrap(True)
+        layout.addWidget(self.empty_label)
+
+        self.pre_run_table = self._create_questions_table(
+            layout,
+            "Pytania przed uruchomieniem",
+        )
+        self.post_run_table = self._create_questions_table(
+            layout,
+            "Pytania po uruchomieniu",
+        )
+        self.set_lesson(None)
+
+    def set_lesson(self, lesson: dict[str, Any] | None) -> None:
+        """Wyświetl pytania kontrolne zapisane w metadanych lekcji.
+
+        Parameters
+        ----------
+        lesson:
+            Metadane lekcji albo ``None``, gdy użytkownik nie wybrał lekcji.
+        """
+        has_lesson = lesson is not None
+        self.empty_label.setVisible(not has_lesson)
+        self.pre_run_table.parentWidget().setVisible(has_lesson)
+        self.post_run_table.parentWidget().setVisible(has_lesson)
+        safe_lesson = lesson or {}
+        self._set_questions(
+            self.pre_run_table,
+            safe_lesson.get("pre_run_questions_pl"),
+        )
+        self._set_questions(
+            self.post_run_table,
+            safe_lesson.get("post_run_questions_pl"),
+        )
+
+    def _create_questions_table(
+        self,
+        parent_layout: QVBoxLayout,
+        title: str,
+    ) -> QTableWidget:
+        """Utwórz nieedytowalną tabelę dla jednej grupy pytań."""
+        group = QGroupBox(title)
+        group_layout = QVBoxLayout(group)
+        table = QTableWidget(0, 1)
+        table.setHorizontalHeaderLabels(["pytanie"])
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        table.horizontalHeader().setStretchLastSection(True)
+        group_layout.addWidget(table)
+        parent_layout.addWidget(group, 1)
+        return table
+
+    def _set_questions(self, table: QTableWidget, questions: Any) -> None:
+        """Wypełnij tabelę pytaniami z listy lub pojedynczej wartości YAML."""
+        if isinstance(questions, list):
+            rows = questions
+        elif questions:
+            rows = [questions]
+        else:
+            rows = []
+        table.setRowCount(len(rows))
+        for row, question in enumerate(rows):
+            item = QTableWidgetItem(str(question))
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            table.setItem(row, 0, item)
+        table.resizeColumnsToContents()
+
+
 class RovingOddballQuestionsPanel(QWidget):
     """Panel pytań kontrolnych dla lekcji roving oddball z odpowiedziami z raportu."""
 
@@ -1061,6 +1154,7 @@ class RovingOddballQuestionsPanel(QWidget):
         """
         safe_report = analysis_report or {}
         roving_report = safe_report.get("roving_oddball", {})
+        self.setVisible(isinstance(roving_report, dict) and bool(roving_report))
         rows = self._question_rows(roving_report)
         self.table.setRowCount(len(rows))
         for row, (question, answer) in enumerate(rows):
