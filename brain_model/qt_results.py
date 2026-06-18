@@ -814,9 +814,7 @@ class TeacherLessonPanel(QWidget):
         )
         hint.setWordWrap(True)
         layout.addWidget(hint)
-        limitation_label = QLabel(EDUCATIONAL_LIMITATION_TEXT_PL)
-        limitation_label.setWordWrap(True)
-        layout.addWidget(limitation_label)
+        layout.addWidget(EducationalLimitationLabel())
 
         for title in self.SECTION_TITLES:
             group = QGroupBox(title)
