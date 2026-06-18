@@ -87,6 +87,20 @@ def test_profile_comparison_result_table_has_polish_headers() -> None:
         assert key in results_source
 
 
+def test_results_define_educational_limitation_and_profile_reference() -> None:
+    """Wyniki definiują wspólne ograniczenie i pokazują je przy porównaniu profili."""
+    results_source = QT_RESULTS_PATH.read_text(encoding="utf-8")
+    profile_panel_source = results_source.split(
+        "class ProfileComparisonPanel", maxsplit=1
+    )[1].split("class LessonQuestionsPanel", maxsplit=1)[0]
+
+    assert (
+        "Wyniki są interpretacją dydaktyczną modelu i nie stanowią diagnozy "
+        "klinicznej ani normy psychometrycznej."
+    ) in results_source
+    assert "EDUCATIONAL_LIMITATION_TEXT_PL" in profile_panel_source
+
+
 def test_profile_comparison_export_uses_required_html_and_pdf_names() -> None:
     """GUI eksportuje raport porównania pod wymaganymi nazwami HTML i PDF."""
     source = QT_APP_PATH.read_text(encoding="utf-8")

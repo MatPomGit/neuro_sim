@@ -44,6 +44,7 @@ from .scenarios import get_scenario
 GLOSSARY_PATH = (
     Path(__file__).resolve().parents[1] / "docs" / "english_polish_glossary.md"
 )
+EDUCATIONAL_LIMITATION_TEXT_PL = "Wyniki są interpretacją dydaktyczną modelu i nie stanowią diagnozy klinicznej ani normy psychometrycznej."  # noqa: E501
 
 
 def _load_glossary_terms() -> dict[str, tuple[str, str]]:
@@ -606,6 +607,9 @@ class ObservationPanel(QWidget):
         )
         self.metric_warnings_label.setWordWrap(True)
         warnings_layout.addWidget(self.metric_warnings_label)
+        limitation_label = QLabel(EDUCATIONAL_LIMITATION_TEXT_PL)
+        limitation_label.setWordWrap(True)
+        warnings_layout.addWidget(limitation_label)
 
         layout.addWidget(observation_group)
         layout.addWidget(importance_group)
@@ -810,6 +814,9 @@ class TeacherLessonPanel(QWidget):
         )
         hint.setWordWrap(True)
         layout.addWidget(hint)
+        limitation_label = QLabel(EDUCATIONAL_LIMITATION_TEXT_PL)
+        limitation_label.setWordWrap(True)
+        layout.addWidget(limitation_label)
 
         for title in self.SECTION_TITLES:
             group = QGroupBox(title)
@@ -876,11 +883,9 @@ class TeacherLessonPanel(QWidget):
         self.section_labels["Ograniczenia interpretacyjne"].setText(
             "\n".join(
                 (
-                    "• To jest dydaktyczna symulacja modelu, a nie wynik badania pacjenta.",
+                    f"• {EDUCATIONAL_LIMITATION_TEXT_PL}",
                     "• Wnioski należy opierać na artefaktach bieżącego uruchomienia, "
                     "nie na ukrytej logice protokołu zadania.",
-                    "• Metryki i profile kliniczne są jakościowymi wskazówkami "
-                    "edukacyjnymi, nie podstawą diagnozy klinicznej.",
                 )
             )
         )
@@ -1005,6 +1010,9 @@ class ProfileComparisonPanel(QWidget):
         )
         hint.setWordWrap(True)
         layout.addWidget(hint)
+        limitation_label = QLabel(EDUCATIONAL_LIMITATION_TEXT_PL)
+        limitation_label.setWordWrap(True)
+        layout.addWidget(limitation_label)
 
         self.table = QTableWidget(0, len(self.HEADERS))
         self.table.setHorizontalHeaderLabels(self.HEADERS)
@@ -1056,6 +1064,9 @@ class LessonQuestionsPanel(QWidget):
         )
         self.empty_label.setWordWrap(True)
         layout.addWidget(self.empty_label)
+        limitation_label = QLabel(EDUCATIONAL_LIMITATION_TEXT_PL)
+        limitation_label.setWordWrap(True)
+        layout.addWidget(limitation_label)
 
         self.pre_run_table = self._create_questions_table(
             layout,

@@ -43,6 +43,7 @@ from .qt_config import (
     state_to_config,
 )
 from .qt_results import (
+    EDUCATIONAL_LIMITATION_TEXT_PL,
     ClinicalProfilePanel,
     EventTimelinePanel,
     ObservationPanel,
@@ -626,7 +627,8 @@ class BrainModelQtWindow(QMainWindow):
         QMessageBox.information(
             self,
             "Eksport zakończony",
-            f"Pakiet lekcji zapisano w katalogu: {package_path}",
+            f"Pakiet lekcji zapisano w katalogu: {package_path}\n\n"
+            f"{EDUCATIONAL_LIMITATION_TEXT_PL}",
         )
         self.status_label.setText(f"Pakiet lekcji zapisano w katalogu: {package_path}")
 
