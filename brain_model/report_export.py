@@ -1109,14 +1109,14 @@ def _lesson_plan_lines(
     mechanism = clinical_profile.get("mechanism", "brak opisu mechanizmu")
     lesson = lesson_metadata or {}
     first_observations = _trial_observation_lines(event_timeline, clinical_profile)[:6]
-    lesson_steps = [f"- [ ] {step}" for step in lesson.get("lesson_steps_pl", [])] or [
+    lesson_steps = [f"- [ ] {step}" for step in (lesson.get("lesson_steps_pl") or [])] or [
         "- [ ] Zweryfikuj konfigurację, uruchomienie i artefakty wyniku."
     ]
     expected_report = [
-        f"- {item}" for item in lesson.get("expected_report_pl", [])
+        f"- {item}" for item in (lesson.get("expected_report_pl") or [])
     ] or ["- Raport zajęciowy z metrykami i osią czasu."]
     assessment_criteria = [
-        f"- [ ] {item}" for item in lesson.get("assessment_criteria_pl", [])
+        f"- [ ] {item}" for item in (lesson.get("assessment_criteria_pl") or [])
     ] or ["- [ ] Odpowiedź odwołuje się do artefaktów bieżącego uruchomienia."]
     lines = [
         "# Plan lekcji",
