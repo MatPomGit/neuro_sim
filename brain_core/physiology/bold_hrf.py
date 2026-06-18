@@ -4,6 +4,8 @@ Minimalistyczny model BOLD oparty o splot z funkcją HRF.
 
 from __future__ import annotations
 
+from numbers import Integral
+
 import numpy as np
 
 from brain_core.data_contracts import (
@@ -27,8 +29,10 @@ def canonical_hrf(
         length (int): Długość sygnału w próbkach.
         dt (float): Rozdzielczość czasowa w sekundach [s].
         peak_latency (float): Opóźnienie piku w sekundach [s].
-        undershoot_latency (float): Opóźnienie podbicia w sekundach [s].
-        ratio (float): Bezwymiarowy stosunek amplitudy podbicia do piku.
+        undershoot_latency (float): Opóźnienie dołka następczego (undershoot)
+            w sekundach [s].
+        ratio (float): Bezwymiarowy stosunek amplitudy dołka następczego
+            do amplitudy piku.
 
     Returns:
         np.ndarray: Bezwymiarowy, znormalizowany wektor HRF o zadanej długości;
@@ -37,9 +41,10 @@ def canonical_hrf(
     Raises:
         ValueError: Jeśli parametry są niepoprawne.
     """
-    if length <= 0:
+    if isinstance(length, bool) or not isinstance(length, Integral) or length <= 0:
         raise ValueError(
-            f"{CONTRACT_D_POPULATIONS_PHYSIOLOGY}: hrf.length musi być > 0"
+            f"{CONTRACT_D_POPULATIONS_PHYSIOLOGY}: "
+            "hrf.length musi być dodatnią liczbą całkowitą"
         )
     if dt <= 0:
         raise ValueError(
