@@ -24,8 +24,8 @@ Każda lekcja w GUI powinna być omawiana w stałej kolejności, aby prowadzący
    tasków. Zawiera cel `learning_goal_pl`, poziom `level_pl`, szacowany czas
    `estimated_duration_min`, pytania `pre_run_questions_pl`, ścieżkę
    `scenario_config`, opcjonalną ścieżkę `comparison_config` oraz stałe
-   ostrzeżenie: „Wynik jest interpretacją dydaktyczną modelu, nie diagnozą
-   kliniczną.”
+   ostrzeżenie, że wynik ma charakter dydaktyczny i nie jest diagnozą
+   kliniczną.
 4. Lekcja jest wyborem nadrzędnym nad pojedynczym scenariuszem: ustawia pole **konfiguracja YAML**, a dopiero wybrany plik YAML określa scenariusz silnika, czas, seed i profil.
 5. Dostępne gotowe lekcje obejmują co najmniej:
    - **roving oddball** — standard, dewiant, habituacja i readaptacja;
@@ -57,11 +57,31 @@ Panel ma stałą strukturę dydaktyczną zgodną z przebiegiem zajęć:
 2. **Co uruchomiono** — pokazuje cel lekcji, scenariusz z `GuiState`, `scenario_config`, `comparison_config` i seed, czyli minimalny kontekst potrzebny do odtworzenia przebiegu.
 3. **Co obserwujesz** — łączy `expected_observations_pl` z liczbą i typami zdarzeń na osi czasu, profilem klinicznym oraz najważniejszymi metrykami raportu.
 4. **Jak interpretować wynik** — przypomina cel lekcji, mechanizm profilu i, jeżeli raport zawiera odpowiednią sekcję, wskazówki interpretacyjne dla roving oddball.
-5. **Ograniczenia interpretacyjne** — jasno zaznacza, że wynik jest dydaktyczną symulacją, nie badaniem pacjenta ani podstawą diagnozy klinicznej.
+5. **Ograniczenia interpretacyjne** — pokazują wspólny komunikat: „Wyniki są
+   interpretacją dydaktyczną modelu i nie stanowią diagnozy klinicznej ani
+   normy psychometrycznej.”
 6. **Pytania kontrolne** — korzystają z `post_run_questions_pl` i służą do sprawdzenia, czy uczestnicy potrafią uzasadnić wynik na podstawie artefaktów.
 7. **Co zmienić w kolejnym uruchomieniu** — formatuje `next_run_changes`, aby prowadzący mógł zaplanować porównanie profilu, parametru albo konfiguracji w następnym przebiegu.
 
 Takie rozdzielenie utrzymuje tryb nauczyciela jako warstwę prezentacji: GUI pokazuje i komentuje gotowe artefakty, natomiast wybór bodźców, walidacja konfiguracji, losowość i raport analityczny pozostają odpowiedzialnością silnika oraz plików YAML. Dzięki temu opis lekcji jest replikowalny i może być porównany z eksportowanym `plan_lekcji.md`.
+
+## Spójne ograniczenie interpretacyjne
+
+Źródłem tekstu ograniczenia dla wyników Qt jest stała
+`EDUCATIONAL_LIMITATION_TEXT_PL` z `brain_model/qt_results.py`. Korzystają z
+niej:
+
+- `ObservationPanel`;
+- `ProfileComparisonPanel`;
+- `TeacherLessonPanel`, w tym sekcja **Ograniczenia interpretacyjne**;
+- `LessonQuestionsPanel`;
+- komunikat potwierdzający eksport pakietu lekcji.
+
+Planowane rozszerzenia tych widoków i eksportu powinny używać tej samej stałej,
+zamiast dodawać lokalne warianty tekstu. Dzięki temu przyszłe zmiany
+terminologii będą wprowadzane w jednym miejscu, a informacja o braku zastosowania
+diagnostycznego i psychometrycznego pozostanie identyczna w całym przepływie
+lekcji.
 
 ## Jak czytać panel „Co obserwujesz teraz?”
 

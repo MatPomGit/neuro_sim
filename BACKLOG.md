@@ -171,16 +171,19 @@ następnie uzupełnia walidację, GUI oraz zakres dydaktyczny P1/P2.
   `BL-CLIN-01` (skalibrowane progi clinical profiles) i `BL-VAL-01`
   (rejestr walidacji z kryteriami zgodności); dodatkowo wymagane są polskie
   opisy presetów YAML.
-- **Główne pliki:** `brain_model/qt_app.py`, `brain_model/qt_sections.py`,
-  `brain_model/qt_state.py`, `brain_model/qt_config.py`,
+- **Główne pliki:** `brain_model/qt_app.py`, `brain_model/qt_results.py`,
+  `brain_model/qt_sections.py`, `brain_model/qt_state.py`,
+  `brain_model/qt_config.py`,
   `docs/english_polish_glossary.md`, `docs/roving_oddball_guide.md`,
-  `configs/*.yaml`, `tests/test_qt_sections.py`, `tests/test_gui_state.py`.
+  `configs/*.yaml`, `tests/test_qt_sections.py`, `tests/test_gui_state.py`,
+  `tests/test_qt_profile_comparison_static.py`.
 - **Kryterium akceptacji:** co najmniej 3 scenariusze mają kartę lekcji,
   konfigurację YAML, oczekiwane obserwacje, pytania kontrolne i kryteria oceny;
   widok nauczyciela pokazuje checklistę, komentarze per etap, ostrzeżenie przed
   interpretacją diagnostyczną i link do raportu porównawczego; widoki i eksport
   przedstawiają metryki wyłącznie jako dydaktyczną interpretację modelu, nie
-  jako diagnozę kliniczną.
+  jako diagnozę kliniczną; nowe panele wynikowe korzystają ze wspólnego tekstu
+  ograniczenia z `EDUCATIONAL_LIMITATION_TEXT_PL`, bez lokalnych wariantów.
 - **Minimalny zestaw testów lub kontroli statycznych:** `ruff check .`,
   `black --check .`, `pytest tests/test_qt_sections.py tests/test_gui_state.py
   tests/test_gui_layout_static.py` oraz kontrola zgodności pojęć z glosariuszem.

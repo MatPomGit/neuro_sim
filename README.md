@@ -225,6 +225,13 @@ Nowy przepływ pracy w GUI składa się z kilku kroków:
 5. **Sugerowany czas scenariusza** – GUI podpowiada czas symulacji dopasowany do wybranego scenariusza, który można zaakceptować albo zmienić ręcznie.
 6. **Tryb nauczyciela** – panel lekcji w wynikach porządkuje hipotezę, uruchomioną konfigurację, obserwacje, interpretację, ograniczenia, pytania kontrolne i sugestie kolejnego przebiegu na podstawie `GuiState`, `event_timeline`, `clinical_profile`, `analysis_report` oraz metadanych `configs/lessons/*.yaml`; GUI nie importuje w tym celu protokołów zadań z `brain_core.experiments`.
 
+Panele wynikowe **Co obserwujesz?**, **Porównanie profili**, **Tryb
+nauczyciela** i **Pytania kontrolne** pokazują wspólne ograniczenie:
+„Wyniki są interpretacją dydaktyczną modelu i nie stanowią diagnozy klinicznej
+ani normy psychometrycznej.” Ten sam komunikat pojawia się po eksporcie pakietu
+lekcji, aby interfejs i dalsze wykorzystanie materiałów zachowywały spójną
+terminologię.
+
 ### Komendy GUI do eksperymentów badawczych
 
 W module GUI dostępne są teraz dwa tryby uruchamiania:
