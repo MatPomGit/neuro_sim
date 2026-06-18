@@ -1058,9 +1058,7 @@ class LessonQuestionsPanel(QWidget):
         )
         self.empty_label.setWordWrap(True)
         layout.addWidget(self.empty_label)
-        limitation_label = QLabel(EDUCATIONAL_LIMITATION_TEXT_PL)
-        limitation_label.setWordWrap(True)
-        layout.addWidget(limitation_label)
+        layout.addWidget(EducationalLimitationLabel())
 
         self.pre_run_table = self._create_questions_table(
             layout,
