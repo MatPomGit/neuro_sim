@@ -15,6 +15,9 @@ Każda lekcja w GUI powinna być omawiana w stałej kolejności, aby prowadzący
 5. **Obserwacja** — wspólne przejrzenie osi czasu, tabeli triali, panelu „Co obserwujesz?” i metryk raportu analitycznego.
 6. **Pytania kontrolne** — krótkie pytania sprawdzające, czy uczestnicy potrafią uzasadnić wynik na podstawie konfiguracji, profilu i obserwacji.
 
+Szczegółowy kontrakt pól, szablon oraz procedura dodawania nowych wpisów są
+opisane w [`lesson_catalog_guidelines.md`](lesson_catalog_guidelines.md).
+
 ## Wybór lekcji
 
 1. Otwórz aplikację przez `neuro-sim-gui`, `main_gui.py` albo punkt wejścia `brain_model.gui:run_gui`.
@@ -30,7 +33,11 @@ Każda lekcja w GUI powinna być omawiana w stałej kolejności, aby prowadzący
 5. Dostępne gotowe lekcje obejmują co najmniej:
    - **roving oddball** — standard, dewiant, habituacja i readaptacja;
    - **go/no-go** — hamowanie reakcji i wpływ dysregulacji GABA;
-   - **n-back** — pamięć robocza, aktualizacja wartości i deficyt dopaminowy.
+   - **n-back** — pamięć robocza, aktualizacja wartości i deficyt dopaminowy;
+   - **Stroop** — konflikt poznawczy i kontrola wykonawcza;
+   - **stress-recovery** — regulacja emocji po epizodzie stresu;
+   - **SNN hipokampa** — demonstracja współsymulacji neural mass i lokalnego
+     obwodu spiking.
 6. Pole **po co ten wybór** opisuje, jaki scenariusz silnika, czas oraz mechanizm profilu klinicznego znajdują się w pliku YAML.
 
 ## Wybór i uruchomienie scenariusza

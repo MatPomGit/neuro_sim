@@ -1,0 +1,21 @@
+id: snn_hippocampus_cosimulation
+label_pl: Lekcja — współsymulacja hipokampa neural mass i SNN
+level_pl: zaawansowany
+estimated_duration_min: 75
+scenario_config: configs/snn_hippocampus_demo.yaml
+comparison_config: null
+learning_goal_pl: Uczestnik rozróżnia skalę neural mass od lokalnego obwodu SNN oraz interpretuje sprzężenie closed-loop jako demonstracyjny kontrakt wymiany sygnałów, a nie pełny model biologiczny hipokampa.
+pre_run_questions_pl:
+  - Jakiego rodzaju sygnał powinien przepływać z modelu neural mass do lokalnego obwodu SNN?
+  - Dlaczego amplituda sprzężenia zwrotnego musi być ograniczona dla stabilności symulacji?
+expected_observations_pl:
+  - Raport wskazuje aktywny tryb closed_loop, region HIP oraz parametry synchronizacji i ograniczenia amplitudy sprzężenia.
+  - Przebieg pozwala porównać sygnał regionu HIP z wynikiem lokalnego obwodu bez utożsamiania aktywności proxy z pomiarem neurofizjologicznym.
+post_run_questions_pl:
+  - Które parametry konfiguracji określają częstotliwość synchronizacji i maksymalną amplitudę sprzężenia zwrotnego?
+  - Jakie dodatkowe pomiary byłyby potrzebne, aby ocenić koszt i stabilność wariantu closed_loop względem report_only?
+next_run_changes:
+  - element: Maksymalna amplituda sprzężenia
+    current_value: "0.15"
+    next_value: "0.10"
+    reason: Sprawdzenie wpływu słabszego sprzężenia zwrotnego na stabilność i aktywność regionu HIP przy tym samym seedzie.
