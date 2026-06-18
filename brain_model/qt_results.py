@@ -607,9 +607,7 @@ class ObservationPanel(QWidget):
         )
         self.metric_warnings_label.setWordWrap(True)
         warnings_layout.addWidget(self.metric_warnings_label)
-        limitation_label = QLabel(EDUCATIONAL_LIMITATION_TEXT_PL)
-        limitation_label.setWordWrap(True)
-        warnings_layout.addWidget(limitation_label)
+        warnings_layout.addWidget(EducationalLimitationLabel())
 
         layout.addWidget(observation_group)
         layout.addWidget(importance_group)
