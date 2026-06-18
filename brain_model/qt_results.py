@@ -1006,9 +1006,7 @@ class ProfileComparisonPanel(QWidget):
         )
         hint.setWordWrap(True)
         layout.addWidget(hint)
-        limitation_label = QLabel(EDUCATIONAL_LIMITATION_TEXT_PL)
-        limitation_label.setWordWrap(True)
-        layout.addWidget(limitation_label)
+        layout.addWidget(EducationalLimitationLabel())
 
         self.table = QTableWidget(0, len(self.HEADERS))
         self.table.setHorizontalHeaderLabels(self.HEADERS)
