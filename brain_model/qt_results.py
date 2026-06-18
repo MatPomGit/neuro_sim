@@ -1154,7 +1154,9 @@ class RovingOddballQuestionsPanel(QWidget):
         """
         safe_report = analysis_report or {}
         roving_report = safe_report.get("roving_oddball", {})
-        self.setVisible(isinstance(roving_report, dict) and bool(roving_report))
+        if not isinstance(roving_report, dict):
+            roving_report = {}
+        self.setVisible(bool(roving_report))
         rows = self._question_rows(roving_report)
         self.table.setRowCount(len(rows))
         for row, (question, answer) in enumerate(rows):
