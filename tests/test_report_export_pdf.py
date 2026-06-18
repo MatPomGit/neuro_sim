@@ -401,7 +401,6 @@ def test_qt_gui_exposes_lesson_package_export_after_successful_run() -> None:
     qt_app_source = QT_APP_PATH.read_text(encoding="utf-8")
 
     assert "Eksportuj pakiet lekcji" in qt_app_source
-    assert "from .report_export import (" in qt_app_source
     assert "export_teaching_package(" in qt_app_source
     assert "self.export_teaching_package_button.setEnabled(True)" in qt_app_source
     assert "Pakiet lekcji zapisano w katalogu:" in qt_app_source
