@@ -4,16 +4,31 @@ level_pl: zaawansowany
 estimated_duration_min: 75
 scenario_config: configs/snn_hippocampus_demo.yaml
 comparison_config: null
+profile_pl: Demonstracyjny obwód hipokampa HIP w trybie closed_loop neural mass ↔ SNN.
+task_pl: Współsymulacja neural mass i lokalnego obwodu SNN.
 learning_goal_pl: Uczestnik rozróżnia skalę neural mass od lokalnego obwodu SNN oraz interpretuje sprzężenie closed-loop jako demonstracyjny kontrakt wymiany sygnałów, a nie pełny model biologiczny hipokampa.
+lesson_steps_pl:
+  - Zapisz hipotezę przed uruchomieniem na podstawie celu i pytań wstępnych.
+  - Zweryfikuj plik konfiguracji, profil, task i ziarno losowości.
+  - Uruchom symulację i sprawdź status zakończenia.
+  - Przejrzyj oś czasu, metryki, wykresy i oczekiwane artefakty raportu.
+  - Odpowiedz na pytania kontrolne i sprawdź odpowiedź według kryteriów oceny.
+  - Omów ograniczenia interpretacyjne i zaplanuj kontrolowaną zmianę kolejnego przebiegu.
 pre_run_questions_pl:
   - Jakiego rodzaju sygnał powinien przepływać z modelu neural mass do lokalnego obwodu SNN?
   - Dlaczego amplituda sprzężenia zwrotnego musi być ograniczona dla stabilności symulacji?
 expected_observations_pl:
   - Raport wskazuje aktywny tryb closed_loop, region HIP oraz parametry synchronizacji i ograniczenia amplitudy sprzężenia.
   - Przebieg pozwala porównać sygnał regionu HIP z wynikiem lokalnego obwodu bez utożsamiania aktywności proxy z pomiarem neurofizjologicznym.
+expected_report_pl:
+  - Raport sekcji snn_comparison z trybem sprzężenia, sync_dt i limitem amplitudy.
+  - Wykresy aktywności HIP i artefakty reprodukcji konfiguracji.
 post_run_questions_pl:
   - Które parametry konfiguracji określają częstotliwość synchronizacji i maksymalną amplitudę sprzężenia zwrotnego?
   - Jakie dodatkowe pomiary byłyby potrzebne, aby ocenić koszt i stabilność wariantu closed_loop względem report_only?
+assessment_criteria_pl:
+  - Odpowiedź wskazuje parametry synchronizacji i limit amplitudy w konfiguracji lub raporcie.
+  - Interpretacja rozróżnia proxy neural mass od aktywności SNN i nie opisuje demonstracji jako pełnego modelu biologicznego.
 next_run_changes:
   - element: Maksymalna amplituda sprzężenia
     current_value: "0.15"

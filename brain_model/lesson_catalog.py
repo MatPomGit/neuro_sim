@@ -16,10 +16,15 @@ _REQUIRED_LESSON_FIELDS = {
     "estimated_duration_min",
     "scenario_config",
     "comparison_config",
+    "profile_pl",
+    "task_pl",
     "learning_goal_pl",
+    "lesson_steps_pl",
     "pre_run_questions_pl",
     "expected_observations_pl",
+    "expected_report_pl",
     "post_run_questions_pl",
+    "assessment_criteria_pl",
     "next_run_changes",
 }
 
@@ -43,14 +48,24 @@ class LessonCatalogItem:
         Ścieżka do konfiguracji YAML uruchamianej przez silnik symulacji.
     comparison_config:
         Opcjonalna ścieżka do konfiguracji porównania profili.
+    profile_pl:
+        Polski opis profilu omawianego podczas lekcji.
+    task_pl:
+        Polska nazwa zadania lub protokołu dydaktycznego.
     learning_goal_pl:
         Polski opis celu dydaktycznego lekcji.
+    lesson_steps_pl:
+        Kolejne kroki prowadzące przez pełny przebieg lekcji.
     pre_run_questions_pl:
         Pytania kontrolne zadawane przed uruchomieniem symulacji.
     expected_observations_pl:
         Oczekiwane obserwacje interpretowane po uruchomieniu symulacji.
+    expected_report_pl:
+        Lista artefaktów oczekiwanych w raporcie i eksporcie.
     post_run_questions_pl:
         Pytania podsumowujące po analizie wyniku.
+    assessment_criteria_pl:
+        Sprawdzalne kryteria oceny odpowiedzi uczestnika.
     next_run_changes:
         Propozycje zmian parametrów dla kolejnego uruchomienia.
     """
@@ -61,10 +76,15 @@ class LessonCatalogItem:
     estimated_duration_min: int
     scenario_config: str
     comparison_config: str | None
+    profile_pl: str
+    task_pl: str
     learning_goal_pl: str
+    lesson_steps_pl: list[str]
     pre_run_questions_pl: list[str]
     expected_observations_pl: list[str]
+    expected_report_pl: list[str]
     post_run_questions_pl: list[str]
+    assessment_criteria_pl: list[str]
     next_run_changes: list[dict[str, str]]
 
 
@@ -219,6 +239,8 @@ def _lesson_from_payload(path: Path, payload: dict[str, Any]) -> LessonCatalogIt
         "label_pl",
         "level_pl",
         "scenario_config",
+        "profile_pl",
+        "task_pl",
         "learning_goal_pl",
     )
     for field_name in string_fields:
@@ -243,12 +265,17 @@ def _lesson_from_payload(path: Path, payload: dict[str, Any]) -> LessonCatalogIt
         estimated_duration_min=estimated_duration_min,
         scenario_config=payload["scenario_config"],
         comparison_config=comparison_config,
+        profile_pl=payload["profile_pl"],
+        task_pl=payload["task_pl"],
         learning_goal_pl=payload["learning_goal_pl"],
+        lesson_steps_pl=_as_string_list(path, payload, "lesson_steps_pl"),
         pre_run_questions_pl=_as_string_list(path, payload, "pre_run_questions_pl"),
         expected_observations_pl=_as_string_list(
             path, payload, "expected_observations_pl"
         ),
+        expected_report_pl=_as_string_list(path, payload, "expected_report_pl"),
         post_run_questions_pl=_as_string_list(path, payload, "post_run_questions_pl"),
+        assessment_criteria_pl=_as_string_list(path, payload, "assessment_criteria_pl"),
         next_run_changes=_as_next_run_changes(path, payload),
     )
 

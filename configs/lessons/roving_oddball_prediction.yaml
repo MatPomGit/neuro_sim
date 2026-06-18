@@ -4,16 +4,31 @@ level_pl: podstawowy
 estimated_duration_min: 45
 scenario_config: configs/roving_oddball_healthy.yaml
 comparison_config: configs/comparisons/roving_oddball_profiles.yaml
+profile_pl: Profil healthy_v1 z opcjonalnym porównaniem GABA i uszkodzenia hipokampa.
+task_pl: Roving oddball — predykcja, habituacja i readaptacja.
 learning_goal_pl: Uczestnik wyjaśnia różnicę między standardem, dewiantem i nowym standardem oraz interpretuje habituację i readaptację jako jakościowe efekty modelu.
+lesson_steps_pl:
+  - Zapisz hipotezę przed uruchomieniem na podstawie celu i pytań wstępnych.
+  - Zweryfikuj plik konfiguracji, profil, task i ziarno losowości.
+  - Uruchom symulację i sprawdź status zakończenia.
+  - Przejrzyj oś czasu, metryki, wykresy i oczekiwane artefakty raportu.
+  - Odpowiedz na pytania kontrolne i sprawdź odpowiedź według kryteriów oceny.
+  - Omów ograniczenia interpretacyjne i zaplanuj kontrolowaną zmianę kolejnego przebiegu.
 pre_run_questions_pl:
   - Co powinno stać się z odpowiedzią modelu po serii powtarzalnych standardów?
   - Dlaczego dewiant powinien zwiększyć sygnał nowości lub błędu predykcji?
 expected_observations_pl:
   - Raport pokazuje standardy, dewianty i nowe standardy na wspólnej osi czasu.
   - Metryki habituacji i readaptacji są interpretowane jako proxy dydaktyczne, nie jako pomiar kliniczny.
+expected_report_pl:
+  - Raport pokazujący standardy, dewianty, nowe standardy, habituację i latencję readaptacji.
+  - Raport porównawczy profili dla wspólnego seeda.
 post_run_questions_pl:
   - Które triale najlepiej pokazują przejście standard → dewiant → nowy standard?
   - Czy obserwowany kierunek zmian jest zgodny z oczekiwaniem profilu?
+assessment_criteria_pl:
+  - Odpowiedź wskazuje na osi czasu przejście standard → dewiant → nowy standard.
+  - Interpretacja habituacji lub readaptacji przywołuje konkretną metrykę i nazywa ją proxy dydaktycznym.
 next_run_changes:
   - element: Profil kliniczny
     current_value: healthy_v1

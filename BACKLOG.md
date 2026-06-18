@@ -18,7 +18,7 @@ Backlog opisuje zarówno prace przyszłe, jak i obszary już częściowo zaimple
 
 Najważniejsze istniejące fundamenty obejmują moduły eksperymentów, uszkodzeń i raportowania, m.in. `brain_core/experiments/protocols.py`, `brain_core/experiments/lesions.py` oraz `brain_core/analysis/reports.py`. Dla pozycji P0–P2 wskazano poniżej konkretne artefakty, aby oddzielić zakres już obecny w repozytorium od pozostałych prac.
 
-Na dzień 2026-06-05 status nie jest prognozą wdrożenia, tylko krótką oceną rzeczywistego stanu repozytorium na podstawie powyższych definicji.
+Na dzień 2026-06-18 status nie jest prognozą wdrożenia, tylko krótką oceną rzeczywistego stanu repozytorium na podstawie powyższych definicji.
 
 ### Najbliższe krytyczne ryzyka
 
@@ -49,7 +49,8 @@ Na dzień 2026-06-05 status nie jest prognozą wdrożenia, tylko krótką oceną
 | Timeline | `partial` | `event_timeline` w `brain_core/simulation/events.py` jest integrowany z silnikiem w `brain_core/simulation/engine.py` oraz raportami, a jego działanie weryfikują testy w `tests/test_task_protocols_and_engine.py`. | Jednolity format dla wszystkich symulacji, widok trial-by-trial, filtrowanie zdarzeń, grupowanie per trial, eksport HTML/PDF, linkowanie zdarzeń z wykresami i objaśnienia per profil kliniczny. |
 | Benchmark metadata | `partial` | `data/validation/benchmark_metadata.json` oraz walidacja metadanych w `brain_core/analysis/benchmark_loader.py`. | Jawne kryteria zgodności dla każdego benchmarku, źródła literaturowe/empiryczne i raport wersyjny. |
 | SNN demo | `partial` | `closed_loop` jest istniejącym MVP: `configs/snn_hippocampus_demo.yaml`, `brain_core/simulation/engine.py`, `brain_core/simulation/signal_adapter.py`, `brain_core/simulation/multiscale_engine.py` i opis demo. | Walidacja stabilności closed-loop, porównanie kosztu `report_only` vs `closed_loop`, pełniejszy backend biologiczny oraz integracja NEST/NEURON/Arbor. |
-| GUI YAML presets | `partial` | Presety YAML dla `roving_oddball` i `snn_hippocampus_demo` są dostępne w GUI oraz sprawdzane przez testy statyczne. | Dopięcie interpretacji dydaktycznej presetów, polskich etykiet i instrukcji wyboru scenariuszy. |
+| GUI YAML presets | `partial` | Presety YAML oraz sześć kart lekcji są dostępne w GUI, mają polskie opisy i są sprawdzane przez testy statyczne. | Rozszerzanie katalogu wraz z nowymi zwalidowanymi scenariuszami i utrzymanie zgodności opisów z artefaktami raportu. |
+| Przepływ dydaktyczny | `done` | Sześć kart YAML definiuje profil, task, checklistę, oczekiwany raport i kryteria oceny; tryb nauczyciela prowadzi przez etapy, a eksport zapisuje raporty, kartę pracy, metadane i wykresy. | Dalsza walidacja użyteczności i rozwój katalogu są usprawnieniami, nie brakami kryteriów BL-EDU-01–03. |
 | Rejestr walidacji | `partial` | `docs/validation_registry.md`, `data/validation/benchmark_metadata.json` i loader benchmarków opisują podstawowe benchmarki edukacyjne. | Kryteria zgodności, źródła, poziomy walidacji i raport wersyjny jakościowej zgodności. |
 
 ### Najbliższe konkretne zadania do zaplanowania
@@ -60,8 +61,10 @@ Na dzień 2026-06-05 status nie jest prognozą wdrożenia, tylko krótką oceną
 | BL-CLIN-01 | P0 | Skalibrować progi clinical profiles względem benchmarków i dopisać tolerancje oraz kierunek oczekiwanej zmiany. | Kalibracja progów clinical profiles | Każdy próg ma źródło, tolerancję, zakres stosowalności i test regresji albo jawne uzasadnienie braku testu; każdy profil clinical ma `expected_direction`, `primary_metric`, `severity_level` i komentarz w raporcie porównawczym. |
 | BL-TL-01 | P0 | Rozszerzyć timeline o grupowanie trial-by-trial i powiązania z wykresami. | Kompletność raportu trial-by-trial | Raport dla `roving_oddball` pokazuje numer triala, typ bodźca, odpowiedź, metryki i komentarz mechanizmu. |
 | BL-SNN-01 | P1 | Zmierzyć koszt `report_only` vs `closed_loop` SNN dla tej samej konfiguracji, seeda i czasu symulacji. | Koszt `closed_loop` SNN | Raport zawiera czas wykonania, długości sygnałów, amplitudę feedbacku i rekomendację, czy wariant nadaje się do GUI. |
-| BL-GUI-01 | P1 | Dodać w GUI dydaktyczne opisy presetów YAML dla `roving_oddball` i `snn_hippocampus_demo`. | Interpretacja benchmarków, koszt `closed_loop` SNN | Użytkownik widzi polski opis celu, oczekiwany efekt, ograniczenia i link do konfiguracji bez duplikowania logiki silnika. |
-| BL-EDU-01 | P1 | Zaprojektować profesjonalny katalog scenariuszy dydaktycznych: lekcja, cel, czas, poziom trudności, profil, task, pytania kontrolne i oczekiwany raport. | Gotowość aplikacji do zajęć | Co najmniej 3 scenariusze mają kartę lekcji, konfigurację YAML, oczekiwane obserwacje, pytania kontrolne i kryteria oceny odpowiedzi; widoki i eksport przedstawiają metryki wyłącznie jako dydaktyczną interpretację modelu, nie jako diagnozę kliniczną. |\n| BL-EDU-02 | P1 | Rozbudować tryb nauczyciela o prowadzenie użytkownika krok po kroku przez hipotezę, uruchomienie, obserwację metryk i interpretację ograniczeń. | Kompletność raportu trial-by-trial, interpretacja benchmarków | Widok nauczyciela pokazuje checklistę lekcji, komentarze per etap, ostrzeżenie przed interpretacją diagnostyczną, link do raportu porównawczego oraz metryki opisane wyłącznie jako dydaktyczna interpretacja modelu, nie jako diagnoza kliniczna. |\n| BL-EDU-03 | P2 | Dodać eksport pakietu dydaktycznego dla zajęć: raport HTML/PDF, skrót dla prowadzącego, karta pracy studenta i metadane konfiguracji. | Replikowalność zajęć | Eksport zawiera konfigurację, seed, wersję kodu, metryki, wykresy, komentarze dydaktyczne i pytania kontrolne bez ręcznego kopiowania z GUI; widoki i eksport nie przedstawiają metryk jako diagnozy klinicznej, tylko jako dydaktyczną interpretację modelu. |
+| BL-GUI-01 | P1 | **Zrealizowane (MVP):** dydaktyczne opisy presetów i kart lekcji są wczytywane z `configs/lessons/*.yaml`. | Interpretacja benchmarków, koszt `closed_loop` SNN | Utrzymywać polskie opisy celu, oczekiwanych obserwacji, ograniczeń i ścieżki konfiguracji bez duplikowania logiki silnika. |
+| BL-EDU-01 | P1 | **Zrealizowane:** katalog obejmuje sześć lekcji z celem, czasem, poziomem, profilem, taskiem, oczekiwanym raportem, pytaniami i kryteriami oceny. | Gotowość aplikacji do zajęć | Kryteria akceptacji spełnione; nowe lekcje walidować według `docs/lesson_catalog_guidelines.md`. |
+| BL-EDU-02 | P1 | **Zrealizowane:** tryb nauczyciela pokazuje checklistę, hipotezę, uruchomienie, obserwacje, raport, interpretację, ograniczenia, kryteria oceny i odnośnik do porównania. | Kompletność raportu trial-by-trial, interpretacja benchmarków | Kryteria akceptacji spełnione; pełniejsze linkowanie pojedynczych triali pozostaje w BL-TL-01. |
+| BL-EDU-03 | P2 | **Zrealizowane:** pakiet zawiera raport HTML/PDF, konfigurację, seed, Git, środowisko, metryki, wykresy PNG, komentarze, pytania, plan, skrót i kartę pracy. | Replikowalność zajęć | Kryteria akceptacji spełnione; dalsze warianty materiałów mogą być rozwijane niezależnie. |
 | BL-VAL-01 | P1 | Uzupełnić rejestr walidacji o kryteria zgodności, źródła i poziomy walidacji per benchmark. | Interpretacja benchmarków | Rejestr wskazuje efekty odtworzone jakościowo, częściowo odtworzone i pozostające poza zakresem. |
 
 ### Plan najbliższej iteracji
@@ -241,12 +244,12 @@ Poniższa lista zbiera komplet najbliższych prac planowanych na bazie aktualneg
 11. **Migracja desktopowego GUI na PySide6 P2** — Status: `partial`. domknąć przejście nowych
     przepływów desktopowych z `tkinter`/`TkAgg` na PySide6/Qt, zachowując
     kompatybilny punkt wejścia `brain_model.gui:run_gui` zgodnie z ADR-0016.
-12. **Tryb nauczyciela P2** — Status: `planned`. dopisać widoki edukacyjne, pytania kontrolne i
-    polskie etykiety pojęć zgodne z `docs/english_polish_glossary.md`.
-13. **Profesjonalizacja aplikacji dydaktycznej P1/P2** — Status: `planned`. przygotować katalog lekcji,
-    prowadzenie krok po kroku, eksport pakietów zajęciowych, checklistę
-    prowadzącego, kartę pracy studenta oraz jasne ograniczenia interpretacyjne
-    dla scenariuszy clinical/lesion.
+12. **Tryb nauczyciela P2** — Status: `done`. Widoki edukacyjne zawierają
+    checklistę, pytania, oczekiwany raport, kryteria oceny, odnośnik do
+    porównania oraz wspólne ograniczenie interpretacyjne.
+13. **Profesjonalizacja aplikacji dydaktycznej P1/P2** — Status: `done`.
+    Katalog sześciu lekcji i eksport pakietu z raportami, kartą pracy,
+    metadanymi oraz osobnymi wykresami spełniają kryteria BL-EDU-01–03.
 14. **Jakość i dokumentacja przekrojowa** — Status: `partial`. utrzymać standard docstringów/type hints,
     aktualizować `docs/program_structure.md` oraz ADR przy zmianach
     strukturalnych i dopisać instrukcje uruchamiania dla scenariuszy.

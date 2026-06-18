@@ -30,10 +30,15 @@ Każdy plik `configs/lessons/<id>.yaml` musi zawierać:
 | `estimated_duration_min` | `int` | Dodatni, realistyczny czas zajęć w minutach. |
 | `scenario_config` | `str` | Istniejąca ścieżka względna do konfiguracji eksperymentu YAML. |
 | `comparison_config` | `str \| null` | Istniejąca konfiguracja porównania profili albo `null`. |
+| `profile_pl` | `str` | Polski opis profilu lub wariantów profili omawianych na lekcji. |
+| `task_pl` | `str` | Polska nazwa zadania lub protokołu dydaktycznego. |
 | `learning_goal_pl` | `str` | Jeden mierzalny cel dydaktyczny zapisany po polsku. |
+| `lesson_steps_pl` | `list[str]` | Co najmniej pięć kroków checklisty od hipotezy do omówienia ograniczeń. |
 | `pre_run_questions_pl` | `list[str]` | Niepusta lista pytań stawianych przed uruchomieniem. |
 | `expected_observations_pl` | `list[str]` | Niepusta lista obserwacji, które można sprawdzić w artefaktach wyniku. |
+| `expected_report_pl` | `list[str]` | Artefakty i sekcje, które muszą znaleźć się w oczekiwanym raporcie. |
 | `post_run_questions_pl` | `list[str]` | Niepusta lista pytań wymagających odwołania do wyniku. |
+| `assessment_criteria_pl` | `list[str]` | Co najmniej dwa sprawdzalne kryteria poprawnej odpowiedzi. |
 | `next_run_changes` | `list[map]` | Niepusta lista kontrolowanych zmian dla następnego przebiegu. |
 
 Każdy wpis `next_run_changes` musi zawierać dokładnie opisane wartości:
@@ -79,13 +84,26 @@ level_pl: podstawowy
 estimated_duration_min: 45
 scenario_config: configs/example.yaml
 comparison_config: null
+profile_pl: Profil referencyjny bez porównania.
+task_pl: Przykładowe zadanie poznawcze.
 learning_goal_pl: Uczestnik wyjaśnia sprawdzalny efekt modelu.
+lesson_steps_pl:
+  - Zapisz hipotezę.
+  - Zweryfikuj konfigurację, profil, task i seed.
+  - Uruchom symulację.
+  - Przejrzyj raport i wykresy.
+  - Oceń odpowiedź i omów ograniczenia.
 pre_run_questions_pl:
   - Jakiego kierunku zmiany oczekujesz przed uruchomieniem?
 expected_observations_pl:
   - Raport pokazuje artefakt pozwalający sprawdzić przewidywanie.
+expected_report_pl:
+  - Raport trial-by-trial z metrykami i wykresami.
 post_run_questions_pl:
   - Czy wynik jest zgodny z przewidywaniem i na jakiej podstawie?
+assessment_criteria_pl:
+  - Odpowiedź wskazuje konkretny artefakt raportu.
+  - Interpretacja zawiera ograniczenie dydaktyczne.
 next_run_changes:
   - element: Nazwa parametru
     current_value: "wartość bazowa"

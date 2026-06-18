@@ -70,6 +70,11 @@ Panel ma stałą strukturę dydaktyczną zgodną z przebiegiem zajęć:
 6. **Pytania kontrolne** — korzystają z `post_run_questions_pl` i służą do sprawdzenia, czy uczestnicy potrafią uzasadnić wynik na podstawie artefaktów.
 7. **Co zmienić w kolejnym uruchomieniu** — formatuje `next_run_changes`, aby prowadzący mógł zaplanować porównanie profilu, parametru albo konfiguracji w następnym przebiegu.
 
+Panel pokazuje ponadto checklistę `lesson_steps_pl`, jawny profil `profile_pl`,
+task `task_pl`, oczekiwane sekcje raportu `expected_report_pl`, kryteria oceny
+`assessment_criteria_pl` oraz ścieżkę do raportu porównawczego, jeżeli lekcja
+definiuje `comparison_config`.
+
 Takie rozdzielenie utrzymuje tryb nauczyciela jako warstwę prezentacji: GUI pokazuje i komentuje gotowe artefakty, natomiast wybór bodźców, walidacja konfiguracji, losowość i raport analityczny pozostają odpowiedzialnością silnika oraz plików YAML. Dzięki temu opis lekcji jest replikowalny i może być porównany z eksportowanym `plan_lekcji.md`.
 
 ## Spójne ograniczenie interpretacyjne
@@ -117,6 +122,9 @@ Po zakończeniu symulacji dostępne są dwie akcje:
    - `pytania_kontrolne.md` — pytania dla studentów z odpowiedziami z raportu, gdy są dostępne;
    - `skrot_dla_prowadzacego.md` — skrót scenariusza, profilu i metryk do omówienia;
    - `plan_lekcji.md` — przebieg lekcji w strukturze: cel, scenariusz YAML, profil, przewidywanie, obserwacja, pytania kontrolne oraz opcjonalna tabela **Co zmienić w kolejnym uruchomieniu**.
+   - `karta_pracy_studenta.md` — miejsce na hipotezę, obserwacje i odpowiedzi,
+     wraz z checklistą kryteriów oceny;
+   - `wykresy/` — osobne pliki PNG wszystkich wykresów przekazanych do eksportu.
 
 ## Interpretacja raportu
 

@@ -4,16 +4,31 @@ level_pl: średni
 estimated_duration_min: 60
 scenario_config: configs/scenario_yaml_stress_recovery_serotonin.yaml
 comparison_config: null
+profile_pl: Scenariusz zaburzenia równowagi serotoninowej bez porównania klinicznego.
+task_pl: Stress-recovery — fazy stresu i regeneracji.
 learning_goal_pl: Uczestnik wyjaśnia kolejne fazy odpowiedzi stresowej i regeneracji oraz ostrożnie interpretuje wpływ zaburzenia równowagi serotoninowej na próg decyzji i elastyczność poznawczą.
+lesson_steps_pl:
+  - Zapisz hipotezę przed uruchomieniem na podstawie celu i pytań wstępnych.
+  - Zweryfikuj plik konfiguracji, profil, task i ziarno losowości.
+  - Uruchom symulację i sprawdź status zakończenia.
+  - Przejrzyj oś czasu, metryki, wykresy i oczekiwane artefakty raportu.
+  - Odpowiedz na pytania kontrolne i sprawdź odpowiedź według kryteriów oceny.
+  - Omów ograniczenia interpretacyjne i zaplanuj kontrolowaną zmianę kolejnego przebiegu.
 pre_run_questions_pl:
   - Które fazy scenariusza powinny odpowiadać narastaniu stresu, utrzymaniu pobudzenia i regeneracji?
   - Jak podwyższony próg decyzji może zmienić zachowanie modelu podczas wygaszania pobudzenia?
 expected_observations_pl:
   - Oś czasu rozdziela fazę stresu od regeneracji i pozwala powiązać je ze zmianami aktywności SAL, EXEC oraz DMN.
   - Raport pokazuje jakościowe zmiany pewności i błędu predykcji bez przypisywania im znaczenia diagnostycznego.
+expected_report_pl:
+  - Raport z osią czasu faz stresu i regeneracji oraz metrykami pewności i błędu predykcji.
+  - Opis profilu i parametrów konfiguracji potrzebnych do powtórzenia przebiegu.
 post_run_questions_pl:
   - W której fazie przebiegu zmiana aktywności regionów związanych z kontrolą i salience jest najbardziej widoczna?
   - Czy powrót metryk po epizodzie stresu jest natychmiastowy, czy rozłożony w czasie?
+assessment_criteria_pl:
+  - Odpowiedź wskazuje fazę stresu i regeneracji na podstawie osi czasu.
+  - Interpretacja zmian pewności lub błędu predykcji pozostaje jakościowa i nie przypisuje im znaczenia diagnostycznego.
 next_run_changes:
   - element: Próg decyzji
     current_value: "0.72"

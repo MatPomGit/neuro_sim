@@ -90,14 +90,16 @@ def test_profile_comparison_result_table_has_polish_headers() -> None:
 def test_results_define_educational_limitation_and_profile_reference() -> None:
     """Wyniki definiują wspólne ograniczenie i pokazują je przy porównaniu profili."""
     results_source = QT_RESULTS_PATH.read_text(encoding="utf-8")
+    labels_source = (REPO_ROOT / "brain_model" / "gui_labels.py").read_text(
+        encoding="utf-8"
+    )
     profile_panel_source = results_source.split(
         "class ProfileComparisonPanel", maxsplit=1
     )[1].split("class LessonQuestionsPanel", maxsplit=1)[0]
 
-    assert (
-        "Wyniki są interpretacją dydaktyczną modelu i nie stanowią diagnozy "
-        "klinicznej ani normy psychometrycznej."
-    ) in results_source
+    assert "Wyniki są interpretacją dydaktyczną modelu" in labels_source
+    assert "klinicznej ani normy psychometrycznej." in labels_source
+    assert "from .gui_labels import EDUCATIONAL_LIMITATION_TEXT_PL" in results_source
     assert "EducationalLimitationLabel" in profile_panel_source
 
 

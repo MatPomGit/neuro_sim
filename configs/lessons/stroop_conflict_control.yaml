@@ -4,16 +4,31 @@ level_pl: średni
 estimated_duration_min: 60
 scenario_config: configs/stroop.yaml
 comparison_config: configs/comparisons/stroop_profiles.yaml
+profile_pl: Profil healthy_v1 porównywany z osłabieniem DLPFC.
+task_pl: Stroop — konflikt poznawczy i kontrola wykonawcza.
 learning_goal_pl: Uczestnik wyjaśnia różnicę między warunkiem congruent i incongruent oraz rolę kontroli wykonawczej w raporcie porównawczym.
+lesson_steps_pl:
+  - Zapisz hipotezę przed uruchomieniem na podstawie celu i pytań wstępnych.
+  - Zweryfikuj plik konfiguracji, profil, task i ziarno losowości.
+  - Uruchom symulację i sprawdź status zakończenia.
+  - Przejrzyj oś czasu, metryki, wykresy i oczekiwane artefakty raportu.
+  - Odpowiedz na pytania kontrolne i sprawdź odpowiedź według kryteriów oceny.
+  - Omów ograniczenia interpretacyjne i zaplanuj kontrolowaną zmianę kolejnego przebiegu.
 pre_run_questions_pl:
   - Dlaczego warunek incongruent powinien wymagać większej kontroli wykonawczej?
   - Jakie metryki mogą pokazać wzrost konfliktu?
 expected_observations_pl:
   - Raport trial-by-trial pokazuje bodziec, odpowiedź, poprawność i komentarz mechanizmu.
   - Profil DLPFC weakening powinien być interpretowany jako jakościowy scenariusz dydaktyczny, nie diagnoza.
+expected_report_pl:
+  - Raport trial-by-trial rozdzielający warunki congruent i incongruent.
+  - Raport porównawczy profili z komentarzem mechanizmu kontroli wykonawczej.
 post_run_questions_pl:
   - Jak różnią się triale congruent i incongruent?
   - Czy obserwowany kierunek różnicy jest zgodny z opisem profilu?
+assessment_criteria_pl:
+  - Odpowiedź poprawnie rozróżnia warunki congruent i incongruent na podstawie triali.
+  - Wniosek o kontroli wykonawczej odwołuje się do artefaktu raportu i zawiera ograniczenie interpretacyjne.
 next_run_changes:
   - element: Profil kliniczny
     current_value: healthy_v1
