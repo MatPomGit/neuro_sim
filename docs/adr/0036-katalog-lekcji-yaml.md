@@ -1,7 +1,7 @@
 # ADR-0036: Katalog lekcji dydaktycznych oparty o YAML
 
-**Status:** proposed  
-**Data:** 2026-06-15
+**Status:** accepted
+**Data:** 2026-06-18
 
 ## Kontekst
 
@@ -20,6 +20,12 @@ Sekcja Qt korzysta z tego loadera zamiast z ręcznie utrzymywanej listy presetó
 Kontrakt autorski, wymagane pola i procedurę dodawania wpisów utrzymujemy w
 `docs/lesson_catalog_guidelines.md`.
 
+Kompletna karta lekcji zawiera również jawny profil i task, checklistę etapów,
+opis oczekiwanego raportu oraz kryteria oceny odpowiedzi. Te pola są źródłem
+dla trybu nauczyciela, planu lekcji i karty pracy studenta. Eksport pakietu
+zapisuje wykresy jako osobne pliki PNG, aby materiały nie zależały wyłącznie od
+osadzenia w PDF.
+
 ## Konsekwencje
 
 Pozytywne skutki:
@@ -27,6 +33,8 @@ Pozytywne skutki:
 - jedno źródło prawdy dla lekcji dydaktycznych,
 - mniejsze ryzyko niespójności między GUI i plikami YAML,
 - statyczne testy mogą weryfikować kompletność katalogu lekcji.
+- prowadzący otrzymuje spójną checklistę, oczekiwany raport i kryteria oceny,
+- eksport może wygenerować plan oraz kartę pracy bez ręcznego kopiowania treści.
 
 Koszty:
 
@@ -34,6 +42,8 @@ Koszty:
   jest niekompletny,
 - dodanie nowej lekcji wymaga utrzymania kompletnego pliku YAML zgodnego z
   kontraktem katalogu.
+- zmiana kontraktu pól wymaga jednoczesnej aktualizacji loadera, testów,
+  dokumentacji oraz istniejących kart lekcji.
 
 ## Alternatywy rozważane
 

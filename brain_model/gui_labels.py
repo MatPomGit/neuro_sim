@@ -11,6 +11,11 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+EDUCATIONAL_LIMITATION_TEXT_PL = (
+    "Wyniki są interpretacją dydaktyczną modelu i nie stanowią diagnozy "
+    "klinicznej ani normy psychometrycznej."
+)
+
 PARAMETER_DESCRIPTIONS = {
     "T": "Czas trwania symulacji w sekundach. Typowo 10-120 s; większe wartości pokazują dłuższe trendy, ale wydłużają obliczenia.",
     "seed": "Ziarno generatora losowego. Typowo dowolna liczba całkowita; ta sama wartość daje powtarzalny przebieg szumu i oscylacji.",

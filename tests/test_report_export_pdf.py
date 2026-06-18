@@ -319,7 +319,22 @@ def test_export_reports_include_detailed_trial_observations(tmp_path: Path) -> N
         event_timeline=event_timeline,
         clinical_profile=clinical_profile,
         analysis_report=analysis_report,
-        plots=[],
+        lesson_metadata={
+            "label_pl": "Lekcja — roving oddball",
+            "learning_goal_pl": "Wyjaśnij habituację i readaptację.",
+            "profile_pl": "Profil healthy_v1.",
+            "task_pl": "Roving oddball.",
+            "lesson_steps_pl": ["Zapisz hipotezę.", "Przejrzyj raport."],
+            "pre_run_questions_pl": ["Jak zmieni się odpowiedź na standard?"],
+            "expected_observations_pl": ["Wskaż dewiant na osi czasu."],
+            "expected_report_pl": ["Raport habituacji i readaptacji."],
+            "post_run_questions_pl": ["Czy hipoteza była zgodna z wynikiem?"],
+            "assessment_criteria_pl": [
+                "Odpowiedź wskazuje trial.",
+                "Interpretacja zawiera ograniczenie.",
+            ],
+        },
+        plots=[("Aktywacje", figure)],
         next_run_changes=[
             {
                 "element": "seed",
@@ -348,6 +363,8 @@ def test_export_reports_include_detailed_trial_observations(tmp_path: Path) -> N
         "pytania_kontrolne.md",
         "skrot_dla_prowadzacego.md",
         "plan_lekcji.md",
+        "karta_pracy_studenta.md",
+        "wykresy",
     }
     assert expected_package_files <= {path.name for path in package_dir.iterdir()}
 
@@ -379,7 +396,15 @@ def test_export_reports_include_detailed_trial_observations(tmp_path: Path) -> N
     assert "## Obserwacja" in lesson_plan
     assert "## Pytania kontrolne" in lesson_plan
     assert "## Co zmienić w kolejnym uruchomieniu" in lesson_plan
+    assert "## Checklista prowadzącego" in lesson_plan
+    assert "## Oczekiwany raport" in lesson_plan
+    assert "## Kryteria oceny odpowiedzi" in lesson_plan
     assert "pokazanie wpływu sekwencji bodźców" in lesson_plan
+    worksheet = (package_dir / "karta_pracy_studenta.md").read_text(encoding="utf-8")
+    assert "# Karta pracy studenta" in worksheet
+    assert "Ograniczenia interpretacyjne" in worksheet
+    assert (package_dir / "wykresy").is_dir()
+    assert list((package_dir / "wykresy").glob("*.png"))
 
 
 def test_qt_gui_exposes_pdf_export_action_and_uses_plot_figures() -> None:

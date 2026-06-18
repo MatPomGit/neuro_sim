@@ -54,11 +54,24 @@ def test_lesson_configs_have_reproducible_teaching_fields() -> None:
     for lesson in load_lesson_catalog():
         assert lesson.estimated_duration_min > 0
         assert lesson.level_pl.strip(), lesson.id
+        assert lesson.profile_pl.strip(), lesson.id
+        assert lesson.task_pl.strip(), lesson.id
         assert lesson.learning_goal_pl.strip(), lesson.id
+        assert lesson.lesson_steps_pl, lesson.id
         assert lesson.pre_run_questions_pl, lesson.id
         assert lesson.expected_observations_pl, lesson.id
+        assert lesson.expected_report_pl, lesson.id
         assert lesson.post_run_questions_pl, lesson.id
+        assert lesson.assessment_criteria_pl, lesson.id
         assert lesson.next_run_changes, lesson.id
+
+
+def test_lessons_define_complete_teaching_and_assessment_flow() -> None:
+    """Każda lekcja prowadzi od hipotezy do sprawdzalnej oceny odpowiedzi."""
+    for lesson in load_lesson_catalog():
+        assert len(lesson.lesson_steps_pl) >= 5, lesson.id
+        assert len(lesson.assessment_criteria_pl) >= 2, lesson.id
+        assert any("raport" in item.lower() for item in lesson.expected_report_pl)
 
 
 def test_lesson_ids_and_labels_are_unique_and_match_file_names() -> None:

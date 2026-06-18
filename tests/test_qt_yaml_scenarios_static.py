@@ -144,6 +144,12 @@ def test_qt_results_have_teacher_lesson_panel_without_task_protocols() -> None:
     assert "expected_observations_pl" in source
     assert "post_run_questions_pl" in source
     assert "next_run_changes" in source
+    assert "lesson_steps_pl" in source
+    assert "expected_report_pl" in source
+    assert "assessment_criteria_pl" in source
+    assert "Checklista lekcji" in source
+    assert "Kryteria oceny odpowiedzi" in source
+    assert "Raport porównawczy" in source
     assert "scenario_config" in source
     assert "comparison_config" in source
     assert "brain_core.experiments.protocols" not in source

@@ -4,16 +4,31 @@ level_pl: podstawowy
 estimated_duration_min: 45
 scenario_config: configs/go_nogo.yaml
 comparison_config: configs/comparisons/go_nogo_profiles.yaml
+profile_pl: Profil referencyjny healthy_v1 porównywany z dysregulacją GABA i osłabieniem DLPFC.
+task_pl: Go/NoGo — hamowanie reakcji.
 learning_goal_pl: Uczestnik łączy warunki go/nogo z kontrolą wykonawczą, błędami hamowania i interpretacją profili GABA/DLPFC.
+lesson_steps_pl:
+  - Zapisz hipotezę przed uruchomieniem na podstawie celu i pytań wstępnych.
+  - Zweryfikuj plik konfiguracji, profil, task i ziarno losowości.
+  - Uruchom symulację i sprawdź status zakończenia.
+  - Przejrzyj oś czasu, metryki, wykresy i oczekiwane artefakty raportu.
+  - Odpowiedz na pytania kontrolne i sprawdź odpowiedź według kryteriów oceny.
+  - Omów ograniczenia interpretacyjne i zaplanuj kontrolowaną zmianę kolejnego przebiegu.
 pre_run_questions_pl:
   - Kiedy model powinien wygenerować odpowiedź press?
   - Dlaczego osłabienie kontroli wykonawczej może zwiększać błędy w warunku nogo?
 expected_observations_pl:
   - Tabela triali rozdziela bodźce go i nogo oraz pokazuje wynik odpowiedzi.
   - Porównanie profili pokazuje jakościowy kierunek różnic względem healthy_v1.
+expected_report_pl:
+  - Raport trial-by-trial z warunkiem go/nogo, odpowiedzią i poprawnością.
+  - Raport porównawczy profili dla wspólnego seeda i sekwencji bodźców.
 post_run_questions_pl:
   - Które triale wskazują błąd hamowania?
   - Jak zmienia się interpretacja po porównaniu z profilem DLPFC weakening?
+assessment_criteria_pl:
+  - Odpowiedź wskazuje co najmniej jeden trial nogo i poprawnie rozpoznaje brak odpowiedzi jako wynik prawidłowy.
+  - Interpretacja porównuje kierunek różnicy z healthy_v1 i przywołuje ograniczenie dydaktyczne.
 next_run_changes:
   - element: Profil kliniczny
     current_value: healthy_v1

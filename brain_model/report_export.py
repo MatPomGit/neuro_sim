@@ -15,6 +15,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 
 from brain_core.analysis.reports import AnalysisReport, build_trial_observation_rows
+from brain_model.gui_labels import EDUCATIONAL_LIMITATION_TEXT_PL
 from brain_model.io import REPO_ROOT, collect_environment_info, collect_git_info
 
 A4_FIGSIZE = (8.27, 11.69)
@@ -1070,6 +1071,7 @@ def _lesson_plan_lines(
     event_timeline: list[dict[str, Any]],
     clinical_profile: dict[str, Any],
     analysis_report: dict[str, Any],
+    lesson_metadata: dict[str, Any] | None = None,
     next_run_changes: list[dict[str, Any]] | None = None,
 ) -> list[str]:
     """Zbuduj plan lekcji zgodny ze strukturą raportu zajęciowego.
@@ -1088,6 +1090,8 @@ def _lesson_plan_lines(
         Profil kliniczny omawiany w lekcji.
     analysis_report:
         Raport analityczny z przewidywaniami i metrykami.
+    lesson_metadata:
+        Metadane wybranej lekcji z katalogu YAML.
     next_run_changes:
         Opcjonalne propozycje zmian do kolejnego uruchomienia.
 
@@ -1103,25 +1107,42 @@ def _lesson_plan_lines(
         "id", "n/a"
     )
     mechanism = clinical_profile.get("mechanism", "brak opisu mechanizmu")
+    lesson = lesson_metadata or {}
     first_observations = _trial_observation_lines(event_timeline, clinical_profile)[:6]
+    lesson_steps = [f"- [ ] {step}" for step in lesson.get("lesson_steps_pl", [])] or [
+        "- [ ] Zweryfikuj konfigurację, uruchomienie i artefakty wyniku."
+    ]
+    expected_report = [
+        f"- {item}" for item in lesson.get("expected_report_pl", [])
+    ] or ["- Raport zajęciowy z metrykami i osią czasu."]
+    assessment_criteria = [
+        f"- [ ] {item}" for item in lesson.get("assessment_criteria_pl", [])
+    ] or ["- [ ] Odpowiedź odwołuje się do artefaktów bieżącego uruchomienia."]
     lines = [
         "# Plan lekcji",
         "",
         "## Cel",
-        (
-            "Uczestnicy łączą konfigurację YAML, profil kliniczny, przewidywanie "
-            "modelu, obserwacje triali i pytania kontrolne w jeden replikowalny "
-            "przebieg zajęć."
+        str(
+            lesson.get(
+                "learning_goal_pl",
+                "Uczestnicy łączą konfigurację, obserwacje i interpretację "
+                "w jeden replikowalny przebieg zajęć.",
+            )
         ),
+        "",
+        "## Checklista prowadzącego",
+        *lesson_steps,
         "",
         "## Scenariusz YAML",
         f"- Plik: {scenario_path}",
         f"- Scenariusz silnika: {scenario_id}",
+        f"- Task: {lesson.get('task_pl', scenario_id)}",
         f"- Ziarno losowości: {seed}",
         f"- Status uruchomienia: {status_message}",
         "",
         "## Profil",
-        f"- Profil kliniczny: {profile_name}",
+        f"- Profil lekcji: {lesson.get('profile_pl', profile_name)}",
+        f"- Profil w wyniku: {profile_name}",
         f"- Mechanizm: {mechanism}",
         "",
         "## Przewidywanie",
@@ -1131,11 +1152,67 @@ def _lesson_plan_lines(
         "## Obserwacja",
         *first_observations,
         "",
+        "## Oczekiwany raport",
+        *expected_report,
+        "",
         "## Pytania kontrolne",
         *_control_question_lines(analysis_report)[2:],
         "",
+        "## Kryteria oceny odpowiedzi",
+        *assessment_criteria,
+        "",
+        "## Ograniczenia interpretacyjne",
+        f"- {EDUCATIONAL_LIMITATION_TEXT_PL}",
+        "",
     ]
     lines.extend(_next_run_change_table_lines(next_run_changes))
+    return lines
+
+
+def _student_worksheet_lines(lesson_metadata: dict[str, Any] | None) -> list[str]:
+    """Zbuduj kartę pracy studenta z pytań i kryteriów lekcji YAML.
+
+    Parameters
+    ----------
+    lesson_metadata:
+        Metadane wybranej lekcji albo ``None``.
+
+    Returns
+    -------
+    list[str]
+        Linie Markdown przeznaczone do samodzielnego uzupełnienia.
+    """
+    lesson = lesson_metadata or {}
+    lines = [
+        "# Karta pracy studenta",
+        "",
+        f"## Lekcja: {lesson.get('label_pl', 'nieokreślona')}",
+        "",
+        "## Hipoteza przed uruchomieniem",
+    ]
+    for question in lesson.get("pre_run_questions_pl", []):
+        lines.extend((f"### {question}", "", "Odpowiedź:", "", ""))
+    lines.extend(("## Obserwacje po uruchomieniu", ""))
+    for observation in lesson.get("expected_observations_pl", []):
+        lines.extend((f"- [ ] {observation}", "  Notatka:"))
+    lines.extend(("", "## Pytania po uruchomieniu", ""))
+    for question in lesson.get("post_run_questions_pl", []):
+        lines.extend((f"### {question}", "", "Odpowiedź:", "", ""))
+    lines.extend(
+        (
+            "## Samokontrola odpowiedzi",
+            "",
+            *[
+                f"- [ ] {criterion}"
+                for criterion in lesson.get("assessment_criteria_pl", [])
+            ],
+            "",
+            "## Ograniczenia interpretacyjne",
+            "",
+            EDUCATIONAL_LIMITATION_TEXT_PL,
+            "",
+        )
+    )
     return lines
 
 
@@ -1335,6 +1412,17 @@ def export_teaching_package(
         plots=plots,
         plot_descriptions=plot_descriptions,
     )
+    figures_dir = package_dir / "wykresy"
+    figures_dir.mkdir(exist_ok=True)
+    for index, (title, figure) in enumerate(plots, start=1):
+        safe_title = "".join(
+            character if character.isalnum() else "_" for character in title.lower()
+        ).strip("_")
+        figure.savefig(
+            figures_dir / f"{index:02d}_{safe_title or 'wykres'}.png",
+            dpi=150,
+            bbox_inches="tight",
+        )
 
     (package_dir / "konfiguracja_gui.json").write_text(
         json.dumps(export_state_config, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -1414,9 +1502,14 @@ def export_teaching_package(
                 event_timeline=event_timeline,
                 clinical_profile=clinical_profile,
                 analysis_report=analysis_report,
+                lesson_metadata=lesson_metadata,
                 next_run_changes=next_run_changes,
             )
         ),
+        encoding="utf-8",
+    )
+    (package_dir / "karta_pracy_studenta.md").write_text(
+        "\n".join(_student_worksheet_lines(lesson_metadata)),
         encoding="utf-8",
     )
     (package_dir / "skrot_dla_prowadzacego.md").write_text(

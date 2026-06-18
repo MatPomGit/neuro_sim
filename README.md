@@ -225,6 +225,26 @@ Nowy przepływ pracy w GUI składa się z kilku kroków:
 5. **Sugerowany czas scenariusza** – GUI podpowiada czas symulacji dopasowany do wybranego scenariusza, który można zaakceptować albo zmienić ręcznie.
 6. **Tryb nauczyciela** – panel lekcji w wynikach porządkuje hipotezę, uruchomioną konfigurację, obserwacje, interpretację, ograniczenia, pytania kontrolne i sugestie kolejnego przebiegu na podstawie `GuiState`, `event_timeline`, `clinical_profile`, `analysis_report` oraz metadanych `configs/lessons/*.yaml`; GUI nie importuje w tym celu protokołów zadań z `brain_core.experiments`.
 
+Katalog zawiera obecnie sześć gotowych lekcji:
+
+- roving oddball — przewidywanie, habituacja i readaptacja;
+- go/no-go — hamowanie reakcji;
+- n-back — pamięć robocza;
+- Stroop — konflikt poznawczy i kontrola wykonawcza;
+- stress-recovery — regulacja emocji po epizodzie stresu;
+- współsymulacja hipokampa neural mass ↔ SNN.
+
+Każda karta lekcji definiuje cel, czas, poziom, profil, task, checklistę etapów,
+pytania przed i po uruchomieniu, oczekiwane obserwacje i raport, kryteria oceny
+odpowiedzi oraz kontrolowaną zmianę kolejnego przebiegu. Eksport pakietu zawiera
+także kartę pracy studenta i osobny katalog wykresów PNG.
+
+Kontrakt pól, szablon i procedurę dodawania wpisów opisuje
+[`docs/lesson_catalog_guidelines.md`](docs/lesson_catalog_guidelines.md).
+Pełny przebieg pracy z lekcją, trybem nauczyciela i eksportem materiałów
+znajduje się w
+[`docs/gui_lesson_scenarios_report.md`](docs/gui_lesson_scenarios_report.md).
+
 Panele wynikowe **Co obserwujesz?**, **Porównanie profili**, **Tryb
 nauczyciela** i **Pytania kontrolne** pokazują wspólne ograniczenie:
 „Wyniki są interpretacją dydaktyczną modelu i nie stanowią diagnozy klinicznej

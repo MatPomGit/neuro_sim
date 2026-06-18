@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 
 from brain_core.analysis.reports import build_trial_observation_rows
 
+from .gui_labels import EDUCATIONAL_LIMITATION_TEXT_PL
 from .gui_state import GuiState
 from .plotting import (
     draw_activity_with_stimulus_channels,
@@ -44,7 +45,15 @@ from .scenarios import get_scenario
 GLOSSARY_PATH = (
     Path(__file__).resolve().parents[1] / "docs" / "english_polish_glossary.md"
 )
-EDUCATIONAL_LIMITATION_TEXT_PL = "Wyniki są interpretacją dydaktyczną modelu i nie stanowią diagnozy klinicznej ani normy psychometrycznej."  # noqa: E501
+
+
+class EducationalLimitationLabel(QLabel):
+    """Etykieta wspólnego ograniczenia interpretacyjnego wyników."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Utwórz zawijaną etykietę z jednolitym komunikatem edukacyjnym."""
+        super().__init__(EDUCATIONAL_LIMITATION_TEXT_PL, parent)
+        self.setWordWrap(True)
 
 
 def _load_glossary_terms() -> dict[str, tuple[str, str]]:
@@ -792,12 +801,16 @@ class TeacherLessonPanel(QWidget):
     """Panel lekcji nauczyciela budowany z metadanych YAML i artefaktów GUI."""
 
     SECTION_TITLES = (
+        "Checklista lekcji",
         "Hipoteza przed uruchomieniem",
         "Co uruchomiono",
         "Co obserwujesz",
+        "Oczekiwany raport",
         "Jak interpretować wynik",
         "Ograniczenia interpretacyjne",
         "Pytania kontrolne",
+        "Kryteria oceny odpowiedzi",
+        "Raport porównawczy",
         "Co zmienić w kolejnym uruchomieniu",
     )
 
@@ -848,6 +861,9 @@ class TeacherLessonPanel(QWidget):
         analysis_report:
             Raport analityczny zwrócony przez silnik po uruchomieniu scenariusza.
         """
+        self.section_labels["Checklista lekcji"].setText(
+            self._format_checklist(lesson.get("lesson_steps_pl"))
+        )
         self.section_labels["Hipoteza przed uruchomieniem"].setText(
             self._bullet_list(lesson.get("pre_run_questions_pl"))
             or str(lesson.get("learning_goal_pl", "Brak celu lekcji w metadanych."))
@@ -861,6 +877,8 @@ class TeacherLessonPanel(QWidget):
                     f"{lesson.get('scenario_config') or state.scenario_config_path}",
                     f"• Konfiguracja porównania: "
                     f"{lesson.get('comparison_config') or state.comparison_config_path}",
+                    f"• Task: {lesson.get('task_pl', 'n/a')}",
+                    f"• Profil lekcji: {lesson.get('profile_pl', 'n/a')}",
                     f"• Ziarno losowości z GUI: {state.seed}",
                 )
             )
@@ -872,6 +890,10 @@ class TeacherLessonPanel(QWidget):
                 clinical_profile=clinical_profile,
                 analysis_report=analysis_report,
             )
+        )
+        self.section_labels["Oczekiwany raport"].setText(
+            self._bullet_list(lesson.get("expected_report_pl"))
+            or "• Brak opisu oczekiwanego raportu."
         )
         self.section_labels["Jak interpretować wynik"].setText(
             self._build_interpretation_text(lesson, clinical_profile, analysis_report)
@@ -888,6 +910,21 @@ class TeacherLessonPanel(QWidget):
         self.section_labels["Pytania kontrolne"].setText(
             self._bullet_list(lesson.get("post_run_questions_pl"))
             or "• Brak pytań kontrolnych w metadanych lekcji."
+        )
+        self.section_labels["Kryteria oceny odpowiedzi"].setText(
+            self._bullet_list(lesson.get("assessment_criteria_pl"))
+            or "• Brak kryteriów oceny w metadanych lekcji."
+        )
+        comparison_path = (
+            lesson.get("comparison_config") or state.comparison_config_path
+        )
+        self.section_labels["Raport porównawczy"].setText(
+            (
+                "• Otwórz zakładkę „Porównanie profili” i użyj konfiguracji: "
+                f"{comparison_path}."
+            )
+            if comparison_path
+            else "• Ta lekcja nie definiuje raportu porównawczego."
         )
         self.section_labels["Co zmienić w kolejnym uruchomieniu"].setText(
             self._format_next_run_changes(lesson.get("next_run_changes"))
@@ -918,6 +955,13 @@ class TeacherLessonPanel(QWidget):
             metric_names = ", ".join(str(name) for name in list(metrics)[:5])
             lines.append(f"• Widoczne metryki raportu: {metric_names}.")
         return "\n".join(lines) if lines else "• Brak obserwacji do pokazania."
+
+    @staticmethod
+    def _format_checklist(steps: Any) -> str:
+        """Sformatuj kroki lekcji jako checklistę do prowadzenia zajęć."""
+        if not isinstance(steps, list) or not steps:
+            return "☐ Brak kroków lekcji w metadanych."
+        return "\n".join(f"☐ {step}" for step in steps)
 
     def _build_interpretation_text(
         self,
