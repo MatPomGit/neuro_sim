@@ -196,6 +196,43 @@ def test_physiology_contract_shapes_ranges_and_deterministic_noise() -> None:
     assert np.all(np.isfinite(bold))
 
 
+@pytest.mark.parametrize(
+    ("parameter_name", "invalid_value", "expected_message"),
+    [
+        ("length", 0, "hrf.length"),
+        ("length", -1, "hrf.length"),
+        ("length", 2.5, "hrf.length"),
+        ("length", True, "hrf.length"),
+        ("dt", 0.0, "hrf.dt"),
+        ("dt", -0.1, "hrf.dt"),
+        ("dt", np.nan, "dt"),
+        ("dt", np.inf, "dt"),
+        ("peak_latency", 0.0, "peak_latency"),
+        ("peak_latency", -1.0, "peak_latency"),
+        ("peak_latency", np.nan, "peak_latency"),
+        ("undershoot_latency", 0.0, "undershoot_latency"),
+        ("undershoot_latency", -1.0, "undershoot_latency"),
+        ("undershoot_latency", np.inf, "undershoot_latency"),
+        ("ratio", -0.1, "hrf.ratio"),
+        ("ratio", np.nan, "ratio"),
+        ("ratio", np.inf, "ratio"),
+    ],
+)
+def test_canonical_hrf_rejects_invalid_parameters(
+    parameter_name: str,
+    invalid_value: object,
+    expected_message: str,
+) -> None:
+    """Niepoprawne parametry HRF mają zgłaszać czytelny błąd kontraktu D."""
+    from brain_core.physiology.bold_hrf import canonical_hrf
+
+    parameters: dict[str, object] = {"length": 8, "dt": 0.5}
+    parameters[parameter_name] = invalid_value
+
+    with pytest.raises(ValueError, match=rf"Kontrakt D.*{expected_message}"):
+        canonical_hrf(**parameters)
+
+
 def test_eeg_bold_validators_report_contract_names_for_edge_shapes() -> None:
     """Walidatory wejść EEG/BOLD mają wskazywać nazwę kontraktu D."""
     from brain_core.physiology.bold_hrf import convolve_with_hrf

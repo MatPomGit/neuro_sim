@@ -28,7 +28,9 @@ neuro_sim/
 ## 2. Punkty wejścia i uruchamianie
 
 - `main.py` — uruchamia podstawową symulację i generowanie wyników z warstwy `brain_model`.
-- `main_gui.py` — uruchamia GUI desktopowe delegujące do `brain_model.gui_runner` oraz modułów GUI.
+- `main_gui.py` — uruchamia GUI desktopowe przez kompatybilną fasadę
+  `brain_model.gui:run_gui`, która deleguje do implementacji PySide6 w
+  `brain_model.qt_app`.
 - `python -m brain_core.simulation.run --config configs/default.yaml` — uruchamia eksperyment z pliku konfiguracyjnego przez niezależną od GUI warstwę `brain_core`.
 - Skrypty instalowane przez `pyproject.toml`: `neuro-sim`, `neuro-sim-gui`, `neuro-sim-run`.
 
