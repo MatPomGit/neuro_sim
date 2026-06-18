@@ -98,7 +98,7 @@ def test_results_define_educational_limitation_and_profile_reference() -> None:
         "Wyniki są interpretacją dydaktyczną modelu i nie stanowią diagnozy "
         "klinicznej ani normy psychometrycznej."
     ) in results_source
-    assert "EDUCATIONAL_LIMITATION_TEXT_PL" in profile_panel_source
+    assert "EducationalLimitationLabel" in profile_panel_source
 
 
 def test_profile_comparison_export_uses_required_html_and_pdf_names() -> None:
