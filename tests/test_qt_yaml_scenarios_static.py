@@ -199,6 +199,19 @@ def test_qt_results_have_teacher_observation_and_roving_questions_panels() -> No
     assert "readaptację" in source
 
 
+def test_qt_results_have_generic_lesson_questions_panel() -> None:
+    """Panel pytań lekcji używa metadanych YAML bez logiki protokołów tasków."""
+    source = _source(QT_RESULTS_PATH)
+
+    assert "class LessonQuestionsPanel" in source
+    assert "Pytania przed uruchomieniem" in source
+    assert "Pytania po uruchomieniu" in source
+    assert "brain_core.experiments.protocols" not in source
+    assert "from brain_core.experiments" not in source
+    assert "get_task" not in source
+    assert "TaskStimulusPlayer" not in source
+
+
 def test_qt_yaml_presets_have_user_facing_descriptions() -> None:
     """GUI opisuje po polsku cel każdego wyboru gotowej konfiguracji YAML."""
     config_source = _source(QT_CONFIG_PATH)
