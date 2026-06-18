@@ -394,3 +394,13 @@ def test_qt_gui_exposes_pdf_export_action_and_uses_plot_figures() -> None:
     assert "self.plot_panel.plots_for_export()" in qt_app_source
     assert "def plots_for_export" in qt_plotting_source
     assert "self._figure_titles.append(title)" in qt_plotting_source
+
+
+def test_qt_gui_exposes_lesson_package_export_after_successful_run() -> None:
+    """GUI udostępnia istniejący eksport pakietu lekcji i polski komunikat."""
+    qt_app_source = QT_APP_PATH.read_text(encoding="utf-8")
+
+    assert "Eksportuj pakiet lekcji" in qt_app_source
+    assert "export_teaching_package(" in qt_app_source
+    assert "self.export_teaching_package_button.setEnabled(True)" in qt_app_source
+    assert "Pakiet lekcji zapisano w katalogu:" in qt_app_source

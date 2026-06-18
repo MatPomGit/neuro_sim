@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
-from dataclasses import fields, replace
+from dataclasses import asdict, fields, replace
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +32,7 @@ from PySide6.QtWidgets import (
 
 from .gui_labels import PARAMETER_DESCRIPTIONS, PARAMETER_LABELS, RULE_FIELDS
 from .gui_state import GuiState
+from .lesson_catalog import lesson_by_label
 from .oscillators import WilsonCowanParams
 from .params import BrainParams
 from .qt_config import (
@@ -215,7 +216,7 @@ class BrainModelQtWindow(QMainWindow):
             self.export_current_profile_comparison_report
         )
         self.export_teaching_package_action = file_menu.addAction(
-            "Eksportuj pakiet zajęciowy..."
+            "Eksportuj pakiet lekcji..."
         )
         self.export_teaching_package_action.setEnabled(False)
         self.export_teaching_package_action.triggered.connect(
@@ -313,7 +314,7 @@ class BrainModelQtWindow(QMainWindow):
         self.export_comparison_report_button.clicked.connect(
             self.export_current_profile_comparison_report
         )
-        self.export_teaching_package_button = QPushButton("Eksportuj pakiet zajęciowy")
+        self.export_teaching_package_button = QPushButton("Eksportuj pakiet lekcji")
         self.export_teaching_package_button.setEnabled(False)
         self.export_teaching_package_button.setToolTip(
             "Zapisuje HTML/PDF, konfigurację, seed, metadane i pytania kontrolne."
@@ -583,7 +584,7 @@ class BrainModelQtWindow(QMainWindow):
             QMessageBox.information(
                 self,
                 "Brak wyników",
-                "Najpierw uruchom symulację, aby wygenerować pakiet zajęciowy.",
+                "Najpierw uruchom symulację, aby wygenerować pakiet lekcji.",
             )
             return
 
@@ -592,30 +593,42 @@ class BrainModelQtWindow(QMainWindow):
         default_dir = Path(output_dir) if output_dir else Path.cwd()
         target = QFileDialog.getExistingDirectory(
             self,
-            "Eksportuj pakiet zajęciowy",
+            "Eksportuj pakiet lekcji",
             str(default_dir),
         )
         if not target:
             return
 
+        lesson = lesson_by_label(self.sections.ready_lesson_combo.currentText())
+        lesson_metadata = asdict(lesson) if lesson is not None else None
         try:
             package_path = export_teaching_package(
-                Path(target) / "pakiet_zajeciowy_neuro_sim",
+                Path(target) / "pakiet_lekcji_neuro_sim",
                 status_message=str(result[0]),
                 summary_text=str(result[1]),
                 state_config=self.last_run_state_config or state_to_config(self.state),
+                gui_state=self.state,
+                scenario_config_path=self.state.scenario_config_path,
+                comparison_config_path=self.state.comparison_config_path or None,
                 event_timeline=list(result[9]),
                 clinical_profile=dict(result[10]),
                 analysis_report=dict(result[11]),
+                lesson_metadata=lesson_metadata,
+                seed=self.state.seed,
                 plots=self.plot_panel.plots_for_export(),
             )
         except Exception as exc:
             QMessageBox.critical(
-                self, "Błąd", f"Nie udało się zapisać pakietu zajęciowego: {exc}"
+                self, "Błąd", f"Nie udało się zapisać pakietu lekcji: {exc}"
             )
             return
 
-        self.status_label.setText(f"Zapisano pakiet zajęciowy: {package_path}")
+        QMessageBox.information(
+            self,
+            "Eksport zakończony",
+            f"Pakiet lekcji zapisano w katalogu: {package_path}",
+        )
+        self.status_label.setText(f"Pakiet lekcji zapisano w katalogu: {package_path}")
 
     def export_current_profile_comparison_report(self) -> None:
         """Zapisz HTML i PDF z tabelą porównania profili klinicznych."""

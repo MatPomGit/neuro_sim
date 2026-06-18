@@ -1247,9 +1247,14 @@ def export_teaching_package(
     status_message: str,
     summary_text: str,
     state_config: dict[str, Any],
+    gui_state: Any | None = None,
+    scenario_config_path: str | Path | None = None,
+    comparison_config_path: str | Path | None = None,
     event_timeline: list[dict[str, Any]],
     clinical_profile: dict[str, Any],
     analysis_report: dict[str, Any],
+    lesson_metadata: dict[str, Any] | None = None,
+    seed: str | int | None = None,
     plots: list[tuple[str, Figure]],
     plot_descriptions: dict[str, str] | None = None,
     next_run_changes: list[dict[str, Any]] | None = None,
@@ -1266,12 +1271,22 @@ def export_teaching_package(
         Skrót metryk widoczny w GUI.
     state_config:
         Migawka konfiguracji GUI/YAML wraz z seedem.
+    gui_state:
+        Bieżący stan GUI; służy do potwierdzenia źródła eksportowanej migawki.
+    scenario_config_path:
+        Ścieżka konfiguracji scenariusza użytej podczas lekcji.
+    comparison_config_path:
+        Opcjonalna ścieżka konfiguracji porównania profili.
     event_timeline:
         Oś czasu zdarzeń zwrócona przez silnik.
     clinical_profile:
         Profil kliniczny z konfiguracji lub wyniku.
     analysis_report:
         Raport analityczny zwrócony przez silnik.
+    lesson_metadata:
+        Opcjonalne metadane lekcji wybranej w katalogu GUI.
+    seed:
+        Ziarno losowości użyte przez symulację.
     plots:
         Wykresy z panelu GUI do raportu PDF.
     plot_descriptions:
@@ -1286,13 +1301,24 @@ def export_teaching_package(
     """
     package_dir = Path(output_dir)
     package_dir.mkdir(parents=True, exist_ok=True)
+    export_state_config = dict(state_config)
+    if gui_state is not None:
+        export_state_config["gui_state_source"] = type(gui_state).__name__
+    if scenario_config_path is not None:
+        export_state_config["scenario_config_path"] = str(scenario_config_path)
+    if comparison_config_path is not None:
+        export_state_config["comparison_config_path"] = str(comparison_config_path)
+    if lesson_metadata is not None:
+        export_state_config["lesson_metadata"] = lesson_metadata
+    if seed is not None:
+        export_state_config["seed"] = seed
     report_html = package_dir / "raport_zajeciowy.html"
     report_pdf = package_dir / "raport_zajeciowy.pdf"
     export_experiment_report(
         report_html,
         status_message=status_message,
         summary_text=summary_text,
-        state_config=state_config,
+        state_config=export_state_config,
         event_timeline=event_timeline,
         clinical_profile=clinical_profile,
         analysis_report=analysis_report,
@@ -1302,7 +1328,7 @@ def export_teaching_package(
         report_pdf,
         status_message=status_message,
         summary_text=summary_text,
-        state_config=state_config,
+        state_config=export_state_config,
         event_timeline=event_timeline,
         clinical_profile=clinical_profile,
         analysis_report=analysis_report,
@@ -1311,11 +1337,11 @@ def export_teaching_package(
     )
 
     (package_dir / "konfiguracja_gui.json").write_text(
-        json.dumps(state_config, ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps(export_state_config, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
     scenario_source = _resolve_scenario_config_path(
-        state_config.get("scenario_config_path")
+        export_state_config.get("scenario_config_path")
     )
     yaml_copy_name = None
     yaml_sha256 = None
@@ -1339,9 +1365,11 @@ def export_teaching_package(
 
     metadata = {
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "seed": state_config.get("seed"),
-        "scenario": state_config.get("scenario"),
-        "scenario_config_path": state_config.get("scenario_config_path"),
+        "seed": export_state_config.get("seed"),
+        "scenario": export_state_config.get("scenario"),
+        "scenario_config_path": export_state_config.get("scenario_config_path"),
+        "comparison_config_path": export_state_config.get("comparison_config_path"),
+        "lesson_metadata": export_state_config.get("lesson_metadata"),
         "scenario_config_copy": yaml_copy_name,
         "scenario_config_sha256": yaml_sha256,
         "python_version": environment_info["python_version"],
@@ -1382,7 +1410,7 @@ def export_teaching_package(
             _lesson_plan_lines(
                 status_message=status_message,
                 summary_text=summary_text,
-                state_config=state_config,
+                state_config=export_state_config,
                 event_timeline=event_timeline,
                 clinical_profile=clinical_profile,
                 analysis_report=analysis_report,
@@ -1396,7 +1424,7 @@ def export_teaching_package(
             _instructor_summary_lines(
                 status_message=status_message,
                 summary_text=summary_text,
-                state_config=state_config,
+                state_config=export_state_config,
                 clinical_profile=clinical_profile,
                 analysis_report=analysis_report,
             )
