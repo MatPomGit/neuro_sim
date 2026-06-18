@@ -17,6 +17,8 @@ Wydzielamy moduł `brain_model.lesson_catalog`, który wczytuje lekcje z katalog
 `configs/lessons`, waliduje obecność wymaganych pól i udostępnia proste API dla
 warstwy GUI: listę lekcji, listę etykiet oraz wyszukiwanie po etykiecie.
 Sekcja Qt korzysta z tego loadera zamiast z ręcznie utrzymywanej listy presetów.
+Kontrakt autorski, wymagane pola i procedurę dodawania wpisów utrzymujemy w
+`docs/lesson_catalog_guidelines.md`.
 
 ## Konsekwencje
 
@@ -45,3 +47,4 @@ Koszty:
 - `configs/lessons/*.yaml`
 - `brain_model/qt_sections.py`
 - `tests/test_lesson_configs_static.py`
+- `docs/lesson_catalog_guidelines.md`
