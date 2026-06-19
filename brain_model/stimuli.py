@@ -9,7 +9,26 @@ StimulusFn = Callable[[float], Dict[str, float]]
 
 
 def build_stimulus_fn(scenario: StimulusScenario) -> StimulusFn:
-    """Build a time-dependent stimulus function from a stable scenario schema."""
+    """Zbuduj funkcję bodźca zależną od czasu dla stabilnego schematu scenariusza.
+
+    Parameters
+    ----------
+    scenario:
+        Scenariusz z kanałami bodźców, pulsami i perturbacjami opisanymi
+        w sekundach oraz bezwymiarowych amplitudach.
+
+    Returns
+    -------
+    StimulusFn
+        Funkcja ``stimulus(t)``, która dla czasu ``t`` w sekundach zwraca
+        słownik amplitud kanałów ``{channel: amplitude}`` w skali scenariusza.
+
+    Raises
+    ------
+    ValueError
+        Zgłaszany dopiero podczas wywołania zwróconej funkcji, jeśli aktywna
+        perturbacja używa trybu innego niż ``"add"`` albo ``"set"``.
+    """
 
     normalized = scenario.normalized_channels()
 
@@ -52,8 +71,25 @@ def resolve_stimulus_scenario(
 ) -> Any:
     """Zwróć obiekt scenariusza bodźców z obiektu lub identyfikatora.
 
-    Jeśli przekazano ``scenario``, jest zwracany bez zmian. W przeciwnym razie
-    ładowany jest scenariusz ``scenario_id`` albo domyślny ``reward-learning``.
+    Parameters
+    ----------
+    scenario_id:
+        Identyfikator scenariusza do załadowania; ``None`` oznacza domyślny
+        scenariusz ``"reward-learning"``.
+    scenario:
+        Gotowy obiekt scenariusza. Jeśli jest podany, ma pierwszeństwo nad
+        ``scenario_id`` i nie jest kopiowany.
+
+    Returns
+    -------
+    StimulusScenario
+        Scenariusz wejściowy albo scenariusz odczytany z rejestru.
+
+    Raises
+    ------
+    KeyError
+        Może zostać propagowany z ``get_scenario`` dla nieznanego
+        identyfikatora scenariusza.
     """
     if scenario is not None:
         return scenario

@@ -12,8 +12,26 @@ from .io import load_run
 def _run_metrics(run: dict) -> dict:
     """Policz zagregowane metryki pojedynczego uruchomienia.
 
-    Oczekuje słownika run z seriami diagnostycznymi i mocą pasmową. Zwraca
-    średnie lub maksima jako liczby ``float``; brakujące serie są traktowane jako zero.
+    Parameters
+    ----------
+    run:
+        Słownik uruchomienia zwrócony przez ``load_run``. Musi zawierać
+        ``diagnostics`` oraz ``oscillations.band_power`` z seriami liczbowymi
+        długości liczby kroków symulacji.
+
+    Returns
+    -------
+    dict[str, float]
+        Płaski słownik średnich lub maksimów diagnostycznych. Metryki mocy pasm
+        są bezwymiarowymi średnimi sum kwadratów, a serie czasowe są agregowane
+        po całym horyzoncie symulacji w sekundach.
+
+    Raises
+    ------
+    KeyError
+        Gdy brakuje wymaganych sekcji ``diagnostics`` albo ``oscillations``.
+    TypeError
+        Gdy serie nie mogą zostać zagregowane przez NumPy.
     """
     d = run["diagnostics"]
     o = run["oscillations"]["band_power"]
@@ -33,9 +51,33 @@ def generate_comparison_report(
 ) -> Any:
     """Wygeneruj obraz PNG porównujący wiele uruchomień symulacji.
 
-    ``run_dirs`` to niepusta kolekcja katalogów wyników. Funkcja wczytuje dane,
-    rysuje przebiegi, moc pasm i tabelę metryk, zapisuje plik i zwraca ścieżkę.
-    Zgłasza ``ValueError`` dla pustej listy oraz propaguje błędy odczytu/zapisu.
+    Parameters
+    ----------
+    run_dirs:
+        Niepusta kolekcja katalogów wyników zapisanych przez symulację. Każdy
+        katalog musi być czytelny przez ``load_run`` i zawierać serie czasu,
+        aktywacji, diagnostyki oraz oscylacji.
+    output_path:
+        Ścieżka pliku PNG raportu. Katalog nadrzędny zostanie utworzony, jeśli
+        nie istnieje.
+
+    Returns
+    -------
+    Path
+        Ścieżka zapisanego pliku raportu.
+
+    Raises
+    ------
+    ValueError
+        Gdy ``run_dirs`` jest puste.
+    OSError
+        Gdy nie można odczytać danych wejściowych albo zapisać pliku PNG.
+
+    Notes
+    -----
+    Raport jest użytkowym artefaktem porównawczym: zestawia przebiegi aktywacji,
+    uproszczoną moc pasm EEG i tabelę zagregowanych metryk bez zmiany danych
+    źródłowych uruchomień.
     """
     if not run_dirs:
         raise ValueError("run_dirs cannot be empty")

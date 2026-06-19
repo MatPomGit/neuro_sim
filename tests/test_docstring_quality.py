@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 
 PLACEHOLDER_PHRASES = ("Opis funkcji", "Opis klasy")
@@ -16,10 +17,19 @@ def test_production_docstrings_do_not_contain_placeholder_phrases() -> None:
         if not directory.exists():
             continue
         for path in sorted(directory.rglob("*.py")):
-            text = path.read_text(encoding="utf-8")
-            for phrase in PLACEHOLDER_PHRASES:
-                if phrase in text:
-                    offenders.append(f"{path.relative_to(repo_root)}: {phrase}")
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            for node in ast.walk(tree):
+                if not isinstance(
+                    node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+                ):
+                    continue
+                docstring = ast.get_docstring(node) or ""
+                for phrase in PLACEHOLDER_PHRASES:
+                    if phrase in docstring:
+                        offenders.append(
+                            f"{path.relative_to(repo_root)}:{node.lineno}: "
+                            f"{node.name}: {phrase}"
+                        )
 
     assert not offenders, "Znaleziono zastępcze frazy w docstringach:\n" + "\n".join(
         offenders
