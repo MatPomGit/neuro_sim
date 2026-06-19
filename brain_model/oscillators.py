@@ -95,15 +95,38 @@ class WilsonCowanOscillatorBank:
     ) -> None:
         """Inicjalizuje bank oscylatorów Wilsona-Cowana dla podanych modułów."""
         self.module_names: list[str] = list(module_names)
+        if len(set(self.module_names)) != len(self.module_names):
+            raise ValueError("Nazwy modułów muszą być unikalne.")
+
         self.idx: dict[str, int] = {name: i for i, name in enumerate(self.module_names)}
         self.n: int = len(self.module_names)
         self.connectivity: np.ndarray = np.asarray(connectivity, dtype=float)
+        expected_connectivity_shape = (self.n, self.n)
+        if self.connectivity.shape != expected_connectivity_shape:
+            raise ValueError(
+                "Macierz connectivity ma niepoprawny kształt: "
+                f"oczekiwano {expected_connectivity_shape}, "
+                f"otrzymano {self.connectivity.shape}."
+            )
+        if not np.all(np.isfinite(self.connectivity)):
+            raise ValueError(
+                "Macierz connectivity musi zawierać wyłącznie skończone wartości."
+            )
+
         self.band_map: dict[str, str] = band_map or DEFAULT_MODULE_BANDS
         self.params: WilsonCowanParams = params or WilsonCowanParams()
 
         self.module_bands: list[str] = [
             self.band_map.get(name, "beta") for name in self.module_names
         ]
+
+        for band in self.module_bands:
+            if band not in BAND_FREQUENCIES or band not in BAND_TIME_CONSTANTS:
+                raise ValueError(
+                    f"Nieznane pasmo {band!r}; nazwa musi występować w "
+                    "BAND_FREQUENCIES i BAND_TIME_CONSTANTS."
+                )
+
         self.frequency: np.ndarray = np.array(
             [BAND_FREQUENCIES[b] for b in self.module_bands], dtype=float
         )
@@ -117,10 +140,29 @@ class WilsonCowanOscillatorBank:
     def initial_state(self, rng: Any = None) -> Any:
         """Opis funkcji initial_state."""
         rng = rng or np.random.default_rng()
+        excitatory_noise = np.asarray(rng.normal(size=self.n), dtype=float)
+        inhibitory_noise = np.asarray(rng.normal(size=self.n), dtype=float)
+        phase = np.asarray(rng.uniform(0.0, 2.0 * np.pi, size=self.n), dtype=float)
+        expected_shape = (self.n,)
+        for name, values in (
+            ("szum pobudzający", excitatory_noise),
+            ("szum hamujący", inhibitory_noise),
+            ("faza początkowa", phase),
+        ):
+            if values.shape != expected_shape:
+                raise ValueError(
+                    f"Dane „{name}” mają niepoprawny kształt: "
+                    f"oczekiwano {expected_shape}, otrzymano {values.shape}."
+                )
+            if not np.all(np.isfinite(values)):
+                raise ValueError(
+                    f"Dane „{name}” muszą zawierać wyłącznie skończone wartości."
+                )
+
         state = np.zeros((self.n, 3), dtype=float)
-        state[:, 0] = 0.10 + 0.02 * rng.normal(size=self.n)  # E
-        state[:, 1] = 0.08 + 0.02 * rng.normal(size=self.n)  # I
-        state[:, 2] = rng.uniform(0.0, 2.0 * np.pi, size=self.n)  # phi
+        state[:, 0] = 0.10 + 0.02 * excitatory_noise  # E
+        state[:, 1] = 0.08 + 0.02 * inhibitory_noise  # I
+        state[:, 2] = phase  # phi
         state[:, :2] = np.clip(state[:, :2], 0.0, 1.0)
         return state
 
@@ -128,6 +170,32 @@ class WilsonCowanOscillatorBank:
         self, state: Any, cognitive_activity: Any, dt: Any, rng: Any = None
     ) -> Any:
         """Opis funkcji step."""
+        if not np.isscalar(dt) or not np.isfinite(dt) or dt <= 0:
+            raise ValueError("Krok dt musi być skończoną liczbą większą od zera.")
+
+        state = np.asarray(state, dtype=float)
+        expected_state_shape = (self.n, 3)
+        if state.shape != expected_state_shape:
+            raise ValueError(
+                f"Stan ma niepoprawny kształt: oczekiwano {expected_state_shape}, "
+                f"otrzymano {state.shape}."
+            )
+        if not np.all(np.isfinite(state)):
+            raise ValueError("Stan musi zawierać wyłącznie skończone wartości.")
+
+        cognitive_activity = np.asarray(cognitive_activity, dtype=float)
+        expected_activity_shape = (self.n,)
+        if cognitive_activity.shape != expected_activity_shape:
+            raise ValueError(
+                "Aktywność poznawcza ma niepoprawny kształt: "
+                f"oczekiwano {expected_activity_shape}, "
+                f"otrzymano {cognitive_activity.shape}."
+            )
+        if not np.all(np.isfinite(cognitive_activity)):
+            raise ValueError(
+                "Aktywność poznawcza musi zawierać wyłącznie skończone wartości."
+            )
+
         rng = rng or np.random.default_rng()
         p = self.params
 
@@ -189,6 +257,16 @@ class WilsonCowanOscillatorBank:
         Chwilowa, uproszczona moc pasmowa: suma kwadratów sygnałów E-I
         w modułach przypisanych do danego pasma.
         """
+        eeg_vector = np.asarray(eeg_vector, dtype=float)
+        expected_shape = (self.n,)
+        if eeg_vector.shape != expected_shape:
+            raise ValueError(
+                f"Wektor EEG ma niepoprawny kształt: oczekiwano {expected_shape}, "
+                f"otrzymano {eeg_vector.shape}."
+            )
+        if not np.all(np.isfinite(eeg_vector)):
+            raise ValueError("Wektor EEG musi zawierać wyłącznie skończone wartości.")
+
         out = {band: 0.0 for band in BAND_FREQUENCIES}
         for value, band in zip(eeg_vector, self.module_bands):
             out[band] += float(value * value)
