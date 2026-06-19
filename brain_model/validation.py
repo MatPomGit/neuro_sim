@@ -16,14 +16,22 @@ DEFAULT_RULES = {
 
 
 def _window_mean(signal: np.ndarray, from_idx: int, to_idx: int) -> float:
-    """Opis funkcji _window_mean."""
+    """Oblicz średnią z okna indeksów jednowymiarowego sygnału.
+
+    Gdy zakres ``[from_idx, to_idx)`` jest pusty lub odwrócony, używana jest
+    średnia z całego sygnału. Zwraca ``float`` i zakłada skończone wartości wejścia.
+    """
     if to_idx <= from_idx:
         return float(np.mean(signal))
     return float(np.mean(signal[from_idx:to_idx]))
 
 
 def _find_module_index(module_names: list[str], module: str) -> int | None:
-    """Opis funkcji _find_module_index."""
+    """Znajdź indeks modułu na liście nazw albo zwróć ``None``.
+
+    Funkcja pomocnicza nie zgłasza wyjątku dla brakującego modułu, dzięki czemu
+    walidacja może działać na konfiguracjach z ograniczonym zestawem modułów.
+    """
     try:
         return module_names.index(module)
     except ValueError:
@@ -103,7 +111,12 @@ def evaluate_run(
     module_names = MODULES
 
     def metric_change(metric_name: str, signal: np.ndarray) -> float:
-        """Opis funkcji metric_change."""
+        """Oszacuj zmianę aktywacji modułu po pobudzeniu diagnostycznym.
+
+        ``signal`` jest wektorem długości liczby kroków symulacji. Funkcja wyznacza
+        próg 70. percentyla serii diagnostycznej, porównuje średnią przed i po
+        zdarzeniu oraz zwraca różnicę późna-minus-wczesna jako ``float``.
+        """
         cue = np.asarray(diagnostics.get(metric_name, np.zeros_like(time)))
         trigger_idx = (
             int(np.argmax(cue > np.percentile(cue, 70)))

@@ -14,7 +14,13 @@ def build_stimulus_fn(scenario: StimulusScenario) -> StimulusFn:
     normalized = scenario.normalized_channels()
 
     def stimulus(t: float) -> Dict[str, float]:
-        """Opis funkcji stimulus."""
+        """Zwróć amplitudy kanałów bodźca dla czasu ``t`` w sekundach.
+
+        Wynikiem jest słownik ``{kanał: amplituda}`` dla wszystkich kanałów
+        scenariusza. Puls aktywny w oknie czasowym nadpisuje baseline maksimum,
+        a perturbacje dodają lub ustawiają wartość. Nieobsługiwany tryb zgłasza
+        ``ValueError``.
+        """
         u = {channel: normalized[channel].baseline for channel in CHANNELS}
 
         for channel in CHANNELS:
@@ -44,7 +50,11 @@ def build_stimulus_fn(scenario: StimulusScenario) -> StimulusFn:
 def resolve_stimulus_scenario(
     scenario_id: str | None = None, scenario: StimulusScenario | None = None
 ) -> Any:
-    """Opis funkcji resolve_stimulus_scenario."""
+    """Zwróć obiekt scenariusza bodźców z obiektu lub identyfikatora.
+
+    Jeśli przekazano ``scenario``, jest zwracany bez zmian. W przeciwnym razie
+    ładowany jest scenariusz ``scenario_id`` albo domyślny ``reward-learning``.
+    """
     if scenario is not None:
         return scenario
     return get_scenario(scenario_id or "reward-learning")

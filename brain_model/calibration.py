@@ -27,7 +27,11 @@ SEARCH_SPACE = {
 
 
 def _sample_params(method: str, trials: int, seed: int) -> list[dict[str, float]]:
-    """Opis funkcji _sample_params."""
+    """Wylosuj lub wybierz z siatki kandydackie parametry kalibracji.
+
+    Zwraca listę słowników ``{nazwa_parametru: wartość}``; liczba elementów nie
+    przekracza ``trials``. ``seed`` kontroluje kolejność siatki i losowanie.
+    """
     rng = np.random.default_rng(seed)
     keys = list(SEARCH_SPACE)
     if method == "grid":
@@ -52,7 +56,13 @@ def run_sweep(
     seed: int,
     output_dir: str,
 ) -> list[dict[str, Any]]:
-    """Opis funkcji run_sweep."""
+    """Uruchom serię symulacji kalibracyjnych i oceń każdą konfigurację.
+
+    Parametry określają scenariusz, liczbę prób, metodę ``grid``/``random``,
+    horyzont czasu w sekundach, ziarno i katalog wyników. Zwraca listę wierszy
+    z parametrami, metrykami i statusem reguł; może propagować błędy walidacji
+    scenariusza, symulacji lub zapisu plików.
+    """
     params_candidates = _sample_params(method=method, trials=trials, seed=seed)
     base_rng = np.random.default_rng(seed)
 
@@ -93,7 +103,12 @@ def run_sweep(
 def save_results(
     results: list[dict[str, Any]], output_dir: str, scenario: str, method: str
 ) -> None:
-    """Opis funkcji save_results."""
+    """Zapisz wyniki kalibracji do plików JSONL i CSV.
+
+    ``results`` zawiera wiersze zwracane przez ``run_sweep``. Funkcja tworzy
+    katalog wyjściowy, serializuje pełne rekordy do JSONL i płaskie metryki do
+    CSV. Wyjątki I/O oraz braki oczekiwanych kluczy są przekazywane do wywołującego.
+    """
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
 
@@ -153,7 +168,11 @@ def save_results(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Opis funkcji build_parser."""
+    """Zbuduj parser CLI dla sweepu kalibracyjnego.
+
+    Zwraca ``argparse.ArgumentParser`` z polskimi opisami opcji scenariusza,
+    liczby prób, metody, czasu symulacji w sekundach, ziarna i katalogu wyników.
+    """
     parser = argparse.ArgumentParser(
         description="Parametryczny sweep kalibracyjny modelu."
     )
@@ -174,7 +193,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    """Opis funkcji main."""
+    """Uruchom kalibrację z argumentów CLI i zaloguj podsumowanie.
+
+    Funkcja nie zwraca wartości; propaguje błędy parsowania, symulacji i zapisu,
+    aby nie ukrywać nieudanych eksperymentów.
+    """
     args = build_parser().parse_args()
     results = run_sweep(
         scenario=args.scenario,

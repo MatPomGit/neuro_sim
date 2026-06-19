@@ -767,7 +767,12 @@ def _draw_brain_projection(
 
 
 def _compute_region_activity_series(activity: Any, idx: Any, regions: Any) -> Any:
-    """Opis funkcji _compute_region_activity_series."""
+    """Przelicz aktywność modułów na serie aktywności regionów mózgu.
+
+    ``activity`` ma kształt ``(czas, moduł)`` i wartości zwykle w ``[0, 1]``;
+    ``idx`` mapuje nazwy modułów na kolumny, a ``regions`` wskazuje regiony do
+    obliczenia. Zwraca słownik ``{region: wektor_czasowy}`` o długości liczby kroków.
+    """
     region_activity_t = {}
     for region in regions:
         mapping = REGION_TO_MODULE_WEIGHTS.get(region, [])
@@ -802,7 +807,11 @@ def _describe(label: str) -> str:
 
 
 def _attach_line_tooltips(fig: Any, axes: Any) -> Any:
-    """Opis funkcji _attach_line_tooltips."""
+    """Podłącz dymki z opisem do linii Matplotlib na podanych osiach.
+
+    Funkcja modyfikuje figurę przez rejestrację obsługi ruchu myszy. Zwraca
+    ``None``; zakłada, że osie zawierają linie z danymi czasu i wartości.
+    """
     annotations = {}
     for ax in axes:
         annotation = ax.annotate(
@@ -822,7 +831,7 @@ def _attach_line_tooltips(fig: Any, axes: Any) -> Any:
         annotations[ax] = annotation
 
     def hide_annotations() -> Any:
-        """Opis funkcji hide_annotations."""
+        """Ukryj aktywne adnotacje tooltipów i odśwież figurę po zmianie."""
         changed = False
         for annotation in annotations.values():
             if annotation.get_visible():
@@ -832,7 +841,7 @@ def _attach_line_tooltips(fig: Any, axes: Any) -> Any:
             fig.canvas.draw_idle()
 
     def on_move(event: Any) -> Any:
-        """Opis funkcji on_move."""
+        """Obsłuż ruch kursora i pokaż tooltip najbliższej wskazanej linii."""
         if event.inaxes not in axes:
             hide_annotations()
             return
@@ -954,7 +963,11 @@ def _style_activity_axis(ax: Axes) -> None:
 
 
 def draw_activity(ax: Any, time: Any, activity: Any, names: Any, idx: Any) -> Any:
-    """Opis funkcji draw_activity."""
+    """Narysuj przebiegi aktywacji modułów poznawczych.
+
+    ``time`` jest wektorem sekund, ``activity`` macierzą ``(czas, moduł)`` z
+    wartościami ``[0, 1]``, ``idx`` mapuje moduły na kolumny. Zwraca listę osi.
+    """
     legend_map = _draw_activity_lines(ax, time, activity, idx)
     _style_activity_axis(ax)
     _connect_activity_legend_picker(ax.figure, legend_map)
@@ -1057,7 +1070,11 @@ def draw_activity_with_stimulus_channels(
 def draw_simulated_brain_activity(
     ax: Any, time: Any, activity: Any, names: Any, idx: Any
 ) -> Any:
-    """Opis funkcji draw_simulated_brain_activity."""
+    """Narysuj mapę cieplną aktywności modułów w czasie.
+
+    Oczekuje ``time`` długości liczby kroków i ``activity`` o kształcie
+    ``(czas, moduł)``. Kolor reprezentuje bezwymiarową aktywację ``[0, 1]``.
+    """
     selected = [
         "VIS",
         "AUD",
@@ -1123,7 +1140,11 @@ def draw_simulated_brain_activity(
 def draw_brain_region_projections(
     ax: Any, time: Any, activity: Any, names: Any, idx: Any
 ) -> Any:
-    """Opis funkcji draw_brain_region_projections."""
+    """Narysuj aktywację regionów na czterech rzutach mózgu SVG.
+
+    Dane wejściowe to wektor czasu w sekundach oraz macierz aktywacji
+    ``(czas, moduł)``. Funkcja zwraca cztery osie i dodaje pasek koloru ``[0, 1]``.
+    """
     fig = ax.figure
     ax.remove()
     axes = fig.subplots(2, 2)
@@ -1174,7 +1195,11 @@ def draw_brain_region_projections(
 def draw_region_activity_2d(
     ax: Any, time: Any, activity: Any, names: Any, idx: Any
 ) -> Any:
-    """Opis funkcji draw_region_activity_2d."""
+    """Narysuj dwuwymiarową mapę aktywności regionów mózgu w czasie.
+
+    Przelicza moduły na regiony, oczekuje macierzy ``(czas, moduł)`` i zwraca
+    listę z osią obrazu; wartości kolorów są ograniczone do skali aktywacji ``[0, 1]``.
+    """
     region_names = sorted(REGION_TO_MODULE_WEIGHTS.keys())
     region_activity_t = _compute_region_activity_series(activity, idx, region_names)
     matrix = [region_activity_t[name] for name in region_names]
@@ -1285,7 +1310,11 @@ def draw_diagnostics(ax: Any, time: Any, diagnostics: Any) -> Any:
 
 
 def draw_weight_trajectories(ax: Any, time: Any, diagnostics: Any) -> Any:
-    """Opis funkcji draw_weight_trajectories."""
+    """Narysuj trajektorie adaptowanych wag połączeń.
+
+    ``diagnostics`` powinien zawierać ``weight_history.weights`` z seriami
+    długości zgodnej z ``time`` w sekundach. Brak danych skutkuje komunikatem na osi.
+    """
     history = diagnostics.get("weight_history", {})
     weights = history.get("weights", {})
 
@@ -1325,7 +1354,11 @@ def draw_weight_trajectories(ax: Any, time: Any, diagnostics: Any) -> Any:
 
 
 def draw_weight_deltas(ax: Any, time: Any, diagnostics: Any) -> Any:
-    """Opis funkcji draw_weight_deltas."""
+    """Narysuj przyrosty wag ``ΔW`` w kolejnych krokach symulacji.
+
+    Oczekuje słownika ``weight_history.deltas`` z seriami zgodnymi z wektorem
+    czasu; wartości dodatnie oznaczają wzmacnianie, ujemne osłabianie połączeń.
+    """
     history = diagnostics.get("weight_history", {})
     deltas = history.get("deltas", {})
 
@@ -1368,7 +1401,11 @@ def draw_weight_deltas(ax: Any, time: Any, diagnostics: Any) -> Any:
 def draw_eeg_modules(
     ax: Any, time: Any, oscillations: Any, names: Any, idx: Any
 ) -> Any:
-    """Opis funkcji draw_eeg_modules."""
+    """Narysuj przesunięte pionowo sygnały EEG wybranych modułów.
+
+    ``oscillations["eeg"]`` ma kształt ``(czas, moduł)`` i reprezentuje sygnał
+    ``E-I`` bez jednostki fizycznej. Funkcja zwraca listę osi.
+    """
     selected = ["HIP", "VSWM", "VIS", "AUD", "EXEC", "ATT", "SEM", "GW"]
     eeg = oscillations["eeg"]
 
@@ -1415,7 +1452,11 @@ def draw_eeg_modules(
 
 
 def draw_scenario_channels(ax: Any, time: Any, scenario: Any) -> Any:
-    """Opis funkcji draw_scenario_channels."""
+    """Narysuj amplitudy kanałów bodźców scenariusza w czasie.
+
+    ``time`` jest wektorem sekund, a ``scenario`` musi być zgodny z
+    ``build_stimulus_fn``. Wynikowe serie są amplitudami bezwymiarowymi.
+    """
     stim = build_stimulus_fn(scenario)
     series = {k: [] for k in CHANNELS}
     for t in time:
@@ -1443,7 +1484,11 @@ def draw_scenario_channels(ax: Any, time: Any, scenario: Any) -> Any:
 
 
 def draw_scenario_timeline(ax: Any, time: Any, scenario: Any) -> Any:
-    """Opis funkcji draw_scenario_timeline."""
+    """Narysuj fazy i zdarzenia scenariusza na osi czasu.
+
+    Oczekuje scenariusza z listami ``phases`` i ``events`` zawierającymi czasy w
+    sekundach. Zwraca listę z osią wykresu.
+    """
     ax.set_title("Oś czasu scenariusza: fazy i zdarzenia")
     ax.set_xlabel("Czas symulacji [s]")
     ax.set_yticks([])
@@ -1584,7 +1629,11 @@ def draw_behavior(ax: Any, time: Any, behavior: Any) -> Any:
 
 
 def draw_band_power(ax: Any, time: Any, oscillations: Any) -> Any:
-    """Opis funkcji draw_band_power."""
+    """Narysuj cztery serie uproszczonej mocy pasm EEG.
+
+    ``oscillations["band_power"]`` zawiera serie theta, alpha, beta i gamma o
+    długości zgodnej z ``time``. Moc jest sumą kwadratów sygnałów modułów, bez jednostki fizycznej.
+    """
     band_power = oscillations["band_power"]
     fig = ax.figure
     ax.remove()
@@ -1623,20 +1672,20 @@ def _show_standalone(
 
 
 def plot_activity(time: Any, activity: Any, names: Any, idx: Any) -> Any:
-    """Opis funkcji plot_activity."""
+    """Otwórz samodzielne okno z wykresem aktywności modułów."""
     _show_standalone(draw_activity, time, activity, names, idx, figsize=(14, 8))
 
 
 def plot_diagnostics(time: Any, diagnostics: Any) -> Any:
-    """Opis funkcji plot_diagnostics."""
+    """Otwórz samodzielne okno z panelami diagnostyki modelu."""
     _show_standalone(draw_diagnostics, time, diagnostics, figsize=(14, 4))
 
 
 def plot_eeg_modules(time: Any, oscillations: Any, names: Any, idx: Any) -> Any:
-    """Opis funkcji plot_eeg_modules."""
+    """Otwórz samodzielne okno z sygnałami EEG wybranych modułów."""
     _show_standalone(draw_eeg_modules, time, oscillations, names, idx, figsize=(14, 6))
 
 
 def plot_band_power(time: Any, oscillations: Any) -> Any:
-    """Opis funkcji plot_band_power."""
+    """Otwórz samodzielne okno z mocą pasm theta, alpha, beta i gamma."""
     _show_standalone(draw_band_power, time, oscillations, figsize=(14, 8))

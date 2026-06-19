@@ -10,7 +10,11 @@ from .io import load_run
 
 
 def _run_metrics(run: dict) -> dict:
-    """Opis funkcji _run_metrics."""
+    """Policz zagregowane metryki pojedynczego uruchomienia.
+
+    Oczekuje słownika run z seriami diagnostycznymi i mocą pasmową. Zwraca
+    średnie lub maksima jako liczby ``float``; brakujące serie są traktowane jako zero.
+    """
     d = run["diagnostics"]
     o = run["oscillations"]["band_power"]
     return {
@@ -27,7 +31,12 @@ def _run_metrics(run: dict) -> dict:
 def generate_comparison_report(
     run_dirs: Any, output_path: str | Path = "outputs/report_comparison.png"
 ) -> Any:
-    """Opis funkcji generate_comparison_report."""
+    """Wygeneruj obraz PNG porównujący wiele uruchomień symulacji.
+
+    ``run_dirs`` to niepusta kolekcja katalogów wyników. Funkcja wczytuje dane,
+    rysuje przebiegi, moc pasm i tabelę metryk, zapisuje plik i zwraca ścieżkę.
+    Zgłasza ``ValueError`` dla pustej listy oraz propaguje błędy odczytu/zapisu.
+    """
     if not run_dirs:
         raise ValueError("run_dirs cannot be empty")
     runs = [load_run(path) for path in run_dirs]

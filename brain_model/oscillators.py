@@ -138,7 +138,27 @@ class WilsonCowanOscillatorBank:
         )
 
     def initial_state(self, rng: Any = None) -> Any:
-        """Opis funkcji initial_state."""
+        """Utwórz losowy stan początkowy banku oscylatorów.
+
+        Parameters
+        ----------
+        rng:
+            Generator zgodny z API NumPy, używany do jawnie kontrolowanego
+            losowania szumu i faz. Gdy ``None``, tworzony jest lokalny generator.
+
+        Returns
+        -------
+        np.ndarray
+            Macierz stanu o kształcie ``(n_modules, 3)``. Kolumny oznaczają
+            kolejno aktywność E ``[0, 1]``, aktywność I ``[0, 1]`` oraz fazę
+            ``phi`` w radianach z zakresu ``[0, 2π)``.
+
+        Raises
+        ------
+        ValueError
+            Gdy generator zwróci tablice o nieoczekiwanym kształcie albo
+            wartości niefinitywne.
+        """
         rng = rng or np.random.default_rng()
         excitatory_noise = np.asarray(rng.normal(size=self.n), dtype=float)
         inhibitory_noise = np.asarray(rng.normal(size=self.n), dtype=float)
@@ -169,7 +189,36 @@ class WilsonCowanOscillatorBank:
     def step(
         self, state: Any, cognitive_activity: Any, dt: Any, rng: Any = None
     ) -> Any:
-        """Opis funkcji step."""
+        """Wykonaj jeden krok Eulera-Maruyamy oscylatorów Wilsona-Cowana.
+
+        Parameters
+        ----------
+        state:
+            Macierz ``(n_modules, 3)`` z aktywnością E, I i fazą ``phi``.
+        cognitive_activity:
+            Wektor aktywacji poznawczej ``(n_modules,)`` w skali modelu ``[0, 1]``.
+        dt:
+            Dodatni krok czasu w sekundach.
+        rng:
+            Generator NumPy używany do kontrolowanego szumu oscylatorów.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray, dict[str, float]]
+            Nowy stan ``(n_modules, 3)``, wektor EEG ``E-I`` o kształcie
+            ``(n_modules,)`` oraz chwilowa moc pasm theta/alpha/beta/gamma.
+
+        Raises
+        ------
+        ValueError
+            Gdy ``dt`` nie jest dodatnią liczbą skończoną albo tablice mają
+            niepoprawny kształt lub wartości niefinitywne.
+
+        Notes
+        -----
+        Model jest fenomenologiczny; aktywności E/I są obcinane do ``[0, 1]``,
+        a sprzężenie sieciowe używa dodatniej części macierzy połączeń.
+        """
         if not np.isscalar(dt) or not np.isfinite(dt) or dt <= 0:
             raise ValueError("Krok dt musi być skończoną liczbą większą od zera.")
 
