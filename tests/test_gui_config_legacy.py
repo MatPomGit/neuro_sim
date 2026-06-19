@@ -32,7 +32,7 @@ class LegacyConfigHarness(GuiConfigMixin):
         self.auto_dt_toggled = True
 
 
-@pytest.mark.parametrize("invalid_dt", ["abc", "0", "-0.01"])
+@pytest.mark.parametrize("invalid_dt", ["abc", "0", "-0.01", True])
 def test_legacy_config_rejects_invalid_dt_without_partial_state(
     invalid_dt: str,
 ) -> None:
