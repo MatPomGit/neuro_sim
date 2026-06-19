@@ -5,7 +5,12 @@ from pathlib import Path
 
 import tomllib
 
-PRODUCTION_DOCSTRING_SCOPES = ("brain_core/**/*.py", "brain_model/**/*.py")
+PRODUCTION_DOCSTRING_SCOPES = (
+    "brain_core/**/*.py",
+    "brain_model/**/*.py",
+    "scripts/**/*.py",
+    "analysis/**/*.py",
+)
 STRICT_MYPY_MODULES = {
     "brain_model.oscillators",
     "brain_model.calibration",

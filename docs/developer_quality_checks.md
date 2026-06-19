@@ -73,8 +73,26 @@ interpretację eksperymentów i raportów:
   diagnostyki, EEG, mocy pasm i zachowania.
 
 Dla produkcyjnych pakietów `brain_core` i `brain_model` nie wolno już wyłączać
-całej rodziny reguł `D`. Tymczasowe wyjątki w `pyproject.toml` są ograniczone do
-jawnie wymienionych reguł długu migracyjnego:
+całej rodziny reguł `D`. Etap 2026-06 rozszerza tę zasadę na katalogi `scripts`
+oraz `analysis`: one również nie mogą używać globalnego ignorowania `D`, ale
+nadal korzystają z tej samej, jawnej listy tymczasowych wyjątków. Zakres jest
+celowo ograniczony do tych dwóch katalogów, ponieważ obejmowanie całego
+repozytorium w jednym kroku wymagałoby masowych poprawek docstringów w kodzie
+legacy i utrudniłoby ocenę merytorycznego diffu.
+
+Zmiana w tym etapie oznacza, że:
+
+- `analysis/**/*.py` i `scripts/**/*.py` mają w `pyproject.toml` identyczną listę
+  reguł migracyjnych jak `brain_core/**/*.py` oraz `brain_model/**/*.py`;
+- nie wolno zastępować tej listy skrótem `D`, ponieważ ukrywałoby to nowe klasy
+  naruszeń docstringów;
+- kolejne PR-y dotykające tych katalogów powinny usuwać konkretne wyjątki
+  lokalnie, gdy poprawiają odpowiadające im docstringi;
+- pozostałe obszary legacy, np. pojedyncze punkty wejścia i moduły
+  kompatybilności, pozostają poza tym etapem do czasu osobnej migracji.
+
+Tymczasowe wyjątki w `pyproject.toml` są ograniczone do jawnie wymienionych
+reguł długu migracyjnego:
 
 - `D100` — brak docstringa modułu;
 - `D104` — brak docstringa pakietu;
@@ -107,11 +125,21 @@ schemacie.
 
 Test `tests/test_quality_policy_static.py` pilnuje, aby:
 
-- produkcyjne moduły `brain_core` i `brain_model` nie wróciły do globalnego
-  ignorowania `D`;
+- produkcyjne moduły `brain_core`, `brain_model`, `scripts` i `analysis` nie
+  wróciły do globalnego ignorowania `D`;
+- zakresy objęte etapową migracją miały wyłącznie jawnie zaakceptowane reguły
+  `D*`, dzięki czemu dodanie nowego wyjątku wymaga świadomej aktualizacji
+  polityki jakości;
 - zaostrzone opcje `mypy` pozostały włączone dla kluczowych modułów naukowych;
 - wybrane moduły naukowe nie zawierały nieuzasadnionego importu ani użycia
   `typing.Any`.
+
+Po każdej zmianie w `pyproject.toml` dotyczącej `tool.ruff.lint.per-file-ignores`
+należy uruchomić:
+
+```bash
+pytest tests/test_quality_policy_static.py -q
+```
 
 Kryterium zakończenia migracji: wszystkie jawnie wymienione wyjątki
 `D*` zostaną usunięte z wyjątków produkcyjnych, a `disallow_untyped_defs` oraz
@@ -160,6 +188,9 @@ modyfikowanych plików.
    powtarzać nazwę funkcji.
 6. Nie dodawaj nowych globalnych ignorowań `D`, `type: ignore`, `# noqa` ani
    wyłączeń testów bez uzasadnienia w komentarzu lub dokumentacji migracyjnej.
+7. W plikach z `scripts` i `analysis` traktuj istniejące wyjątki `D*` jako limit
+   długu legacy: nowe lub istotnie zmieniane funkcje powinny otrzymać kompletne
+   docstringi zamiast polegać na per-file-ignore.
 
 ### 8.3 Po edycji
 
