@@ -116,16 +116,16 @@ class WilsonCowanOscillatorBank:
         self.band_map: dict[str, str] = band_map or DEFAULT_MODULE_BANDS
         self.params: WilsonCowanParams = params or WilsonCowanParams()
 
-        for band in self.band_map.values():
+        self.module_bands: list[str] = [
+            self.band_map.get(name, "beta") for name in self.module_names
+        ]
+
+        for band in self.module_bands:
             if band not in BAND_FREQUENCIES or band not in BAND_TIME_CONSTANTS:
                 raise ValueError(
                     f"Nieznane pasmo {band!r}; nazwa musi występować w "
                     "BAND_FREQUENCIES i BAND_TIME_CONSTANTS."
                 )
-
-        self.module_bands: list[str] = [
-            self.band_map.get(name, "beta") for name in self.module_names
-        ]
 
         self.frequency: np.ndarray = np.array(
             [BAND_FREQUENCIES[b] for b in self.module_bands], dtype=float
