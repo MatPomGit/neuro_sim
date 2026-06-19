@@ -4,15 +4,71 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import fields, replace
+from dataclasses import dataclass, fields, replace
 from datetime import date
 from pathlib import Path
 from tkinter import filedialog, messagebox
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from .gui_forms import APP_VERSION, COMMAND_LABELS, COMMAND_VALUES, RULE_FIELDS
 
+if TYPE_CHECKING:
+    from .oscillators import WilsonCowanParams
+    from .params import BrainParams
+
 TDataclass = TypeVar("TDataclass")
+
+
+@dataclass(frozen=True)
+class _PreparedConfigStateValues:
+    """Przechowuje zwalidowane wartości konfiguracji przed mutacją stanu GUI.
+
+    Parameters
+    ----------
+    T:
+        Tekstowa wartość czasu trwania symulacji.
+    dt:
+        Tekstowa wartość kroku czasowego zachowywana w stanie GUI.
+    auto_dt:
+        Flaga automatycznego doboru kroku czasowego.
+    seed:
+        Tekstowa wartość ziarna losowości.
+    command:
+        Techniczna nazwa komendy uruchamianej z GUI.
+    batch_seeds:
+        Tekstowa lista ziaren dla uruchomień seryjnych.
+    batch_scenarios:
+        Tekstowa lista scenariuszy dla uruchomień seryjnych.
+    sensitivity_params:
+        Tekstowa lista parametrów analizy wrażliwości.
+    sensitivity_delta:
+        Tekstowa wartość zmiany parametru analizy wrażliwości.
+    scenario:
+        Techniczna nazwa scenariusza eksperymentalnego.
+    save_results:
+        Flaga zapisu artefaktów eksperymentu.
+    brain_params:
+        Parametry modelu mózgu po konwersji typów i ustawieniu `dt`.
+    oscillator_params:
+        Parametry oscylatorów po konwersji typów.
+    plots:
+        Zestaw wykresów po konwersji wartości logicznych.
+    """
+
+    T: str
+    dt: str
+    auto_dt: bool
+    seed: str
+    command: str
+    batch_seeds: str
+    batch_scenarios: str
+    sensitivity_params: str
+    sensitivity_delta: str
+    scenario: str
+    save_results: bool
+    brain_params: "BrainParams"
+    oscillator_params: "WilsonCowanParams"
+    plots: dict[str, bool]
 
 
 class GuiConfigMixin:
@@ -140,6 +196,47 @@ class GuiConfigMixin:
 
     def _apply_config(self, config: dict[str, Any]) -> None:
         """Zastosuj konfigurację odczytaną z JSON do stanu i kontrolek GUI."""
+        prepared_values = self._prepare_config_state_values(config)
+
+        self.state.T = prepared_values.T
+        self.state.dt = prepared_values.dt
+        self.state.seed = prepared_values.seed
+        self.state.auto_dt = prepared_values.auto_dt
+        self.state.command = prepared_values.command
+        self.state.batch_seeds = prepared_values.batch_seeds
+        self.state.batch_scenarios = prepared_values.batch_scenarios
+        self.state.sensitivity_params = prepared_values.sensitivity_params
+        self.state.sensitivity_delta = prepared_values.sensitivity_delta
+        self.state.scenario = prepared_values.scenario
+        self.state.save_results = prepared_values.save_results
+        self.state.brain_params = prepared_values.brain_params
+        self.state.oscillator_params = prepared_values.oscillator_params
+        self.state.plots = prepared_values.plots
+        self._sync_controls_from_state()
+        self._refresh_scenario_details()
+        self._on_auto_dt_toggle()
+
+    def _prepare_config_state_values(
+        self, config: dict[str, Any]
+    ) -> _PreparedConfigStateValues:
+        """Przygotuj komplet wartości konfiguracji przed zmianą stanu GUI.
+
+        Parameters
+        ----------
+        config:
+            Słownik konfiguracji odczytany z pliku JSON GUI.
+
+        Returns
+        -------
+        _PreparedConfigStateValues
+            Zwalidowane i przekonwertowane wartości gotowe do atomowego przypisania
+            do `self.state`.
+
+        Raises
+        ------
+        ValueError
+            Gdy `dt` albo pole parametrów modelu ma niepoprawny typ lub wartość.
+        """
         raw_dt = config.get("dt", self.state.dt)
         dt_value = self._validate_dt_value(raw_dt)
 
@@ -159,31 +256,28 @@ class GuiConfigMixin:
             }
         )
 
-        self.state.T = str(config.get("T", self.state.T))
-        self.state.dt = str(raw_dt)
-        self.state.seed = str(config.get("seed", self.state.seed))
-        self.state.auto_dt = bool(config.get("auto_dt", self.state.auto_dt))
-        self.state.command = str(config.get("command", self.state.command))
-        self.state.batch_seeds = str(config.get("batch_seeds", self.state.batch_seeds))
-        self.state.batch_scenarios = str(
-            config.get("batch_scenarios", self.state.batch_scenarios)
+        return _PreparedConfigStateValues(
+            T=str(config.get("T", self.state.T)),
+            dt=str(raw_dt),
+            auto_dt=bool(config.get("auto_dt", self.state.auto_dt)),
+            seed=str(config.get("seed", self.state.seed)),
+            command=str(config.get("command", self.state.command)),
+            batch_seeds=str(config.get("batch_seeds", self.state.batch_seeds)),
+            batch_scenarios=str(
+                config.get("batch_scenarios", self.state.batch_scenarios)
+            ),
+            sensitivity_params=str(
+                config.get("sensitivity_params", self.state.sensitivity_params)
+            ),
+            sensitivity_delta=str(
+                config.get("sensitivity_delta", self.state.sensitivity_delta)
+            ),
+            scenario=str(config.get("scenario", self.state.scenario)),
+            save_results=bool(config.get("save_results", self.state.save_results)),
+            brain_params=new_brain_params,
+            oscillator_params=new_oscillator_params,
+            plots=new_plots,
         )
-        self.state.sensitivity_params = str(
-            config.get("sensitivity_params", self.state.sensitivity_params)
-        )
-        self.state.sensitivity_delta = str(
-            config.get("sensitivity_delta", self.state.sensitivity_delta)
-        )
-        self.state.scenario = str(config.get("scenario", self.state.scenario))
-        self.state.save_results = bool(
-            config.get("save_results", self.state.save_results)
-        )
-        self.state.brain_params = new_brain_params
-        self.state.oscillator_params = new_oscillator_params
-        self.state.plots = new_plots
-        self._sync_controls_from_state()
-        self._refresh_scenario_details()
-        self._on_auto_dt_toggle()
 
     def _editable_dataclass_values(
         self, instance: Any, exclude: tuple[str, ...] = ()
