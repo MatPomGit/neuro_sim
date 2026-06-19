@@ -82,5 +82,7 @@ def test_key_scientific_modules_do_not_use_unjustified_any() -> None:
                         offenders.append(f"{relative_path}:{node.lineno}: import Any")
             elif isinstance(node, ast.Name) and node.id == "Any":
                 offenders.append(f"{relative_path}:{node.lineno}: Any")
+            elif isinstance(node, ast.Attribute) and node.attr == "Any":
+                offenders.append(f"{relative_path}:{node.lineno}: typing.Any")
 
     assert not offenders, "Nieuzasadnione użycie Any:\n" + "\n".join(offenders)
