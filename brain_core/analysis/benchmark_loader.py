@@ -46,7 +46,7 @@ def _resolve_benchmark_base_dir(base_dir: str | Path) -> Path:
     if pyinstaller_root:
         bundled_candidates.append(Path(pyinstaller_root) / DEFAULT_BENCHMARK_BASE_DIR)
 
-    if getattr(sys, "frozen", False):
+    if getattr(sys, "frozen", False) and sys.executable:
         executable_dir = Path(sys.executable).resolve().parent
         bundled_candidates.extend(
             [
