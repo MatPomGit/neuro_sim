@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import fields, replace
 from datetime import date
 from pathlib import Path
@@ -100,10 +101,66 @@ class GuiConfigMixin:
             "plots": dict(self.state.plots),
         }
 
+    def _validate_dt_value(self, raw_dt: Any) -> float:
+        """Sprawdź krok symulacji przed zastosowaniem konfiguracji GUI.
+
+        Parameters
+        ----------
+        raw_dt:
+            Wartość kroku czasowego odczytana z konfiguracji albo kontrolki GUI.
+
+        Returns
+        -------
+        float
+            Skończona, dodatnia wartość kroku czasowego.
+
+        Raises
+        ------
+        ValueError
+            Gdy wartość nie jest liczbą skończoną większą od zera.
+        """
+        if isinstance(raw_dt, bool):
+            raise ValueError(
+                f"Niepoprawna wartość dt: {raw_dt}. "
+                "Wymagana jest liczba skończona większa od zera."
+            )
+        try:
+            dt_value = float(raw_dt)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"Niepoprawna wartość dt: {raw_dt}. "
+                "Wymagana jest liczba skończona większa od zera."
+            ) from exc
+        if not math.isfinite(dt_value) or dt_value <= 0.0:
+            raise ValueError(
+                f"Niepoprawna wartość dt: {raw_dt}. "
+                "Wymagana jest liczba skończona większa od zera."
+            )
+        return dt_value
+
     def _apply_config(self, config: dict[str, Any]) -> None:
         """Zastosuj konfigurację odczytaną z JSON do stanu i kontrolek GUI."""
+        raw_dt = config.get("dt", self.state.dt)
+        dt_value = self._validate_dt_value(raw_dt)
+
+        new_brain_params = self._dataclass_with_updates(
+            self.state.brain_params, config.get("brain_params", {})
+        )
+        new_brain_params = replace(new_brain_params, dt=dt_value)
+        new_oscillator_params = self._dataclass_with_updates(
+            self.state.oscillator_params, config.get("oscillator_params", {})
+        )
+        new_plots = dict(self.state.plots)
+        new_plots.update(
+            {
+                name: bool(value)
+                for name, value in config.get("plots", {}).items()
+                if name in self.plot_vars
+            }
+        )
+
         self.state.T = str(config.get("T", self.state.T))
-        self.state.dt = str(config.get("dt", self.state.dt))
+        self.state.dt = str(raw_dt)
         self.state.seed = str(config.get("seed", self.state.seed))
         self.state.auto_dt = bool(config.get("auto_dt", self.state.auto_dt))
         self.state.command = str(config.get("command", self.state.command))
@@ -121,29 +178,12 @@ class GuiConfigMixin:
         self.state.save_results = bool(
             config.get("save_results", self.state.save_results)
         )
-        self.state.brain_params = self._dataclass_with_updates(
-            self.state.brain_params, config.get("brain_params", {})
-        )
-        self.state.oscillator_params = self._dataclass_with_updates(
-            self.state.oscillator_params, config.get("oscillator_params", {})
-        )
-        self.state.plots.update(
-            {
-                name: bool(value)
-                for name, value in config.get("plots", {}).items()
-                if name in self.plot_vars
-            }
-        )
+        self.state.brain_params = new_brain_params
+        self.state.oscillator_params = new_oscillator_params
+        self.state.plots = new_plots
         self._sync_controls_from_state()
         self._refresh_scenario_details()
         self._on_auto_dt_toggle()
-        try:
-            self.state.brain_params = replace(
-                self.state.brain_params, dt=float(self.dt_var.get())
-            )
-            self.state.dt = self.dt_var.get()
-        except ValueError:
-            pass
 
     def _editable_dataclass_values(
         self, instance: Any, exclude: tuple[str, ...] = ()
