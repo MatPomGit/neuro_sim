@@ -57,7 +57,9 @@ def test_oscillator_bank_requires_rng_and_does_not_create_local_generator() -> N
 
     assert not any(
         isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Attribute)
-        and node.func.attr == "default_rng"
+        and (
+            (isinstance(node.func, ast.Attribute) and node.func.attr == "default_rng")
+            or (isinstance(node.func, ast.Name) and node.func.id == "default_rng")
+        )
         for node in ast.walk(oscillator_class)
     )
