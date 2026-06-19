@@ -82,3 +82,26 @@ def test_legacy_config_applies_positive_finite_dt_atomically() -> None:
     assert gui.controls_synced is True
     assert gui.scenario_refreshed is True
     assert gui.auto_dt_toggled is True
+
+
+def test_legacy_config_rejects_invalid_parameter_without_partial_state() -> None:
+    """Błąd pojedynczego pola parametrów nie może zmienić poprzedniego stanu GUI."""
+    gui = LegacyConfigHarness()
+    original_state = GuiState()
+
+    with pytest.raises(ValueError) as error_info:
+        gui._apply_config(
+            {
+                "T": "99.0",
+                "dt": "0.01",
+                "seed": "123",
+                "brain_params": {"noise": "nie-liczba"},
+                "plots": {"activity": True},
+            }
+        )
+
+    assert "Niepoprawna wartość parametru 'noise'" in str(error_info.value)
+    assert gui.state == original_state
+    assert gui.controls_synced is False
+    assert gui.scenario_refreshed is False
+    assert gui.auto_dt_toggled is False
