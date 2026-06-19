@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Any
 
 import numpy as np
 
@@ -114,9 +113,8 @@ class WilsonCowanOscillatorBank:
             [BAND_TIME_CONSTANTS[b][1] for b in self.module_bands], dtype=float
         )
 
-    def initial_state(self, rng: Any = None) -> Any:
-        """Opis funkcji initial_state."""
-        rng = rng or np.random.default_rng()
+    def initial_state(self, rng: np.random.Generator) -> np.ndarray:
+        """Utwórz stan początkowy, używając jawnie przekazanego generatora RNG."""
         state = np.zeros((self.n, 3), dtype=float)
         state[:, 0] = 0.10 + 0.02 * rng.normal(size=self.n)  # E
         state[:, 1] = 0.08 + 0.02 * rng.normal(size=self.n)  # I
@@ -125,10 +123,13 @@ class WilsonCowanOscillatorBank:
         return state
 
     def step(
-        self, state: Any, cognitive_activity: Any, dt: Any, rng: Any = None
-    ) -> Any:
-        """Opis funkcji step."""
-        rng = rng or np.random.default_rng()
+        self,
+        state: np.ndarray,
+        cognitive_activity: np.ndarray,
+        dt: float,
+        rng: np.random.Generator,
+    ) -> tuple[np.ndarray, np.ndarray, dict[str, float]]:
+        """Wykonaj krok oscylatorów, używając jawnie przekazanego generatora RNG."""
         p = self.params
 
         excitatory_activity = state[:, 0]
@@ -184,7 +185,7 @@ class WilsonCowanOscillatorBank:
 
         return next_state, eeg, band_power
 
-    def compute_band_power(self, eeg_vector: Any) -> Any:
+    def compute_band_power(self, eeg_vector: np.ndarray) -> dict[str, float]:
         """
         Chwilowa, uproszczona moc pasmowa: suma kwadratów sygnałów E-I
         w modułach przypisanych do danego pasma.
