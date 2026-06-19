@@ -304,9 +304,30 @@ class WilsonCowanOscillatorBank:
         return next_state, eeg, band_power
 
     def compute_band_power(self, eeg_vector: np.ndarray) -> dict[str, float]:
-        """
-        Chwilowa, uproszczona moc pasmowa: suma kwadratów sygnałów E-I
-        w modułach przypisanych do danego pasma.
+        """Oblicz chwilową energię sygnału EEG w pasmach modułów.
+
+        Parameters
+        ----------
+        eeg_vector : np.ndarray
+            Jednowymiarowy wektor sygnału EEG o kształcie ``(n_modules,)``.
+            Każda wartość jest chwilową różnicą aktywności ``E - I`` dla
+            pojedynczego modułu, dlatego przy poprawnym stanie oscylatorów
+            mieści się w zakresie ``[-1, 1]``.
+
+        Returns
+        -------
+        dict[str, float]
+            Słownik z kluczami ``"theta"``, ``"alpha"``, ``"beta"``
+            i ``"gamma"``. Wartość każdego klucza jest sumą kwadratów
+            chwilowych wartości EEG z modułów przypisanych do danego pasma.
+            Wynik jest więc chwilową sumą kwadratów w aktualnym kroku
+            symulacji, a nie estymatą widmowej mocy pasma z okna czasowego.
+
+        Raises
+        ------
+        ValueError
+            Gdy ``eeg_vector`` ma kształt inny niż ``(n_modules,)`` albo
+            zawiera wartości nieskończone lub ``NaN``.
         """
         eeg_vector = np.asarray(eeg_vector, dtype=float)
         expected_shape = (self.n,)
