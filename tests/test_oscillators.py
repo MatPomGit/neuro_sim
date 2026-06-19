@@ -142,9 +142,10 @@ def test_step_rejects_invalid_inputs(
 ) -> None:
     """Krok symulacji powinien jawnie odrzucać błędne dane i broadcasting."""
     bank = create_oscillator_bank()
+    rng = np.random.default_rng(0)
 
     with pytest.raises(ValueError, match=message):
-        bank.step(state, cognitive_activity, dt)
+        bank.step(state, cognitive_activity, dt, rng)
 
 
 @pytest.mark.parametrize(
