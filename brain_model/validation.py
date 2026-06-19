@@ -47,7 +47,50 @@ def evaluate_run(
     behavior: Any = None,
     rules: dict[str, float] | None = None,
 ) -> dict[str, Any]:
-    """Evaluate one simulation run and return metrics with pass/fail rules."""
+    """Oceń pojedyncze uruchomienie symulacji zestawem reguł jakości.
+
+    Parameters
+    ----------
+    time:
+        Jednowymiarowa sekwencja czasu w sekundach o długości ``n_steps``.
+    activity:
+        Macierz aktywacji ``(n_steps, n_modules)`` z wartościami w typowej
+        skali modelu ``[0, 1]``. Służy do oceny saturacji i odpowiedzi modułów.
+    diagnostics:
+        Słownik serii diagnostycznych, m.in. ``noradrenaline`` i
+        ``dopamine_delta``, każda seria powinna mieć długość ``n_steps``.
+    oscillations:
+        Słownik zawierający ``band_power`` z seriami mocy pasm EEG.
+    scenario:
+        Identyfikator scenariusza albo słownik z kluczem ``scenario_id``; wybiera
+        oczekiwany udział pasm dla scenariuszy referencyjnych.
+    behavior:
+        Opcjonalny słownik serii behawioralnych ``decision_event``,
+        ``confidence`` i ``latency`` o długości ``n_steps``.
+    rules:
+        Nadpisania progów walidacyjnych. Wartości są bezwymiarowe poza
+        latencją, która jest raportowana w sekundach.
+
+    Returns
+    -------
+    dict[str, Any]
+        Słownik z identyfikatorem scenariusza, metrykami stabilności, zgodności
+        pasm i funkcji, statusem reguł oraz polem ``pass``.
+
+    Raises
+    ------
+    ValueError
+        Gdy ``time`` jest puste albo liczba wierszy ``activity`` nie zgadza się
+        z długością czasu.
+    KeyError
+        Gdy nadpisania ``rules`` usuną wymagane progi przez niepoprawny format.
+
+    Notes
+    -----
+    Ocena ma charakter heurystyczny: moc pasm jest porównywana przez udziały
+    względne, a odpowiedzi funkcjonalne są różnicą średniej aktywacji po i przed
+    diagnostycznym pobudzeniem.
+    """
     if len(time) == 0:
         raise ValueError("time cannot be empty")
     if activity.shape[0] != len(time):

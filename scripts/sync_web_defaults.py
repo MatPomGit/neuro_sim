@@ -21,13 +21,18 @@ def read_dataclass_defaults(path: Path, class_name: str) -> Any:
     Returns
     -------
     dict[str, object]
-        Słownik ``{nazwa_pola: wartość_domyslna}`` dla pól, których wartość AST
-        jest obsługiwana przez ``ast.literal_eval``.
+        Płaski słownik ``{nazwa_pola: wartość_domyslna}``. Klucz jest nazwą
+        adnotowanego pola klasy, a wartość jest wynikiem ``ast.literal_eval``:
+        liczbą, napisem, wartością logiczną, ``None`` albo zagnieżdżoną strukturą
+        literalną obsługiwaną przez AST.
 
     Notes
     -----
-    Nieobsługiwane wartości AST, np. wywołania funkcji lub wyrażenia zależne
-    od kontekstu wykonania, są pomijane bez przerywania synchronizacji.
+    Nieobsługiwane wartości AST, np. wywołania funkcji, referencje do stałych,
+    wyrażenia arytmetyczne lub wartości zależne od kontekstu wykonania, są
+    pomijane bez przerywania synchronizacji. Dzięki temu skrypt synchronizuje
+    tylko bezpiecznie odczytywalne domyślne literały i nie importuje modułu z
+    potencjalnymi efektami ubocznymi.
     """
     tree = ast.parse(path.read_text(encoding="utf-8"))
     out = {}
@@ -41,7 +46,7 @@ def read_dataclass_defaults(path: Path, class_name: str) -> Any:
                 ):
                     try:
                         out[item.target.id] = ast.literal_eval(item.value)
-                    except Exception:
+                    except (ValueError, TypeError):
                         pass
     return out
 
@@ -58,14 +63,19 @@ def read_param_desc(path: Path) -> Any:
     Returns
     -------
     dict[str, str]
-        Słownik ``{nazwa_parametru: polski_opis}`` z wartości literalnej stałej
-        albo pusty słownik, gdy stała nie występuje.
+        Płaski słownik ``{nazwa_parametru: polski_opis}`` z literalnej wartości
+        stałej ``PARAMETER_DESCRIPTIONS`` albo pusty słownik, gdy stała nie
+        występuje. Klucze odpowiadają technicznym nazwom parametrów, a wartości
+        są polskimi opisami prezentowanymi w warstwie web/GUI.
 
     Raises
     ------
     ValueError
-        Może zostać zgłoszony przez ``ast.literal_eval``, jeśli znaleziona
-        stała zawiera nieobsługiwaną wartość AST.
+        Może zostać zgłoszony przez ``ast.literal_eval``, jeśli znaleziona stała
+        zawiera nieobsługiwaną wartość AST, np. wywołanie funkcji albo referencję
+        do nazwy zamiast literalnego słownika. W odróżnieniu od domyślnych pól
+        dataclass taki błąd nie jest pomijany, bo opisy parametrów powinny być
+        w pełni literalne i walidowalne.
     """
     tree = ast.parse(path.read_text(encoding="utf-8"))
     for node in tree.body:
