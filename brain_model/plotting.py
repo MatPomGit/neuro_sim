@@ -596,12 +596,10 @@ def _calculate_scroll_zoom_limits(
 
 def _attach_brain_projection_scroll_zoom(ax: Any) -> None:
     """Podłącz przybliżanie i oddalanie rzutu SVG kółkiem myszy."""
-    home_xlim = tuple(float(value) for value in ax.get_xlim())
-    home_ylim = tuple(float(value) for value in ax.get_ylim())
-    if len(home_xlim) != 2 or len(home_ylim) != 2:
-        return
-    home_xlim = (home_xlim[0], home_xlim[1])
-    home_ylim = (home_ylim[0], home_ylim[1])
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    home_xlim = (float(xlim[0]), float(xlim[1]))
+    home_ylim = (float(ylim[0]), float(ylim[1]))
     ax._neuro_sim_home_xlim = home_xlim
     ax._neuro_sim_home_ylim = home_ylim
 
