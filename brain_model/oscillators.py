@@ -308,7 +308,7 @@ class WilsonCowanOscillatorBank:
 
         Parameters
         ----------
-        eeg_vector:
+        eeg_vector : np.ndarray
             Jednowymiarowy wektor sygnału EEG o kształcie ``(n_modules,)``.
             Każda wartość jest chwilową różnicą aktywności ``E - I`` dla
             pojedynczego modułu, dlatego przy poprawnym stanie oscylatorów
