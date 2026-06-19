@@ -56,7 +56,7 @@ def _resolve_benchmark_base_dir(base_dir: str | Path) -> Path:
         )
 
     for bundled_root in bundled_candidates:
-        if bundled_root.exists():
+        if bundled_root.is_dir():
             return bundled_root
     return root
 
