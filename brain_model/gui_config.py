@@ -119,6 +119,11 @@ class GuiConfigMixin:
         ValueError
             Gdy wartość nie jest liczbą skończoną większą od zera.
         """
+        if isinstance(raw_dt, bool):
+            raise ValueError(
+                f"Niepoprawna wartość dt: {raw_dt}. "
+                "Wymagana jest liczba skończona większa od zera."
+            )
         try:
             dt_value = float(raw_dt)
         except (TypeError, ValueError) as exc:
