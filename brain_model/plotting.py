@@ -43,6 +43,8 @@ def _add_interpretation_box(fig: Any, text: str) -> None:
         try:
             existing_artist.remove()
         except ValueError:
+            # Matplotlib zgłasza ValueError, gdy artysta został już bezpiecznie
+            # usunięty z figury, więc nie trzeba wykonywać dodatkowej akcji.
             pass
 
     wrapped_text = fill(text, width=INTERPRETATION_WRAP_WIDTH)
