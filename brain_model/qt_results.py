@@ -287,6 +287,14 @@ def _create_activity_controls(canvas: Any, axes: list[Any]) -> QWidget:
         canvas.draw_idle()
 
     def autoscale_activity_y() -> None:
+        """Dopasuj zakres osi Y aktywacji bez zmiany aktualnego okna czasu.
+
+        Funkcja przelicza granice widocznych linii na osi aktywacji i
+        autoskaluje tylko oś Y. Zakres osi X jest zapamiętywany przed operacją
+        i odtwarzany po niej, dlatego wybrane przybliżenie czasu pozostaje bez
+        zmian. Nie przełącza skali logarytmicznej; działa w bieżącym trybie osi
+        Y ustawionym przez przycisk skali.
+        """
         current_xlim = activity_axis.get_xlim()
         activity_axis.relim(visible_only=True)
         activity_axis.autoscale_view(scalex=False, scaley=True)
@@ -294,6 +302,15 @@ def _create_activity_controls(canvas: Any, axes: list[Any]) -> QWidget:
         canvas.draw_idle()
 
     def autoscale_activity_plot() -> None:
+        """Przywróć pełny widok aktywacji i bodźców w skali liniowej.
+
+        Funkcja resetuje oś Y aktywacji do skali liniowej, aktualizuje etykietę
+        przycisku skali i autoskaluje aktywację w obu kierunkach, więc może
+        rozszerzyć zakres czasu do całych danych. Jeżeli istnieje oś bodźców,
+        autoskalowana jest jej oś Y, natomiast jej zakres czasu pozostaje
+        powiązany z osią aktywacji przez współdzielenie osi X i callbacki. Skala
+        logarytmiczna nie jest tu włączana niezależnie od wartości danych.
+        """
         activity_axis.set_yscale("linear")
         scale_button.setText("Skala Y: liniowa")
         activity_axis.relim(visible_only=True)
@@ -304,6 +321,14 @@ def _create_activity_controls(canvas: Any, axes: list[Any]) -> QWidget:
         canvas.draw_idle()
 
     def toggle_activity_y_scale() -> None:
+        """Przełącz oś Y aktywacji między skalą liniową i logarytmiczną.
+
+        Aktualny zakres czasu na osi X jest zachowywany podczas przełączenia.
+        Skala logarytmiczna może zostać włączona tylko wtedy, gdy widoczne dane
+        aktywacji zawierają dodatnią wartość; w przeciwnym razie użytkownik
+        otrzymuje ostrzeżenie, a osie pozostają bez zmian. Przy powrocie do
+        skali liniowej oś Y jest ponownie autoskalowana dla widocznych linii.
+        """
         current_xlim = activity_axis.get_xlim()
         if activity_axis.get_yscale() == "linear":
             min_positive = _get_min_positive_activity_value(activity_axis)
