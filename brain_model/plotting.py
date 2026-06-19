@@ -10,6 +10,7 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.backend_bases import MouseEvent, PickEvent
 from matplotlib.collections import PolyCollection
 
 from .scenarios.types import CHANNELS, StimulusScenario
@@ -600,8 +601,15 @@ def _attach_brain_projection_scroll_zoom(ax: Any) -> None:
     ax._neuro_sim_home_xlim = home_xlim
     ax._neuro_sim_home_ylim = home_ylim
 
-    def on_scroll(event: Any) -> None:
-        """Zmień skalę tylko wtedy, gdy kursor znajduje się nad danym rzutem."""
+    def on_scroll(event: MouseEvent) -> None:
+        """Obsłuż zoom kółkiem myszy dla pojedynczego rzutu mózgu.
+
+        Funkcja reaguje wyłącznie na zdarzenia przewijania Matplotlib, których
+        kursor znajduje się nad osią danego rzutu SVG. Przewinięcie w górę
+        przybliża widok względem położenia kursora, a przewinięcie w dół oddala
+        go. Zmieniane są jednocześnie osie X i Y, a nowy zakres jest ograniczony
+        do pierwotnych granic danych zapisanych dla rzutu.
+        """
         if event.inaxes != ax or event.xdata is None or event.ydata is None:
             return
 
@@ -933,7 +941,15 @@ def _draw_activity_lines(
 def _connect_activity_legend_picker(fig: Any, legend_map: dict[Any, Any]) -> None:
     """Podłącz przełączanie widoczności linii przez kliknięcie wpisu legendy."""
 
-    def on_pick(event: Any) -> None:
+    def on_pick(event: PickEvent) -> None:
+        """Przełącz widoczność linii aktywacji po kliknięciu wpisu legendy.
+
+        Oczekuje zdarzenia ``PickEvent`` Matplotlib wygenerowanego dla
+        klikalnej linii legendy. Jeśli wskazany artysta jest obecny w
+        ``legend_map``, odpowiadająca mu linia danych zmienia widoczność na
+        przeciwną, a przezroczystość wpisu legendy informuje, czy sygnał jest
+        aktualnie widoczny.
+        """
         legend_line = event.artist
         line = legend_map.get(legend_line)
         if line is None:
@@ -1025,10 +1041,26 @@ def draw_activity_with_stimulus_channels(
     time_end = float(time[-1])
 
     def synchronize_stimulus_xlim(changed_ax: Axes) -> None:
+        """Przenieś zakres osi czasu z aktywacji na kanały bodźców.
+
+        Callback jest podłączony do zmiany ``xlim`` górnej osi aktywacji, więc
+        synchronizacja przebiega jednokierunkowo: z ``activity_ax`` do
+        ``stimulus_ax``. Nie należy w tym miejscu zmieniać ponownie zakresu osi
+        aktywacji ani podłączać analogicznego callbacku w drugą stronę, bo
+        mogłoby to wywołać rekurencyjne odświeżanie limitów osi.
+        """
         stimulus_ax.set_xlim(changed_ax.get_xlim())
         fig.canvas.draw_idle()
 
-    def on_scroll(event: Any) -> None:
+    def on_scroll(event: MouseEvent) -> None:
+        """Przybliż lub oddal wspólną oś czasu aktywacji i bodźców.
+
+        Obsługiwane są zdarzenia przewijania Matplotlib nad górną osią
+        aktywacji, dolną osią kanałów bodźców oraz ich osiami X. Przewinięcie w
+        górę przybliża wykres względem czasu pod kursorem, a przewinięcie w dół
+        oddala widok. Zakres X obu osi jest aktualizowany razem i przycinany do
+        przedziału czasu dostępnego w danych wejściowych.
+        """
         if event.inaxes not in (
             activity_ax,
             activity_ax.xaxis,
