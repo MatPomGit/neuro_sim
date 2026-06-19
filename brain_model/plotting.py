@@ -596,8 +596,10 @@ def _calculate_scroll_zoom_limits(
 
 def _attach_brain_projection_scroll_zoom(ax: Any) -> None:
     """Podłącz przybliżanie i oddalanie rzutu SVG kółkiem myszy."""
-    home_xlim = tuple(float(value) for value in ax.get_xlim())
-    home_ylim = tuple(float(value) for value in ax.get_ylim())
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    home_xlim = (float(xlim[0]), float(xlim[1]))
+    home_ylim = (float(ylim[0]), float(ylim[1]))
     ax._neuro_sim_home_xlim = home_xlim
     ax._neuro_sim_home_ylim = home_ylim
 
@@ -623,7 +625,7 @@ def _attach_brain_projection_scroll_zoom(ax: Any) -> None:
 
         ax.set_xlim(
             _calculate_scroll_zoom_limits(
-                tuple(float(value) for value in ax.get_xlim()),
+                (float(ax.get_xlim()[0]), float(ax.get_xlim()[1])),
                 ax._neuro_sim_home_xlim,
                 float(event.xdata),
                 scale_factor,
@@ -631,7 +633,7 @@ def _attach_brain_projection_scroll_zoom(ax: Any) -> None:
         )
         ax.set_ylim(
             _calculate_scroll_zoom_limits(
-                tuple(float(value) for value in ax.get_ylim()),
+                (float(ax.get_ylim()[0]), float(ax.get_ylim()[1])),
                 ax._neuro_sim_home_ylim,
                 float(event.ydata),
                 scale_factor,
@@ -1490,7 +1492,7 @@ def draw_scenario_channels(ax: Any, time: Any, scenario: Any) -> Any:
     ``build_stimulus_fn``. Wynikowe serie są amplitudami bezwymiarowymi.
     """
     stim = build_stimulus_fn(scenario)
-    series = {k: [] for k in CHANNELS}
+    series: dict[str, list[float]] = {k: [] for k in CHANNELS}
     for t in time:
         u = stim(float(t))
         for k in series:

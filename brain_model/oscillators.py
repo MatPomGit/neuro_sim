@@ -7,8 +7,7 @@ from .activations import sigmoid
 
 @dataclass
 class WilsonCowanParams:
-    """
-    Parametry banku oscylatorów Wilsona-Cowana.
+    """Parametry banku oscylatorów Wilsona-Cowana.
 
     Każdy moduł poznawczy ma parę populacji: pobudzającą E i hamującą I.
     Częstotliwości pasm są modelowane przez różne stałe czasowe oraz dodatkowy
@@ -74,8 +73,7 @@ DEFAULT_MODULE_BANDS = {
 
 
 class WilsonCowanOscillatorBank:
-    """
-    Bank oscylatorów Wilsona-Cowana przypisanych do modułów poznawczych.
+    """Bank oscylatorów Wilsona-Cowana przypisanych do modułów poznawczych.
 
     Stan ma wymiar (n_modules, 3):
         E     aktywność populacji pobudzającej,
@@ -146,14 +144,14 @@ class WilsonCowanOscillatorBank:
             jawnie kontrolowanego losowania szumu i faz. Wymagany do zapewnienia
             replikowalności eksperymentów.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Macierz stanu o kształcie ``(n_modules, 3)``. Kolumny oznaczają
             kolejno aktywność E ``[0, 1]``, aktywność I ``[0, 1]`` oraz fazę
             ``phi`` w radianach z zakresu ``[0, 2π)``.
 
-        Raises
+        Raises:
         ------
         ValueError
             Gdy generator zwróci tablice o nieoczekiwanym kształcie albo
@@ -206,24 +204,25 @@ class WilsonCowanOscillatorBank:
             Generator NumPy (``np.random.Generator``) używany do kontrolowanego
             szumu oscylatorów. Wymagany do zapewnienia replikowalności.
 
-        Returns
+        Returns:
         -------
         tuple[np.ndarray, np.ndarray, dict[str, float]]
             Nowy stan ``(n_modules, 3)``, wektor EEG ``E-I`` o kształcie
             ``(n_modules,)`` oraz chwilowa moc pasm theta/alpha/beta/gamma.
 
-        Raises
+        Raises:
         ------
         ValueError
             Gdy ``dt`` nie jest dodatnią liczbą skończoną albo tablice mają
             niepoprawny kształt lub wartości niefinitywne.
 
-        Notes
+        Notes:
         -----
         Model jest fenomenologiczny; aktywności E/I są obcinane do ``[0, 1]``,
         a sprzężenie sieciowe używa dodatniej części macierzy połączeń.
         """
-        if not np.isscalar(dt) or not np.isfinite(dt) or dt <= 0:
+        dt_value = float(dt)
+        if not np.isfinite(dt_value) or dt_value <= 0:
             raise ValueError("Krok dt musi być skończoną liczbą większą od zera.")
 
         state = np.asarray(state, dtype=float)
@@ -283,15 +282,15 @@ class WilsonCowanOscillatorBank:
 
         E_next = (
             excitatory_activity
-            + dt * dE
-            + np.sqrt(dt) * p.oscillator_noise * rng.normal(size=self.n)
+            + dt_value * dE
+            + np.sqrt(dt_value) * p.oscillator_noise * rng.normal(size=self.n)
         )
         I_next = (
             inhibitory_activity
-            + dt * dI
-            + np.sqrt(dt) * p.oscillator_noise * rng.normal(size=self.n)
+            + dt_value * dI
+            + np.sqrt(dt_value) * p.oscillator_noise * rng.normal(size=self.n)
         )
-        phi_next = phi + 2.0 * np.pi * self.frequency * dt
+        phi_next = phi + 2.0 * np.pi * self.frequency * dt_value
 
         next_state = np.empty_like(state)
         next_state[:, 0] = np.clip(E_next, 0.0, 1.0)
@@ -314,7 +313,7 @@ class WilsonCowanOscillatorBank:
             pojedynczego modułu, dlatego przy poprawnym stanie oscylatorów
             mieści się w zakresie ``[-1, 1]``.
 
-        Returns
+        Returns:
         -------
         dict[str, float]
             Słownik z kluczami ``"theta"``, ``"alpha"``, ``"beta"``
@@ -323,7 +322,7 @@ class WilsonCowanOscillatorBank:
             Wynik jest więc chwilową sumą kwadratów w aktualnym kroku
             symulacji, a nie estymatą widmowej mocy pasma z okna czasowego.
 
-        Raises
+        Raises:
         ------
         ValueError
             Gdy ``eeg_vector`` ma kształt inny niż ``(n_modules,)`` albo
