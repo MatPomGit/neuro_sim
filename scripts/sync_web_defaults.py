@@ -179,13 +179,15 @@ def _read_constructor_call(node: ast.Call) -> dict[str, object]:
     if not isinstance(node.func, ast.Name) or node.args:
         raise ValueError("Konstruktor musi być nazwany i bez argumentów pozycyjnych.")
 
+    kwargs = {}
+    for keyword in node.keywords:
+        if keyword.arg is None:
+            raise ValueError("Rozpakowywanie słownika (**kwargs) nie jest obsługiwane statycznie.")
+        kwargs[keyword.arg] = _read_supported_default_value(keyword.value)
+
     return {
         "constructor": node.func.id,
-        "kwargs": {
-            keyword.arg: _read_supported_default_value(keyword.value)
-            for keyword in node.keywords
-            if keyword.arg is not None
-        },
+        "kwargs": kwargs,
     }
 
 
