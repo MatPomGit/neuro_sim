@@ -205,6 +205,33 @@ def test_reference_benchmark_metadata_loads_from_pyinstaller_bundle(
     assert set(metadata.keys()) == {"eeg", "fmri", "behavior"}
 
 
+def test_reference_benchmark_metadata_loads_from_frozen_onedir_internal(
+    tmp_path: Any, monkeypatch: Any
+) -> Any:
+    """Domyślny loader powinien obsłużyć katalog _internal aplikacji EXE."""
+    import shutil
+    import sys
+
+    from brain_core.analysis.benchmark_loader import load_reference_benchmark_metadata
+
+    source_validation_dir = Path("data/validation").resolve()
+    executable_dir = tmp_path / "NeuroSim"
+    bundled_validation_dir = executable_dir / "_internal" / "data" / "validation"
+    shutil.copytree(source_validation_dir, bundled_validation_dir)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "executable", str(executable_dir / "NeuroSim.exe"))
+    monkeypatch.delattr(sys, "_MEIPASS", raising=False)
+    load_reference_benchmark_metadata.cache_clear()
+
+    try:
+        metadata = load_reference_benchmark_metadata()
+    finally:
+        load_reference_benchmark_metadata.cache_clear()
+
+    assert set(metadata.keys()) == {"eeg", "fmri", "behavior"}
+
+
 def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> Any:
     """Walidacja metadanych powinna odrzucać poziomy spoza rejestru."""
     import json

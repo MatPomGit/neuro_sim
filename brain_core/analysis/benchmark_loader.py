@@ -28,8 +28,9 @@ def _resolve_benchmark_base_dir(base_dir: str | Path) -> Path:
     Parameters
     ----------
     base_dir:
-        Katalog bazowy z plikami benchmarków. Fallback do ``sys._MEIPASS`` jest
-        stosowany wyłącznie dla domyślnego katalogu projektu.
+        Katalog bazowy z plikami benchmarków. Fallback do katalogu zasobów
+        PyInstaller albo katalogu obok pliku EXE jest stosowany wyłącznie dla
+        domyślnego katalogu projektu.
 
     Returns
     -------
@@ -40,9 +41,23 @@ def _resolve_benchmark_base_dir(base_dir: str | Path) -> Path:
     if root.exists() or root != DEFAULT_BENCHMARK_BASE_DIR:
         return root
 
-    bundled_root = Path(getattr(sys, "_MEIPASS", "")) / DEFAULT_BENCHMARK_BASE_DIR
-    if bundled_root.exists():
-        return bundled_root
+    bundled_candidates: list[Path] = []
+    pyinstaller_root = getattr(sys, "_MEIPASS", None)
+    if pyinstaller_root:
+        bundled_candidates.append(Path(pyinstaller_root) / DEFAULT_BENCHMARK_BASE_DIR)
+
+    if getattr(sys, "frozen", False):
+        executable_dir = Path(sys.executable).resolve().parent
+        bundled_candidates.extend(
+            [
+                executable_dir / DEFAULT_BENCHMARK_BASE_DIR,
+                executable_dir / "_internal" / DEFAULT_BENCHMARK_BASE_DIR,
+            ]
+        )
+
+    for bundled_root in bundled_candidates:
+        if bundled_root.exists():
+            return bundled_root
     return root
 
 
