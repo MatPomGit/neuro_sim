@@ -1,0 +1,395 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Raport eksperymentu neuro_sim</title><style>body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;line-height:1.5;max-width:1200px;margin:2rem auto;padding:0 1rem;color:#1f2933;}h1,h2,h3{color:#102a43;}table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.92rem;}th,td{border:1px solid #bcccdc;padding:.45rem;text-align:left;vertical-align:top;}th{background:#f0f4f8;}tr:nth-child(even){background:#f8fafc;}</style></head><body><h1>Raport porównania profili</h1><ul><li>**Status**: Symulacja zakończona.</li><li>**Skrót**: Porównanie profili zakończone: wiersze tabeli=2, wspólna sekwencja=True.</li></ul><h2>Skrót metryk</h2><ul><li>**band_power_delta**: 0.000100878</li><li>**band_power_theta**: 0.00252744</li><li>**band_power_alpha**: 4.75279e-05</li><li>**band_power_beta**: 0.000102265</li><li>**band_power_gamma**: 4.06342e-07</li><li>**erp_proxy_peak_to_peak**: 0.510277</li><li>**phase_locking_value**: 0.123517</li><li>**connectivity_mean**: 0.0929675</li><li>**connectivity_abs_mean**: 0.134881</li><li>**pli_proxy_mean**: 0.0626562</li><li>**region_strength_mean**: 0.134881</li><li>**directional_mean**: 4.33681e-19</li></ul><h2>Sekcje EEG/BOLD</h2><table>
+<thead><tr>
+<th>Modalność</th>
+<th>Metryka</th>
+<th>Region/pasmo</th>
+<th>Wartość</th>
+<th>Interpretacja</th>
+<th>Ograniczenia</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>EEG</td>
+<td>band_power_delta</td>
+<td>pasmo delta</td>
+<td>0.00010087758614706398</td>
+<td>Moc pasma delta gotowa do porównań profili jako opis wolnej aktywności oscylacyjnej.</td>
+<td>Metryka pochodzi z uproszczonego widma FFT i nie zastępuje walidowanej analizy klinicznej EEG.</td>
+</tr>
+<tr>
+<td>EEG</td>
+<td>band_power_theta</td>
+<td>pasmo theta</td>
+<td>0.00252744399357043</td>
+<td>Moc theta wspiera raportowanie rytmów związanych z pamięcią i kontrolą poznawczą w profilu symulacji.</td>
+<td>Zakres pasma jest stały, a wynik zależy od długości sygnału i częstotliwości próbkowania.</td>
+</tr>
+<tr>
+<td>EEG</td>
+<td>band_power_alpha</td>
+<td>pasmo alpha</td>
+<td>4.7527886278847953e-05</td>
+<td>Moc alpha jest gotowa do raportowania jako marker rytmu hamowania i odniesienia spoczynkowego.</td>
+<td>To syntetyczna miara mocy, bez korekty artefaktów i bez wnioskowania diagnostycznego.</td>
+</tr>
+<tr>
+<td>EEG</td>
+<td>band_power_beta</td>
+<td>pasmo beta</td>
+<td>0.00010226486797457815</td>
+<td>Moc beta opisuje rytm zadaniowy i może być zestawiana między profilami healthy/disorder/lesion.</td>
+<td>Interpretuj trend względny, bo model nie kalibruje amplitudy do empirycznych jednostek EEG.</td>
+</tr>
+<tr>
+<td>EEG</td>
+<td>band_power_gamma</td>
+<td>pasmo gamma</td>
+<td>4.063420672352131e-07</td>
+<td>Moc gamma raportuje lokalną synchronizację szybkich rytmów wygenerowanych przez model.</td>
+<td>Brak modelowania artefaktów mięśniowych, dlatego wynik jest metryką symulacyjną.</td>
+</tr>
+<tr>
+<td>EEG</td>
+<td>erp_proxy_peak_to_peak</td>
+<td>kanał_0</td>
+<td>0.5102773280885171</td>
+<td>Proxy ERP peak-to-peak jest gotowe do raportowania jako zakres odpowiedzi w głównym sygnale EEG.</td>
+<td>To opis amplitudy symulowanej, bez segmentacji triali i bez kalibracji do mikrovoltów empirycznego EEG.</td>
+</tr>
+<tr>
+<td>EEG</td>
+<td>phase_locking_value</td>
+<td>kanał_0–kanał_1</td>
+<td>0.1235167629114771</td>
+<td>PLV jest gotowe do raportowania jako syntetyczna miara stałości relacji fazowej między dwoma sygnałami.</td>
+<td>Implementacja używa faz FFT całego sygnału, więc nie opisuje lokalnych zmian fazy w oknach czasowych.</td>
+</tr>
+<tr>
+<td>EEG</td>
+<td>connectivity_mean</td>
+<td>wszystkie regiony</td>
+<td>0.09296746383719512</td>
+<td>Średnia korelacja jest gotowa do raportowania jako globalny opis współzmienności regionów.</td>
+<td>Korelacja nie rozstrzyga kierunku ani przyczynowości połączeń.</td>
+</tr>
+<tr>
+<td>EEG</td>
+<td>connectivity_abs_mean</td>
+<td>wszystkie regiony</td>
+<td>0.13488097294385465</td>
+<td>Średnia bezwzględna korelacja pokazuje siłę sprzężeń bez znaku i nadaje się do porównań profili.</td>
+<td>Wysoka wartość może wynikać z synchronizacji dodatniej albo ujemnej.</td>
+</tr>
+<tr>
+<td>EEG</td>
+<td>pli_proxy_mean</td>
+<td>wszystkie regiony</td>
+<td>0.06265625</td>
+<td>PLI-proxy raportuje asymetrię znaków różnicy faz i może wskazywać na stabilną synchronizację między regionami.</td>
+<td>To uproszczony wskaźnik z faz FFT, a nie pełna procedura PLI EEG.</td>
+</tr>
+<tr>
+<td>EEG</td>
+<td>region_strength_mean</td>
+<td>wszystkie regiony</td>
+<td>0.13488097294385465</td>
+<td>Średnia siła regionów podsumowuje, jak mocno regiony są powiązane z resztą sieci.</td>
+<td>Agregat ukrywa różnice między pojedynczymi parami regionów.</td>
+</tr>
+<tr>
+<td>EEG</td>
+<td>directional_mean</td>
+<td>wszystkie regiony</td>
+<td>4.336808689942018e-19</td>
+<td>Średnia kierunkowość jest gotowa do raportowania jako znakowany proxy przepływu między regionami.</td>
+<td>Metryka opiera się na opóźnieniu jednej próbki i nie jest pełną analizą przyczynowości Grangera.</td>
+</tr>
+<tr>
+<td>EEG</td>
+<td>directional_abs_mean</td>
+<td>wszystkie regiony</td>
+<td>0.014914026910502724</td>
+<td>Bezwzględna kierunkowość pokazuje łączną siłę asymetrii przepływu niezależnie od znaku.</td>
+<td>Agregat nie wskazuje, który region jest źródłem dominującego wpływu.</td>
+</tr>
+<tr>
+<td>EEG</td>
+<td>outgoing_mean</td>
+<td>wszystkie regiony</td>
+<td>0.11931221528402179</td>
+<td>Średnia siła wychodząca opisuje regiony jako potencjalne źródła wpływu w symulowanej sieci.</td>
+<td>Wynik jest proxy raportowym i wymaga ostrożnej interpretacji.</td>
+</tr>
+<tr>
+<td>BOLD</td>
+<td>fmri_mean</td>
+<td>cały sygnał BOLD</td>
+<td>0.5934160012356973</td>
+<td>Średnia BOLD opisuje globalny poziom sygnału po modelowaniu hemodynamicznym.</td>
+<td>To syntetyczna miara BOLD zależna od HRF i napędu neuronalnego, bez kalibracji do danych fMRI.</td>
+</tr>
+<tr>
+<td>BOLD</td>
+<td>bold_peak_to_peak</td>
+<td>cały sygnał BOLD</td>
+<td>1.0</td>
+<td>Zakres BOLD pokazuje rozpiętość odpowiedzi hemodynamicznej w symulacji.</td>
+<td>Metryka nie obejmuje szumu skanera, filtracji fMRI ani modelowania przestrzennego.</td>
+</tr>
+</tbody>
+</table><h2>Tabela triali</h2><p>Kolumna **Wynik** opisuje Wynik behawioralny trialu.</p><p>Tryb eksportu: tabela ograniczona do 20 triali; liczba triali: 20; pokazano: 20; pominięto: 0.</p><table>
+<thead><tr>
+<th>Trial</th>
+<th>Warunek</th>
+<th>Bodziec</th>
+<th>Odpowiedź</th>
+<th>Wynik</th>
+<th>Czas [s]</th>
+<th>Aktywne regiony</th>
+<th>Profil kliniczny</th>
+<th>Najważniejsze metryki</th>
+<th>Komentarz</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 0 (non_target).</td>
+<td>Odpowiedź w trialu 0: poprawna.</td>
+<td>Trial 0: odpowiedź poprawna.</td>
+<td>0.3</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>1</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 1 (non_target).</td>
+<td>Odpowiedź w trialu 1: niepoprawna.</td>
+<td>Błąd w trialu 1: commission.</td>
+<td>1.8</td>
+<td>DLPFC (1), working-memory (0.5) oraz VIS</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>reaction_time_s=0.45; correct=nie; error_type=commission; abs_delta=0.055759; abs_delta=0.050978</td>
+<td>Trial w warunku bodziec niecelowy wymaga omówienia błędu razem z aktywnością: DLPFC (1), working-memory (0.5) oraz VIS.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 2 (non_target).</td>
+<td>Odpowiedź w trialu 2: poprawna.</td>
+<td>Trial 2: odpowiedź poprawna.</td>
+<td>3.3</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>3</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 3 (non_target).</td>
+<td>Odpowiedź w trialu 3: poprawna.</td>
+<td>Trial 3: odpowiedź poprawna.</td>
+<td>4.8</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>4</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 4 (non_target).</td>
+<td>Odpowiedź w trialu 4: poprawna.</td>
+<td>Trial 4: odpowiedź poprawna.</td>
+<td>6.3</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>5</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 5 (non_target).</td>
+<td>Odpowiedź w trialu 5: poprawna.</td>
+<td>Trial 5: odpowiedź poprawna.</td>
+<td>7.8</td>
+<td>DLPFC (1), working-memory (0.5) oraz AUD</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none; abs_delta=0.05413; abs_delta=0.050315</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1), working-memory (0.5) oraz AUD.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 6 (non_target).</td>
+<td>Odpowiedź w trialu 6: poprawna.</td>
+<td>Trial 6: odpowiedź poprawna.</td>
+<td>9.3</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>7</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 7 (non_target).</td>
+<td>Odpowiedź w trialu 7: poprawna.</td>
+<td>Trial 7: odpowiedź poprawna.</td>
+<td>10.8</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>8</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 8 (non_target).</td>
+<td>Odpowiedź w trialu 8: niepoprawna.</td>
+<td>Błąd w trialu 8: commission.</td>
+<td>12.3</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>reaction_time_s=0.3; correct=nie; error_type=commission</td>
+<td>Trial w warunku bodziec niecelowy wymaga omówienia błędu razem z aktywnością: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>9</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 9 (non_target).</td>
+<td>Odpowiedź w trialu 9: poprawna.</td>
+<td>Trial 9: odpowiedź poprawna.</td>
+<td>13.8</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>10</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 10 (non_target).</td>
+<td>Odpowiedź w trialu 10: poprawna.</td>
+<td>Trial 10: odpowiedź poprawna.</td>
+<td>15.3</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>11</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 11 (non_target).</td>
+<td>Odpowiedź w trialu 11: poprawna.</td>
+<td>Trial 11: odpowiedź poprawna.</td>
+<td>16.8</td>
+<td>DLPFC (1), working-memory (0.5) oraz VIS</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none; abs_delta=0.056294; abs_delta=0.05237</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1), working-memory (0.5) oraz VIS.</td>
+</tr>
+<tr>
+<td>12</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 12 (non_target).</td>
+<td>Odpowiedź w trialu 12: poprawna.</td>
+<td>Trial 12: odpowiedź poprawna.</td>
+<td>18.3</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>13</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 13 (non_target).</td>
+<td>Odpowiedź w trialu 13: poprawna.</td>
+<td>Trial 13: odpowiedź poprawna.</td>
+<td>19.8</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>14</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 14 (non_target).</td>
+<td>Odpowiedź w trialu 14: poprawna.</td>
+<td>Trial 14: odpowiedź poprawna.</td>
+<td>21.3</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>15</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 15 (non_target).</td>
+<td>Odpowiedź w trialu 15: niepoprawna.</td>
+<td>Błąd w trialu 15: commission.</td>
+<td>22.8</td>
+<td>DLPFC (1), working-memory (0.5) oraz AUD</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>reaction_time_s=0.4; correct=nie; error_type=commission; abs_delta=0.051789; abs_delta=0.051108</td>
+<td>Trial w warunku bodziec niecelowy wymaga omówienia błędu razem z aktywnością: DLPFC (1), working-memory (0.5) oraz AUD.</td>
+</tr>
+<tr>
+<td>16</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 16 (non_target).</td>
+<td>Odpowiedź w trialu 16: poprawna.</td>
+<td>Trial 16: odpowiedź poprawna.</td>
+<td>24.3</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>17</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 17 (non_target).</td>
+<td>Odpowiedź w trialu 17: poprawna.</td>
+<td>Trial 17: odpowiedź poprawna.</td>
+<td>25.8</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>18</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 18 (non_target).</td>
+<td>Odpowiedź w trialu 18: poprawna.</td>
+<td>Trial 18: odpowiedź poprawna.</td>
+<td>27.3</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+<tr>
+<td>19</td>
+<td>bodziec niecelowy</td>
+<td>Początek bodźca w trialu 19 (non_target).</td>
+<td>Odpowiedź w trialu 19: poprawna.</td>
+<td>Trial 19: odpowiedź poprawna.</td>
+<td>28.8</td>
+<td>DLPFC (1) oraz working-memory (0.5)</td>
+<td>Zdrowy profil bazowy v1 — Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</td>
+<td>correct=tak; error_type=none</td>
+<td>Trial w warunku bodziec niecelowy łączy wynik behawioralny z regionami: DLPFC (1) oraz working-memory (0.5).</td>
+</tr>
+</tbody>
+</table><h2>Konfiguracja</h2><p>T: 30.0</p><p>dt: 0.005</p><p>auto_dt: False</p><p>seed: 13</p><p>command: compare_profiles</p><p>batch_seeds: 7,11,19</p><p>batch_scenarios: reward-learning</p><p>sensitivity_params: noise,gw_threshold</p><p>sensitivity_delta: 0.1</p><p>scenario: baseline</p><p>scenario_config_path: configs\n_back.yaml</p><p>comparison_config_path: configs\comparisons\n_back_profiles.yaml</p><p>save_results: True</p><p>brain_params.dt: 0.005</p><p>brain_params.noise: 0.015</p><p>brain_params.gw_threshold: 0.62</p><p>brain_params.gw_gain: 10</p><p>brain_params.learning_rate_semantic: 0.004</p><p>brain_params.learning_rate_value: 0.02</p><p>brain_params.decay_semantic: 0.001</p><p>brain_params.enable_oscillators: True</p><p>brain_params.decision_threshold: 0.62</p><p>brain_params.confidence_gain: 1.8</p><p>oscillator_params.w_ee: 10.5</p><p>oscillator_params.w_ei: 9.5</p><p>oscillator_params.w_ie: 10</p><p>oscillator_params.w_ii: 1</p><p>oscillator_params.baseline_e: -2.4</p><p>oscillator_params.baseline_i: -3</p><p>oscillator_params.cognitive_drive_gain: 2.8</p><p>oscillator_params.coupling_gain: 0.35</p><p>oscillator_params.oscillator_noise: 0.01</p><p>oscillator_params.phase_drive_gain: 0.1</p><p>plots.activity: True</p><p>plots.simulated_brain_activity: True</p><p>plots.brain_region_projections: True</p><p>plots.region_activity_2d: True</p><p>plots.diagnostics: True</p><p>plots.behavior: True</p><p>plots.eeg: True</p><p>plots.band_power: True</p><p>plots.weight_trajectories: True</p><p>plots.weight_deltas: True</p><p>plots.scenario_channels: True</p><p>plots.scenario_timeline: True</p><h2>Profil kliniczny</h2><p>id: healthy_v1</p><p>display_name: Zdrowy profil bazowy v1</p><p>mechanism: Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.</p><p>affected_regions: brak</p><p>cognitive_functions: kontrola poznawcza, uwaga, pamięć robocza</p><p>expected_effects.baseline_role: Punkt odniesienia dla porównań profili klinicznych, bez symulowanej patologii.</p><p>expected_effects.clinical_interpretation: Nie stanowi diagnozy, normy populacyjnej ani wzorca zdrowia klinicznego.</p><p>expected_effects.comparison_expectation: Różnice względem tego samego profilu powinny mieścić się w tolerancjach regresji przy stałym seedzie.</p><p>expected_direction: stable_reference</p><p>primary_metric: mean_abs_difference</p><p>severity_level.small: 0</p><p>severity_level.medium: 0.02</p><p>severity_level.large: 0.05</p><h2>Polski słownik pojęć</h2><ul><li>**event_timeline**: oś czasu eksperymentu — chronologiczny zapis zdarzeń istotnych dla interpretacji wyniku</li><li>**stimulus_onset**: początek bodźca — czas rozpoczęcia prezentacji bodźca w trialu</li><li>**response**: odpowiedź — zarejestrowana odpowiedź modelu wraz z czasem reakcji</li><li>**error**: błąd — niepoprawna albo brakująca odpowiedź w punktacji trialu</li><li>**correctness**: poprawność — informacja, czy odpowiedź w trialu była poprawna</li><li>**neuromodulation_change**: zmiana neuromodulacji — wykryty skok sygnału neuromodulacyjnego w diagnostyce</li><li>**lesion_pathology_event**: zdarzenie lezji lub patologii — jawna lezja, patologia albo profil kliniczny użyty w uruchomieniu</li><li>**significant_region_activity_change**: istotna zmiana aktywności regionu — duża zmiana aktywności regionu względem poprzedniej próbki</li><li>**prediction_error**: błąd predykcji — różnica między bodźcem a predykcją modelu</li><li>**task_evoked_activity**: aktywność wywołana zadaniem — aktywność regionów wywołana bodźcami zadania</li></ul></body></html>

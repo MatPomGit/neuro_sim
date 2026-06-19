@@ -22,6 +22,9 @@ a = Analysis(
     datas=[
         ("configs", "configs"),
         ("assets/svg", "assets/svg"),
+        ("data/atlases", "data/atlases"),
+        ("data/connectomes", "data/connectomes"),
+        ("data/validation", "data/validation"),
     ],
     hiddenimports=[
         "brain_model",

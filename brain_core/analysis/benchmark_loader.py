@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -14,10 +15,35 @@ ALLOWED_BENCHMARK_LEVELS = frozenset(
 )
 BENCHMARK_KEYS = ("eeg", "fmri", "behavior")
 METADATA_FILE_NAME = "benchmark_metadata.json"
+DEFAULT_BENCHMARK_BASE_DIR = Path("data/validation")
 
 
 class BenchmarkValidationError(ValueError):
     """Wyjątek zgłaszany przy błędach walidacji benchmarków referencyjnych."""
+
+
+def _resolve_benchmark_base_dir(base_dir: str | Path) -> Path:
+    """Zwróć katalog benchmarków z obsługą zasobów spakowanych przez PyInstaller.
+
+    Parameters
+    ----------
+    base_dir:
+        Katalog bazowy z plikami benchmarków. Fallback do ``sys._MEIPASS`` jest
+        stosowany wyłącznie dla domyślnego katalogu projektu.
+
+    Returns
+    -------
+    Path
+        Ścieżka do katalogu benchmarków używana przez loader.
+    """
+    root = Path(base_dir)
+    if root.exists() or root != DEFAULT_BENCHMARK_BASE_DIR:
+        return root
+
+    bundled_root = Path(getattr(sys, "_MEIPASS", "")) / DEFAULT_BENCHMARK_BASE_DIR
+    if bundled_root.exists():
+        return bundled_root
+    return root
 
 
 @dataclass(frozen=True)
@@ -347,7 +373,7 @@ def load_reference_benchmark_metadata(
         Gdy plik metadanych nie istnieje, jest niekompletny albo zawiera
         nieobsługiwany poziom benchmarku.
     """
-    path = Path(base_dir) / METADATA_FILE_NAME
+    path = _resolve_benchmark_base_dir(base_dir) / METADATA_FILE_NAME
     if not path.exists():
         raise BenchmarkValidationError(
             f"Plik metadanych benchmarków nie istnieje: {path}"
@@ -421,7 +447,7 @@ def load_reference_benchmarks(
     Raises:
         BenchmarkValidationError: Jeśli benchmarki są niepoprawne lub niekompletne.
     """
-    root = Path(base_dir)
+    root = _resolve_benchmark_base_dir(base_dir)
     metadata = load_reference_benchmark_metadata(base_dir)
     matrices = {
         "eeg": _load_csv_matrix(

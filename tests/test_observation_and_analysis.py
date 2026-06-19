@@ -181,6 +181,30 @@ def test_reference_benchmark_metadata_validation() -> Any:
         }
 
 
+def test_reference_benchmark_metadata_loads_from_pyinstaller_bundle(
+    tmp_path: Any, monkeypatch: Any
+) -> Any:
+    """Domyślny loader powinien odczytywać benchmarki z katalogu PyInstaller."""
+    import shutil
+    import sys
+
+    from brain_core.analysis.benchmark_loader import load_reference_benchmark_metadata
+
+    source_validation_dir = Path("data/validation").resolve()
+    bundled_validation_dir = tmp_path / "bundle" / "data" / "validation"
+    shutil.copytree(source_validation_dir, bundled_validation_dir)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys, "_MEIPASS", str(tmp_path / "bundle"), raising=False)
+    load_reference_benchmark_metadata.cache_clear()
+
+    try:
+        metadata = load_reference_benchmark_metadata()
+    finally:
+        load_reference_benchmark_metadata.cache_clear()
+
+    assert set(metadata.keys()) == {"eeg", "fmri", "behavior"}
+
+
 def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> Any:
     """Walidacja metadanych powinna odrzucać poziomy spoza rejestru."""
     import json
