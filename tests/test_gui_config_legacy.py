@@ -51,7 +51,7 @@ def test_legacy_config_rejects_invalid_dt_without_partial_state(
             }
         )
 
-    assert invalid_dt in str(error_info.value)
+    assert str(invalid_dt) in str(error_info.value)
     assert "Niepoprawna wartość dt" in str(error_info.value)
     assert gui.state == original_state
     assert gui.controls_synced is False
