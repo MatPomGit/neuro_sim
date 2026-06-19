@@ -9,7 +9,26 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def read_dataclass_defaults(path: Path, class_name: str) -> Any:
-    """Opis funkcji read_dataclass_defaults."""
+    """Odczytaj literalne wartości domyślne pól dataclass z pliku Pythona.
+
+    Parameters
+    ----------
+    path:
+        Ścieżka do modułu zawierającego definicję klasy.
+    class_name:
+        Nazwa klasy, której adnotowane przypisania pól mają zostać odczytane.
+
+    Returns
+    -------
+    dict[str, object]
+        Słownik ``{nazwa_pola: wartość_domyslna}`` dla pól, których wartość AST
+        jest obsługiwana przez ``ast.literal_eval``.
+
+    Notes
+    -----
+    Nieobsługiwane wartości AST, np. wywołania funkcji lub wyrażenia zależne
+    od kontekstu wykonania, są pomijane bez przerywania synchronizacji.
+    """
     tree = ast.parse(path.read_text(encoding="utf-8"))
     out = {}
     for node in tree.body:
@@ -28,7 +47,26 @@ def read_dataclass_defaults(path: Path, class_name: str) -> Any:
 
 
 def read_param_desc(path: Path) -> Any:
-    """Opis funkcji read_param_desc."""
+    """Odczytaj słownik opisów parametrów z przypisania AST.
+
+    Parameters
+    ----------
+    path:
+        Ścieżka do modułu, w którym szukana jest stała
+        ``PARAMETER_DESCRIPTIONS``.
+
+    Returns
+    -------
+    dict[str, str]
+        Słownik ``{nazwa_parametru: polski_opis}`` z wartości literalnej stałej
+        albo pusty słownik, gdy stała nie występuje.
+
+    Raises
+    ------
+    ValueError
+        Może zostać zgłoszony przez ``ast.literal_eval``, jeśli znaleziona
+        stała zawiera nieobsługiwaną wartość AST.
+    """
     tree = ast.parse(path.read_text(encoding="utf-8"))
     for node in tree.body:
         if isinstance(node, ast.Assign):

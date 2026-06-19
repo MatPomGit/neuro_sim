@@ -137,7 +137,28 @@ class WilsonCowanOscillatorBank:
         )
 
     def initial_state(self, rng: np.random.Generator) -> np.ndarray:
-        """Utwórz stan początkowy, używając jawnie przekazanego generatora RNG."""
+        """Utwórz losowy stan początkowy banku oscylatorów.
+
+        Parameters
+        ----------
+        rng:
+            Generator zgodny z API NumPy (``np.random.Generator``), używany do
+            jawnie kontrolowanego losowania szumu i faz. Wymagany do zapewnienia
+            replikowalności eksperymentów.
+
+        Returns
+        -------
+        np.ndarray
+            Macierz stanu o kształcie ``(n_modules, 3)``. Kolumny oznaczają
+            kolejno aktywność E ``[0, 1]``, aktywność I ``[0, 1]`` oraz fazę
+            ``phi`` w radianach z zakresu ``[0, 2π)``.
+
+        Raises
+        ------
+        ValueError
+            Gdy generator zwróci tablice o nieoczekiwanym kształcie albo
+            wartości niefinitywne.
+        """
         excitatory_noise = np.asarray(rng.normal(size=self.n), dtype=float)
         inhibitory_noise = np.asarray(rng.normal(size=self.n), dtype=float)
         phase = np.asarray(rng.uniform(0.0, 2.0 * np.pi, size=self.n), dtype=float)
@@ -171,7 +192,37 @@ class WilsonCowanOscillatorBank:
         dt: float,
         rng: np.random.Generator,
     ) -> tuple[np.ndarray, np.ndarray, dict[str, float]]:
-        """Wykonaj krok oscylatorów, używając jawnie przekazanego generatora RNG."""
+        """Wykonaj jeden krok Eulera-Maruyamy oscylatorów Wilsona-Cowana.
+
+        Parameters
+        ----------
+        state:
+            Macierz ``(n_modules, 3)`` z aktywnością E, I i fazą ``phi``.
+        cognitive_activity:
+            Wektor aktywacji poznawczej ``(n_modules,)`` w skali modelu ``[0, 1]``.
+        dt:
+            Dodatni krok czasu w sekundach.
+        rng:
+            Generator NumPy (``np.random.Generator``) używany do kontrolowanego
+            szumu oscylatorów. Wymagany do zapewnienia replikowalności.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray, dict[str, float]]
+            Nowy stan ``(n_modules, 3)``, wektor EEG ``E-I`` o kształcie
+            ``(n_modules,)`` oraz chwilowa moc pasm theta/alpha/beta/gamma.
+
+        Raises
+        ------
+        ValueError
+            Gdy ``dt`` nie jest dodatnią liczbą skończoną albo tablice mają
+            niepoprawny kształt lub wartości niefinitywne.
+
+        Notes
+        -----
+        Model jest fenomenologiczny; aktywności E/I są obcinane do ``[0, 1]``,
+        a sprzężenie sieciowe używa dodatniej części macierzy połączeń.
+        """
         if not np.isscalar(dt) or not np.isfinite(dt) or dt <= 0:
             raise ValueError("Krok dt musi być skończoną liczbą większą od zera.")
 

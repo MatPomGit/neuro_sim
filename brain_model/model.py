@@ -207,7 +207,12 @@ class CognitiveBrainModel:
     def _add_drive_to_module_regions(
         self, external: Any, module_name: Any, value: Any
     ) -> Any:
-        """Opis funkcji _add_drive_to_module_regions."""
+        """Rozdziel zewnętrzny napęd modułu na odpowiadające mu regiony.
+
+        ``external`` jest wektorem napędów o długości liczby modułów/regionów,
+        ``module_name`` wskazuje moduł poznawczy, a ``value`` jest skalarną
+        amplitudą napędu. Brak mapowanych regionów kończy funkcję bez zmian.
+        """
         regions = [r for r in regions_for_module(module_name) if r in self.idx]
         if not regions:
             return
@@ -224,7 +229,12 @@ class CognitiveBrainModel:
         prediction_error: Any,
         acetylcholine: Any,
     ) -> Any:
-        """Opis funkcji build_external_drive."""
+        """Zbuduj wektor zewnętrznego pobudzenia dla bieżącego kroku modelu.
+
+        Łączy aktywność stanu ``x``, kanały bodźców ``u``, błędy predykcji i
+        acetylocholinę w wektor długości ``n``. Wartości są bezwymiarowymi
+        amplitudami modelu; brak wymaganych kluczy lub indeksów propaguje wyjątek.
+        """
         VIS = self.idx["VIS"]
         AUD = self.idx["AUD"]
         INT = self.idx["INT"]

@@ -6,7 +6,21 @@ from typing import Any
 
 @dataclass(frozen=True)
 class BehaviorSample:
-    """Opis klasy BehaviorSample."""
+    """Pojedynczy odczyt behawioralny modelu w danym kroku symulacji.
+
+    Attributes
+    ----------
+    decision:
+        Etykieta decyzji użytkowej: oczekiwanie, eksploracja, unikanie albo
+        podejście do nagrody.
+    latency:
+        Czas decyzji liczony od początku symulacji w sekundach.
+    confidence:
+        Pewność decyzji w zakresie ``[0, 1]`` po przeskalowaniu względem progu.
+    decision_score:
+        Surowy wynik decyzyjny obliczony jako ważona suma aktywacji modułów
+        EXEC, VAL, MOT i GW; wartości większe od progu wyzwalają decyzję.
+    """
 
     decision: str
     latency: float
