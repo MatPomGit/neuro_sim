@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Any
 
 import numpy as np
 
@@ -137,9 +136,8 @@ class WilsonCowanOscillatorBank:
             [BAND_TIME_CONSTANTS[b][1] for b in self.module_bands], dtype=float
         )
 
-    def initial_state(self, rng: Any = None) -> Any:
-        """Opis funkcji initial_state."""
-        rng = rng or np.random.default_rng()
+    def initial_state(self, rng: np.random.Generator) -> np.ndarray:
+        """Utwórz stan początkowy, używając jawnie przekazanego generatora RNG."""
         excitatory_noise = np.asarray(rng.normal(size=self.n), dtype=float)
         inhibitory_noise = np.asarray(rng.normal(size=self.n), dtype=float)
         phase = np.asarray(rng.uniform(0.0, 2.0 * np.pi, size=self.n), dtype=float)
@@ -167,9 +165,13 @@ class WilsonCowanOscillatorBank:
         return state
 
     def step(
-        self, state: Any, cognitive_activity: Any, dt: Any, rng: Any = None
-    ) -> Any:
-        """Opis funkcji step."""
+        self,
+        state: np.ndarray,
+        cognitive_activity: np.ndarray,
+        dt: float,
+        rng: np.random.Generator,
+    ) -> tuple[np.ndarray, np.ndarray, dict[str, float]]:
+        """Wykonaj krok oscylatorów, używając jawnie przekazanego generatora RNG."""
         if not np.isscalar(dt) or not np.isfinite(dt) or dt <= 0:
             raise ValueError("Krok dt musi być skończoną liczbą większą od zera.")
 
@@ -195,8 +197,6 @@ class WilsonCowanOscillatorBank:
             raise ValueError(
                 "Aktywność poznawcza musi zawierać wyłącznie skończone wartości."
             )
-
-        rng = rng or np.random.default_rng()
         p = self.params
 
         excitatory_activity = state[:, 0]
@@ -252,7 +252,7 @@ class WilsonCowanOscillatorBank:
 
         return next_state, eeg, band_power
 
-    def compute_band_power(self, eeg_vector: Any) -> Any:
+    def compute_band_power(self, eeg_vector: np.ndarray) -> dict[str, float]:
         """
         Chwilowa, uproszczona moc pasmowa: suma kwadratów sygnałów E-I
         w modułach przypisanych do danego pasma.
