@@ -10,6 +10,7 @@ MAIN_GUI_PATH = REPO_ROOT / "main_gui.py"
 GUI_ENTRYPOINT_PATH = REPO_ROOT / "brain_model" / "gui.py"
 GUI_FORMS_PATH = REPO_ROOT / "brain_model" / "gui_forms.py"
 GUI_LABELS_PATH = REPO_ROOT / "brain_model" / "gui_labels.py"
+GUI_LAYOUT_PATH = REPO_ROOT / "brain_model" / "gui_layout.py"
 QT_APP_PATH = REPO_ROOT / "brain_model" / "qt_app.py"
 QT_SECTIONS_PATH = REPO_ROOT / "brain_model" / "qt_sections.py"
 QT_GUI_PATHS = tuple(sorted((REPO_ROOT / "brain_model").glob("qt_*.py")))
@@ -164,3 +165,27 @@ def test_qt_start_button_is_defined_once() -> None:
     )
 
     assert qt_button_count == 1
+
+
+def _value_error_handlers_with_bare_pass(path: Path) -> list[int]:
+    """Zwróć linie bloków `except ValueError`, które tylko wyciszają błąd."""
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    offender_lines: list[int] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ExceptHandler):
+            continue
+        if not isinstance(node.type, ast.Name) or node.type.id != "ValueError":
+            continue
+        if len(node.body) == 1 and isinstance(node.body[0], ast.Pass):
+            offender_lines.append(node.lineno)
+    return offender_lines
+
+
+def test_legacy_gui_reset_dt_value_error_is_explained() -> None:
+    """Reset dt w legacy GUI nie może po cichu ukrywać błędu konwersji."""
+    source = GUI_LAYOUT_PATH.read_text(encoding="utf-8")
+
+    assert _value_error_handlers_with_bare_pass(GUI_LAYOUT_PATH) == []
+    assert "except ValueError as exc:" in source
+    assert 'style="Warning.Status.TLabel"' in source
+    assert "Nie można zastosować domyślnego kroku dt" in source

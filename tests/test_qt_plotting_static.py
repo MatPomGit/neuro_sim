@@ -223,3 +223,11 @@ def test_diagnostics_plot_uses_two_shared_panels_with_separated_series() -> None
     for neuromodulator_key in neuromodulator_keys:
         assert neuromodulator_key in neuromodulator_block
         assert neuromodulator_key not in theoretical_block
+
+
+def test_interpretation_box_documents_safe_removed_artist_value_error() -> None:
+    """ValueError przy usuwaniu artysty Matplotlib musi być jawnie uzasadniony."""
+    source = PLOTTING_PATH.read_text(encoding="utf-8")
+
+    assert "artysta został już bezpiecznie" in source
+    assert "usunięty z figury" in source

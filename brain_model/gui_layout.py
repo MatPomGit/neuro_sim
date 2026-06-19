@@ -238,10 +238,19 @@ class GuiLayoutMixin:
             self.state.brain_params = replace(
                 self.state.brain_params, dt=float(self.state.dt)
             )
-        except ValueError:
-            pass
-        self.status_label.configure(style="Status.TLabel")
-        self.status_var.set("Przywrócono wartości domyślne.")
+        except ValueError as exc:
+            self.state.dt = str(self.brain_defaults.dt)
+            self.state.brain_params = replace(
+                self.state.brain_params, dt=self.brain_defaults.dt
+            )
+            self.status_label.configure(style="Warning.Status.TLabel")
+            self.status_var.set(
+                "Nie można zastosować domyślnego kroku dt. "
+                f"Sprawdź wartość w polu dt: {exc}"
+            )
+        else:
+            self.status_label.configure(style="Status.TLabel")
+            self.status_var.set("Przywrócono wartości domyślne.")
 
     def _build_brain_params(self) -> BrainParams:
         """Zbuduj parametry modelu z aktualnego stanu, zachowując reguły plastyczności."""
