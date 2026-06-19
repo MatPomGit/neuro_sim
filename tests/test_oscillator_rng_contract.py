@@ -34,7 +34,7 @@ def test_oscillator_bank_reproduces_state_and_trajectory_for_equal_seeds() -> No
 
 def test_oscillator_bank_requires_rng_and_does_not_create_local_generator() -> None:
     """Chroni kontrakt RNG przed przywróceniem opcjonalnego lub lokalnego generatora."""
-    source_path = Path("brain_model/oscillators.py")
+    source_path = Path(__file__).parent.parent / "brain_model" / "oscillators.py"
     module = ast.parse(source_path.read_text(encoding="utf-8"))
     oscillator_class = next(
         node
