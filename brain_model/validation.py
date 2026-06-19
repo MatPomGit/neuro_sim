@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
 import numpy as np
 
 from .modules import MODULES
@@ -39,14 +37,14 @@ def _find_module_index(module_names: list[str], module: str) -> int | None:
 
 
 def evaluate_run(
-    time: Any,
-    activity: Any,
-    diagnostics: Any,
-    oscillations: Any,
-    scenario: Any,
-    behavior: Any = None,
+    time: np.ndarray,
+    activity: np.ndarray,
+    diagnostics: dict[str, np.ndarray],
+    oscillations: dict[str, dict[str, np.ndarray]],
+    scenario: str | dict[str, str],
+    behavior: dict[str, np.ndarray] | None = None,
     rules: dict[str, float] | None = None,
-) -> dict[str, Any]:
+) -> dict[str, object]:
     """Oceń pojedyncze uruchomienie symulacji zestawem reguł jakości.
 
     Parameters
@@ -71,13 +69,13 @@ def evaluate_run(
         Nadpisania progów walidacyjnych. Wartości są bezwymiarowe poza
         latencją, która jest raportowana w sekundach.
 
-    Returns
+    Returns:
     -------
-    dict[str, Any]
+    dict[str, object]
         Słownik z identyfikatorem scenariusza, metrykami stabilności, zgodności
         pasm i funkcji, statusem reguł oraz polem ``pass``.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy ``time`` jest puste albo liczba wierszy ``activity`` nie zgadza się
@@ -85,7 +83,7 @@ def evaluate_run(
     KeyError
         Gdy nadpisania ``rules`` usuną wymagane progi przez niepoprawny format.
 
-    Notes
+    Notes:
     -----
     Ocena ma charakter heurystyczny: moc pasm jest porównywana przez udziały
     względne, a odpowiedzi funkcjonalne są różnicą średniej aktywacji po i przed

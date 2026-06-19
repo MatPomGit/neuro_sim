@@ -7,7 +7,7 @@ import json
 import logging
 from dataclasses import replace
 from pathlib import Path
-from typing import Any
+from typing import cast
 
 import numpy as np
 
@@ -55,7 +55,7 @@ def run_sweep(
     time_horizon: float,
     seed: int,
     output_dir: str,
-) -> list[dict[str, Any]]:
+) -> list[dict[str, object]]:
     """Uruchom serię symulacji kalibracyjnych i oceń każdą konfigurację.
 
     Parameters
@@ -74,14 +74,14 @@ def run_sweep(
     output_dir:
         Katalog na pliki JSONL i CSV z wynikami.
 
-    Returns
+    Returns:
     -------
-    list[dict[str, Any]]
+    list[dict[str, object]]
         Lista rekordów prób. Każdy rekord zawiera numer próby, scenariusz,
         metodę, ziarno uruchomienia, parametry, status ``pass``, reguły i
         metryki walidacyjne.
 
-    Raises
+    Raises:
     ------
     ValueError
         Może zostać propagowany z konfiguracji modelu, walidacji scenariusza lub
@@ -89,7 +89,7 @@ def run_sweep(
     OSError
         Gdy nie można utworzyć katalogu wyników albo zapisać plików.
 
-    Notes
+    Notes:
     -----
     Funkcja jest deterministyczna dla tego samego ``seed`` i tej samej wersji
     kodu; nie modyfikuje danych wejściowych poza zapisem artefaktów kalibracji.
@@ -97,10 +97,17 @@ def run_sweep(
     params_candidates = _sample_params(method=method, trials=trials, seed=seed)
     base_rng = np.random.default_rng(seed)
 
-    results: list[dict[str, Any]] = []
+    results: list[dict[str, object]] = []
     for i, param_set in enumerate(params_candidates):
         run_seed = int(base_rng.integers(0, 2**31 - 1))
-        params = replace(BrainParams(), **param_set)
+        params = replace(
+            BrainParams(),
+            noise=param_set["noise"],
+            gw_threshold=param_set["gw_threshold"],
+            gw_gain=param_set["gw_gain"],
+            learning_rate_semantic=param_set["learning_rate_semantic"],
+            learning_rate_value=param_set["learning_rate_value"],
+        )
 
         model = CognitiveBrainModel(params=params, stimulus=scenario, seed=run_seed)
         time, activity, diagnostics, oscillations, behavior = model.simulate(
@@ -132,7 +139,7 @@ def run_sweep(
 
 
 def save_results(
-    results: list[dict[str, Any]], output_dir: str, scenario: str, method: str
+    results: list[dict[str, object]], output_dir: str, scenario: str, method: str
 ) -> None:
     """Zapisz wyniki kalibracji do plików JSONL i CSV.
 
@@ -148,13 +155,13 @@ def save_results(
     method:
         Nazwa metody próbkowania używana w nazwie plików wynikowych.
 
-    Returns
+    Returns:
     -------
     None
         Funkcja zapisuje ``calibration_<scenario>_<method>.jsonl`` z pełnymi
         rekordami oraz ``.csv`` z płaskimi kolumnami metryk.
 
-    Raises
+    Raises:
     ------
     KeyError
         Gdy rekord wynikowy nie zawiera oczekiwanych pól.
@@ -197,7 +204,9 @@ def save_results(
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for row in results:
-            metrics = row["metrics"]
+            metrics = cast(dict[str, dict[str, object]], row["metrics"])
+            params = cast(dict[str, object], row["params"])
+            rules = cast(dict[str, object], row["rules"])
             writer.writerow(
                 {
                     "trial": row["trial"],
@@ -205,8 +214,8 @@ def save_results(
                     "method": row["method"],
                     "seed": row["seed"],
                     "pass": row["pass"],
-                    **row["params"],
-                    **row["rules"],
+                    **params,
+                    **rules,
                     "saturation_fraction": metrics["stability"]["saturation_fraction"],
                     "saturation_run_length_max": metrics["stability"][
                         "saturation_run_length_max"

@@ -130,6 +130,34 @@ black .
 pytest
 ```
 
+### 4.1) Obowiązkowe polecenia dla agentów AI przy zmianach jakości
+
+Agent AI modyfikujący typowanie, docstringi, konfigurację `ruff`/`mypy` albo
+moduły naukowe musi stosować zasady z `docs/developer_quality_checks.md`. W
+szczególności:
+
+1. **Nie przywracaj globalnego ignorowania `D`** dla kodu produkcyjnego. Jeżeli
+   wyjątek jest konieczny, wpisz konkretną regułę, opisz ją w
+   `docs/developer_quality_checks.md` i dodaj albo zaktualizuj test statyczny.
+2. **Nie używaj `typing.Any` jako obejścia typowania.** Najpierw rozważ
+   `object`, `TypedDict`, `Protocol`, `Mapping`, `Sequence`, `Callable` albo typ
+   domenowy. `Any` jest dopuszczalne tylko na granicy z dynamiczną biblioteką
+   zewnętrzną lub ze zwalidowanym payloadem legacy.
+3. **Nie wykonuj masowego formatowania.** Formatowanie ogranicz do plików
+   edytowanych w danym zadaniu. Nie uruchamiaj `black .`, jeśli zmiana dotyczy
+   pojedynczych plików i spowodowałoby to niezwiązany diff.
+4. **Nowe i zmieniane funkcje mają mieć kompletne type hints oraz docstringi.**
+   Docstring ma opisywać cel obliczeniowy lub metodologiczny, parametry, wynik,
+   wyjątki i założenia. Nie wolno dodawać docstringów zastępczych.
+5. **Po zmianie uruchom właściwe kontrole i wpisz je w PR.** Minimalny zestaw
+   dla polityki jakości to:
+
+```bash
+python -m ruff check .
+python -m mypy --follow-imports=silent brain_model/oscillators.py brain_model/calibration.py brain_model/validation.py brain_model/plotting.py
+python -m pytest tests/test_quality_policy_static.py
+```
+
 Importy porządkuj w kolejności:
 
 1. biblioteki standardowe,
