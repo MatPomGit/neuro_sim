@@ -58,10 +58,41 @@ def run_sweep(
 ) -> list[dict[str, Any]]:
     """Uruchom serię symulacji kalibracyjnych i oceń każdą konfigurację.
 
-    Parametry określają scenariusz, liczbę prób, metodę ``grid``/``random``,
-    horyzont czasu w sekundach, ziarno i katalog wyników. Zwraca listę wierszy
-    z parametrami, metrykami i statusem reguł; może propagować błędy walidacji
-    scenariusza, symulacji lub zapisu plików.
+    Parameters
+    ----------
+    scenario:
+        Identyfikator scenariusza bodźców używany w każdej symulacji.
+    trials:
+        Maksymalna liczba kandydackich konfiguracji do sprawdzenia.
+    method:
+        Strategia próbkowania: ``"grid"`` miesza siatkę wartości, a
+        ``"random"`` losuje wartości z tej samej przestrzeni.
+    time_horizon:
+        Czas każdej symulacji w sekundach.
+    seed:
+        Ziarno bazowe kontrolujące próbkowanie parametrów i ziarna uruchomień.
+    output_dir:
+        Katalog na pliki JSONL i CSV z wynikami.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Lista rekordów prób. Każdy rekord zawiera numer próby, scenariusz,
+        metodę, ziarno uruchomienia, parametry, status ``pass``, reguły i
+        metryki walidacyjne.
+
+    Raises
+    ------
+    ValueError
+        Może zostać propagowany z konfiguracji modelu, walidacji scenariusza lub
+        oceny uruchomienia.
+    OSError
+        Gdy nie można utworzyć katalogu wyników albo zapisać plików.
+
+    Notes
+    -----
+    Funkcja jest deterministyczna dla tego samego ``seed`` i tej samej wersji
+    kodu; nie modyfikuje danych wejściowych poza zapisem artefaktów kalibracji.
     """
     params_candidates = _sample_params(method=method, trials=trials, seed=seed)
     base_rng = np.random.default_rng(seed)
@@ -105,9 +136,30 @@ def save_results(
 ) -> None:
     """Zapisz wyniki kalibracji do plików JSONL i CSV.
 
-    ``results`` zawiera wiersze zwracane przez ``run_sweep``. Funkcja tworzy
-    katalog wyjściowy, serializuje pełne rekordy do JSONL i płaskie metryki do
-    CSV. Wyjątki I/O oraz braki oczekiwanych kluczy są przekazywane do wywołującego.
+    Parameters
+    ----------
+    results:
+        Rekordy zwrócone przez ``run_sweep``. Każdy rekord musi zawierać
+        parametry, reguły i zagnieżdżone metryki stabilności, pasm oraz funkcji.
+    output_dir:
+        Katalog docelowy tworzony w razie potrzeby.
+    scenario:
+        Identyfikator scenariusza używany w nazwie plików wynikowych.
+    method:
+        Nazwa metody próbkowania używana w nazwie plików wynikowych.
+
+    Returns
+    -------
+    None
+        Funkcja zapisuje ``calibration_<scenario>_<method>.jsonl`` z pełnymi
+        rekordami oraz ``.csv`` z płaskimi kolumnami metryk.
+
+    Raises
+    ------
+    KeyError
+        Gdy rekord wynikowy nie zawiera oczekiwanych pól.
+    OSError
+        Gdy zapis JSONL lub CSV nie powiedzie się.
     """
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)

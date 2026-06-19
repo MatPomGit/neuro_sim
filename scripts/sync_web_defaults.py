@@ -20,14 +20,17 @@ def read_dataclass_defaults(path: Path, class_name: str) -> dict[str, object]:
     Returns
     -------
     dict[str, object]
-        Słownik ``{nazwa_pola: wartość_domyslna}`` dla pól, których wartość AST
-        jest obsługiwana przez ``ast.literal_eval``.
+        Płaski słownik ``{nazwa_pola: wartość_domyslna}``. Klucz jest nazwą
+        adnotowanego pola klasy, a wartość jest wynikiem ``ast.literal_eval``:
+        liczbą, napisem, wartością logiczną, ``None`` albo zagnieżdżoną strukturą
+        literalną obsługiwaną przez AST.
 
     Raises
     ------
     ValueError
         Gdy wskazana klasa nie istnieje albo co najmniej jedno pole ma wartość,
-        której nie da się odczytać statycznie przez ``ast.literal_eval``.
+        której nie da się odczytać statycznie jako literału lub obsługiwanego
+        wywołania ``field(default_factory=lambda: Constructor(...))``.
     """
     tree = ast.parse(path.read_text(encoding="utf-8"))
     for node in tree.body:
@@ -182,7 +185,9 @@ def _read_constructor_call(node: ast.Call) -> dict[str, object]:
     kwargs = {}
     for keyword in node.keywords:
         if keyword.arg is None:
-            raise ValueError("Rozpakowywanie słownika (**kwargs) nie jest obsługiwane statycznie.")
+            raise ValueError(
+                "Rozpakowywanie słownika (**kwargs) nie jest obsługiwane statycznie."
+            )
         kwargs[keyword.arg] = _read_supported_default_value(keyword.value)
 
     return {
@@ -203,14 +208,22 @@ def read_param_desc(path: Path) -> dict[str, str]:
     Returns
     -------
     dict[str, str]
-        Słownik ``{nazwa_parametru: polski_opis}`` z wartości literalnej stałej
-        albo pusty słownik, gdy stała nie występuje.
+        Płaski słownik ``{nazwa_parametru: polski_opis}`` z literalnej wartości
+        stałej ``PARAMETER_DESCRIPTIONS`` albo pusty słownik, gdy stała nie
+        występuje. Klucze odpowiadają technicznym nazwom parametrów, a wartości
+        są polskimi opisami prezentowanymi w warstwie web/GUI.
 
     Raises
     ------
-    ValueError, TypeError
-        Może zostać zgłoszony przez ``ast.literal_eval``, jeśli znaleziona
-        stała zawiera nieobsługiwaną wartość AST.
+    ValueError
+        Może zostać zgłoszony przez ``ast.literal_eval``, jeśli znaleziona stała
+        zawiera nieobsługiwaną wartość AST, np. wywołanie funkcji albo referencję
+        do nazwy zamiast literalnego słownika. W odróżnieniu od domyślnych pól
+        dataclass taki błąd nie jest pomijany, bo opisy parametrów powinny być
+        w pełni literalne i walidowalne.
+    TypeError
+        Gdy ``PARAMETER_DESCRIPTIONS`` nie jest słownikiem albo zawiera wartość
+        niezgodną z oczekiwanym typem zwracanym.
     """
     tree = ast.parse(path.read_text(encoding="utf-8"))
     for node in tree.body:
