@@ -932,7 +932,7 @@ def run_experiment(
         "trial_report_context": {
             "scenario": str(config.task.get("scenario", "run")),
             "task_name": str(config.task.get("name", "stroop")),
-            "profile_id": str(config.clinical_profile.get("id", "healthy_v1")),
+            "profile_id": str((config.clinical_profile or {}).get("id", "healthy_v1")),
             "metrics": analysis_report.payload.get("metrics", {}),
         },
         "stimulus_sequence_signature": stimulus_sequence_signature,
