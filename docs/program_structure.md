@@ -45,7 +45,7 @@ modułów.
 | --- | --- | --- | --- |
 | `roving_oddball` | `partial` | `brain_core/experiments/protocols.py`, `configs/roving_oddball_healthy.yaml`, `configs/roving_oddball_disorder_gaba.yaml`, `configs/roving_oddball_lesion_hippocampus.yaml`. | Artefakty MVP już istnieją; utrzymać rozwój w tych ścieżkach i istniejących raportach, bez nowej warstwy architektonicznej. |
 | Clinical profiles | `partial` | `configs/clinical_profiles/*.yaml`, `brain_core/simulation/config_schema.py`, `brain_core/experiments/lesions.py`, `brain_model/scenarios/`. | Rozszerzać metadane i interpretacje w istniejącym katalogu profili oraz raportach porównawczych. |
-| Timeline | `partial` | `brain_core/simulation/events.py`, `brain_core/simulation/engine.py`, `brain_core/analysis/reports.py`. | Rozbudować raport trial-by-trial w istniejących modułach raportowania i eksportu. |
+| Timeline | `partial` | `brain_core/simulation/events.py`, `brain_core/simulation/engine.py`, `brain_core/analysis/reports.py`. Zdarzenia per trial mają `trial_id` oraz numeryczne `trial_number`, także dla błędów, neuromodulacji i zmian aktywności przypisanych do trialu. | Rozbudować linkowanie z wykresami i objaśnienia per profil kliniczny w istniejących modułach raportowania oraz eksportu. |
 | Benchmark metadata | `partial` | `data/validation/benchmark_metadata.json` i `brain_core/analysis/benchmark_loader.py`. | Uzupełniać kryteria zgodności i źródła w danych walidacyjnych oraz loaderze benchmarków. |
 | SNN demo | `partial` | `configs/snn_hippocampus_demo.yaml`, `docs/snn_cosimulation_demo.md`, `brain_core/simulation/signal_adapter.py`, `brain_core/simulation/multiscale_engine.py`. | Pełniejsze sprzężenie i backendy utrzymywać w warstwie `brain_core/simulation` oraz `brain_core/populations`. |
 
@@ -165,9 +165,9 @@ brain_core/analysis/
 
 Warstwa analizy wylicza metryki spektralne, fazowe, łącznościowe i przepływu informacji. `signal_metrics.py` pełni rolę fasady kompatybilności, a `reports.py` agreguje metryki do raportów końcowych.
 
-**MVP istnieje — timeline:** oś zdarzeń jest budowana w `brain_core/simulation/events.py`, dołączana przez `brain_core/simulation/engine.py` i konsumowana przez raporty.
+**MVP istnieje — timeline:** oś zdarzeń jest budowana w `brain_core/simulation/events.py`, dołączana przez `brain_core/simulation/engine.py` i konsumowana przez raporty. Zdarzenia przypisane do trialu przenoszą `trial_id` oraz `trial_number`, a `details.trial_number` jest utrzymywane dla zdarzeń, których metadane są później używane w tabelach trial-by-trial.
 
-**Pozostały zakres — timeline:** pełny raport trial-by-trial, eksport HTML/PDF i linkowanie zdarzeń z wykresami powinny pozostać w istniejących modułach analizy oraz `brain_model/report_export.py`.
+**Pozostały zakres — timeline:** dalsze linkowanie zdarzeń z wykresami, filtrowanie osi czasu i objaśnienia per profil kliniczny powinny pozostać w istniejących modułach analizy oraz `brain_model/report_export.py`.
 
 ## 5. Dane, konfiguracje i artefakty statyczne
 

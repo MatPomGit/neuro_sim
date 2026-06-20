@@ -465,6 +465,12 @@ def test_roving_oddball_event_timeline_has_trials_order_and_polish_labels() -> A
     trial_events = [event for event in event_timeline if event["trial_id"] != "n/a"]
     assert {event["condition"] for event in trial_events} >= {"standard", "deviant"}
     assert all(event["label_pl"] for event in trial_events)
+    assert all(isinstance(event["trial_number"], int) for event in trial_events)
+    assert all(
+        event["details"].get("trial_number") == event["trial_number"]
+        for event in trial_events
+        if isinstance(event.get("details"), dict) and "trial_number" in event["details"]
+    )
     assert any(event["label_pl"] == "poprawność" for event in trial_events)
     assert any("Początek bodźca" in event["description_pl"] for event in trial_events)
 
