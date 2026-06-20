@@ -213,6 +213,7 @@ Każdy wynik trialu powinien być czytany jako mała obserwacja o strukturze:
 | Pole | Jak je czytać |
 | --- | --- |
 | `trial_id` | Kolejny numer trialu. Pomaga odtworzyć porządek sekwencji. |
+| `trial_number` | Numeryczna postać identyfikatora używana przez `event_timeline` do grupowania bodźców, odpowiedzi, błędów, zmian neuromodulacji i zmian aktywności w jednej obserwacji trial-by-trial. |
 | `condition` | `standard` albo `deviant`. To podstawowa etykieta bodźca. |
 | `tone_hz` | Częstotliwość tonu użyta w trialu. |
 | `previous_standard_hz` | Dla dewiantu: częstotliwość standardu, względem którego bodziec był odmienny. |
@@ -231,6 +232,24 @@ Każdy wynik trialu powinien być czytany jako mała obserwacja o strukturze:
 4. sprawdź, czy `tone_hz` nowego standardu jest taki sam jak `tone_hz`
    poprzedniego dewiantu;
 5. porównaj `habituation_level` w obrębie każdego runu.
+
+### Oś czasu zdarzeń a tabela triali
+
+`event_timeline` jest wspólnym źródłem dla tabeli triali w raporcie i eksporcie.
+Wiersz trialu nie powinien być odtwarzany z samego tekstu opisu zdarzenia.
+Konsumenci raportu powinni grupować zdarzenia po `trial_number`, a `trial_id`
+traktować jako stabilny identyfikator źródłowy widoczny dla użytkownika. W
+praktyce oznacza to, że:
+
+- `stimulus_onset`, `response`, `correctness` i `error` dla tego samego trialu
+  mają ten sam `trial_number`;
+- zdarzenia diagnostyczne przypisane do okna trialu, np.
+  `neuromodulation_change` oraz `significant_region_activity_change`, także
+  zachowują `trial_number`;
+- jeśli zdarzenie ma `details.trial_number`, wartość ta musi być zgodna z
+  top-level `trial_number`;
+- zdarzenia globalne, np. opis profilu klinicznego, mogą mieć `trial_id: "n/a"`
+  oraz brak numerycznego `trial_number`.
 
 ## 8. Raport dla pojedynczego uruchomienia
 
@@ -421,6 +440,8 @@ Dla porównania profili dodaj:
   bodźców, oczekiwana odpowiedź i ocena trialu.
 - `brain_core/simulation/engine.py` — uruchamianie zadania, dołączanie raportu
   `roving_oddball` i budowa porównania profili.
+- `brain_core/simulation/events.py` — budowa `event_timeline` oraz kontrakt pól
+  `trial_id`, `trial_number` i `details.trial_number` dla zdarzeń triali.
 - `brain_core/analysis/reports.py` — agregacja metryk roving oddball i renderowanie
   sekcji raportu Markdown.
 - `configs/roving_oddball_healthy.yaml` — referencyjny wariant zdrowy.
