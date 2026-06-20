@@ -515,6 +515,68 @@ def _trial_group_markdown_lines(
     return lines
 
 
+def _build_roving_trial_by_trial_rows(
+    trial_results: list[dict[str, Any]],
+    *,
+    clinical_profile: dict[str, Any] | None,
+) -> list[dict[str, object]]:
+    """Buduje szczegółowe wiersze trial-by-trial dla roving oddball.
+
+    Parameters
+    ----------
+    trial_results:
+        Wyniki triali zwrócone przez silnik symulacji.
+    clinical_profile:
+        Profil kliniczny użyty do komentarza mechanizmu.
+
+    Returns
+    -------
+    list[dict[str, object]]
+        Wiersze z numerem triala, standardem, dewiantem, nowym standardem,
+        odpowiedzią modelu, metrykami i komentarzem mechanizmu profilu.
+    """
+    profile = clinical_profile or {}
+    mechanism_metadata = _roving_mechanism_metadata(profile)
+    mechanism_comment = str(
+        mechanism_metadata.get(
+            "mechanism_comment", profile.get("mechanism", "brak opisu mechanizmu")
+        )
+    )
+    rows: list[dict[str, object]] = []
+    for index, result in enumerate(trial_results):
+        condition = str(result.get("condition", "n/a"))
+        metrics = result.get("metrics")
+        if not isinstance(metrics, dict):
+            metrics = {
+                key: result[key]
+                for key in TRIAL_METRIC_KEYS
+                if key in result and result[key] is not None
+            }
+        rows.append(
+            {
+                "trial_number": int(
+                    result.get("trial_number", result.get("trial_id", index))
+                ),
+                "trial_id": result.get("trial_id", index),
+                "standard": condition == "standard",
+                "deviant": condition == "deviant",
+                "new_standard": bool(result.get("is_new_standard", False)),
+                "stimulus_type": result.get("stimulus_type", condition),
+                "tone_hz": result.get("tone_hz", "n/a"),
+                "model_response": result.get(
+                    "model_response", result.get("observed_response")
+                ),
+                "expected_response": result.get("expected_response"),
+                "correct": bool(result.get("correct", False)),
+                "metrics": dict(metrics),
+                "profile_id": result.get("profile_id", profile.get("id", "n/a")),
+                "scenario": result.get("scenario", "roving_oddball"),
+                "mechanism_comment": mechanism_comment,
+            }
+        )
+    return rows
+
+
 def _mean_regional_response_amplitude(trial_results: list[dict[str, Any]]) -> float:
     """Liczy prosty proxy amplitudy odpowiedzi z wejść regionalnych triali.
 
@@ -1554,6 +1616,32 @@ class AnalysisReport:
                     f"- **komentarz dydaktyczny**: "
                     f"{mechanism.get('educational_comment', 'n/a')}"
                 )
+            trial_rows = roving_report.get("trial_by_trial") or []
+            if trial_rows:
+                lines.extend(["", "### Trial-by-trial roving oddball"])
+                lines.append(
+                    "| Trial | Standard | Dewiant | Nowy standard | Odpowiedź "
+                    "| Metryki | Profil/scenariusz | Komentarz mechanizmu |"
+                )
+                lines.append("| --- | --- | --- | --- | --- | --- | --- | --- |")
+                for row in trial_rows:
+                    metrics_text = "; ".join(
+                        f"{key}={_format_trial_metric_value(value)}"
+                        for key, value in (row.get("metrics") or {}).items()
+                    )
+                    profile_context = (
+                        f"{row.get('profile_id', 'n/a')} / {row.get('scenario', 'n/a')}"
+                    )
+                    lines.append(
+                        f"| {row.get('trial_number', row.get('trial_id', 'n/a'))} "
+                        f"| {'tak' if row.get('standard') else 'nie'} "
+                        f"| {'tak' if row.get('deviant') else 'nie'} "
+                        f"| {'tak' if row.get('new_standard') else 'nie'} "
+                        f"| {row.get('model_response', 'brak')} "
+                        f"| {metrics_text or 'brak metryk'} "
+                        f"| {profile_context} "
+                        f"| {row.get('mechanism_comment', 'n/a')} |"
+                    )
 
         roving_profile_comparison = self.payload.get("roving_profile_comparison")
         if roving_profile_comparison:
@@ -2061,6 +2149,7 @@ def build_roving_oddball_report(
             "habituation_rate": 0.0,
             "mean_readaptation_latency": 0.0,
             "sequence_signature": [],
+            "trial_by_trial": [],
             "amplitude_latency_mechanism": _build_amplitude_latency_mechanism_section(
                 trial_results=[],
                 summary={"profile_id": profile_id, "mean_readaptation_latency": 0.0},
@@ -2126,6 +2215,9 @@ def build_roving_oddball_report(
             else 0.0
         ),
         "sequence_signature": sequence_signature,
+        "trial_by_trial": _build_roving_trial_by_trial_rows(
+            trial_results, clinical_profile=clinical_profile
+        ),
     }
     if profile_id is not None:
         summary["profile_id"] = profile_id

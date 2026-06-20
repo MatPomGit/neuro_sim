@@ -56,15 +56,26 @@ def test_trial_results_have_unified_schema_and_are_deterministic() -> Any:
     assert len(r1["trial_events"]) > 0
 
     first = r1["trial_results"][0]
-    assert set(first.keys()) == {
+    assert {
         "trial_id",
+        "trial_number",
+        "stimulus_type",
+        "model_response",
+        "expected_response",
         "reaction_time_s",
         "correct",
         "error_type",
         "condition",
         "regional_input",
-    }
+        "metrics",
+        "profile_id",
+        "scenario",
+    }.issubset(first)
     assert isinstance(first["correct"], bool)
+    assert first["trial_number"] == first["trial_id"]
+    assert first["stimulus_type"] == first["condition"]
+    assert first["metrics"]["correct"] == first["correct"]
+    assert r1["trial_report_context"]["scenario"] == "stroop"
 
 
 def test_all_task_configs_exist() -> Any:
@@ -188,6 +199,23 @@ def test_roving_oddball_trial_results_include_metrics() -> Any:
         r1["trial_results"][0]
     )
     assert any(result["condition"] == "deviant" for result in r1["trial_results"])
+    assert all(
+        result["trial_number"] == result["trial_id"] for result in r1["trial_results"]
+    )
+    assert all("model_response" in result for result in r1["trial_results"])
+    roving_report = r1["analysis_report"]["roving_oddball"]
+    assert len(roving_report["trial_by_trial"]) == len(r1["trial_results"])
+    assert {
+        "trial_number",
+        "standard",
+        "deviant",
+        "new_standard",
+        "model_response",
+        "metrics",
+        "profile_id",
+        "scenario",
+        "mechanism_comment",
+    }.issubset(roving_report["trial_by_trial"][0])
 
 
 def test_task_functional_mapping_examples() -> Any:

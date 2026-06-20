@@ -613,6 +613,8 @@ def _experiment_report_markdown(
             )
         else:
             lines.append("Brak triali w osi czasu.")
+    lines.extend(["", "## Raport analityczny brain_core", ""])
+    lines.extend(_report_markdown_lines(analysis_report))
     lines.extend(["", "## Konfiguracja", *_flatten_mapping(state_config), ""])
     lines.extend(["## Profil kliniczny", *_flatten_mapping(clinical_profile), ""])
     lines.extend(["## Polski słownik pojęć", *_glossary_markdown_lines(), ""])

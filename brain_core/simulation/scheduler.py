@@ -62,6 +62,7 @@ class TaskStimulusPlayer:
             emitted.append(
                 {
                     "trial_id": stimulus.trial_id,
+                    "trial_number": int(stimulus.trial_id),
                     "onset_s": stimulus.onset_s,
                     "duration_s": stimulus.duration_s,
                     "condition": stimulus.condition,

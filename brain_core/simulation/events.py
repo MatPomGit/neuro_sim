@@ -67,6 +67,9 @@ class SimulationEvent:
         Źródło zdarzenia, np. ``task`` lub ``diagnostics``.
     trial_id:
         Stabilny identyfikator trialu albo ``n/a`` dla zdarzeń globalnych.
+    trial_number:
+        Numeryczny numer trialu używany do grupowania raportów roving oddball;
+        ``None`` oznacza zdarzenie globalne.
     condition:
         Warunek eksperymentalny trialu albo ``n/a`` dla zdarzeń globalnych.
     details:
@@ -81,6 +84,7 @@ class SimulationEvent:
     description_pl: str
     source: str
     trial_id: int | str = "n/a"
+    trial_number: int | None = None
     condition: str = "n/a"
     details: dict[str, Any] = field(default_factory=dict)
     plot_anchor: str | None = None
@@ -96,6 +100,8 @@ class SimulationEvent:
         payload = asdict(self)
         payload["time_s"] = round(float(self.time_s), 6)
         payload["details"] = _to_builtin(payload["details"])
+        if payload.get("trial_number") is None:
+            payload["trial_number"] = _trial_number_from_id(payload.get("trial_id"))
         if payload.get("plot_anchor") is None:
             payload.pop("plot_anchor", None)
         return payload
@@ -185,9 +191,11 @@ def _stimulus_onset_events(trial_events: list[dict[str, Any]]) -> list[Simulatio
                 description_pl=f"Początek bodźca w trialu {trial_id} ({condition}).",
                 source="task",
                 trial_id=trial_id,
+                trial_number=_trial_number_from_id(trial_id),
                 condition=condition,
                 details={
                     "trial_id": trial_id,
+                    "trial_number": _trial_number_from_id(trial_id),
                     "condition": condition,
                     "duration_s": trial_event.get("duration_s"),
                     "regional_input": trial_event.get("regional_input", {}),
@@ -229,9 +237,11 @@ def _response_and_error_events(
                 ),
                 source="task_scoring",
                 trial_id=trial_id,
+                trial_number=_trial_number_from_id(trial_id),
                 condition=str(result.get("condition", "n/a")),
                 details={
                     "trial_id": trial_id,
+                    "trial_number": _trial_number_from_id(trial_id),
                     "condition": result.get("condition", "n/a"),
                     "reaction_time_s": reaction_time,
                     "correct": correct,
@@ -253,9 +263,11 @@ def _response_and_error_events(
                 ),
                 source="task_scoring",
                 trial_id=trial_id,
+                trial_number=_trial_number_from_id(trial_id),
                 condition=str(result.get("condition", "n/a")),
                 details={
                     "trial_id": trial_id,
+                    "trial_number": _trial_number_from_id(trial_id),
                     "condition": result.get("condition", "n/a"),
                     "correct": correct,
                     "error_type": error_type,
@@ -462,6 +474,7 @@ def _trial_contexts(trial_events: list[dict[str, Any]]) -> list[dict[str, Any]]:
         contexts.append(
             {
                 "trial_id": event.get("trial_id") or "n/a",
+                "trial_number": _trial_number_from_id(event.get("trial_id")),
                 "condition": str(event.get("condition") or "n/a"),
                 "start_s": onset_s,
                 "end_s": onset_s + max(duration_s, 0.0) + 0.75,
@@ -478,9 +491,10 @@ def _trial_context_at(
         if float(context["start_s"]) <= time_s <= float(context["end_s"]):
             return {
                 "trial_id": context["trial_id"],
+                "trial_number": context.get("trial_number"),
                 "condition": context["condition"],
             }
-    return {"trial_id": "n/a", "condition": "n/a"}
+    return {"trial_id": "n/a", "trial_number": None, "condition": "n/a"}
 
 
 def _time_at(time: np.ndarray, sample_index: int) -> float:
@@ -502,3 +516,24 @@ def _to_builtin(value: Any) -> Any:
     if isinstance(value, np.ndarray):
         return value.tolist()
     return value
+
+
+def _trial_number_from_id(trial_id: Any) -> int | None:
+    """Zwraca numeryczny numer trialu albo ``None`` dla zdarzeń globalnych.
+
+    Parameters
+    ----------
+    trial_id:
+        Identyfikator trialu zapisany w bodźcu, wyniku albo osi czasu.
+
+    Returns
+    -------
+    int | None
+        Numer trialu używany do stabilnego grupowania raportów roving oddball.
+    """
+    if trial_id in {None, "n/a"}:
+        return None
+    try:
+        return int(trial_id)
+    except (TypeError, ValueError):
+        return None
