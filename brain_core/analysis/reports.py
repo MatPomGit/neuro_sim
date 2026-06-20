@@ -552,11 +552,16 @@ def _build_roving_trial_by_trial_rows(
                 for key in TRIAL_METRIC_KEYS
                 if key in result and result[key] is not None
             }
+        trial_num_raw = result.get("trial_number")
+        if trial_num_raw is None or trial_num_raw == "n/a":
+            trial_num_raw = result.get("trial_id")
+        try:
+            trial_number = int(trial_num_raw) if trial_num_raw is not None else index
+        except (ValueError, TypeError):
+            trial_number = index
         rows.append(
             {
-                "trial_number": int(
-                    result.get("trial_number", result.get("trial_id", index))
-                ),
+                "trial_number": trial_number,
                 "trial_id": result.get("trial_id", index),
                 "standard": condition == "standard",
                 "deviant": condition == "deviant",
