@@ -672,17 +672,35 @@ def _simulate_task_trials(
             if observed is None
             else round(0.25 + ((stimulus.trial_id + config.seed) % 5) * 0.05, 3)
         )
+        expected_response = task.expected_response(stimulus)
         result: TrialResult = task.score_trial(stimulus, observed, reaction_time)
-        trial_result = {
-            "trial_id": result.trial_id,
+        error_type = (
+            result.error_type.value
+            if isinstance(result.error_type, ErrorType)
+            else str(result.error_type)
+        )
+        metrics: dict[str, Any] = {
             "reaction_time_s": result.reaction_time_s,
             "correct": result.correct,
-            "error_type": (
-                result.error_type.value
-                if isinstance(result.error_type, ErrorType)
-                else str(result.error_type)
-            ),
+            "error_type": error_type,
+        }
+        try:
+            trial_number = int(result.trial_id)
+        except (ValueError, TypeError):
+            trial_number = None
+        trial_result = {
+            "trial_id": result.trial_id,
+            "trial_number": trial_number,
+            "stimulus_type": result.condition,
+            "model_response": observed,
+            "observed_response": observed,
+            "expected_response": expected_response,
+            "reaction_time_s": result.reaction_time_s,
+            "correct": result.correct,
+            "error_type": error_type,
             "condition": result.condition,
+            "scenario": str(config.task.get("scenario", task.name)),
+            "profile_id": str((config.clinical_profile or {}).get("id", "healthy_v1")),
         }
         trial_result["regional_input"] = dict(stimulus.regional_input)
         for metric_name in (
@@ -692,6 +710,8 @@ def _simulate_task_trials(
         ):
             if metric_name in stimulus.payload:
                 trial_result[metric_name] = stimulus.payload[metric_name]
+                metrics[metric_name] = stimulus.payload[metric_name]
+        trial_result["metrics"] = metrics
         for payload_name in (
             "tone_hz",
             "previous_standard_hz",
@@ -909,6 +929,12 @@ def run_experiment(
         "behavior": behavior,
         "trial_events": trial_events,
         "trial_results": trial_results,
+        "trial_report_context": {
+            "scenario": str(config.task.get("scenario", "run")),
+            "task_name": str(config.task.get("name", "stroop")),
+            "profile_id": str((config.clinical_profile or {}).get("id", "healthy_v1")),
+            "metrics": analysis_report.payload.get("metrics", {}),
+        },
         "stimulus_sequence_signature": stimulus_sequence_signature,
         "event_timeline": event_timeline,
         "analysis_report": analysis_report.payload,

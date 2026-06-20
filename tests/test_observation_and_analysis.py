@@ -539,6 +539,9 @@ def test_roving_oddball_report_groups_trials_and_exports_text_reports(
     md_text = md_path.read_text(encoding="utf-8")
     html_text = html_path.read_text(encoding="utf-8")
     assert "### Grupy triali" in markdown
+    assert "### Trial-by-trial roving oddball" in markdown
+    assert "| Trial | Standard | Dewiant | Nowy standard | Odpowiedź" in markdown
+    assert result["analysis_report"]["roving_oddball"]["trial_by_trial"]
     assert "**bodziec**" in markdown
     assert "**odpowiedź**" in markdown
     assert "**błąd/poprawność**" in markdown
@@ -550,6 +553,7 @@ def test_roving_oddball_report_groups_trials_and_exports_text_reports(
     assert "początek bodźca" in md_text
     assert "<!doctype html>" in html_text
     assert "Tabela triali" in html_text
+    assert "Trial-by-trial roving oddball" in html_text
 
 
 def test_healthy_v1_profile_has_complete_required_baseline_fields() -> Any:
