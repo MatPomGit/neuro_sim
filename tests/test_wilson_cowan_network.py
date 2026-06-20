@@ -11,7 +11,7 @@ from brain_core.populations.wilson_cowan import (
 
 
 def test_delayed_coupling_formula() -> Any:
-    """Opis funkcji test_delayed_coupling_formula."""
+    """Sprawdza wzór sprzężenia z macierzą aktywności opóźnionej."""
     conn = np.array([[0.0, 0.5], [0.3, 0.0]])
     delays = np.array([[0, 1], [2, 0]])
     buffer = DelayBuffer(n_regions=2, delays_steps=delays)
@@ -26,7 +26,7 @@ def test_delayed_coupling_formula() -> Any:
 
 
 def test_region_wilson_cowan_step_shapes() -> Any:
-    """Opis funkcji test_region_wilson_cowan_step_shapes."""
+    """Sprawdza kształty i zakresy stanów po kroku modelu Wilsona-Cowana."""
     regions = ["R1", "R2"]
     params = {r: RegionWilsonCowanParams() for r in regions}
     model = RegionWilsonCowanModel(region_names=regions, params=params)
@@ -71,7 +71,7 @@ def test_region_wilson_cowan_parameter_vectors_are_cached() -> Any:
 
 
 def test_structural_network_coupling() -> Any:
-    """Opis funkcji test_structural_network_coupling."""
+    """Sprawdza mnożenie konektomu przez wektor aktywności regionów."""
     net = StructuralNetwork(["A", "B"], np.array([[0.0, 1.0], [0.5, 0.0]]))
     out = net.coupling(np.array([0.2, 0.7]))
     assert np.allclose(out, np.array([0.7, 0.1]))

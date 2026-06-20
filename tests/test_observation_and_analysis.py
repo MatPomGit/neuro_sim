@@ -31,7 +31,7 @@ from brain_core.simulation.engine import (
 
 
 def test_eeg_forward_projection_shapes() -> Any:
-    """Opis funkcji test_eeg_forward_projection_shapes."""
+    """Sprawdza kształty projekcji źródeł przez model forward EEG."""
     model = EEGForwardModel(np.array([[1.0, 0.5], [0.2, 1.0]]))
     vec = model.project(np.array([1.0, 2.0]))
     assert vec.shape == (2,)
@@ -40,7 +40,7 @@ def test_eeg_forward_projection_shapes() -> Any:
 
 
 def test_eeg_forward_average_reference_zero_mean_per_sample() -> Any:
-    """Opis funkcji test_eeg_forward_average_reference_zero_mean_per_sample."""
+    """Sprawdza zerową średnią próbek po referencji uśrednionej EEG."""
     model = EEGForwardModel(
         np.array([[1.0, 0.0], [0.0, 1.0], [0.5, 0.5]]),
         config=ForwardModelConfig(reference="average"),
@@ -50,7 +50,7 @@ def test_eeg_forward_average_reference_zero_mean_per_sample() -> Any:
 
 
 def test_eeg_inverse_recovers_sources_for_low_noise_case() -> Any:
-    """Opis funkcji test_eeg_inverse_recovers_sources_for_low_noise_case."""
+    """Sprawdza odtwarzanie źródeł EEG w przypadku niskiego szumu."""
     leadfield = np.array([[1.0, 0.2], [0.1, 1.2], [0.7, 0.3]])
     sources = np.array([[0.5, 1.0], [1.2, -0.4], [0.0, 0.3]])
     eeg = EEGForwardModel(leadfield).project(sources)
@@ -65,7 +65,7 @@ def test_eeg_inverse_recovers_sources_for_low_noise_case() -> Any:
 
 
 def test_bold_pipeline_shapes() -> Any:
-    """Opis funkcji test_bold_pipeline_shapes."""
+    """Sprawdza zachowanie kształtu danych w potoku BOLD/HRF."""
     neural = np.array([[0.0, 0.2], [0.4, 0.6], [0.1, 0.3]])
     drive = neural_drive_from_activity(neural, baseline=0.1)
     hrf = canonical_hrf(length=10, dt=0.5)
@@ -74,7 +74,7 @@ def test_bold_pipeline_shapes() -> Any:
 
 
 def test_analysis_metrics_outputs() -> Any:
-    """Opis funkcji test_analysis_metrics_outputs."""
+    """Sprawdza zakresy i kształty metryk analizy sygnałów."""
     fs = 200.0
     t = np.arange(0, 1.0, 1.0 / fs)
     s1 = np.sin(2 * np.pi * 10 * t)
@@ -93,7 +93,7 @@ def test_analysis_metrics_outputs() -> Any:
 
 
 def test_reference_benchmark_loader_shapes() -> Any:
-    """Opis funkcji test_reference_benchmark_loader_shapes."""
+    """Sprawdza strukturę i wymiary referencyjnych benchmarków."""
     benchmark = load_reference_benchmarks()
     assert set(benchmark.keys()) == {"eeg", "fmri", "behavior"}
     assert benchmark["eeg"].ndim == 2
@@ -102,7 +102,7 @@ def test_reference_benchmark_loader_shapes() -> Any:
 
 
 def test_report_structure_and_metric_stability() -> Any:
-    """Opis funkcji test_report_structure_and_metric_stability."""
+    """Sprawdza strukturę raportu i stabilność metryk dla tego samego seed."""
     cfg = ExperimentConfig(
         output={"save_results": False, "label": "test", "output_dir": "outputs"},
         seed=11,

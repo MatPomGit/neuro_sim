@@ -12,7 +12,7 @@ from brain_core.simulation.state import SimulationState
 
 
 def test_region_and_edge_mutations_change_state_signal_and_metrics() -> Any:
-    """Opis funkcji test_region_and_edge_mutations_change_state_signal_and_metrics."""
+    """Sprawdza wpływ mutacji regionów i krawędzi na stan oraz metryki."""
     state = SimulationState(
         regions={"Hippocampus": np.array([1.0, 0.8]), "PFC": np.array([0.2, 0.3])},
         connections={"DLPFC->ACC": np.array([0.9])},
@@ -56,7 +56,7 @@ def test_region_and_edge_mutations_change_state_signal_and_metrics() -> Any:
 
 
 def test_ei_imbalance_and_delay_increase_change_dynamics_markers() -> Any:
-    """Opis funkcji test_ei_imbalance_and_delay_increase_change_dynamics_markers."""
+    """Sprawdza metryki przesunięcia E/I i opóźnienia po mutacjach patologii."""
     state = SimulationState(
         regions={"PFC": np.array([0.1, 0.15])},
         connections={"A->B": np.array([0.8, 1.0])},
@@ -74,7 +74,7 @@ def test_ei_imbalance_and_delay_increase_change_dynamics_markers() -> Any:
 
 
 def test_reference_scenarios_and_pathology_config_validation() -> Any:
-    """Opis funkcji test_reference_scenarios_and_pathology_config_validation."""
+    """Sprawdza scenariusze referencyjne patologii i walidację konfiguracji."""
     scenarios = pathology_scenarios()
     assert {"hippocampal_lesion", "dlpfc_weakening", "reduced_gaba"}.issubset(
         scenarios.keys()

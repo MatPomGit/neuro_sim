@@ -20,7 +20,7 @@ from brain_core.simulation.engine import (
 
 
 def test_tasks_generate_deterministic_stimuli() -> Any:
-    """Opis funkcji test_tasks_generate_deterministic_stimuli."""
+    """Sprawdza deterministyczne generowanie bodźców dla zadań poznawczych."""
     duration = 10.0
     s1 = StroopTask().generate_stimuli(seed=7, duration_s=duration)
     s2 = StroopTask().generate_stimuli(seed=7, duration_s=duration)
@@ -44,7 +44,7 @@ def test_tasks_generate_deterministic_stimuli() -> Any:
 
 
 def test_trial_results_have_unified_schema_and_are_deterministic() -> Any:
-    """Opis funkcji test_trial_results_have_unified_schema_and_are_deterministic."""
+    """Sprawdza jednolity schemat wyników prób i ich deterministyczność."""
     cfg = ExperimentConfig(
         task={"name": "stroop", "scenario": "stroop", "duration": 5.0},
         output={"save_results": False},
@@ -68,7 +68,7 @@ def test_trial_results_have_unified_schema_and_are_deterministic() -> Any:
 
 
 def test_all_task_configs_exist() -> Any:
-    """Opis funkcji test_all_task_configs_exist."""
+    """Sprawdza dostępność konfiguracji YAML dla obsługiwanych zadań."""
     pytest.importorskip("yaml")
     from pathlib import Path
 

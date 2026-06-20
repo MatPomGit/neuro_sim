@@ -15,21 +15,21 @@ from brain_core.simulation.state import SimulationState
 
 
 class CounterModule:
-    """Opis klasy CounterModule."""
+    """Moduł testowy zliczający kroki i akumulujący prostą metrykę."""
 
     def __init__(self) -> None:
-        """Opis funkcji __init__."""
+        """Inicjalizuje licznik wykonanych kroków modułu testowego."""
         self.steps: int = 0
 
     def update(self, state: SimulationState, dt: float) -> None:
-        """Opis funkcji update."""
+        """Zwiększa licznik i dopisuje deterministyczny wkład do metryki."""
         self.steps += 1
         state.metrics.setdefault("acc", 0.0)
         state.metrics["acc"] += 0.001 * dt
 
 
 def test_multiscale_scheduler_respects_different_dt() -> Any:
-    """Opis funkcji test_multiscale_scheduler_respects_different_dt."""
+    """Sprawdza harmonogram uruchamiania zadań o różnych krokach czasowych."""
     fast = CounterModule()
     slow = CounterModule()
     contract = MultiScaleIOContract(
@@ -60,7 +60,7 @@ def test_multiscale_scheduler_respects_different_dt() -> Any:
 
 
 def test_cosim_performance_and_numerical_stability_smoke() -> Any:
-    """Opis funkcji test_cosim_performance_and_numerical_stability_smoke."""
+    """Sprawdza wydajność i stabilność numeryczną długiej symulacji smoke."""
     fast = CounterModule()
     slow = CounterModule()
     engine = MultiScaleEngine(
@@ -84,7 +84,7 @@ def test_cosim_performance_and_numerical_stability_smoke() -> Any:
 
 
 def test_delay_buffer_length_and_no_nan_drift() -> Any:
-    """Opis funkcji test_delay_buffer_length_and_no_nan_drift."""
+    """Sprawdza długość bufora opóźnień i brak dryfu do wartości NaN."""
     delays = np.array([[0, 3], [2, 0]])
     buffer = DelayBuffer(n_regions=2, delays_steps=delays)
 
