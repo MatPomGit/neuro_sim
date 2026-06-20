@@ -67,7 +67,9 @@ def test_key_scientific_modules_require_complete_type_annotations() -> None:
         modules = override["module"]
         if isinstance(modules, str):
             modules = [modules]
-        if override.get("disallow_untyped_defs") and override.get("disallow_incomplete_defs"):
+        if override.get("disallow_untyped_defs") and override.get(
+            "disallow_incomplete_defs"
+        ):
             strict_modules.update(modules)
 
     assert STRICT_MYPY_MODULES <= strict_modules
