@@ -14,7 +14,7 @@ from brain_core.simulation.signal_adapter import (
 
 
 def test_signal_contract_and_shape_validation() -> Any:
-    """Opis funkcji test_signal_contract_and_shape_validation."""
+    """Sprawdza kontrakt sygnału SNN oraz walidację kształtów wyjścia."""
     adapter = Brian2SpikingPopulationAdapter(region_names=["HIP"], dt=0.001)
     signal = NeuralMassToSNNInput(
         excitatory_drive_hz=np.array([18.0]),
@@ -59,7 +59,7 @@ def test_adapter_accepts_single_hip_region_as_tuple() -> None:
 
 
 def test_coupling_adapter_roundtrip_mapping_and_units() -> Any:
-    """Opis funkcji test_coupling_adapter_roundtrip_mapping_and_units."""
+    """Sprawdza mapowanie sygnałów między masą neuronalną i SNN wraz z jednostkami."""
     mapping = SNNPopulationMapping(
         snn_region_names=("HIP",),
         neural_mass_region_names=("HIP", "ACC", "PCC"),

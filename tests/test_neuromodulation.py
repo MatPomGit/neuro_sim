@@ -11,7 +11,7 @@ from brain_core.synapses.state import NeuromodulationState, update_region_state
 
 
 def test_neuromodulation_state_update_bounds() -> Any:
-    """Opis funkcji test_neuromodulation_state_update_bounds."""
+    """Sprawdza ograniczenie zaktualizowanych neuromodulatorów do zakresu 0–1."""
     s0 = NeuromodulationState()
     s1 = update_region_state(
         s0,
@@ -39,13 +39,13 @@ def test_neuromodulation_state_update_bounds() -> Any:
 
 
 def test_pharmacology_scenarios_are_available() -> Any:
-    """Opis funkcji test_pharmacology_scenarios_are_available."""
+    """Sprawdza dostępność referencyjnych scenariuszy farmakologicznych."""
     scenarios = comparison_scenarios()
     assert set(scenarios.keys()) == {"baseline", "high_ach", "high_na", "low_gaba"}
 
 
 def test_wilson_cowan_accepts_neuromodulation_vector() -> Any:
-    """Opis funkcji test_wilson_cowan_accepts_neuromodulation_vector."""
+    """Sprawdza obsługę wektora neuromodulacji przez model Wilsona-Cowana."""
     regions = ["R1", "R2"]
     params = {r: RegionWilsonCowanParams() for r in regions}
     model = RegionWilsonCowanModel(region_names=regions, params=params)

@@ -21,7 +21,7 @@ def test_load_default_atlas_and_connectome() -> None:
 
 
 def test_consistency_validation_rejects_wrong_region_order() -> Any:
-    """Opis funkcji test_consistency_validation_rejects_wrong_region_order."""
+    """Sprawdza odrzucenie konektomu z niezgodną kolejnością regionów."""
     atlas = load_region_atlas()
     connectome = load_connectome(atlas)
 

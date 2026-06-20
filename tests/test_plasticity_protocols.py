@@ -11,7 +11,7 @@ from brain_core.synapses.plasticity import (
 
 
 def test_protocol_contains_train_and_test_phases() -> Any:
-    """Opis funkcji test_protocol_contains_train_and_test_phases."""
+    """Sprawdza obecność faz treningowej i testowej w protokole."""
     protocol = default_train_test_protocol()
     phases = {step.phase for step in protocol.steps}
     assert phases == {ProtocolPhase.TRAIN, ProtocolPhase.TEST}
@@ -21,7 +21,7 @@ def test_protocol_contains_train_and_test_phases() -> Any:
 
 
 def test_plasticity_update_clamps_and_records_metrics() -> Any:
-    """Opis funkcji test_plasticity_update_clamps_and_records_metrics."""
+    """Sprawdza obcięcie wag plastyczności i zapis metryk aktualizacji."""
     cfg = NeuralMassPlasticityConfig(
         eta=0.4,
         decay_lambda=0.01,
