@@ -18,7 +18,10 @@ Dodajemy do `clinical_profile` opcjonalną, walidowaną sekcję
 `roving_oddball`: oczekiwany kierunek amplitudy, oczekiwany kierunek
 readaptacji, próg jakościowy, komentarz mechanizmu i komentarz dydaktyczny.
 Raport `roving_oddball` otrzymuje podsekcję `amplitude_latency_mechanism`, a
-porównanie profili otrzymuje listę porównań względem profilu zdrowego.
+porównanie profili otrzymuje listę porównań względem profilu zdrowego. Raport
+porównawczy zapisuje też jawny wspólny seed oraz renderuje tabelę porównującą
+habituację, readaptację/latencję, amplitudę proxy i komentarz
+`amplitude-latency-mechanism` dla trzech profili referencyjnych.
 
 ## Konsekwencje
 
@@ -26,13 +29,18 @@ Pozytywne:
 
 - raport pokazuje, jak amplituda proxy, readaptacja i mechanizm profilu są
   połączone w jednym miejscu;
+- porównanie profili pokazuje wspólny seed i zwartą tabelę metryk, co ułatwia
+  dydaktyczne porównanie `healthy`, `disorder` i `lesion` przy tej samej
+  sekwencji bodźców;
 - konfiguracja jawnie zapisuje oczekiwane kierunki i próg jakościowy;
 - walidacja wykrywa literówki oraz brak wymaganych pól raportowych.
 
 Negatywne / koszty:
 
 - `clinical_profile` ma jedno dodatkowe pole schematu;
-- amplituda w raporcie pozostaje proxy modelu i wymaga ostrożnej interpretacji.
+- amplituda w raporcie pozostaje proxy modelu i wymaga ostrożnej interpretacji;
+- komentarz `amplitude-latency-mechanism` musi być opisywany jako wyjaśnienie
+  mechanizmu symulacyjnego, bez sugerowania diagnozy klinicznej.
 
 ## Alternatywy rozważane
 

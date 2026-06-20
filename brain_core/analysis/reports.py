@@ -1637,9 +1637,9 @@ class AnalysisReport:
                     profile_context = (
                         f"{row.get('profile_id', 'n/a')} / {row.get('scenario', 'n/a')}"
                     )
-                    trial_num = row.get('trial_number')
+                    trial_num = row.get("trial_number")
                     if trial_num is None:
-                        trial_num = row.get('trial_id', 'n/a')
+                        trial_num = row.get("trial_id", "n/a")
                     lines.append(
                         f"| {trial_num} "
                         f"| {'tak' if row.get('standard') else 'nie'} "
@@ -1655,6 +1655,10 @@ class AnalysisReport:
         if roving_profile_comparison:
             lines.extend(["", "## Porównanie profili roving oddball"])
             lines.append(
+                f"- **seed porównania**: "
+                f"{roving_profile_comparison.get('seed', 'n/a')}"
+            )
+            lines.append(
                 f"- **ten sam seed**: "
                 f"{roving_profile_comparison.get('same_seed', 'n/a')}"
             )
@@ -1662,7 +1666,32 @@ class AnalysisReport:
                 f"- **ta sama sekwencja**: "
                 f"{roving_profile_comparison.get('same_sequence', 'n/a')}"
             )
-            for profile in roving_profile_comparison.get("profiles") or []:
+            comparison_profiles = roving_profile_comparison.get("profiles") or []
+            if comparison_profiles:
+                lines.extend(
+                    [
+                        "",
+                        "### Tabela porównawcza habituacja-readaptacja-amplituda-latencja",
+                        "| Profil | Grupa | Habituacja | Readaptacja/latencja | "
+                        "Amplituda proxy | Komentarz amplitude-latency-mechanism |",
+                        "| --- | --- | ---: | ---: | ---: | --- |",
+                    ]
+                )
+                for profile in comparison_profiles:
+                    mechanism = profile.get("amplitude_latency_mechanism") or {}
+                    lines.append(
+                        f"| {profile.get('profile_id', 'n/a')} "
+                        f"| {profile.get('profile_group', 'n/a')} "
+                        f"| {profile.get('habituation_rate', 'n/a')} "
+                        f"| {profile.get('mean_readaptation_latency', 'n/a')} "
+                        f"| {mechanism.get('response_amplitude', 'n/a')} "
+                        f"| {mechanism.get('mechanism_comment', 'n/a')} |"
+                    )
+                lines.append(
+                    "Komentarz amplitude-latency-mechanism opisuje mechanizm "
+                    "symulacyjny i nie sugeruje diagnozy klinicznej."
+                )
+            for profile in comparison_profiles:
                 lines.append(f"- **profil**: {profile.get('profile_id', 'n/a')}")
                 lines.append(f"  - grupa: {profile.get('profile_group', 'n/a')}")
                 lines.append(

@@ -386,13 +386,25 @@ def test_roving_oddball_profile_comparison_reports_direction_threshold_and_comme
     comparison = batch["roving_profile_comparison"]
     markdown = AnalysisReport({"roving_profile_comparison": comparison}).to_markdown()
 
+    assert comparison["seed"] == 21
     assert comparison["same_seed"] is True
     assert comparison["same_sequence"] is True
+    assert {item["profile_id"] for item in comparison["profiles"]} == {
+        "healthy_v1",
+        "gaba_dysregulation",
+        "hippocampal_lesion",
+    }
     assert {item["profile_group"] for item in comparison["profiles"]} == {
         "healthy",
         "disorder",
         "lesion",
     }
+    for profile in comparison["profiles"]:
+        mechanism = profile["amplitude_latency_mechanism"]
+        assert "habituation_rate" in profile
+        assert "mean_readaptation_latency" in profile
+        assert "response_amplitude" in mechanism
+        assert "mean_readaptation_latency" in mechanism
     assert len(comparison["comparisons"]) == 2
     for item in comparison["comparisons"]:
         assert item["expected_amplitude_direction"]
@@ -400,6 +412,15 @@ def test_roving_oddball_profile_comparison_reports_direction_threshold_and_comme
         assert item["observed_difference_comment"].startswith("Obserwacja:")
         assert item["qualitative_threshold"] == pytest.approx(0.05)
         assert item["educational_comment"]
+    assert "seed porównania" in markdown
+    assert (
+        "### Tabela porównawcza habituacja-readaptacja-amplituda-latencja" in markdown
+    )
+    assert "Komentarz amplitude-latency-mechanism" in markdown
+    assert "nie sugeruje diagnozy klinicznej" in markdown
+    assert "healthy_v1" in markdown
+    assert "gaba_dysregulation" in markdown
+    assert "hippocampal_lesion" in markdown
     assert "### Porównanie healthy/disorder/lesion" in markdown
     assert "kierunek obserwowany" in markdown
     assert "próg jakościowy" in markdown
