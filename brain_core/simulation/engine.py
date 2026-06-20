@@ -684,9 +684,13 @@ def _simulate_task_trials(
             "correct": result.correct,
             "error_type": error_type,
         }
+        try:
+            trial_number = int(result.trial_id)
+        except (ValueError, TypeError):
+            trial_number = None
         trial_result = {
             "trial_id": result.trial_id,
-            "trial_number": int(result.trial_id),
+            "trial_number": trial_number,
             "stimulus_type": result.condition,
             "model_response": observed,
             "observed_response": observed,
