@@ -59,10 +59,14 @@ class TaskStimulusPlayer:
         ):
             stimulus = self.stimuli[self.cursor]
             regional_input = self._regional_input_for(stimulus)
+            try:
+                trial_number = int(stimulus.trial_id)
+            except (ValueError, TypeError):
+                trial_number = None
             emitted.append(
                 {
                     "trial_id": stimulus.trial_id,
-                    "trial_number": int(stimulus.trial_id),
+                    "trial_number": trial_number,
                     "onset_s": stimulus.onset_s,
                     "duration_s": stimulus.duration_s,
                     "condition": stimulus.condition,
