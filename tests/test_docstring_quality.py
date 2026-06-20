@@ -3,7 +3,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-PLACEHOLDER_PHRASES = ("Opis funkcji", "Opis klasy")
+PLACEHOLDER_PHRASES = tuple(f"Opis {name}" for name in ("funkcji", "klasy"))
 PRODUCTION_DIRS = ("brain_model", "brain_core", "brain_viewer", "analysis", "scripts")
 TEST_DIR = "tests"
 
