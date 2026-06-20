@@ -700,7 +700,7 @@ def _simulate_task_trials(
             "error_type": error_type,
             "condition": result.condition,
             "scenario": str(config.task.get("scenario", task.name)),
-            "profile_id": str(config.clinical_profile.get("id", "healthy_v1")),
+            "profile_id": str((config.clinical_profile or {}).get("id", "healthy_v1")),
         }
         trial_result["regional_input"] = dict(stimulus.regional_input)
         for metric_name in (
