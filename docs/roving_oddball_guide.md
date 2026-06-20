@@ -301,7 +301,7 @@ dla kolejnych profili klinicznych i dodaje `roving_profile_comparison` dla zadan
 
 Wynik `batch["roving_profile_comparison"]` zawiera:
 
-- `seed` — ziarno sekwencji;
+- `seed` — jawne wspólne ziarno sekwencji zapisane w raporcie porównawczym;
 - `same_seed` — informację, czy porównanie zostało zbudowane na wspólnym seedzie;
 - `same_sequence` — informację, czy sygnatury triali są identyczne między profilami;
 - `profiles` — listę agregatów dla profili;
@@ -315,6 +315,22 @@ Wynik `batch["roving_profile_comparison"]` zawiera:
 - `observed_difference_comment` — krótki polski opis, czy profil badany ma wyższą
   lub niższą amplitudę proxy oraz dłuższą lub krótszą readaptację względem
   wariantu zdrowego.
+
+Raport Markdown dodaje też tabelę **Tabela porównawcza
+habituacja-readaptacja-amplituda-latencja**. Wiersze tej tabeli odpowiadają
+trzem profilom z plików `configs/roving_oddball_healthy.yaml`,
+`configs/roving_oddball_disorder_gaba.yaml` i
+`configs/roving_oddball_lesion_hippocampus.yaml`. Kolumny pokazują:
+
+- **Habituacja** — `habituation_rate`, czyli tempo narastania przewidywalności w
+  standardach tej samej sekwencji;
+- **Readaptacja/latencja** — `mean_readaptation_latency`, czyli dydaktyczne proxy
+  czasu ponownego dopasowania po dewiancie;
+- **Amplituda proxy** — `response_amplitude` z sekcji
+  `amplitude_latency_mechanism`;
+- **Komentarz amplitude-latency-mechanism** — opis mechanizmu symulacyjnego
+  przypisany do profilu. Komentarz nie jest sugestią rozpoznania klinicznego i
+  nie powinien być przepisywany jako wniosek medyczny.
 
 ### Reguła interpretacyjna
 

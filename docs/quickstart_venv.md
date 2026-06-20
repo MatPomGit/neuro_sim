@@ -103,6 +103,15 @@ Przykład uruchomienia jednego ze scenariuszy:
 python -m brain_core.simulation.run --config configs/roving_oddball_healthy.yaml
 ```
 
+Trzy konfiguracje roving oddball używają wspólnego seeda `21`, dlatego nadają się
+do porównania profili przy tej samej sekwencji bodźców. Raport porównawczy
+`roving_profile_comparison` zapisuje ten seed, flagę `same_sequence` oraz tabelę
+**Tabela porównawcza habituacja-readaptacja-amplituda-latencja**. Tabela zestawia
+`habituation_rate`, `mean_readaptation_latency`, amplitudę proxy odpowiedzi i
+komentarz `amplitude-latency-mechanism` dla profilu zdrowego, profilu
+dysregulacji GABA i profilu lezji hipokampa. Komentarz mechanizmu traktuj jako
+wyjaśnienie dydaktyczne modelu, nie jako sugestię diagnozy klinicznej.
+
 ## Ograniczenia interpretacyjne
 
 Wyniki generowane przez projekt mają charakter dydaktyczny i symulacyjny. Nie

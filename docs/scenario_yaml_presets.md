@@ -16,6 +16,27 @@ nie konstruuje sekwencji bodźców poza silnikiem symulacji.
 | N-back — deficyt dopaminowy | `configs/scenario_yaml_n_back_dopamine.yaml` | Lekcja pamięci roboczej 2-back z kontekstem uczenia nagrody i słabszą modulacją wartościującą. |
 | Stres i regeneracja — serotonina | `configs/scenario_yaml_stress_recovery_serotonin.yaml` | Lekcja epizodu stresu, wygaszania pobudzenia i ostrożniejszego progu decyzji przy zaburzeniu serotoninowym. |
 
+## Porównanie trzech presetów roving oddball
+
+Presety `roving_oddball_healthy`, `roving_oddball_disorder_gaba` i
+`roving_oddball_lesion_hippocampus` mają wspólny seed `21` oraz tę samą sekcję
+`task`. Dzięki temu można używać ich jako zestawu demonstracyjnego, w którym
+raport porównawczy pokazuje `same_sequence: true` i pozwala omawiać różnice
+metryk profilu bez zmiany sekwencji bodźców.
+
+Sekcja `roving_profile_comparison` w raporcie Markdown zawiera tabelę
+**Tabela porównawcza habituacja-readaptacja-amplituda-latencja** z kolumnami:
+
+- profil i grupa profilu (`healthy`, `disorder`, `lesion`);
+- `habituation_rate`;
+- `mean_readaptation_latency`, opisywane w tabeli jako readaptacja/latencja;
+- `response_amplitude`, czyli amplituda proxy z
+  `amplitude_latency_mechanism`;
+- komentarz `amplitude-latency-mechanism` z konfiguracji profilu.
+
+Tabela służy do nauki interpretacji mechanizmów symulacyjnych. Nie wolno
+traktować jej jako klasyfikatora klinicznego ani jako podstawy rozpoznania.
+
 ## Zasady utrzymania
 
 - Nowy preset SCENARIO_YAML powinien być kompletnym plikiem YAML przechodzącym
