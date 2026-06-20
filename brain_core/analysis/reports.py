@@ -1637,8 +1637,11 @@ class AnalysisReport:
                     profile_context = (
                         f"{row.get('profile_id', 'n/a')} / {row.get('scenario', 'n/a')}"
                     )
+                    trial_num = row.get('trial_number')
+                    if trial_num is None:
+                        trial_num = row.get('trial_id', 'n/a')
                     lines.append(
-                        f"| {row.get('trial_number', row.get('trial_id', 'n/a'))} "
+                        f"| {trial_num} "
                         f"| {'tak' if row.get('standard') else 'nie'} "
                         f"| {'tak' if row.get('deviant') else 'nie'} "
                         f"| {'tak' if row.get('new_standard') else 'nie'} "
