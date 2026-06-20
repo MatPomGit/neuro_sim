@@ -1417,7 +1417,7 @@ def export_teaching_package(
     for index, (title, figure) in enumerate(plots, start=1):
         safe_title = "".join(
             character if character.isalnum() else "_"
-            for character in str(title or "").lower()
+            for character in (title or "").lower()
         ).strip("_")
         figure.savefig(
             figures_dir / f"{index:02d}_{safe_title or 'wykres'}.png",
