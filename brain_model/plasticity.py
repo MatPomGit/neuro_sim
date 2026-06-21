@@ -68,7 +68,7 @@ class WeightUpdatePayload(TypedDict):
 WeightUpdateMap = dict[str, WeightUpdatePayload]
 
 
-def _get_weight_updates(diagnostics: MutableMapping[str, object]) -> WeightUpdateMap:
+def _get_weight_updates(diagnostics: MutableMapping[str, Any]) -> WeightUpdateMap:
     """Pobierz słownik aktualizacji wag z jawną walidacją diagnostyki.
 
     Parameters
