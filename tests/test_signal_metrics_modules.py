@@ -93,6 +93,23 @@ def test_reportable_signal_metrics_cover_profiles_and_polish_descriptions() -> N
         assert len(str(item["interpretation_pl"]).split()) >= 5
         assert str(item["limitations_pl"]).strip()
         assert str(item["unit"]).strip()
+        assert str(item["reference_or_expected_direction"]).strip()
+        assert "profil" in str(item["profile_task_context_pl"]).lower()
+
+
+def test_reportable_bold_metrics_cover_profiles_and_context() -> None:
+    """Katalog BOLD opisuje kierunek referencyjny oraz kontekst profilu i tasku."""
+    from brain_core.physiology.bold_hrf import REPORTABLE_BOLD_METRICS
+
+    names = {str(item["name"]) for item in REPORTABLE_BOLD_METRICS}
+
+    assert {"fmri_mean", "bold_peak_to_peak"} <= names
+    for item in REPORTABLE_BOLD_METRICS:
+        assert {"healthy", "disorder", "lesion"} <= set(item["profile_groups"])
+        assert str(item["interpretation_pl"]).strip()
+        assert str(item["reference_or_expected_direction"]).strip()
+        assert "task" in str(item["profile_task_context_pl"]).lower()
+        assert str(item["limitations_pl"]).strip()
 
 
 def test_physiology_docstrings_describe_units_and_methodology() -> None:

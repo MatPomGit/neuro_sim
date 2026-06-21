@@ -261,7 +261,6 @@ def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> An
                     "effect_name": "test",
                     "source": "test",
                     "evidence_source": "test",
-                    "expected_direction": "test",
                     "tolerance_or_quality_criterion": "test",
                     "scope": "test",
                     "limitations": "test",
@@ -285,7 +284,6 @@ def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> An
                     "effect_name": "test",
                     "source": "test",
                     "evidence_source": "test",
-                    "expected_direction": "test",
                     "tolerance_or_quality_criterion": "test",
                     "scope": "test",
                     "limitations": "test",
@@ -309,7 +307,6 @@ def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> An
                     "effect_name": "test",
                     "source": "test",
                     "evidence_source": "test",
-                    "expected_direction": "test",
                     "tolerance_or_quality_criterion": "test",
                     "scope": "test",
                     "limitations": "test",
@@ -358,7 +355,6 @@ def test_report_marks_benchmark_origin_in_markdown() -> Any:
                     "effect_name": "test",
                     "source": "test",
                     "evidence_source": "test",
-                    "expected_direction": "test",
                     "tolerance_or_quality_criterion": "test",
                     "scope": "test",
                     "limitations": "test",
@@ -383,7 +379,6 @@ def test_report_marks_benchmark_origin_in_markdown() -> Any:
                     "effect_name": "test",
                     "source": "test",
                     "evidence_source": "test",
-                    "expected_direction": "test",
                     "tolerance_or_quality_criterion": "test",
                     "scope": "test",
                     "limitations": "test",
@@ -761,7 +756,18 @@ def test_analysis_report_contains_eeg_bold_sections_with_polish_descriptions() -
     )
     behavior = np.linspace(0.0, 1.0, time.size)
 
-    report = build_analysis_report(eeg=eeg, fmri=fmri, behavior=behavior, fs=fs)
+    clinical_profile = {
+        "id": "dopamine_deficit",
+        "expected_direction": "reduced_amplitude",
+    }
+    report = build_analysis_report(
+        eeg=eeg,
+        fmri=fmri,
+        behavior=behavior,
+        fs=fs,
+        clinical_profile=clinical_profile,
+        task_name="roving_oddball",
+    )
     sections = report.payload["eeg_bold_sections"]
     markdown = report.to_markdown()
     csv_rows = report.to_csv_rows()
@@ -770,7 +776,18 @@ def test_analysis_report_contains_eeg_bold_sections_with_polish_descriptions() -
     assert {"EEG", "BOLD"} <= {item["modality"] for item in sections}
     assert all(item["interpretation"] for item in sections)
     assert all(item["limitations"] for item in sections)
+    assert all(item["reference_or_expected_direction"] for item in sections)
+    assert {item["profile_group"] for item in sections} == {"disorder"}
+    assert all(item["task_name"] == "roving_oddball" for item in sections)
+    assert all("dopamine_deficit" in item["profile_task_context"] for item in sections)
     assert "## Sekcje EEG/BOLD gotowe do raportowania" in markdown
     assert "Interpretacja" in markdown
     assert "Ograniczenia" in markdown
+    assert "Wartość referencyjna/kierunek" in markdown
+    assert "Profil i task" in markdown
     assert any(row["section"] == "eeg_bold_sections" for row in csv_rows)
+    assert any(
+        row["metric"].endswith("_profile_task_context")
+        for row in csv_rows
+        if row["section"] == "eeg_bold_sections"
+    )

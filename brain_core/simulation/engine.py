@@ -857,6 +857,8 @@ def run_experiment(
         fs=1.0 / config.timestep,
         analysis_set=config.analysis.get("sets"),
         benchmark_metadata=benchmark_bundle.metadata_payload(),
+        clinical_profile=config.clinical_profile,
+        task_name=str(config.task.get("name") or "n/a"),
     )
     analysis_report = _attach_task_activation_section(analysis_report, task_activation)
     if str(config.task.get("name") or "") in {"roving_oddball", "roving-oddball"}:

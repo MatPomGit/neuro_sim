@@ -9,6 +9,40 @@ from .information_flow import REPORTABLE_INFORMATION_FLOW_METRICS
 from .phase_locking import REPORTABLE_PHASE_LOCKING_METRICS, compute_phase_locking
 from .spectral import REPORTABLE_SPECTRAL_METRICS, compute_band_powers
 
+DEFAULT_PROFILE_GROUPS = ("healthy", "disorder", "lesion")
+DEFAULT_REFERENCE_OR_EXPECTED_DIRECTION = (
+    "Porównuj względem healthy_v1 albo kierunku oczekiwanego w profilu; "
+    "wzrost lub spadek należy interpretować relatywnie do tasku i benchmarku."
+)
+DEFAULT_PROFILE_TASK_CONTEXT_PL = (
+    "Metryka jest raportowana w kontekście profilu healthy/disorder/lesion "
+    "oraz tasku, a nie jako samodzielny marker diagnostyczny."
+)
+
+
+def _with_report_context(item: dict[str, object]) -> dict[str, object]:
+    """Uzupełnij metadane metryki o kontekst profilu i tasku.
+
+    Parameters
+    ----------
+    item:
+        Definicja metryki z modułów analitycznych.
+
+    Returns
+    -------
+    dict[str, object]
+        Kopia definicji z polami wymaganymi przez raport profili klinicznych.
+    """
+
+    enriched = dict(item)
+    enriched.setdefault("profile_groups", DEFAULT_PROFILE_GROUPS)
+    enriched.setdefault(
+        "reference_or_expected_direction", DEFAULT_REFERENCE_OR_EXPECTED_DIRECTION
+    )
+    enriched.setdefault("profile_task_context_pl", DEFAULT_PROFILE_TASK_CONTEXT_PL)
+    return enriched
+
+
 REPORTABLE_SIGNAL_METRICS = (
     *REPORTABLE_SPECTRAL_METRICS,
     *REPORTABLE_PHASE_LOCKING_METRICS,
@@ -42,7 +76,7 @@ def reportable_signal_metrics() -> tuple[dict[str, object], ...]:
         lesion.
     """
 
-    return REPORTABLE_SIGNAL_METRICS
+    return tuple(_with_report_context(item) for item in REPORTABLE_SIGNAL_METRICS)
 
 
 def band_powers(

@@ -145,7 +145,6 @@ class BenchmarkMetadata:
             "level": self.level,
             "compliance_criteria": self.compliance_criteria,
             "compliance_checks": dict(self.compliance_checks),
-            "expected_direction": self.expected_direction,
             "primary_metric": self.primary_metric,
             "severity_level": dict(self.severity_level),
             "tolerance": dict(self.tolerance),
@@ -379,7 +378,11 @@ def _validate_thresholds(
     normalized: dict[str, float] = {}
     for threshold_name in ("small", "medium", "large"):
         value = severity_level.get(threshold_name)
-        if isinstance(value, bool) or not isinstance(value, int | float) or not np.isfinite(value):
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, int | float)
+            or not np.isfinite(value)
+        ):
             raise BenchmarkValidationError(
                 f"Benchmark {benchmark_name} ma niepoprawny próg {threshold_name}."
             )
@@ -421,7 +424,12 @@ def _validate_tolerance(
     normalized: dict[str, object] = {}
     for tolerance_key in ("absolute", "relative"):
         value = tolerance.get(tolerance_key)
-        if isinstance(value, bool) or not isinstance(value, int | float) or not np.isfinite(value) or value < 0:
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, int | float)
+            or not np.isfinite(value)
+            or value < 0
+        ):
             raise BenchmarkValidationError(
                 f"Benchmark {benchmark_name} ma niepoprawną tolerancję {tolerance_key}."
             )
@@ -502,7 +510,6 @@ def _build_metadata(
         level=level,
         compliance_criteria=compliance_criteria,
         compliance_checks=compliance_checks,
-        expected_direction=expected_direction,
         primary_metric=primary_metric,
         severity_level=severity_level,
         tolerance=tolerance,
