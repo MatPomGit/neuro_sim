@@ -120,7 +120,7 @@ def apply_state_learning(
 def update_connectivity(
     W: NDArray[np.float64],
     x: NDArray[np.float64],
-    diagnostics: MutableMapping[str, object],
+    diagnostics: MutableMapping[str, Any],
     params: ConnectivityAdaptationParams,
     idx: Mapping[str, int],
 ) -> NDArray[np.float64]:
