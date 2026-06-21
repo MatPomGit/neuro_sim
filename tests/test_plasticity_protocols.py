@@ -1,12 +1,18 @@
 from typing import Any
 
 import numpy as np
+import pytest
 
 from brain_core.experiments.protocols import ProtocolPhase, default_train_test_protocol
 from brain_core.synapses.plasticity import (
     NeuralMassPlasticityConfig,
     PlasticityTracker,
     update_weights_two_timescales,
+)
+from brain_model.plasticity import (
+    ConnectivityAdaptationConfig,
+    HebbianRuleConfig,
+    update_connectivity,
 )
 
 
@@ -49,3 +55,28 @@ def test_plasticity_update_clamps_and_records_metrics() -> Any:
     assert len(tracker.weight_history) == 1
     assert len(tracker.metrics_history) == 1
     assert "mean_weight" in tracker.metrics_history[0]
+
+
+def test_connectivity_update_rejects_invalid_weight_update_diagnostics() -> Any:
+    """Adaptacja konektywności jawnie odrzuca błędny typ diagnostyki wag."""
+    W = np.array([[0.0, 0.2], [0.3, 0.0]], dtype=float)
+    x = np.array([0.5, 0.4], dtype=float)
+    diagnostics: dict[str, object] = {"weight_updates": []}
+
+    class Params:
+        """Minimalny kontrakt parametrów adaptacji konektywności w teście."""
+
+        connectivity_adaptation = ConnectivityAdaptationConfig(
+            enabled=True,
+            pairs=(("SRC", "DST"),),
+            hebbian=HebbianRuleConfig(enabled=True, learning_rate=0.1),
+        )
+
+    with pytest.raises(TypeError, match="weight_updates"):
+        update_connectivity(
+            W=W,
+            x=x,
+            diagnostics=diagnostics,
+            params=Params(),
+            idx={"SRC": 0, "DST": 1},
+        )

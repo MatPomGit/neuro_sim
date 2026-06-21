@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Mapping, MutableMapping, Sequence, Tuple
+from typing import Any, Mapping, MutableMapping, Protocol, Sequence, TypedDict, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -29,7 +29,7 @@ class ConnectivityAdaptationConfig:
     """Parametry adaptacji wybranych połączeń macierzy konektywności."""
 
     enabled: bool = False
-    pairs: Sequence[Tuple[str, str]] = ()
+    pairs: Sequence[tuple[str, str]] = ()
     hebbian: HebbianRuleConfig = field(default_factory=HebbianRuleConfig)
     decay: float = 0.0
     l2: float = 0.0
@@ -37,16 +37,72 @@ class ConnectivityAdaptationConfig:
     clip_max: float = 1.0
 
 
+class StateLearningParams(Protocol):
+    """Kontrakt parametrów wymaganych przez reguły uczenia stanu.
+
+    Protocol celowo opisuje tylko pola używane w tym module, aby uniknąć
+    cyklicznego importu pełnej konfiguracji modelu z `brain_model.params`.
+    """
+
+    semantic_rule: PlasticityRuleConfig
+    value_rule: PlasticityRuleConfig
+
+
+class ConnectivityAdaptationParams(Protocol):
+    """Kontrakt parametrów wymaganych przez adaptację konektywności.
+
+    Protocol ogranicza zależność do konfiguracji plastyczności połączeń i
+    pozostawia pełny obiekt parametrów po stronie modelu poznawczego.
+    """
+
+    connectivity_adaptation: ConnectivityAdaptationConfig
+
+
+class WeightUpdatePayload(TypedDict):
+    """Pojedynczy wpis diagnostyczny zmiany wagi połączenia."""
+
+    weight: float
+    delta: float
+
+
+WeightUpdateMap = dict[str, WeightUpdatePayload]
+
+
+def _get_weight_updates(diagnostics: MutableMapping[str, Any]) -> WeightUpdateMap:
+    """Pobierz słownik aktualizacji wag z jawną walidacją diagnostyki.
+
+    Parameters
+    ----------
+    diagnostics:
+        Modyfikowalny słownik diagnostyczny pojedynczego kroku symulacji.
+
+    Returns
+    -------
+    WeightUpdateMap
+        Słownik mapujący etykietę połączenia na wagę po aktualizacji i deltę.
+
+    Raises
+    ------
+    TypeError
+        Gdy istniejące pole ``weight_updates`` nie jest słownikiem. Taki stan
+        oznacza naruszenie kontraktu diagnostyki i powinien przerwać symulację
+        zamiast ukrywać błąd raportowania.
+    """
+    weight_updates = diagnostics.setdefault("weight_updates", {})
+    if not isinstance(weight_updates, dict):
+        raise TypeError("diagnostics['weight_updates'] musi być słownikiem.")
+
+    return cast(WeightUpdateMap, weight_updates)
+
+
 def apply_state_learning(
     dx: NDArray[np.float64],
     x: NDArray[np.float64],
     diagnostics: Mapping[str, float],
-    params: Any,
+    params: StateLearningParams,
     idx: Mapping[str, int],
 ) -> NDArray[np.float64]:
     """Aktualizuje pochodne stanu zgodnie z regułami uczenia semantycznego i wartości."""
-    # TODO(typing): zastąpić Any docelowym typem konfiguracji modelu,
-    # gdy interfejs params zostanie ustabilizowany.
     sem_cfg = params.semantic_rule
     val_cfg = params.value_rule
 
@@ -65,14 +121,12 @@ def update_connectivity(
     W: NDArray[np.float64],
     x: NDArray[np.float64],
     diagnostics: MutableMapping[str, Any],
-    params: Any,
+    params: ConnectivityAdaptationParams,
     idx: Mapping[str, int],
 ) -> NDArray[np.float64]:
     """Modyfikuje wybrane wagi konektywności na podstawie aktywności i diagnostyki."""
-    # TODO(typing): zastąpić Any docelowym typem konfiguracji modelu,
-    # gdy interfejs params zostanie ustabilizowany.
     cfg = params.connectivity_adaptation
-    diagnostics.setdefault("weight_updates", {})
+    weight_updates = _get_weight_updates(diagnostics)
 
     if not cfg.enabled or not cfg.pairs:
         return W
@@ -94,7 +148,7 @@ def update_connectivity(
             dW -= cfg.l2 * W[dst, src]
 
         W[dst, src] = float(np.clip(W[dst, src] + dW, cfg.clip_min, cfg.clip_max))
-        diagnostics["weight_updates"][f"{src_name}->{dst_name}"] = {
+        weight_updates[f"{src_name}->{dst_name}"] = {
             "weight": W[dst, src],
             "delta": dW,
         }
@@ -103,8 +157,8 @@ def update_connectivity(
 
 
 def build_weight_history_series(
-    weight_history: List[Dict[str, Dict[str, float]]], series_len: int
-) -> Dict[str, Dict[str, NDArray[np.float64]]]:
+    weight_history: list[WeightUpdateMap], series_len: int
+) -> dict[str, dict[str, NDArray[np.float64]]]:
     """Przekształca historię wag w serie czasowe wag i delt dla raportów."""
     if not weight_history:
         return {}
