@@ -89,6 +89,12 @@ class BenchmarkMetadata:
     level: str
     compliance_criteria: str
     compliance_checks: dict[str, object]
+    expected_direction: str
+    primary_metric: str
+    severity_level: dict[str, float]
+    tolerance: dict[str, object]
+    applicability_scope: str
+    benchmark_source: str
 
     @property
     def comparison_origin_pl(self) -> str:
@@ -112,8 +118,8 @@ class BenchmarkMetadata:
         -------
         dict[str, str]
             Słownik z polami ``source``, ``scope``, ``limitations``, ``level``,
-            ``compliance_criteria``, ``compliance_checks`` i
-            ``comparison_origin_pl``.
+            ``compliance_criteria``, ``compliance_checks``, pola walidacyjne
+            progu oraz ``comparison_origin_pl``.
         """
         return {
             "source": self.source,
@@ -122,6 +128,12 @@ class BenchmarkMetadata:
             "level": self.level,
             "compliance_criteria": self.compliance_criteria,
             "compliance_checks": dict(self.compliance_checks),
+            "expected_direction": self.expected_direction,
+            "primary_metric": self.primary_metric,
+            "severity_level": dict(self.severity_level),
+            "tolerance": dict(self.tolerance),
+            "applicability_scope": self.applicability_scope,
+            "benchmark_source": self.benchmark_source,
             "comparison_origin_pl": self.comparison_origin_pl,
         }
 
@@ -320,6 +332,92 @@ def _validate_compliance_checks(
     return normalized
 
 
+def _validate_thresholds(
+    benchmark_name: str, metadata: dict[str, object]
+) -> dict[str, float]:
+    """Zweryfikuj progi nasilenia benchmarku.
+
+    Parameters
+    ----------
+    benchmark_name:
+        Nazwa benchmarku, dla którego walidowane są progi.
+    metadata:
+        Surowe metadane odczytane z pliku JSON.
+
+    Returns
+    -------
+    dict[str, float]
+        Progi ``small``, ``medium`` i ``large`` uporządkowane niemalejąco.
+
+    Raises
+    ------
+    BenchmarkValidationError
+        Gdy progi są nieobecne, nienumeryczne albo nieuporządkowane.
+    """
+    severity_level = metadata.get("severity_level")
+    if not isinstance(severity_level, dict):
+        raise BenchmarkValidationError(
+            f"Benchmark {benchmark_name} musi mieć obiekt severity_level."
+        )
+    normalized: dict[str, float] = {}
+    for threshold_name in ("small", "medium", "large"):
+        value = severity_level.get(threshold_name)
+        if isinstance(value, bool) or not isinstance(value, int | float) or not np.isfinite(value):
+            raise BenchmarkValidationError(
+                f"Benchmark {benchmark_name} ma niepoprawny próg {threshold_name}."
+            )
+        normalized[threshold_name] = float(value)
+    if not (normalized["small"] <= normalized["medium"] <= normalized["large"]):
+        raise BenchmarkValidationError(
+            f"Benchmark {benchmark_name} ma nieuporządkowane progi severity_level."
+        )
+    return normalized
+
+
+def _validate_tolerance(
+    benchmark_name: str, metadata: dict[str, object]
+) -> dict[str, object]:
+    """Zweryfikuj tolerancję numeryczną benchmarku.
+
+    Parameters
+    ----------
+    benchmark_name:
+        Nazwa benchmarku, dla którego walidowana jest tolerancja.
+    metadata:
+        Surowe metadane odczytane z pliku JSON.
+
+    Returns
+    -------
+    dict[str, object]
+        Słownik z polami ``absolute``, ``relative`` i ``unit``.
+
+    Raises
+    ------
+    BenchmarkValidationError
+        Gdy tolerancja jest nieobecna albo zawiera wartości ujemne.
+    """
+    tolerance = metadata.get("tolerance")
+    if not isinstance(tolerance, dict):
+        raise BenchmarkValidationError(
+            f"Benchmark {benchmark_name} musi mieć obiekt tolerance."
+        )
+    normalized: dict[str, object] = {}
+    for tolerance_key in ("absolute", "relative"):
+        value = tolerance.get(tolerance_key)
+        if isinstance(value, bool) or not isinstance(value, int | float) or not np.isfinite(value) or value < 0:
+            raise BenchmarkValidationError(
+                f"Benchmark {benchmark_name} ma niepoprawną tolerancję {tolerance_key}."
+            )
+        normalized[tolerance_key] = float(value)
+    unit = tolerance.get("unit")
+    if not isinstance(unit, str) or not unit.strip():
+        raise BenchmarkValidationError(
+            f"Benchmark {benchmark_name} ma niepoprawną jednostkę tolerancji."
+        )
+    normalized["unit"] = unit.strip()
+    return normalized
+
+
 def _build_metadata(
     benchmark_name: str, metadata: dict[str, object]
 ) -> BenchmarkMetadata:
@@ -350,6 +448,18 @@ def _build_metadata(
         benchmark_name, metadata, "compliance_criteria"
     )
     compliance_checks = _validate_compliance_checks(benchmark_name, metadata)
+    expected_direction = _validate_text_field(
+        benchmark_name, metadata, "expected_direction"
+    )
+    primary_metric = _validate_text_field(benchmark_name, metadata, "primary_metric")
+    severity_level = _validate_thresholds(benchmark_name, metadata)
+    tolerance = _validate_tolerance(benchmark_name, metadata)
+    applicability_scope = _validate_text_field(
+        benchmark_name, metadata, "applicability_scope"
+    )
+    benchmark_source = _validate_text_field(
+        benchmark_name, metadata, "benchmark_source"
+    )
     if level not in ALLOWED_BENCHMARK_LEVELS:
         allowed = ", ".join(sorted(ALLOWED_BENCHMARK_LEVELS))
         raise BenchmarkValidationError(
@@ -363,6 +473,12 @@ def _build_metadata(
         level=level,
         compliance_criteria=compliance_criteria,
         compliance_checks=compliance_checks,
+        expected_direction=expected_direction,
+        primary_metric=primary_metric,
+        severity_level=severity_level,
+        tolerance=tolerance,
+        applicability_scope=applicability_scope,
+        benchmark_source=benchmark_source,
     )
 
 

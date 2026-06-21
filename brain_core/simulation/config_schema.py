@@ -39,6 +39,9 @@ ALLOWED_CLINICAL_PROFILE_KEYS = {
     "expected_direction",
     "severity_level",
     "primary_metric",
+    "tolerance",
+    "applicability_scope",
+    "benchmark_source",
     "amplitude_latency_mechanism",
 }
 
@@ -117,6 +120,18 @@ class ExperimentConfig:
             "expected_direction": "stable_reference",
             "severity_level": {"small": 0.0, "medium": 0.02, "large": 0.05},
             "primary_metric": "mean_abs_difference",
+            "tolerance": {
+                "absolute": 0.005,
+                "relative": 0.0,
+                "unit": "mean_abs_difference",
+            },
+            "applicability_scope": (
+                "Porównania regresyjne profilu referencyjnego przy stałym seedzie."
+            ),
+            "benchmark_source": (
+                "Syntetyczny profil bazowy utrzymywany w repozytorium; brak "
+                "źródła klinicznego, ponieważ nie reprezentuje danych pacjentów."
+            ),
             "amplitude_latency_mechanism": {
                 "expected_amplitude_direction": "stable_reference",
                 "expected_readaptation_direction": "stable_reference",
@@ -581,7 +596,12 @@ def _validate_clinical_profile_config(cfg: ExperimentConfig) -> None:
     if unknown_keys:
         raise ConfigValidationError(f"Nieznane pola clinical_profile: {unknown_keys}")
 
-    for text_key in ("display_name", "mechanism"):
+    for text_key in (
+        "display_name",
+        "mechanism",
+        "applicability_scope",
+        "benchmark_source",
+    ):
         if text_key not in cfg.clinical_profile:
             raise ConfigValidationError(f"Brak pola clinical_profile.{text_key}")
         value = cfg.clinical_profile[text_key]
@@ -642,9 +662,39 @@ def _validate_clinical_profile_config(cfg: ExperimentConfig) -> None:
             "small <= medium <= large"
         )
 
+    tolerance = cfg.clinical_profile.get("tolerance")
+    if not isinstance(tolerance, dict):
+        raise ConfigValidationError(
+            "clinical_profile.tolerance musi być obiektem z polami absolute, "
+            "relative i unit"
+        )
+    for tolerance_key in ("absolute", "relative"):
+        if tolerance_key not in tolerance:
+            raise ConfigValidationError(
+                f"Brak pola clinical_profile.tolerance.{tolerance_key}"
+            )
+        tolerance[tolerance_key] = _require_number(
+            tolerance[tolerance_key], f"clinical_profile.tolerance.{tolerance_key}"
+        )
+        if tolerance[tolerance_key] < 0.0:
+            raise ConfigValidationError(
+                f"clinical_profile.tolerance.{tolerance_key} musi być >= 0"
+            )
+    if "unit" not in tolerance:
+        raise ConfigValidationError("Brak pola clinical_profile.tolerance.unit")
+    tolerance["unit"] = _require_non_empty_string(
+        tolerance["unit"], "clinical_profile.tolerance.unit"
+    )
+
     cfg.clinical_profile["id"] = str(profile_id)
     cfg.clinical_profile["display_name"] = cfg.clinical_profile["display_name"].strip()
     cfg.clinical_profile["mechanism"] = cfg.clinical_profile["mechanism"].strip()
+    cfg.clinical_profile["applicability_scope"] = cfg.clinical_profile[
+        "applicability_scope"
+    ].strip()
+    cfg.clinical_profile["benchmark_source"] = cfg.clinical_profile[
+        "benchmark_source"
+    ].strip()
     cfg.clinical_profile["affected_regions"] = list(
         cfg.clinical_profile.get("affected_regions", [])
     )
@@ -655,6 +705,7 @@ def _validate_clinical_profile_config(cfg: ExperimentConfig) -> None:
     cfg.clinical_profile["expected_direction"] = expected_direction.strip()
     cfg.clinical_profile["primary_metric"] = str(primary_metric)
     cfg.clinical_profile["severity_level"] = dict(severity_level)
+    cfg.clinical_profile["tolerance"] = dict(tolerance)
     cfg.clinical_profile["amplitude_latency_mechanism"] = (
         _validate_amplitude_latency_mechanism_config(cfg.clinical_profile)
     )

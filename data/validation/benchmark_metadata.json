@@ -18,7 +18,21 @@
       ],
       "interpretation_scope": "Kontrola techniczna kształtu sygnału EEG i stabilności raportowania amplitudy proxy.",
       "acceptance_rule": "Benchmark jest zgodny tylko wtedy, gdy plik zawiera wymagane kolumny Cz i Pz, co najmniej dwie próbki oraz raport nie rozszerza wyniku na normy kliniczne."
-    }
+    },
+    "expected_direction": "stable_reference",
+    "primary_metric": "mae",
+    "severity_level": {
+      "small": 0.0,
+      "medium": 0.02,
+      "large": 0.05
+    },
+    "tolerance": {
+      "absolute": 0.005,
+      "relative": 0.0,
+      "unit": "amplitude_proxy"
+    },
+    "applicability_scope": "Techniczna walidacja kształtu i porównań amplitudy proxy dla syntetycznych kanałów Cz i Pz; bez norm klinicznych EEG.",
+    "benchmark_source": "Syntetyczny benchmark utrzymywany w repozytorium neuro_sim; brak źródła empirycznego, ponieważ dane nie pochodzą od uczestników."
   },
   "fmri": {
     "source": "Syntetyczny cel walidacyjny utrzymywany w repozytorium neuro_sim; nie pochodzi z akwizycji MRI ani z publicznego zbioru BIDS.",
@@ -39,7 +53,21 @@
       ],
       "interpretation_scope": "Kontrola techniczna kształtu sygnału BOLD proxy i porównania średniej aktywności regionów.",
       "acceptance_rule": "Benchmark jest zgodny tylko wtedy, gdy plik zawiera regiony V1 i PFC, co najmniej dwie próbki oraz raport nie interpretuje wyniku jako walidacji hemodynamicznej."
-    }
+    },
+    "expected_direction": "stable_reference",
+    "primary_metric": "mae",
+    "severity_level": {
+      "small": 0.0,
+      "medium": 0.02,
+      "large": 0.05
+    },
+    "tolerance": {
+      "absolute": 0.005,
+      "relative": 0.0,
+      "unit": "bold_proxy"
+    },
+    "applicability_scope": "Techniczna walidacja kształtu i porównań średniej aktywności proxy dla syntetycznych regionów V1 i PFC; bez wnioskowania hemodynamicznego.",
+    "benchmark_source": "Syntetyczny benchmark utrzymywany w repozytorium neuro_sim; brak źródła MRI/BIDS, ponieważ dane nie pochodzą z akwizycji."
   },
   "behavior": {
     "source": "Edukacyjny cel walidacyjny utrzymywany w repozytorium neuro_sim; wartości dobrano ręcznie do testów raportowania.",
@@ -60,6 +88,20 @@
       ],
       "interpretation_scope": "Edukacyjna kontrola spójności raportowania trafności i czasu reakcji w minimalnym zestawie prób.",
       "acceptance_rule": "Benchmark jest zgodny tylko wtedy, gdy plik zawiera trafność i czas reakcji, co najmniej dwie próby oraz raport pozostaje kontrolą edukacyjną bez wniosków psychometrycznych."
-    }
+    },
+    "expected_direction": "stable_reference",
+    "primary_metric": "mae",
+    "severity_level": {
+      "small": 0.0,
+      "medium": 0.02,
+      "large": 0.05
+    },
+    "tolerance": {
+      "absolute": 0.005,
+      "relative": 0.0,
+      "unit": "behavior_proxy"
+    },
+    "applicability_scope": "Edukacyjna walidacja minimalnych porównań trafności i czasu reakcji; bez interpretacji psychometrycznej.",
+    "benchmark_source": "Edukacyjny benchmark utrzymywany w repozytorium neuro_sim; brak źródła empirycznego, ponieważ wartości dobrano ręcznie do testów raportowania."
   }
 }
