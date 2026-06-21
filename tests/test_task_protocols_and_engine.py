@@ -404,6 +404,7 @@ def test_roving_oddball_profile_comparison_reports_direction_threshold_and_comme
         assert "habituation_rate" in profile
         assert "mean_readaptation_latency" in profile
         assert "response_amplitude" in mechanism
+        assert "mean_response_latency_s" in mechanism
         assert "mean_readaptation_latency" in mechanism
     assert len(comparison["comparisons"]) == 2
     for item in comparison["comparisons"]:
@@ -416,6 +417,7 @@ def test_roving_oddball_profile_comparison_reports_direction_threshold_and_comme
     assert (
         "### Tabela porównawcza habituacja-readaptacja-amplituda-latencja" in markdown
     )
+    assert "Latencja odpowiedzi" in markdown
     assert "Komentarz amplitude-latency-mechanism" in markdown
     assert "nie sugeruje diagnozy klinicznej" in markdown
     assert "healthy_v1" in markdown
