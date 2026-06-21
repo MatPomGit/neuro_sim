@@ -468,8 +468,8 @@ def _plot_anchors_from_group(group: dict[str, Any]) -> list[str]:
         group.get("stimulus"),
         group.get("response"),
         group.get("correctness"),
-        *list(group.get("activity_changes") or []),
-        *list(group.get("mechanism_comments") or []),
+        *group.get("activity_changes", []),
+        *group.get("mechanism_comments", []),
     ]
     for event in candidate_events:
         if isinstance(event, dict) and event.get("plot_anchor"):
