@@ -720,7 +720,7 @@ def _mean_response_latency_s(trial_results: list[dict[str, Any]]) -> float:
     latencies_s = [
         float(value)
         for result in trial_results
-        if (value := result.get("reaction_time_s")) is not None
+        if (value := result.get("reaction_time_s")) not in (None, "n/a")
     ]
     return round(float(np.mean(latencies_s)), 6) if latencies_s else 0.0
 
