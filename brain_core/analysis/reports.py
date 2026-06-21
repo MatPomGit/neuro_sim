@@ -191,8 +191,10 @@ def _build_eeg_bold_report_sections(
                     "limitations_pl",
                     "Wynik jest proxy symulacyjnym, nie samodzielnym markerem klinicznym.",
                 ),
-                "reference_or_expected_direction": metadata.get(
-                    "reference_or_expected_direction", expected_direction
+                "reference_or_expected_direction": (
+                    expected_direction
+                    if expected_direction != "stable_reference"
+                    else metadata.get("reference_or_expected_direction", expected_direction)
                 ),
                 "profile_id": profile_id,
                 "profile_group": profile_group,
