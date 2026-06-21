@@ -67,8 +67,17 @@ class BenchmarkMetadata:
 
     Parameters
     ----------
+    effect_name:
+        Nazwa efektu kontrolowanego przez benchmark.
     source:
         Jawny opis pochodzenia danych referencyjnych.
+    evidence_source:
+        Źródło literaturowe, empiryczne albo jawnie oznaczone źródło
+        syntetyczne/edukacyjne użyte do interpretacji benchmarku.
+    expected_direction:
+        Oczekiwany kierunek zmiany albo stabilności efektu.
+    tolerance_or_quality_criterion:
+        Tolerancja numeryczna albo jakościowe kryterium akceptacji efektu.
     scope:
         Zakres sygnału, zadania lub metryki objęty benchmarkiem.
     limitations:
@@ -83,7 +92,11 @@ class BenchmarkMetadata:
         z pliku metadanych, aby kod nie dopisywał arbitralnych progów.
     """
 
+    effect_name: str
     source: str
+    evidence_source: str
+    expected_direction: str
+    tolerance_or_quality_criterion: str
     scope: str
     limitations: str
     level: str
@@ -122,7 +135,11 @@ class BenchmarkMetadata:
             progu oraz ``comparison_origin_pl``.
         """
         return {
+            "effect_name": self.effect_name,
             "source": self.source,
+            "evidence_source": self.evidence_source,
+            "expected_direction": self.expected_direction,
+            "tolerance_or_quality_criterion": self.tolerance_or_quality_criterion,
             "scope": self.scope,
             "limitations": self.limitations,
             "level": self.level,
@@ -440,7 +457,15 @@ def _build_metadata(
     BenchmarkValidationError
         Gdy poziom lub wymagane pola metadanych są niepoprawne.
     """
+    effect_name = _validate_text_field(benchmark_name, metadata, "effect_name")
     source = _validate_text_field(benchmark_name, metadata, "source")
+    evidence_source = _validate_text_field(benchmark_name, metadata, "evidence_source")
+    expected_direction = _validate_text_field(
+        benchmark_name, metadata, "expected_direction"
+    )
+    tolerance_or_quality_criterion = _validate_text_field(
+        benchmark_name, metadata, "tolerance_or_quality_criterion"
+    )
     scope = _validate_text_field(benchmark_name, metadata, "scope")
     limitations = _validate_text_field(benchmark_name, metadata, "limitations")
     level = _validate_text_field(benchmark_name, metadata, "level")
@@ -467,7 +492,11 @@ def _build_metadata(
             f"dozwolone poziomy: {allowed}."
         )
     return BenchmarkMetadata(
+        effect_name=effect_name,
         source=source,
+        evidence_source=evidence_source,
+        expected_direction=expected_direction,
+        tolerance_or_quality_criterion=tolerance_or_quality_criterion,
         scope=scope,
         limitations=limitations,
         level=level,
