@@ -3,11 +3,11 @@ clinical_profile:
   display_name: Dysregulacja GABA
   mechanism: Obniżona inhibicja zwiększająca szum i niestabilność kontroli przedczołowej.
   affected_regions:
-    - PFC
-    - ATT
+  - PFC
+  - ATT
   cognitive_functions:
-    - hamowanie reakcji
-    - stabilność uwagi
+  - hamowanie reakcji
+  - stabilność uwagi
   expected_direction: higher_activity
   primary_metric: mean_abs_difference
   severity_level:
@@ -16,6 +16,15 @@ clinical_profile:
     large: 0.05
   expected_effects:
     noise: wyższy poziom szumu aktywacji
+  tolerance:
+    absolute: 0.005
+    relative: 0.0
+    unit: mean_abs_difference
+  applicability_scope: Porównania edukacyjne wpływu podniesionego noise na stabilność
+    uwagi i hamowanie reakcji przy stałym seedzie oraz identycznym zadaniu.
+  benchmark_source: Literature-inspired mechanistic hypothesis; brak źródła ilościowego,
+    ponieważ profil jest syntetyczną manipulacją poziomu szumu, a nie estymacją z
+    danych GABA.
 model:
   noise: 0.03
 pathology:

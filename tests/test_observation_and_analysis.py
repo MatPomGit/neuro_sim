@@ -177,6 +177,14 @@ def test_reference_benchmark_metadata_validation() -> Any:
         assert item.compliance_criteria
         assert item.compliance_checks["minimum_rows"] >= 2
         assert item.compliance_checks["required_columns"]
+        assert item.expected_direction
+        assert item.primary_metric
+        assert item.severity_level == {"small": 0.0, "medium": 0.02, "large": 0.05}
+        assert item.tolerance["absolute"] >= 0.0
+        assert item.tolerance["relative"] >= 0.0
+        assert item.tolerance["unit"]
+        assert item.applicability_scope
+        assert item.benchmark_source
         assert item.level in {
             "synthetic",
             "educational",
@@ -266,6 +274,12 @@ def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> An
                         "interpretation_scope": "test",
                         "acceptance_rule": "test",
                     },
+                    "expected_direction": "stable_reference",
+                    "primary_metric": "mae",
+                    "severity_level": {"small": 0.0, "medium": 0.02, "large": 0.05},
+                    "tolerance": {"absolute": 0.005, "relative": 0.0, "unit": "proxy"},
+                    "applicability_scope": "test",
+                    "benchmark_source": "test",
                 },
                 "fmri": {
                     "effect_name": "test",
@@ -284,6 +298,12 @@ def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> An
                         "interpretation_scope": "test",
                         "acceptance_rule": "test",
                     },
+                    "expected_direction": "stable_reference",
+                    "primary_metric": "mae",
+                    "severity_level": {"small": 0.0, "medium": 0.02, "large": 0.05},
+                    "tolerance": {"absolute": 0.005, "relative": 0.0, "unit": "proxy"},
+                    "applicability_scope": "test",
+                    "benchmark_source": "test",
                 },
                 "behavior": {
                     "effect_name": "test",
@@ -302,6 +322,12 @@ def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> An
                         "interpretation_scope": "test",
                         "acceptance_rule": "test",
                     },
+                    "expected_direction": "stable_reference",
+                    "primary_metric": "mae",
+                    "severity_level": {"small": 0.0, "medium": 0.02, "large": 0.05},
+                    "tolerance": {"absolute": 0.005, "relative": 0.0, "unit": "proxy"},
+                    "applicability_scope": "test",
+                    "benchmark_source": "test",
                 },
             }
         ),
@@ -345,6 +371,12 @@ def test_report_marks_benchmark_origin_in_markdown() -> Any:
                         "interpretation_scope": "test",
                         "acceptance_rule": "test",
                     },
+                    "expected_direction": "stable_reference",
+                    "primary_metric": "mae",
+                    "severity_level": {"small": 0.0, "medium": 0.02, "large": 0.05},
+                    "tolerance": {"absolute": 0.005, "relative": 0.0, "unit": "proxy"},
+                    "applicability_scope": "test",
+                    "benchmark_source": "test",
                     "comparison_origin_pl": "syntetyczny",
                 },
                 "behavior": {
@@ -364,6 +396,12 @@ def test_report_marks_benchmark_origin_in_markdown() -> Any:
                         "interpretation_scope": "test",
                         "acceptance_rule": "test",
                     },
+                    "expected_direction": "stable_reference",
+                    "primary_metric": "mae",
+                    "severity_level": {"small": 0.0, "medium": 0.02, "large": 0.05},
+                    "tolerance": {"absolute": 0.005, "relative": 0.0, "unit": "proxy"},
+                    "applicability_scope": "test",
+                    "benchmark_source": "test",
                     "comparison_origin_pl": "empiryczny",
                 },
             },
@@ -615,6 +653,50 @@ def test_healthy_v1_profile_has_complete_required_baseline_fields() -> Any:
         "medium": 0.02,
         "large": 0.05,
     }
+
+
+def test_all_clinical_profiles_have_required_benchmark_fields() -> Any:
+    """Każdy profil kliniczny opisuje progi, tolerancję i zakres walidacji."""
+    profile_paths = sorted(Path("configs/clinical_profiles").glob("*.yaml"))
+
+    for profile_path in profile_paths:
+        profile_payload = load_clinical_profile(profile_path)
+        clinical_profile = profile_payload["clinical_profile"]
+
+        assert clinical_profile["expected_direction"]
+        assert clinical_profile["primary_metric"] in {
+            "mean_abs_difference",
+            "max_abs_difference",
+        }
+        assert clinical_profile["severity_level"] == {
+            "small": 0.0,
+            "medium": 0.02,
+            "large": 0.05,
+        }
+        assert clinical_profile["tolerance"]["absolute"] >= 0.0
+        assert clinical_profile["tolerance"]["relative"] >= 0.0
+        assert clinical_profile["tolerance"]["unit"]
+        assert clinical_profile["applicability_scope"]
+        assert clinical_profile["benchmark_source"]
+
+
+def test_clinical_profile_validation_rejects_missing_tolerance() -> Any:
+    """Schemat profilu klinicznego wymaga jawnej tolerancji benchmarku."""
+    from brain_core.simulation.config_schema import ConfigValidationError
+
+    profile_payload = load_clinical_profile(
+        "configs/clinical_profiles/dopamine_deficit.yaml"
+    )
+    del profile_payload["clinical_profile"]["tolerance"]
+
+    try:
+        load_clinical_profile.__globals__["validate_config"](
+            profile_payload, require_sections=False
+        )
+    except ConfigValidationError as error:
+        assert "clinical_profile.tolerance" in str(error)
+    else:
+        raise AssertionError("Oczekiwano błędu braku tolerancji profilu.")
 
 
 def test_healthy_v1_baseline_metrics_match_reference_thresholds() -> Any:

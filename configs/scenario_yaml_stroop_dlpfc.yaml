@@ -36,6 +36,14 @@ clinical_profile:
     large: 0.05
   expected_effects:
     pathology_scenario: dlpfc_weakening
+  tolerance:
+    absolute: 0.005
+    relative: 0.0
+    unit: mean_abs_difference
+  applicability_scope: Porównania edukacyjne osłabionej kontroli wykonawczej DLPFC-ACC
+    w zadaniach konfliktu poznawczego, szczególnie Stroop.
+  benchmark_source: Syntetyczny scenariusz osłabienia DLPFC utrzymywany w repozytorium;
+    brak benchmarku empirycznego, ponieważ parametry nie pochodzą z kohorty klinicznej.
 connectome:
   atlas: default_regions
   weights: data/connectomes/weights.csv

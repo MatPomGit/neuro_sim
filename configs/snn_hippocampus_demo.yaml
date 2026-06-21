@@ -28,14 +28,23 @@ clinical_profile:
   cognitive_functions:
   - pamięć epizodyczna
   - detekcja nowości
-  expected_effects:
-    snn_coupling: sprzężenie closed-loop dla HIP
   expected_direction: stable_reference
   primary_metric: mean_abs_difference
   severity_level:
     small: 0.0
     medium: 0.02
     large: 0.05
+  expected_effects:
+    snn_coupling: sprzężenie closed-loop dla HIP
+  tolerance:
+    absolute: 0.005
+    relative: 0.0
+    unit: mean_abs_difference
+  applicability_scope: Porównania edukacyjne zmian po scenariuszu hippocampal_lesion
+    w zadaniach pamięci epizodycznej, detekcji nowości i roving oddball.
+  benchmark_source: Syntetyczny scenariusz lesion utrzymywany w repozytorium; brak
+    benchmarku empirycznego, ponieważ nie jest dopasowany do danych pacjentów po uszkodzeniu
+    hipokampa.
 connectome:
   atlas: default_regions
   weights: data/connectomes/weights.csv

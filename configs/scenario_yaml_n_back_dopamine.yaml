@@ -38,6 +38,15 @@ clinical_profile:
     large: 0.05
   expected_effects:
     learning_rate_value: niższe tempo aktualizacji wartości
+  tolerance:
+    absolute: 0.005
+    relative: 0.0
+    unit: mean_abs_difference
+  applicability_scope: Porównania edukacyjne wpływu niższego learning_rate_value na
+    metryki aktywności i zachowania w zadaniach decyzji oraz uczenia ze wzmocnieniem.
+  benchmark_source: Literature-inspired mechanistic hypothesis; brak pojedynczego
+    benchmarku empirycznego, ponieważ konfiguracja nie odwzorowuje kohorty klinicznej
+    ani protokołu farmakologicznego.
 connectome:
   atlas: default_regions
   weights: data/connectomes/weights.csv

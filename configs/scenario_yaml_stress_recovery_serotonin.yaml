@@ -37,6 +37,15 @@ clinical_profile:
     large: 0.05
   expected_effects:
     decision_threshold: ostrożniejsze przełączanie decyzji
+  tolerance:
+    absolute: 0.005
+    relative: 0.0
+    unit: mean_abs_difference
+  applicability_scope: Porównania edukacyjne wpływu wyższego decision_threshold i
+    confidence_gain na regulację emocji oraz elastyczność poznawczą w scenariuszach
+    demonstracyjnych.
+  benchmark_source: Literature-inspired mechanistic hypothesis; brak źródła ilościowego,
+    ponieważ profil agreguje mechanizm serotoninowy do parametrów decyzyjnych modelu.
 connectome:
   atlas: default_regions
   weights: data/connectomes/weights.csv

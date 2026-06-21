@@ -38,6 +38,15 @@ clinical_profile:
   expected_effects:
     noise: wyższy poziom szumu aktywacji
     pathology_scenario: reduced_gaba
+  tolerance:
+    absolute: 0.005
+    relative: 0.0
+    unit: mean_abs_difference
+  applicability_scope: Porównania edukacyjne wpływu podniesionego noise na stabilność
+    uwagi i hamowanie reakcji przy stałym seedzie oraz identycznym zadaniu.
+  benchmark_source: Literature-inspired mechanistic hypothesis; brak źródła ilościowego,
+    ponieważ profil jest syntetyczną manipulacją poziomu szumu, a nie estymacją z
+    danych GABA.
 connectome:
   atlas: default_regions
   weights: data/connectomes/weights.csv
