@@ -10,6 +10,7 @@ from typing import Any
 
 import numpy as np
 
+from brain_core.physiology.bold_hrf import REPORTABLE_BOLD_METRICS
 from brain_core.simulation.events import EVENT_TERM_EXPLANATIONS, EVENT_TERM_GLOSSARY
 
 from .connectivity import compute_connectivity
@@ -54,11 +55,71 @@ def _metric_catalog_by_name() -> dict[str, dict[str, object]]:
     return {str(item["name"]): dict(item) for item in reportable_signal_metrics()}
 
 
+def _profile_group_from_id(profile_id: str) -> str:
+    """Przypisz techniczny identyfikator profilu do grupy raportowej.
+
+    Parameters
+    ----------
+    profile_id:
+        Identyfikator profilu klinicznego z konfiguracji eksperymentu.
+
+    Returns
+    -------
+    str
+        Jedna z grup ``healthy``, ``disorder`` albo ``lesion``.
+    """
+
+    lowered = profile_id.strip().lower()
+    if "lesion" in lowered or "weakening" in lowered:
+        return "lesion"
+    if lowered in {"healthy", "healthy_v1", "baseline"}:
+        return "healthy"
+    return "disorder"
+
+
+def _build_metric_profile_task_context(
+    *,
+    metric_name: str,
+    profile_id: str,
+    profile_group: str,
+    expected_direction: str,
+    task_name: str,
+) -> str:
+    """Zbuduj jednozdaniowe powiązanie metryki z profilem i taskiem.
+
+    Parameters
+    ----------
+    metric_name:
+        Techniczna nazwa metryki EEG/BOLD.
+    profile_id:
+        Identyfikator profilu klinicznego.
+    profile_group:
+        Grupa profilu: healthy, disorder albo lesion.
+    expected_direction:
+        Kierunek oczekiwany zapisany w profilu lub opis referencyjny.
+    task_name:
+        Nazwa tasku, w którym obliczono metrykę.
+
+    Returns
+    -------
+    str
+        Polski komentarz raportowy bez wnioskowania diagnostycznego.
+    """
+
+    return (
+        f"Metryka {metric_name} jest interpretowana dla profilu {profile_id} "
+        f"({profile_group}) w tasku {task_name}; oczekiwany kierunek: "
+        f"{expected_direction}."
+    )
+
+
 def _build_eeg_bold_report_sections(
     metrics: dict[str, float],
     *,
     primary_region: str = "kanał_0",
     secondary_region: str = "kanał_1",
+    clinical_profile: dict[str, Any] | None = None,
+    task_name: str = "n/a",
 ) -> list[dict[str, object]]:
     """Zbuduj opisowe wiersze EEG/BOLD na podstawie policzonych metryk.
 
@@ -72,6 +133,10 @@ def _build_eeg_bold_report_sections(
         Nazwa głównego kanału albo regionu używanego w metrykach EEG.
     secondary_region:
         Nazwa drugiego kanału albo regionu używanego w metrykach parowych.
+    clinical_profile:
+        Profil kliniczny użyty do dodania kontekstu healthy/disorder/lesion.
+    task_name:
+        Nazwa tasku, z którym raportowana jest metryka.
 
     Returns
     -------
@@ -80,6 +145,13 @@ def _build_eeg_bold_report_sections(
     """
 
     catalog = _metric_catalog_by_name()
+    profile = clinical_profile or {}
+    profile_id = str(profile.get("id") or "healthy_v1")
+    profile_group = str(
+        profile.get("profile_group") or _profile_group_from_id(profile_id)
+    )
+    expected_direction = str(profile.get("expected_direction") or "stable_reference")
+    task_label = str(task_name or "n/a")
     metric_context = {
         "band_power_delta": ("EEG", "pasmo delta"),
         "band_power_theta": ("EEG", "pasmo theta"),
@@ -119,38 +191,54 @@ def _build_eeg_bold_report_sections(
                     "limitations_pl",
                     "Wynik jest proxy symulacyjnym, nie samodzielnym markerem klinicznym.",
                 ),
+                "reference_or_expected_direction": (
+                    expected_direction
+                    if expected_direction != "stable_reference"
+                    else metadata.get("reference_or_expected_direction", expected_direction)
+                ),
+                "profile_id": profile_id,
+                "profile_group": profile_group,
+                "task_name": task_label,
+                "profile_task_context": _build_metric_profile_task_context(
+                    metric_name=metric_name,
+                    profile_id=profile_id,
+                    profile_group=profile_group,
+                    expected_direction=expected_direction,
+                    task_name=task_label,
+                ),
             }
         )
 
-    bold_rows = (
-        (
-            "fmri_mean",
-            "cały sygnał BOLD",
-            "średnia amplituda BOLD proxy",
-            "Średnia BOLD opisuje globalny poziom sygnału po modelowaniu hemodynamicznym.",
-            "To syntetyczna miara BOLD zależna od HRF i napędu neuronalnego, "
-            "bez kalibracji do danych fMRI.",
-        ),
-        (
-            "bold_peak_to_peak",
-            "cały sygnał BOLD",
-            "amplituda BOLD proxy peak-to-peak",
-            "Zakres BOLD pokazuje rozpiętość odpowiedzi hemodynamicznej w symulacji.",
-            "Metryka nie obejmuje szumu skanera, filtracji fMRI ani modelowania przestrzennego.",
-        ),
-    )
-    for metric_name, region_or_band, unit, interpretation, limitations in bold_rows:
+    for bold_metadata in REPORTABLE_BOLD_METRICS:
+        metric_name = str(bold_metadata["name"])
         if metric_name in metrics:
             rows.append(
                 {
                     "modality": "BOLD",
                     "metric": metric_name,
-                    "region_or_band": region_or_band,
+                    "region_or_band": bold_metadata.get("scope", "cały sygnał BOLD"),
                     "value": float(metrics[metric_name]),
-                    "unit": unit,
-                    "profile_groups": ["healthy", "disorder", "lesion"],
-                    "interpretation": interpretation,
-                    "limitations": limitations,
+                    "unit": bold_metadata.get("unit", "jednostka BOLD proxy"),
+                    "profile_groups": list(
+                        bold_metadata.get(
+                            "profile_groups", ("healthy", "disorder", "lesion")
+                        )
+                    ),
+                    "interpretation": bold_metadata.get("interpretation_pl", "n/a"),
+                    "limitations": bold_metadata.get("limitations_pl", "n/a"),
+                    "reference_or_expected_direction": bold_metadata.get(
+                        "reference_or_expected_direction", expected_direction
+                    ),
+                    "profile_id": profile_id,
+                    "profile_group": profile_group,
+                    "task_name": task_label,
+                    "profile_task_context": _build_metric_profile_task_context(
+                        metric_name=metric_name,
+                        profile_id=profile_id,
+                        profile_group=profile_group,
+                        expected_direction=expected_direction,
+                        task_name=task_label,
+                    ),
                 }
             )
     return rows
@@ -1426,9 +1514,10 @@ class AnalysisReport:
             lines.append("## Sekcje EEG/BOLD gotowe do raportowania")
             lines.append(
                 "| Modalność | Metryka | Region/pasmo | Wartość | Jednostka | "
-                "Interpretacja | Ograniczenia |"
+                "Wartość referencyjna/kierunek | Profil i task | Interpretacja | "
+                "Ograniczenia |"
             )
-            lines.append("| --- | --- | --- | --- | --- | --- | --- |")
+            lines.append("| --- | --- | --- | --- | --- | --- | --- | --- | --- |")
             for item in eeg_bold_sections:
                 lines.append(
                     f"| {item.get('modality', 'n/a')} "
@@ -1436,6 +1525,8 @@ class AnalysisReport:
                     f"| {item.get('region_or_band', 'n/a')} "
                     f"| {item.get('value', 'n/a')} "
                     f"| {item.get('unit', 'n/a')} "
+                    f"| {item.get('reference_or_expected_direction', 'n/a')} "
+                    f"| {item.get('profile_task_context', 'n/a')} "
                     f"| {item.get('interpretation', 'n/a')} "
                     f"| {item.get('limitations', 'n/a')} |"
                 )
@@ -1980,6 +2071,11 @@ class AnalysisReport:
                 "unit",
                 "interpretation",
                 "limitations",
+                "reference_or_expected_direction",
+                "profile_id",
+                "profile_group",
+                "task_name",
+                "profile_task_context",
             ):
                 rows.append(
                     {
@@ -2428,6 +2524,8 @@ def build_analysis_report(
     fs: float = 100.0,
     analysis_set: list[str] | None = None,
     benchmark_metadata: dict[str, dict[str, object]] | None = None,
+    clinical_profile: dict[str, Any] | None = None,
+    task_name: str = "n/a",
 ) -> AnalysisReport:
     """
     Buduje raport analizy sygnałów EEG, fMRI i zachowania oraz porównania z benchmarkiem.
@@ -2441,6 +2539,9 @@ def build_analysis_report(
         analysis_set (list[str] | None): Lista analiz do wykonania.
         benchmark_metadata (dict[str, dict[str, object]] | None): Metadane źródeł,
             zakresów, ograniczeń i poziomów benchmarków.
+        clinical_profile (dict[str, Any] | None): Profil healthy/disorder/lesion
+            używany do komentarzy interpretacyjnych EEG/BOLD.
+        task_name (str): Nazwa tasku, z którym wiązane są metryki EEG/BOLD.
 
     Returns:
         AnalysisReport: Raport z metrykami i porównaniami.
@@ -2535,8 +2636,12 @@ def build_analysis_report(
     payload = {
         "metrics": metrics,
         "comparison": comparison,
-        "eeg_bold_sections": _build_eeg_bold_report_sections(metrics),
+        "eeg_bold_sections": _build_eeg_bold_report_sections(
+            metrics, clinical_profile=clinical_profile, task_name=task_name
+        ),
         "interpretation_limitations": _collect_interpretation_limitations(metrics),
+        "clinical_profile": clinical_profile or {},
+        "task_name": task_name,
     }
     if benchmark_metadata is not None:
         payload["benchmark_metadata"] = benchmark_metadata

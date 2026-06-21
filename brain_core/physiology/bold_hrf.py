@@ -14,6 +14,47 @@ from brain_core.data_contracts import (
     validate_hrf_contract,
 )
 
+REPORTABLE_BOLD_METRICS = (
+    {
+        "name": "fmri_mean",
+        "scope": "cały sygnał BOLD",
+        "unit": "średnia amplituda BOLD proxy",
+        "profile_groups": ("healthy", "disorder", "lesion"),
+        "interpretation_pl": (
+            "Średnia BOLD opisuje globalny poziom odpowiedzi hemodynamicznej "
+            "w profilu i tasku symulacji."
+        ),
+        "reference_or_expected_direction": (
+            "Porównuj z healthy_v1 lub oczekiwanym kierunkiem profilu klinicznego."
+        ),
+        "limitations_pl": (
+            "Miara zależy od HRF i napędu neuronalnego, bez kalibracji do danych fMRI."
+        ),
+        "profile_task_context_pl": (
+            "Wartość BOLD należy czytać razem z profilem healthy/disorder/lesion "
+            "oraz taskiem, który generował napęd neuronalny."
+        ),
+    },
+    {
+        "name": "bold_peak_to_peak",
+        "scope": "cały sygnał BOLD",
+        "unit": "amplituda BOLD proxy peak-to-peak",
+        "profile_groups": ("healthy", "disorder", "lesion"),
+        "interpretation_pl": (
+            "Zakres BOLD pokazuje rozpiętość odpowiedzi hemodynamicznej w symulacji."
+        ),
+        "reference_or_expected_direction": (
+            "Kierunek interpretuj relatywnie do healthy_v1, profilu i tasku."
+        ),
+        "limitations_pl": (
+            "Metryka nie obejmuje szumu skanera, filtracji fMRI ani modelowania przestrzennego."
+        ),
+        "profile_task_context_pl": (
+            "To miara kontekstowa dla profilu i tasku, nie samodzielny marker kliniczny."
+        ),
+    },
+)
+
 
 def canonical_hrf(
     length: int,
