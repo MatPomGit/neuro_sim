@@ -157,7 +157,7 @@ def update_connectivity(
 
 
 def build_weight_history_series(
-    weight_history: list[dict[str, dict[str, float]]], series_len: int
+    weight_history: list[WeightUpdateMap], series_len: int
 ) -> dict[str, dict[str, NDArray[np.float64]]]:
     """Przekształca historię wag w serie czasowe wag i delt dla raportów."""
     if not weight_history:
