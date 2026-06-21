@@ -347,6 +347,9 @@ trzem profilom z plików `configs/roving_oddball_healthy.yaml`,
   czasu ponownego dopasowania po dewiancie;
 - **Amplituda proxy** — `response_amplitude` z sekcji
   `amplitude_latency_mechanism`;
+- **Latencja odpowiedzi** — `mean_response_latency_s`, czyli średni czas reakcji
+  modelu w sekundach dla triali z odpowiedzią; ta wartość uzupełnia latencję
+  readaptacji, ale jej nie zastępuje;
 - **Komentarz amplitude-latency-mechanism** — opis mechanizmu symulacyjnego
   przypisany do profilu. Komentarz nie jest sugestią rozpoznania klinicznego i
   nie powinien być przepisywany jako wniosek medyczny.

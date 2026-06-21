@@ -702,6 +702,29 @@ def _mean_regional_response_amplitude(trial_results: list[dict[str, Any]]) -> fl
     return round(float(np.mean(amplitudes)), 6) if amplitudes else 0.0
 
 
+def _mean_response_latency_s(trial_results: list[dict[str, Any]]) -> float:
+    """Oblicz średnią latencję odpowiedzi modelu dla triali roving oddball.
+
+    Parameters
+    ----------
+    trial_results:
+        Lista wyników triali z polem ``reaction_time_s`` zapisanym przez silnik.
+
+    Returns
+    -------
+    float
+        Średni czas reakcji w sekundach dla triali z odpowiedzią. Wartość jest
+        dydaktycznym proxy latencji odpowiedzi modelu, a nie parametrem
+        diagnostycznym.
+    """
+    latencies_s = [
+        float(value)
+        for result in trial_results
+        if (value := result.get("reaction_time_s")) is not None
+    ]
+    return round(float(np.mean(latencies_s)), 6) if latencies_s else 0.0
+
+
 def _roving_mechanism_metadata(profile: dict[str, Any] | None) -> dict[str, Any]:
     """Zwraca zwalidowane metadane mechanizmu amplituda-latencja dla profilu."""
     if not isinstance(profile, dict):
@@ -745,6 +768,7 @@ def _build_amplitude_latency_mechanism_section(
     standard_amplitude = _mean_regional_response_amplitude(standard_trials)
     deviant_amplitude = _mean_regional_response_amplitude(deviant_trials)
     response_amplitude = _mean_regional_response_amplitude(trial_results)
+    response_latency_s = _mean_response_latency_s(trial_results)
     metadata = _roving_mechanism_metadata(clinical_profile)
     qualitative_threshold_source = metadata.get("qualitative_threshold")
     if qualitative_threshold_source is None:
@@ -766,6 +790,7 @@ def _build_amplitude_latency_mechanism_section(
             deviant_amplitude - standard_amplitude, 6
         ),
         "mean_readaptation_latency": summary.get("mean_readaptation_latency", 0.0),
+        "mean_response_latency_s": response_latency_s,
         "expected_amplitude_direction": metadata.get(
             "expected_amplitude_direction", "stable_reference"
         ),
@@ -1768,8 +1793,9 @@ class AnalysisReport:
                         "",
                         "### Tabela porównawcza habituacja-readaptacja-amplituda-latencja",
                         "| Profil | Grupa | Habituacja | Readaptacja/latencja | "
-                        "Amplituda proxy | Komentarz amplitude-latency-mechanism |",
-                        "| --- | --- | ---: | ---: | ---: | --- |",
+                        "Amplituda proxy | Latencja odpowiedzi | "
+                        "Komentarz amplitude-latency-mechanism |",
+                        "| --- | --- | ---: | ---: | ---: | ---: | --- |",
                     ]
                 )
                 for profile in comparison_profiles:
@@ -1780,6 +1806,7 @@ class AnalysisReport:
                         f"| {profile.get('habituation_rate', 'n/a')} "
                         f"| {profile.get('mean_readaptation_latency', 'n/a')} "
                         f"| {mechanism.get('response_amplitude', 'n/a')} "
+                        f"| {mechanism.get('mean_response_latency_s', 'n/a')} "
                         f"| {mechanism.get('mechanism_comment', 'n/a')} |"
                     )
                 lines.append(
@@ -1806,6 +1833,10 @@ class AnalysisReport:
                     lines.append(
                         f"  - amplituda odpowiedzi proxy: "
                         f"{mechanism.get('response_amplitude', 'n/a')}"
+                    )
+                    lines.append(
+                        f"  - latencja odpowiedzi modelu: "
+                        f"{mechanism.get('mean_response_latency_s', 'n/a')}"
                     )
                     lines.append(
                         f"  - mechanizm profilu: "
