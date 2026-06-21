@@ -4,19 +4,31 @@ clinical_profile:
   mechanism: Brak jawnie modelowanej patologii; profil referencyjny do porównań klinicznych.
   affected_regions: []
   cognitive_functions:
-    - kontrola poznawcza
-    - uwaga
-    - pamięć robocza
+  - kontrola poznawcza
+  - uwaga
+  - pamięć robocza
   expected_effects:
-    baseline_role: Punkt odniesienia dla porównań profili klinicznych, bez symulowanej patologii.
-    clinical_interpretation: Nie stanowi diagnozy, normy populacyjnej ani wzorca zdrowia klinicznego.
-    comparison_expectation: Różnice względem tego samego profilu powinny mieścić się w tolerancjach regresji przy stałym seedzie.
+    baseline_role: Punkt odniesienia dla porównań profili klinicznych, bez symulowanej
+      patologii.
+    clinical_interpretation: Nie stanowi diagnozy, normy populacyjnej ani wzorca zdrowia
+      klinicznego.
+    comparison_expectation: Różnice względem tego samego profilu powinny mieścić się
+      w tolerancjach regresji przy stałym seedzie.
   expected_direction: stable_reference
   primary_metric: mean_abs_difference
   severity_level:
     small: 0.0
     medium: 0.02
     large: 0.05
+  tolerance:
+    absolute: 0.005
+    relative: 0.0
+    unit: mean_abs_difference
+  applicability_scope: Referencyjne porównania regresyjne uruchamiane z tym samym
+    zadaniem, konfiguracją i ziarnem; bez interpretacji diagnostycznej.
+  benchmark_source: Syntetyczny profil bazowy utrzymywany w repozytorium neuro_sim;
+    brak źródła klinicznego, ponieważ profil służy wyłącznie jako techniczny punkt
+    odniesienia.
 model:
   noise: 0.015
 pathology:

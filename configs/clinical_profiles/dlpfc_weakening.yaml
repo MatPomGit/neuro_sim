@@ -1,14 +1,15 @@
 clinical_profile:
   id: dlpfc_weakening
   display_name: Osłabienie DLPFC
-  mechanism: Niższa kontrola wykonawcza i słabsza komunikacja DLPFC–ACC podczas monitorowania konfliktu.
+  mechanism: Niższa kontrola wykonawcza i słabsza komunikacja DLPFC–ACC podczas monitorowania
+    konfliktu.
   affected_regions:
-    - DLPFC
-    - ACC
-    - EXEC
+  - DLPFC
+  - ACC
+  - EXEC
   cognitive_functions:
-    - kontrola wykonawcza
-    - monitorowanie konfliktu
+  - kontrola wykonawcza
+  - monitorowanie konfliktu
   expected_direction: lower_activity
   primary_metric: mean_abs_difference
   severity_level:
@@ -17,6 +18,14 @@ clinical_profile:
     large: 0.05
   expected_effects:
     pathology_scenario: dlpfc_weakening
+  tolerance:
+    absolute: 0.005
+    relative: 0.0
+    unit: mean_abs_difference
+  applicability_scope: Porównania edukacyjne osłabionej kontroli wykonawczej DLPFC-ACC
+    w zadaniach konfliktu poznawczego, szczególnie Stroop.
+  benchmark_source: Syntetyczny scenariusz osłabienia DLPFC utrzymywany w repozytorium;
+    brak benchmarku empirycznego, ponieważ parametry nie pochodzą z kohorty klinicznej.
 model:
   gw_threshold: 0.68
   learning_rate_semantic: 0.0025

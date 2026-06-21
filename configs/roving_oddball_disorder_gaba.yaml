@@ -30,20 +30,31 @@ clinical_profile:
   cognitive_functions:
   - hamowanie reakcji
   - stabilność uwagi
-  expected_effects:
-    noise: wyższy poziom szumu aktywacji
   expected_direction: stable_reference
   primary_metric: mean_abs_difference
   severity_level:
     small: 0.0
     medium: 0.02
     large: 0.05
+  expected_effects:
+    noise: wyższy poziom szumu aktywacji
+  tolerance:
+    absolute: 0.005
+    relative: 0.0
+    unit: mean_abs_difference
+  applicability_scope: Porównania edukacyjne wpływu podniesionego noise na stabilność
+    uwagi i hamowanie reakcji przy stałym seedzie oraz identycznym zadaniu.
+  benchmark_source: Literature-inspired mechanistic hypothesis; brak źródła ilościowego,
+    ponieważ profil jest syntetyczną manipulacją poziomu szumu, a nie estymacją z
+    danych GABA.
   amplitude_latency_mechanism:
     expected_amplitude_direction: higher_noise_or_unstable_amplitude
     expected_readaptation_direction: longer_readaptation
     qualitative_threshold: 0.05
-    mechanism_comment: Obniżona inhibicja może zwiększać niestabilność amplitudy proxy i wydłużać ponowne dopasowanie po dewiancie.
-    educational_comment: Porównanie z profilem zdrowym pokazuje, czy symulacja wspiera dydaktyczną hipotezę o mniej stabilnej kontroli hamowania.
+    mechanism_comment: Obniżona inhibicja może zwiększać niestabilność amplitudy proxy
+      i wydłużać ponowne dopasowanie po dewiancie.
+    educational_comment: Porównanie z profilem zdrowym pokazuje, czy symulacja wspiera
+      dydaktyczną hipotezę o mniej stabilnej kontroli hamowania.
 connectome:
   atlas: default_regions
   weights: data/connectomes/weights.csv
