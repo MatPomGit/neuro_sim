@@ -285,7 +285,11 @@ def _build_trial_comment(row: dict[str, str]) -> str:
         Jednozdaniowy komentarz po polsku łączący warunek, zachowanie i aktywność.
     """
     mechanism_context = row.get("mechanism_context", "n/a")
-    if mechanism_context not in {"n/a", "brak komentarza mechanizmu"}:
+    clinical_profile = row.get("clinical_profile", "n/a")
+    if (
+        mechanism_context not in {"n/a", "brak komentarza mechanizmu"}
+        and mechanism_context != clinical_profile
+    ):
         return mechanism_context
     condition = row.get("condition", "n/a")
     behavior = row.get("behavioral_outcome", "n/a")
