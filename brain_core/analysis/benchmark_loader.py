@@ -404,7 +404,7 @@ def _validate_tolerance(
     normalized: dict[str, object] = {}
     for tolerance_key in ("absolute", "relative"):
         value = tolerance.get(tolerance_key)
-        if isinstance(value, bool) or not isinstance(value, int | float) or value < 0:
+        if isinstance(value, bool) or not isinstance(value, int | float) or not np.isfinite(value) or value < 0:
             raise BenchmarkValidationError(
                 f"Benchmark {benchmark_name} ma niepoprawną tolerancję {tolerance_key}."
             )
