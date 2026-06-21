@@ -362,7 +362,7 @@ def _validate_thresholds(
     normalized: dict[str, float] = {}
     for threshold_name in ("small", "medium", "large"):
         value = severity_level.get(threshold_name)
-        if isinstance(value, bool) or not isinstance(value, int | float):
+        if isinstance(value, bool) or not isinstance(value, int | float) or not np.isfinite(value):
             raise BenchmarkValidationError(
                 f"Benchmark {benchmark_name} ma niepoprawny próg {threshold_name}."
             )
