@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Mapping, MutableMapping, Protocol, Sequence, TypedDict, cast
+from typing import Any, Mapping, MutableMapping, Protocol, Sequence, TypedDict, cast
 
 import numpy as np
 from numpy.typing import NDArray
