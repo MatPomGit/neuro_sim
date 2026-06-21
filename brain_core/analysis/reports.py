@@ -69,7 +69,7 @@ def _profile_group_from_id(profile_id: str) -> str:
         Jedna z grup ``healthy``, ``disorder`` albo ``lesion``.
     """
 
-    lowered = profile_id.lower()
+    lowered = profile_id.strip().lower()
     if "lesion" in lowered or "weakening" in lowered:
         return "lesion"
     if lowered in {"healthy", "healthy_v1", "baseline"}:
