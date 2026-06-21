@@ -546,8 +546,12 @@ def test_roving_oddball_report_groups_trials_and_exports_text_reports(
     assert "**odpowiedź**" in markdown
     assert "**błąd/poprawność**" in markdown
     assert "**zmiana aktywności**" in markdown
+    assert "**typ bodźca**" in markdown
+    assert "**powiązane wykresy**" in markdown
     assert "**komentarz mechanizmu**" in markdown
-    assert "| Trial | Warunek | Bodziec | Odpowiedź | Wynik |" in md_text
+    assert "| Trial | Nr trialu | Warunek | Typ bodźca | Bodziec |" in md_text
+    assert "Powiązane wykresy" in md_text
+    assert "model_response" in md_text
     assert "## Skrót metryk" in md_text
     assert "## Polski słownik pojęć" in md_text
     assert "początek bodźca" in md_text

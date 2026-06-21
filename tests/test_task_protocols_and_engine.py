@@ -483,12 +483,20 @@ def test_roving_oddball_event_timeline_has_trials_order_and_polish_labels() -> A
     assert any("SAL" in row["active_regions"] for row in trial_rows)
     assert all(row["clinical_profile"] != "n/a" for row in trial_rows)
     assert any("reaction_time_s" in row["key_metrics"] for row in trial_rows)
+    assert all(row["trial_number"] != "n/a" for row in trial_rows)
+    assert {"standard", "dewiant", "nowy standard"} & {
+        row["stimulus_category"] for row in trial_rows
+    }
+    assert any("model_response" in row["key_metrics"] for row in trial_rows)
+    assert any(row["plot_links"] != "brak wskazanych elementów" for row in trial_rows)
 
     report = AnalysisReport(result["analysis_report"]).to_markdown()
+    assert "**typ bodźca**" in report
     assert "**aktywne regiony**" in report
     assert "**profil kliniczny**" in report
     assert "**wynik behawioralny**" in report
     assert "**najważniejsze metryki**" in report
+    assert "**powiązane wykresy**" in report
     assert "dewiant" in report
 
 

@@ -434,8 +434,9 @@ def _trial_observation_lines(
         lines.extend(
             [
                 (
-                    f"Trial {row['trial_id']} | czas: {row['time_s']} s | "
-                    f"warunek: {row['condition']}"
+                    f"Trial {row['trial_id']} (nr {row['trial_number']}) | "
+                    f"czas: {row['time_s']} s | warunek: {row['condition']} | "
+                    f"typ bodźca: {row['stimulus_category']}"
                 ),
                 f"  Bodziec: {row['stimulus']}",
                 f"  Odpowiedź: {row['response']}",
@@ -445,6 +446,7 @@ def _trial_observation_lines(
                 f"  Profil kliniczny: {row['clinical_profile']}",
                 f"  Wynik behawioralny: {row['behavioral_outcome']}",
                 f"  Najważniejsze metryki: {row['key_metrics']}",
+                f"  Powiązane wykresy: {row['plot_links']}",
                 f"  Komentarz: {row['comment_pl']}",
             ]
         )
@@ -590,21 +592,22 @@ def _experiment_report_markdown(
         lines.extend(
             [
                 (
-                    "| Trial | Warunek | Bodziec | Odpowiedź | Wynik | "
+                    "| Trial | Nr trialu | Warunek | Typ bodźca | Bodziec | "
+                    "Odpowiedź | Wynik | "
                     "Czas [s] | Aktywne regiony | Profil kliniczny | "
-                    "Najważniejsze metryki | Komentarz |"
+                    "Najważniejsze metryki | Powiązane wykresy | Komentarz |"
                 ),
-                "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+                "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
             ]
         )
         for row in rows:
             escaped_row = {k: _escape_markdown_table_cell(v) for k, v in row.items()}
             lines.append(
-                "| {trial_id} | {condition} | {stimulus} | {response} | "
+                "| {trial_id} | {trial_number} | {condition} | "
+                "{stimulus_category} | {stimulus} | {response} | "
                 "{behavioral_outcome} | {time_s} | {active_regions} | "
-                "{clinical_profile} | {key_metrics} | {comment_pl} |".format(
-                    **escaped_row
-                )
+                "{clinical_profile} | {key_metrics} | {plot_links} | "
+                "{comment_pl} |".format(**escaped_row)
             )
     else:
         if total_rows > 0:

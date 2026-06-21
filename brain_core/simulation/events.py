@@ -183,6 +183,7 @@ def _stimulus_onset_events(trial_events: list[dict[str, Any]]) -> list[Simulatio
     for trial_event in trial_events:
         condition = str(trial_event.get("condition", "n/a"))
         trial_id = trial_event.get("trial_id", "n/a")
+        trial_number = _trial_number_from_event(trial_event)
         events.append(
             SimulationEvent(
                 time_s=float(trial_event.get("onset_s", 0.0)),
@@ -191,11 +192,11 @@ def _stimulus_onset_events(trial_events: list[dict[str, Any]]) -> list[Simulatio
                 description_pl=f"Początek bodźca w trialu {trial_id} ({condition}).",
                 source="task",
                 trial_id=trial_id,
-                trial_number=_trial_number_from_id(trial_id),
+                trial_number=trial_number,
                 condition=condition,
                 details={
                     "trial_id": trial_id,
-                    "trial_number": _trial_number_from_id(trial_id),
+                    "trial_number": trial_number,
                     "condition": condition,
                     "duration_s": trial_event.get("duration_s"),
                     "regional_input": trial_event.get("regional_input", {}),
@@ -219,6 +220,7 @@ def _response_and_error_events(
     events: list[SimulationEvent] = []
     for result in trial_results:
         trial_id = result.get("trial_id", "n/a")
+        trial_number = _trial_number_from_event(result)
         reaction_time = result.get("reaction_time_s")
         onset_s = onset_by_trial.get(trial_id, 0.0)
         event_time = (
@@ -237,12 +239,15 @@ def _response_and_error_events(
                 ),
                 source="task_scoring",
                 trial_id=trial_id,
-                trial_number=_trial_number_from_id(trial_id),
+                trial_number=trial_number,
                 condition=str(result.get("condition", "n/a")),
                 details={
                     "trial_id": trial_id,
-                    "trial_number": _trial_number_from_id(trial_id),
+                    "trial_number": trial_number,
                     "condition": result.get("condition", "n/a"),
+                    "model_response": result.get("model_response"),
+                    "observed_response": result.get("observed_response"),
+                    "expected_response": result.get("expected_response"),
                     "reaction_time_s": reaction_time,
                     "correct": correct,
                     "error_type": error_type,
@@ -263,11 +268,11 @@ def _response_and_error_events(
                 ),
                 source="task_scoring",
                 trial_id=trial_id,
-                trial_number=_trial_number_from_id(trial_id),
+                trial_number=trial_number,
                 condition=str(result.get("condition", "n/a")),
                 details={
                     "trial_id": trial_id,
-                    "trial_number": _trial_number_from_id(trial_id),
+                    "trial_number": trial_number,
                     "condition": result.get("condition", "n/a"),
                     "correct": correct,
                     "error_type": error_type,
@@ -287,11 +292,11 @@ def _response_and_error_events(
                     description_pl=f"Błąd w trialu {trial_id}: {error_type}.",
                     source="task_scoring",
                     trial_id=trial_id,
-                    trial_number=_trial_number_from_id(trial_id),
+                    trial_number=trial_number,
                     condition=str(result.get("condition", "n/a")),
                     details={
                         "trial_id": trial_id,
-                        "trial_number": _trial_number_from_id(trial_id),
+                        "trial_number": trial_number,
                         "condition": result.get("condition", "n/a"),
                         "error_type": error_type,
                     },
@@ -480,7 +485,7 @@ def _trial_contexts(trial_events: list[dict[str, Any]]) -> list[dict[str, Any]]:
         contexts.append(
             {
                 "trial_id": event.get("trial_id") or "n/a",
-                "trial_number": _trial_number_from_id(event.get("trial_id")),
+                "trial_number": _trial_number_from_event(event),
                 "condition": str(event.get("condition") or "n/a"),
                 "start_s": onset_s,
                 "end_s": onset_s + max(duration_s, 0.0) + 0.75,
@@ -543,3 +548,27 @@ def _trial_number_from_id(trial_id: Any) -> int | None:
         return int(trial_id)
     except (TypeError, ValueError):
         return None
+
+
+def _trial_number_from_event(event: dict[str, Any]) -> int | None:
+    """Odczytaj numer trialu z pola zdarzenia z zachowaniem kompatybilności.
+
+    Parameters
+    ----------
+    event:
+        Zdarzenie bodźcowe albo wynik trialu. Preferowane jest jawne pole
+        ``trial_number``; gdy go brakuje, funkcja odtwarza dotychczasowe
+        zachowanie na podstawie ``trial_id``.
+
+    Returns
+    -------
+    int | None
+        Numer trialu używany w raportach albo ``None`` dla zdarzeń globalnych.
+    """
+    trial_number = event.get("trial_number")
+    if trial_number not in {None, "n/a"}:
+        try:
+            return int(trial_number)
+        except (TypeError, ValueError):
+            return None
+    return _trial_number_from_id(event.get("trial_id"))

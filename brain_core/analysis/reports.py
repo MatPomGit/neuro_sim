@@ -180,6 +180,8 @@ TRIAL_METRIC_KEYS = (
     "reaction_time_s",
     "correct",
     "error_type",
+    "model_response",
+    "expected_response",
     "surprise_index",
     "habituation_level",
     "readaptation_latency",
@@ -282,6 +284,9 @@ def _build_trial_comment(row: dict[str, str]) -> str:
     str
         Jednozdaniowy komentarz po polsku łączący warunek, zachowanie i aktywność.
     """
+    mechanism_context = row.get("mechanism_context", "n/a")
+    if mechanism_context not in {"n/a", "brak komentarza mechanizmu"}:
+        return mechanism_context
     condition = row.get("condition", "n/a")
     behavior = row.get("behavioral_outcome", "n/a")
     active_regions = row.get("active_regions", "n/a")
@@ -337,9 +342,11 @@ def build_trial_observation_rows(
         response = group.get("response") or {}
         correctness = group.get("correctness") or {}
         activity_changes = group.get("activity_changes") or []
+        mechanism_comments = group.get("mechanism_comments") or []
         stimulus_details = stimulus.get("details") or {}
         response_details = response.get("details") or {}
         correctness_details = correctness.get("details") or {}
+        stimulus_payload = stimulus_details.get("payload") or {}
 
         active_regions: list[str] = []
         regional_input = stimulus_details.get("regional_input") or {}
@@ -356,11 +363,7 @@ def build_trial_observation_rows(
                 active_regions.append(str(region))
 
         metric_items: list[str] = []
-        for mapping in (
-            stimulus_details.get("payload") or {},
-            response_details,
-            correctness_details,
-        ):
+        for mapping in (stimulus_payload, response_details, correctness_details):
             if isinstance(mapping, dict):
                 metric_items.extend(_metric_summary_from_mapping(mapping))
         for event in activity_changes[:2]:
@@ -377,11 +380,27 @@ def build_trial_observation_rows(
             )
         else:
             behavioral_outcome = str(response.get("description_pl") or "brak wyniku")
+        mechanism_context = "; ".join(
+            str(event.get("description_pl") or "brak opisu")
+            for event in mechanism_comments[:3]
+        )
+        if not mechanism_context or mechanism_context == "brak opisu":
+            mechanism_context = profile_label
+        plot_links = _format_polish_list(_plot_anchors_from_group(group))
+        is_new_standard = bool(stimulus_payload.get("is_new_standard", False))
+        stimulus_category = _stimulus_category_label(
+            group.get("condition", "n/a"),
+            is_new_standard=is_new_standard,
+        )
 
         row = {
             "trial_id": str(group.get("trial_id", "n/a")),
+            "trial_number": _format_trial_metric_value(
+                group.get("trial_number", "n/a")
+            ),
             "time_s": _format_trial_metric_value(group.get("first_time_s", "n/a")),
             "condition": _condition_label_pl(group.get("condition", "n/a")),
+            "stimulus_category": stimulus_category,
             "stimulus": str(stimulus.get("description_pl") or "brak zapisanego bodźca"),
             "response": str(
                 response.get("description_pl") or "brak zapisanej odpowiedzi"
@@ -398,11 +417,78 @@ def build_trial_observation_rows(
             "clinical_profile": profile_label,
             "behavioral_outcome": behavioral_outcome,
             "key_metrics": "; ".join(unique_metrics[:8]) or "brak metryk trialu",
+            "mechanism_context": mechanism_context,
+            "plot_links": plot_links,
             "comment_pl": "",
         }
         row["comment_pl"] = _build_trial_comment(row)
         rows.append(row)
     return rows
+
+
+def _stimulus_category_label(condition: Any, *, is_new_standard: bool) -> str:
+    """Zwróć etykietę standard/dewiant/nowy standard dla trialu.
+
+    Parameters
+    ----------
+    condition:
+        Warunek zapisany w bodźcu lub wyniku trialu.
+    is_new_standard:
+        Czy bodziec jest pierwszym standardem po dewiancie w roving oddball.
+
+    Returns
+    -------
+    str
+        Polska kategoria bodźca wymagana w raporcie trial-by-trial.
+    """
+    if is_new_standard:
+        return "nowy standard"
+    return _condition_label_pl(condition)
+
+
+def _plot_anchors_from_group(group: dict[str, Any]) -> list[str]:
+    """Zbierz znaczniki łączące trial z danymi wykresów.
+
+    Parameters
+    ----------
+    group:
+        Grupa zdarzeń jednego trialu zbudowana z ``event_timeline``.
+
+    Returns
+    -------
+    list[str]
+        Unikalne kotwice wykresów, np. ``task_timeline`` albo ``activity.SAL``.
+    """
+    anchors: list[str] = []
+    candidate_events = [
+        group.get("stimulus"),
+        group.get("response"),
+        group.get("correctness"),
+        *list(group.get("activity_changes") or []),
+        *list(group.get("mechanism_comments") or []),
+    ]
+    for event in candidate_events:
+        if isinstance(event, dict) and event.get("plot_anchor"):
+            anchors.append(str(event["plot_anchor"]))
+    return list(dict.fromkeys(anchors))
+
+
+def _trial_group_key(event: dict[str, Any]) -> tuple[str, str]:
+    """Zwróć stabilny klucz grupowania po ``trial_id`` oraz ``trial_number``.
+
+    Parameters
+    ----------
+    event:
+        Pojedynczy wpis osi czasu eksperymentu.
+
+    Returns
+    -------
+    tuple[str, str]
+        Para tekstowa używana jako klucz słownika grup triali.
+    """
+    trial_id = event.get("trial_id", "n/a")
+    trial_number = event.get("trial_number", "n/a")
+    return str(trial_id), str(trial_number)
 
 
 def _group_event_timeline_by_trial(
@@ -427,11 +513,12 @@ def _group_event_timeline_by_trial(
         trial_id = event.get("trial_id", "n/a")
         if trial_id in {None, "n/a"}:
             continue
-        trial_key = str(trial_id)
+        trial_key = "|".join(_trial_group_key(event))
         group = grouped.setdefault(
             trial_key,
             {
                 "trial_id": trial_id,
+                "trial_number": event.get("trial_number", "n/a"),
                 "condition": event.get("condition") or "n/a",
                 "stimulus": None,
                 "response": None,
@@ -442,6 +529,7 @@ def _group_event_timeline_by_trial(
             },
         )
         group["condition"] = event.get("condition") or group["condition"]
+        group["trial_number"] = event.get("trial_number", group["trial_number"])
         group["first_time_s"] = min(
             float(group["first_time_s"]), float(event.get("time_s", 0.0) or 0.0)
         )
@@ -498,9 +586,11 @@ def _trial_group_markdown_lines(
     ]
     for row in rows:
         lines.append(
-            f"- **Trial {row['trial_id']}** — czas: {row['time_s']} s; "
+            f"- **Trial {row['trial_id']} (nr {row['trial_number']})** — "
+            f"czas: {row['time_s']} s; "
             f"warunek: {row['condition']}"
         )
+        lines.append(f"  - **typ bodźca**: {row['stimulus_category']}")
         lines.append(f"  - **bodziec**: {row['stimulus']}")
         lines.append(f"  - **odpowiedź**: {row['response']}")
         lines.append(f"  - **błąd/poprawność**: {row['correctness']}")
@@ -509,6 +599,7 @@ def _trial_group_markdown_lines(
         lines.append(f"  - **profil kliniczny**: {row['clinical_profile']}")
         lines.append(f"  - **wynik behawioralny**: {row['behavioral_outcome']}")
         lines.append(f"  - **najważniejsze metryki**: {row['key_metrics']}")
+        lines.append(f"  - **powiązane wykresy**: {row['plot_links']}")
         lines.append(f"  - **komentarz mechanizmu**: {row['comment_pl']}")
     if len(groups) > max_trials:
         lines.append(f"- ... pominięto {len(groups) - max_trials} dalszych triali.")
