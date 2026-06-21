@@ -1,9 +1,13 @@
 {
   "eeg": {
+    "effect_name": "Stabilność kształtu i amplitudy proxy sygnału EEG Cz/Pz",
     "source": "Syntetyczny cel walidacyjny utrzymywany w repozytorium neuro_sim; nie pochodzi z danych uczestników.",
+    "evidence_source": "Syntetyczny cel walidacyjny utrzymywany w repozytorium neuro_sim; nie pochodzi z danych uczestników ani z publikacji klinicznej.",
+    "expected_direction": "stable_shape_and_amplitude_proxy",
+    "tolerance_or_quality_criterion": "Kryterium jakościowe: wymagane kolumny Cz i Pz, co najmniej dwie próbki oraz metryki porównawcze mae, rmse i correlation bez rozszerzania interpretacji na normy kliniczne.",
+    "level": "synthetic",
     "scope": "Krótki sygnał demonstracyjny EEG dla kanałów Cz i Pz używany do testowania kształtu danych oraz podstawowych porównań amplitudy.",
     "limitations": "Benchmark służy do walidacji technicznej i edukacyjnej; nie reprezentuje norm klinicznych, rozkładów populacyjnych ani pełnych właściwości czasowo-częstotliwościowych EEG.",
-    "level": "synthetic",
     "compliance_criteria": "Zgodność oznacza poprawny odczyt niepustej macierzy z kolumnami metryk Cz i Pz, zachowanie co najmniej dwóch próbek oraz raportowanie metryk porównawczych bez interpretacji klinicznej.",
     "compliance_checks": {
       "required_columns": [
@@ -21,10 +25,14 @@
     }
   },
   "fmri": {
+    "effect_name": "Stabilność kształtu i średniej aktywności proxy BOLD V1/PFC",
     "source": "Syntetyczny cel walidacyjny utrzymywany w repozytorium neuro_sim; nie pochodzi z akwizycji MRI ani z publicznego zbioru BIDS.",
+    "evidence_source": "Syntetyczny cel walidacyjny utrzymywany w repozytorium neuro_sim; nie pochodzi z akwizycji MRI, publicznego zbioru BIDS ani publikacji hemodynamicznej.",
+    "expected_direction": "stable_shape_and_mean_activity_proxy",
+    "tolerance_or_quality_criterion": "Kryterium jakościowe: wymagane regiony V1 i PFC, co najmniej dwie próbki oraz metryki porównawcze mae, rmse i correlation bez wnioskowania hemodynamicznego.",
+    "level": "synthetic",
     "scope": "Krótki sygnał demonstracyjny fMRI dla regionów V1 i PFC używany do testowania kształtu danych oraz porównań średniej aktywności.",
     "limitations": "Benchmark nie modeluje pełnej odpowiedzi hemodynamicznej, opóźnień skanera, wariancji międzyosobniczej ani artefaktów akwizycji.",
-    "level": "synthetic",
     "compliance_criteria": "Zgodność oznacza poprawny odczyt niepustej macierzy regionów V1 i PFC, zachowanie co najmniej dwóch próbek oraz raportowanie porównań średniej aktywności bez wnioskowania hemodynamicznego.",
     "compliance_checks": {
       "required_columns": [
@@ -42,10 +50,14 @@
     }
   },
   "behavior": {
+    "effect_name": "Spójność raportowania trafności i czasu reakcji",
     "source": "Edukacyjny cel walidacyjny utrzymywany w repozytorium neuro_sim; wartości dobrano ręcznie do testów raportowania.",
+    "evidence_source": "Edukacyjny cel walidacyjny utrzymywany w repozytorium neuro_sim; wartości dobrano ręcznie do testów raportowania, bez próby empirycznej.",
+    "expected_direction": "stable_accuracy_and_reaction_time_reporting",
+    "tolerance_or_quality_criterion": "Kryterium jakościowe: wymagane kolumny accuracy i reaction_time, co najmniej dwie próby oraz metryki porównawcze mae, rmse i correlation bez wniosków psychometrycznych.",
+    "level": "educational",
     "scope": "Minimalny zestaw prób z trafnością i czasem reakcji używany do sprawdzania porównań behawioralnych.",
     "limitations": "Benchmark nie jest próbą empiryczną, nie zawiera wariancji populacyjnej i nie powinien być używany do wniosków psychometrycznych.",
-    "level": "educational",
     "compliance_criteria": "Zgodność oznacza poprawny odczyt minimalnego zestawu prób z trafnością i czasem reakcji oraz raportowanie porównań behawioralnych wyłącznie jako kontroli edukacyjnej.",
     "compliance_checks": {
       "required_columns": [

@@ -167,7 +167,11 @@ def test_reference_benchmark_metadata_validation() -> Any:
     assert metadata["eeg"].level == "synthetic"
     assert metadata["behavior"].level == "educational"
     for item in metadata.values():
+        assert item.effect_name
         assert item.source
+        assert item.evidence_source
+        assert item.expected_direction
+        assert item.tolerance_or_quality_criterion
         assert item.scope
         assert item.limitations
         assert item.compliance_criteria
@@ -246,7 +250,11 @@ def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> An
         json.dumps(
             {
                 "eeg": {
+                    "effect_name": "test",
                     "source": "test",
+                    "evidence_source": "test",
+                    "expected_direction": "test",
+                    "tolerance_or_quality_criterion": "test",
                     "scope": "test",
                     "limitations": "test",
                     "level": "unknown",
@@ -260,7 +268,11 @@ def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> An
                     },
                 },
                 "fmri": {
+                    "effect_name": "test",
                     "source": "test",
+                    "evidence_source": "test",
+                    "expected_direction": "test",
+                    "tolerance_or_quality_criterion": "test",
                     "scope": "test",
                     "limitations": "test",
                     "level": "synthetic",
@@ -274,7 +286,11 @@ def test_reference_benchmark_metadata_rejects_invalid_level(tmp_path: Any) -> An
                     },
                 },
                 "behavior": {
+                    "effect_name": "test",
                     "source": "test",
+                    "evidence_source": "test",
+                    "expected_direction": "test",
+                    "tolerance_or_quality_criterion": "test",
                     "scope": "test",
                     "limitations": "test",
                     "level": "empirical",
@@ -313,7 +329,11 @@ def test_report_marks_benchmark_origin_in_markdown() -> Any:
             "comparison": {},
             "benchmark_metadata": {
                 "eeg": {
+                    "effect_name": "test",
                     "source": "test",
+                    "evidence_source": "test",
+                    "expected_direction": "test",
+                    "tolerance_or_quality_criterion": "test",
                     "scope": "test",
                     "limitations": "test",
                     "level": "synthetic",
@@ -328,7 +348,11 @@ def test_report_marks_benchmark_origin_in_markdown() -> Any:
                     "comparison_origin_pl": "syntetyczny",
                 },
                 "behavior": {
+                    "effect_name": "test",
                     "source": "test",
+                    "evidence_source": "test",
+                    "expected_direction": "test",
+                    "tolerance_or_quality_criterion": "test",
                     "scope": "test",
                     "limitations": "test",
                     "level": "empirical",
@@ -395,6 +419,10 @@ def test_validation_registry_benchmarks_are_reported() -> Any:
     assert reported_benchmarks == set(metadata_from_file)
     assert "## Zgodność walidacyjna" in markdown
     for benchmark_name, metadata in bundle.metadata_payload().items():
+        assert metadata["effect_name"]
+        assert metadata["evidence_source"]
+        assert metadata["expected_direction"]
+        assert metadata["tolerance_or_quality_criterion"]
         assert f"| {benchmark_name} | {metadata['level']} |" in markdown
         assert f"{benchmark_name}_mae" in " ".join(report.payload["comparison"])
 
