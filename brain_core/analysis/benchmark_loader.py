@@ -123,7 +123,7 @@ class BenchmarkMetadata:
 
         Returns
         -------
-        dict[str, str]
+        dict[str, object]
             Słownik z polami opisu efektu, źródła, kierunku, tolerancji,
             poziomu walidacji, ograniczeń, kryteriów zgodności i
             ``comparison_origin_pl``.
