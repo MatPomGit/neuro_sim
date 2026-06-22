@@ -4,13 +4,59 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Any, Mapping, Protocol, runtime_checkable
 
 import numpy as np
 
 from .state import SimulationState
 
 LOGGER = logging.getLogger(__name__)
+
+
+@runtime_checkable
+class StimulusLike(Protocol):
+    """Jawny kontrakt bodźca obsługiwanego przez odtwarzacz zadań.
+
+    Protocol opisuje minimalny zestaw pól wymaganych przez harmonogram
+    symulacji. Pole ``regional_input`` pozostaje opcjonalne i jest modelowane
+    osobnym protokołem, aby zachować zgodność ze starszym formatem
+    ``payload["regional_input"]``.
+    """
+
+    @property
+    def trial_id(self) -> int | str:
+        """Identyfikator trialu używany w metrykach i raportach."""
+        ...
+
+    @property
+    def onset_s(self) -> float:
+        """Czas rozpoczęcia bodźca w sekundach."""
+        ...
+
+    @property
+    def duration_s(self) -> float:
+        """Czas trwania bodźca w sekundach."""
+        ...
+
+    @property
+    def condition(self) -> str:
+        """Nazwa warunku eksperymentalnego prezentowana w metrykach."""
+        ...
+
+    @property
+    def payload(self) -> Mapping[str, object]:
+        """Dodatkowe dane bodźca, w tym starsze ``regional_input``."""
+        ...
+
+
+@runtime_checkable
+class RegionalStimulusLike(StimulusLike, Protocol):
+    """Kontrakt bodźca z jawną mapą wejść regionalnych."""
+
+    @property
+    def regional_input(self) -> Mapping[str, object]:
+        """Jawna mapa region→amplituda dla aktywacji bodźca."""
+        ...
 
 
 class SimulationModule(Protocol):
@@ -42,7 +88,7 @@ class CoSimulationHook:
 class TaskStimulusPlayer:
     """Wstrzykuje bodźce zadania poznawczego do osi czasu metryk."""
 
-    stimuli: list[Any]
+    stimuli: list[StimulusLike]
     cursor: int = 0
 
     def __post_init__(self) -> None:
@@ -104,7 +150,7 @@ class TaskStimulusPlayer:
             )
 
     @staticmethod
-    def _is_stimulus_active(stimulus: Any, time_s: float) -> bool:
+    def _is_stimulus_active(stimulus: StimulusLike, time_s: float) -> bool:
         """Sprawdza, czy bodziec obejmuje bieżący czas symulacji.
 
         Parameters
@@ -125,7 +171,7 @@ class TaskStimulusPlayer:
         )
 
     @staticmethod
-    def _regional_input_for(stimulus: Any) -> dict[str, float]:
+    def _regional_input_for(stimulus: StimulusLike) -> dict[str, float]:
         """Zwraca znormalizowaną mapę wejść regionalnych bodźca.
 
         Parameters
@@ -139,9 +185,18 @@ class TaskStimulusPlayer:
         dict[str, float]
             Kopia mapy region→amplituda z wartościami liczbowymi typu ``float``.
         """
-        regional_input = getattr(stimulus, "regional_input", None)
-        if regional_input is None:
-            regional_input = stimulus.payload.get("regional_input", {})
+        regional_input: Mapping[str, object] = {}
+        if isinstance(stimulus, RegionalStimulusLike):
+            regional_input = stimulus.regional_input
+        if not regional_input:
+            legacy_regional_input = stimulus.payload.get("regional_input", {})
+            if not isinstance(legacy_regional_input, Mapping):
+                LOGGER.warning(
+                    "Pominięto niepoprawną mapę wejścia regionalnego w payload: %r.",
+                    legacy_regional_input,
+                )
+                legacy_regional_input = {}
+            regional_input = legacy_regional_input
         return {
             region: TaskStimulusPlayer._safe_regional_amplitude(region, amplitude)
             for region, amplitude in regional_input.items()
