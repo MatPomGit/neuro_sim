@@ -55,7 +55,9 @@ Tryb nauczyciela w zakładkach wynikowych porządkuje lekcję po uruchomieniu sc
 - `GuiState` — aktualny scenariusz, ścieżka konfiguracji YAML, ścieżka konfiguracji porównania i seed widoczny w formularzu;
 - `event_timeline` — oś czasu zdarzeń wygenerowana przez silnik;
 - `clinical_profile` — profil kliniczny z konfiguracji albo raportu;
-- `analysis_report` — metryki i sekcje analityczne wygenerowane przez `run_experiment`;
+- `analysis_report` — metryki i sekcje analityczne wygenerowane przez
+  `run_experiment`; silnik buduje je wewnętrznie w `ExperimentResult`, a GUI
+  nadal otrzymuje stabilny słownik kompatybilności;
 - `configs/lessons/*.yaml` — metadane lekcji: cel, pytania przed uruchomieniem, oczekiwane obserwacje, pytania po uruchomieniu i sugerowane zmiany następnego przebiegu.
 
 Panel ma stałą strukturę dydaktyczną zgodną z przebiegiem zajęć:

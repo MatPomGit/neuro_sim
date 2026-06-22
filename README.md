@@ -142,6 +142,8 @@ Od tego etapu uruchamianie eksperymentów jest oparte o wspólny silnik `brain_c
 Najważniejsze elementy:
 
 - `brain_core/simulation/engine.py` – API `run_experiment(config, progress_callback=...)`,
+- `brain_core/simulation/results.py` – wewnętrzny kontrakt `ExperimentResult`
+  z polami reprodukowalności i konwersją do dotychczasowego słownika wynikowego,
 - `brain_core/simulation/config_schema.py` – schema + walidacja konfiguracji,
 - `brain_core/simulation/config_loader.py` – loader YAML/JSON,
 - `brain_core/simulation/run.py` – CLI (`python -m brain_core.simulation.run --config ...`),
@@ -183,6 +185,12 @@ time, activity, diagnostics, oscillations, behavior = model.simulate(T=45.0)
 - `oscillations["eeg"]`: sygnały E-I dla modułów,
 - `oscillations["band_power"]`: chwilowa moc theta/alpha/beta/gamma,
 - `behavior`: decyzje, latencje, pewność i zdarzenia decyzyjne.
+
+`run_experiment(...)` nadal zwraca słownik zgodny z dotychczasowym API,
+ale wewnętrznie buduje `ExperimentResult`, który grupuje konfigurację,
+sygnały, metryki, zdarzenia prób, raport analizy, katalog wynikowy oraz
+informacje Git i środowiska. Konwersja przez `to_legacy_dict()` utrzymuje
+stabilne klucze dla GUI, CLI i istniejących integracji.
 
 Pipeline kalibracji parametrów jest opisany w `docs/calibration_pipeline.md`.
 

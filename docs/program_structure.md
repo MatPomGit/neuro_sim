@@ -82,6 +82,7 @@ brain_core/simulation/
 ├── config_schema.py
 ├── config_loader.py
 ├── engine.py
+├── results.py
 ├── run.py
 ├── state.py
 ├── scheduler.py
@@ -94,6 +95,11 @@ brain_core/simulation/
 - `config_schema.py` definiuje `ExperimentConfig` i walidację sekcji `model`, `integrator`, `task`, `pathology`, `output`, `snn` oraz `analysis`.
 - `config_loader.py` wczytuje YAML/JSON, a `run.py` udostępnia CLI eksperymentów.
 - `engine.py` spina konfigurację z aktualnym modelem poznawczym i dołącza sekcję `snn_comparison` dla demonstracyjnego przebiegu neural-mass + lokalny obwód SNN.
+- `results.py` definiuje `ExperimentResult`, czyli wewnętrzny kontrakt wyniku
+  eksperymentu obejmujący konfigurację, sygnały, metryki, zdarzenia prób,
+  raport analizy, katalog wynikowy oraz informacje Git i środowiska; publiczne
+  `run_experiment` nadal eksportuje stabilny słownik legacy przez
+  `to_legacy_dict()`.
 - `signal_adapter.py` definiuje `SNNPopulationMapping` oraz `CouplingSignalAdapter`, czyli jawny kontrakt mapowania regionów i konwersji jednostek między neural-mass i SNN.
 - `state.py`, `scheduler.py`, `multiscale_engine.py`, `integrators.py` i `random_sources.py` są fundamentem dalszej integracji wieloskalowej i deterministycznych uruchomień.
 
@@ -164,6 +170,12 @@ brain_core/analysis/
 ```
 
 Warstwa analizy wylicza metryki spektralne, fazowe, łącznościowe i przepływu informacji. `signal_metrics.py` pełni rolę fasady kompatybilności, a `reports.py` agreguje metryki do raportów końcowych.
+
+**MVP istnieje — wynik eksperymentu:** `brain_core/simulation/results.py`
+porządkuje artefakty pojedynczego uruchomienia w `ExperimentResult`, a
+`engine.py` zwraca dotychczasowy słownik dopiero na granicy kompatybilności.
+Dzięki temu wewnętrzny wynik zawiera jawne pola reprodukowalności bez zmiany
+kontraktu GUI, CLI i testów.
 
 **MVP istnieje — timeline:** oś zdarzeń jest budowana w `brain_core/simulation/events.py`, dołączana przez `brain_core/simulation/engine.py` i konsumowana przez raporty. Zdarzenia przypisane do trialu przenoszą `trial_id` oraz `trial_number`, a `details.trial_number` jest utrzymywane dla zdarzeń, których metadane są później używane w tabelach trial-by-trial.
 

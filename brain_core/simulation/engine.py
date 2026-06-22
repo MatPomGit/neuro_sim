@@ -22,7 +22,13 @@ from brain_core.experiments.protocols import (
     TrialStimulus,
     get_task,
 )
-from brain_model.io import build_output_dir, save_run
+from brain_model.io import (
+    REPO_ROOT,
+    build_output_dir,
+    collect_environment_info,
+    collect_git_info,
+    save_run,
+)
 from brain_model.model import CognitiveBrainModel
 from brain_model.oscillators import WilsonCowanParams
 from brain_model.params import BrainParams
@@ -45,6 +51,7 @@ from .profile_comparison import (
 from .profile_comparison import (
     run_task_across_clinical_profiles as _run_task_across_clinical_profiles,
 )
+from .results import ExperimentResult
 from .scheduler import SimulationScheduler, TaskStimulusPlayer
 from .snn_runtime import (
     build_snn_runtime,
@@ -513,30 +520,42 @@ def run_experiment(
         )
         save_info["analysis_report_files"] = report_files
 
-    return {
-        "model": model,
-        "time": time,
-        "activity": activity,
-        "diagnostics": diagnostics,
-        "oscillations": oscillations,
-        "behavior": behavior,
-        "trial_events": trial_events,
-        "trial_results": trial_results,
-        "trial_report_context": {
+    output_dir = Path(save_info["output_dir"]) if save_info is not None else None
+    experiment_result = ExperimentResult(
+        config=config,
+        signals={
+            "model": model,
+            "time": time,
+            "activity": activity,
+            "diagnostics": diagnostics,
+            "oscillations": oscillations,
+            "behavior": behavior,
+        },
+        metrics={
+            "metrics": analysis_report.payload.get("metrics", {}),
+            "comparison": analysis_report.payload.get("comparison", {}),
+        },
+        trial_events=trial_events,
+        analysis_report=analysis_report.payload,
+        output_dir=output_dir,
+        git_info=collect_git_info(REPO_ROOT),
+        environment_info=collect_environment_info(),
+        trial_results=trial_results,
+        trial_report_context={
             "scenario": str(config.task.get("scenario", "run")),
             "task_name": str(config.task.get("name", "stroop")),
             "profile_id": str((config.clinical_profile or {}).get("id", "healthy_v1")),
             "metrics": analysis_report.payload.get("metrics", {}),
         },
-        "stimulus_sequence_signature": stimulus_sequence_signature,
-        "event_timeline": event_timeline,
-        "analysis_report": analysis_report.payload,
-        "task_activation": task_activation,
-        "clinical_profile": dict(config.clinical_profile),
-        "snn_comparison": snn_comparison,
-        "save_info": save_info,
-        "elapsed": elapsed,
-    }
+        stimulus_sequence_signature=stimulus_sequence_signature,
+        event_timeline=event_timeline,
+        task_activation=task_activation,
+        clinical_profile=dict(config.clinical_profile),
+        snn_comparison=snn_comparison,
+        save_info=save_info,
+        elapsed=elapsed,
+    )
+    return experiment_result.to_legacy_dict()
 
 
 _classify_roving_profile_group = classify_roving_profile_group
