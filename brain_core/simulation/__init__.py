@@ -15,6 +15,7 @@ from .multiscale_engine import ClosedLoopFeedbackPath, MultiScaleEngine, TimeSca
 from .random_sources import RandomSources
 from .scheduler import CoSimulationHook, SimulationModule, SimulationScheduler
 from .state import SimulationState
+from .timebase import TIMEBASE_RELATIVE_TOLERANCE, TimeAccumulator
 
 __all__: list[str] = [
     "SimulationEvent",
@@ -24,6 +25,8 @@ __all__: list[str] = [
     "MultiScaleEngine",
     "ClosedLoopFeedbackPath",
     "TimeScaleTask",
+    "TimeAccumulator",
+    "TIMEBASE_RELATIVE_TOLERANCE",
     "SimulationModule",
     "CoSimulationHook",
     "BaseIntegrator",

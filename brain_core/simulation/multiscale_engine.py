@@ -8,6 +8,7 @@ from typing import Protocol
 import numpy as np
 
 from .state import SimulationState
+from .timebase import TimeAccumulator
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,7 +134,12 @@ class TimeScaleTask:
     name: str
     module: TimeScaleModule
     dt: float
-    _accumulator: float = 0.0
+    _accumulator: TimeAccumulator | None = field(default=None, init=False)
+
+    def __post_init__(self) -> None:
+        """Inicjalizuje wspólny akumulator czasu zadania współsymulacji."""
+        if self._accumulator is None:
+            self._accumulator = TimeAccumulator(self.dt)
 
     def tick(self, state: SimulationState, base_dt: float) -> int:
         """
@@ -151,17 +157,14 @@ class TimeScaleTask:
         """
         if state is None:
             raise ValueError("state nie może być None")
-        if base_dt <= 0:
-            raise ValueError("base_dt musi być > 0")
-        if self.dt <= 0:
-            raise ValueError(f"Task '{self.name}' ma niepoprawne dt={self.dt}")
-        self._accumulator += base_dt
-        runs = 0
-        eps = self.dt * 1e-9
-        while self._accumulator >= self.dt - eps:
+        if self._accumulator is None:
+            self._accumulator = TimeAccumulator(self.dt)
+        try:
+            runs = self._accumulator.advance(base_dt)
+        except ValueError as error:
+            raise ValueError(f"Task '{self.name}' ma niepoprawny krok czasu") from error
+        for _ in range(runs):
             self.module.update(state, self.dt)
-            self._accumulator -= self.dt
-            runs += 1
         return runs
 
 
