@@ -1,8 +1,28 @@
 """Testy regresyjne odtwarzacza bodźców zadań poznawczych."""
 
 from brain_core.experiments.protocols import TrialStimulus
-from brain_core.simulation.scheduler import TaskStimulusPlayer
+from brain_core.simulation.scheduler import (
+    RegionalStimulusLike,
+    StimulusLike,
+    TaskStimulusPlayer,
+)
 from brain_core.simulation.state import SimulationState
+
+
+def test_trial_stimulus_matches_scheduler_stimulus_contract() -> None:
+    """Weryfikuje jawny kontrakt bodźca używany przez harmonogram."""
+    stimulus = TrialStimulus(
+        trial_id=1,
+        onset_s=0.0,
+        duration_s=0.5,
+        payload={"regional_input": {"ACC": 0.5}},
+        condition="contract",
+    )
+    compatible_stimuli: list[StimulusLike] = [stimulus]
+
+    assert compatible_stimuli[0] is stimulus
+    assert isinstance(stimulus, StimulusLike)
+    assert isinstance(stimulus, RegionalStimulusLike)
 
 
 def test_task_stimulus_player_sorts_stimuli_before_playback() -> None:
@@ -137,3 +157,21 @@ def test_task_stimulus_player_handles_invalid_regional_input_safely(caplog) -> N
     }
     assert "Pominięto pustą amplitudę" in caplog.text
     assert "Pominięto niepoprawną amplitudę" in caplog.text
+
+
+def test_task_stimulus_player_keeps_legacy_payload_regional_input() -> None:
+    """Weryfikuje zgodność ze starszym polem ``payload["regional_input"]``."""
+    stimulus = TrialStimulus(
+        trial_id=1,
+        onset_s=0.0,
+        duration_s=0.5,
+        payload={"regional_input": {"ACC": "0.75"}},
+        condition="legacy",
+    )
+    player = TaskStimulusPlayer(stimuli=[stimulus])
+    state = SimulationState(time=0.0)
+
+    player.update(state, dt=0.1)
+
+    assert state.regions["ACC"].tolist() == [0.75]
+    assert state.metrics["trial_events"][0]["regional_input"] == {"ACC": 0.75}
