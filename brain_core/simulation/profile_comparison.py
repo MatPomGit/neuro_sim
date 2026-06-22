@@ -263,18 +263,18 @@ def apply_clinical_profile_config(
     """Scal bazową konfigurację zadania z pojedynczym profilem klinicznym."""
     profile = deepcopy(profile_config)
     merged_model = deepcopy(base_config.model)
-    merged_model.update(profile.get("model", {}))
+    merged_model.update(profile.get("model") or {})
 
     output = deepcopy(base_config.output)
-    profile_metadata = profile.get("clinical_profile", {})
+    profile_metadata = profile.get("clinical_profile") or {}
     profile_id = profile_metadata.get("id", output.get("label", "clinical_profile"))
-    output.update(profile.get("output", {}))
+    output.update(profile.get("output") or {})
     output["label"] = str(profile_id)
 
     return replace(
         base_config,
         model=merged_model,
-        pathology=deepcopy(profile.get("pathology", base_config.pathology)),
+        pathology=deepcopy(profile.get("pathology") or base_config.pathology),
         output=output,
         clinical_profile=deepcopy(profile_metadata),
     )
