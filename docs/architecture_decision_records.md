@@ -98,6 +98,7 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0034 | proposed | Architektura docelowego backendu SNN opartego o `brian2.Network` | [`docs/adr/0034-architektura-snn-brian2-network.md`](adr/0034-architektura-snn-brian2-network.md) | `BACKLOG.md` P3 / 11 i Etap 6 |
 | ADR-0035 | proposed | Lekkie walidatory BIDS w `brain_core` | [`docs/adr/0035-lekkie-walidatory-bids.md`](adr/0035-lekkie-walidatory-bids.md) | — |
 | ADR-0036 | accepted | Katalog lekcji dydaktycznych oparty o YAML | [`docs/adr/0036-katalog-lekcji-yaml.md`](adr/0036-katalog-lekcji-yaml.md) | — |
+| ADR-0037 | proposed | Granice odpowiedzialności modułów symulacji | [`docs/adr/0037-granice-modulow-symulacji.md`](adr/0037-granice-modulow-symulacji.md) | — |
 
 ## Procedura dodawania kolejnego ADR
 
