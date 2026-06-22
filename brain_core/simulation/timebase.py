@@ -49,6 +49,8 @@ class TimeAccumulator:
         self.relative_tolerance = self._validate_non_negative_finite(
             "relative_tolerance", self.relative_tolerance
         )
+        if self.relative_tolerance >= 1.0:
+            raise ValueError("relative_tolerance musi być < 1.0")
 
     def advance(self, base_dt: float) -> int:
         """Dodaje bazowy krok czasu i zwraca liczbę gotowych uruchomień.
