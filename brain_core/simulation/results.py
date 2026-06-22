@@ -87,12 +87,12 @@ class ExperimentResult:
             niezamierzoną zmianę kontraktu kompatybilności.
         """
         return {
-            "model": self.signals["model"],
-            "time": self.signals["time"],
-            "activity": self.signals["activity"],
-            "diagnostics": self.signals["diagnostics"],
-            "oscillations": self.signals["oscillations"],
-            "behavior": self.signals["behavior"],
+            "model": self.signals.get("model"),
+            "time": self.signals.get("time"),
+            "activity": self.signals.get("activity"),
+            "diagnostics": self.signals.get("diagnostics"),
+            "oscillations": self.signals.get("oscillations"),
+            "behavior": self.signals.get("behavior"),
             "trial_events": self.trial_events,
             "trial_results": self.trial_results,
             "trial_report_context": self.trial_report_context,
