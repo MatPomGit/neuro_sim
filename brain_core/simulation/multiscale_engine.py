@@ -134,7 +134,7 @@ class TimeScaleTask:
     name: str
     module: TimeScaleModule
     dt: float
-    _accumulator: TimeAccumulator | None = None
+    _accumulator: TimeAccumulator | None = field(default=None, init=False)
 
     def __post_init__(self) -> None:
         """Inicjalizuje wspólny akumulator czasu zadania współsymulacji."""
