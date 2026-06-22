@@ -9,6 +9,7 @@ from typing import Any, Protocol
 import numpy as np
 
 from .state import SimulationState
+from .timebase import TimeAccumulator
 
 LOGGER = logging.getLogger(__name__)
 
@@ -28,14 +29,23 @@ class CoSimulationHook:
     name: str
     module: SimulationModule
     dt: float
-    _accumulator: float = 0.0
+    _accumulator: TimeAccumulator | None = None
 
-    def tick(self, state: SimulationState, base_dt: float) -> None:
-        """Akumuluje czas bazowy i wywołuje moduł, gdy osiągnięto lokalny krok."""
-        self._accumulator += base_dt
-        while self._accumulator >= self.dt - 1e-9:
+    def __post_init__(self) -> None:
+        """Inicjalizuje wspólny akumulator czasu hooka współsymulacji."""
+        if self._accumulator is None:
+            self._accumulator = TimeAccumulator(self.dt)
+
+    def tick(self, state: SimulationState, base_dt: float) -> int:
+        """Akumuluje czas bazowy, uruchamia moduł i zwraca liczbę wykonań."""
+        if state is None:
+            raise ValueError("state nie może być None")
+        if self._accumulator is None:
+            self._accumulator = TimeAccumulator(self.dt)
+        runs = self._accumulator.advance(base_dt)
+        for _ in range(runs):
             self.module.update(state, self.dt)
-            self._accumulator -= self.dt
+        return runs
 
 
 @dataclass(slots=True)

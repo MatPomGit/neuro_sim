@@ -100,6 +100,7 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0036 | accepted | Katalog lekcji dydaktycznych oparty o YAML | [`docs/adr/0036-katalog-lekcji-yaml.md`](adr/0036-katalog-lekcji-yaml.md) | — |
 | ADR-0037 | proposed | Granice odpowiedzialności modułów symulacji | [`docs/adr/0037-granice-modulow-symulacji.md`](adr/0037-granice-modulow-symulacji.md) | — |
 | ADR-0038 | proposed | Jawna struktura wyniku eksperymentu | [`docs/adr/0038-struktura-wyniku-eksperymentu.md`](adr/0038-struktura-wyniku-eksperymentu.md) | — |
+| ADR-0039 | proposed | Wspólna akumulacja czasu współsymulacji | [`docs/adr/0039-wspolna-akumulacja-czasu-wspolsymulacji.md`](adr/0039-wspolna-akumulacja-czasu-wspolsymulacji.md) | — |
 
 ## Procedura dodawania kolejnego ADR
 
