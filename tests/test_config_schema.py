@@ -11,6 +11,7 @@ import pytest
 from brain_core.simulation.config_loader import load_config, load_config_from_string
 from brain_core.simulation.config_schema import (
     ConfigValidationError,
+    ConfigValidationIssue,
     ExperimentConfig,
     validate_config,
 )
@@ -216,9 +217,7 @@ def test_invalid_task_duration_type_reports_field_path() -> None:
         ),
         (
             "analysis",
-            lambda payload: payload["analysis"].update(
-                {"sets": ["spectral", "spectral"]}
-            ),
+            lambda payload: payload["analysis"].update({"sets": ["spectral", "spectral"]}),
             r"analysis\.sets musi zawierać unikalne nazwy",
         ),
         (
@@ -239,6 +238,31 @@ def test_each_config_section_reports_domain_error_message(
 
     with pytest.raises(ConfigValidationError, match=expected_message):
         validate_config(payload)
+
+
+def test_collect_errors_returns_multiple_section_issues() -> None:
+    """Tryb zbierania błędów raportuje wiele sekcji bez przerwania walidacji."""
+    payload = _valid_config_payload()
+    payload["integrator"].pop("method")
+    payload["task"]["duration"] = "długo"
+    payload["snn"].pop("enabled")
+    payload["output"].pop("label")
+
+    issues = validate_config(payload, collect_errors=True)
+
+    assert all(isinstance(issue, ConfigValidationIssue) for issue in issues)
+    issue_by_path = {issue.field_path: issue for issue in issues}
+    assert issue_by_path["integrator.method"].severity == "error"
+    assert issue_by_path["task.duration"].message == "task.duration musi być liczbą"
+    assert issue_by_path["snn.enabled"].message == "Brak pola snn.enabled"
+    assert issue_by_path["output.label"].message == "Brak pola output.label"
+
+
+def test_collect_errors_returns_empty_list_for_valid_config() -> None:
+    """Poprawna konfiguracja w trybie zbierania błędów zwraca pustą listę."""
+    issues = validate_config(_valid_config_payload(), collect_errors=True)
+
+    assert issues == []
 
 
 def test_yaml_and_json_use_same_validation_path() -> None:
@@ -341,9 +365,7 @@ def test_analysis_include_full_trial_table_rejects_non_bool() -> None:
     payload = _valid_config_payload()
     payload["analysis"]["include_full_trial_table"] = "tak"
 
-    with pytest.raises(
-        ConfigValidationError, match="analysis.include_full_trial_table"
-    ):
+    with pytest.raises(ConfigValidationError, match="analysis.include_full_trial_table"):
         validate_config(payload)
 
 
@@ -415,9 +437,7 @@ def test_explicit_snn_sync_dt_still_must_match_timestep() -> None:
     payload["timestep"] = 0.02
     payload["snn"] = {"enabled": True, "circuits": [], "sync_dt": 0.005}
 
-    with pytest.raises(
-        ConfigValidationError, match="snn.sync_dt musi być wielokrotnością"
-    ):
+    with pytest.raises(ConfigValidationError, match="snn.sync_dt musi być wielokrotnością"):
         validate_config(payload)
 
 
