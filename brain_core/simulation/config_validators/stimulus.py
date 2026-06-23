@@ -11,7 +11,25 @@ from brain_core.simulation.config_validators.common import (
 
 
 def validate_stimulus_config(stimulus: dict[str, Any]) -> dict[str, Any]:
-    """Waliduje wymaganą sekcję bodźców eksperymentalnych."""
+    """Waliduje wymaganą sekcję bodźców eksperymentalnych.
+
+    Parameters
+    ----------
+    stimulus:
+        Sekcja konfiguracji opisująca scenariusz bodźca i źródło jego
+        parametrów.
+
+    Returns
+    -------
+    dict[str, Any]
+        Znormalizowana sekcja ``stimulus`` z niepustymi polami tekstowymi.
+
+    Raises
+    ------
+    ConfigValidationError
+        Gdy brakuje pól ``scenario`` lub ``source`` albo ich wartości nie są
+        niepustym tekstem.
+    """
     for text_field in ("scenario", "source"):
         if text_field not in stimulus:
             raise ConfigValidationError(f"Brak pola stimulus.{text_field}")

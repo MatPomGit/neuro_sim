@@ -9,7 +9,11 @@ from typing import Any
 import pytest
 
 from brain_core.simulation.config_loader import load_config, load_config_from_string
-from brain_core.simulation.config_schema import ConfigValidationError, validate_config
+from brain_core.simulation.config_schema import (
+    ConfigValidationError,
+    ExperimentConfig,
+    validate_config,
+)
 from brain_core.simulation.engine import run_experiment
 from brain_core.simulation.signal_adapter import SNNPopulationMapping
 
@@ -66,6 +70,13 @@ def test_complete_target_schema_accepts_seed_and_rng_seed() -> None:
     assert cfg.stimulus["scenario"] == "stroop"
     assert cfg.brain_profile["id"] == "default"
     assert cfg.connectome["atlas"] == "default_regions"
+
+
+def test_validate_config_preserves_public_experiment_config_api() -> None:
+    """Publiczne API schematu ma nadal zwracać `ExperimentConfig`."""
+    cfg = validate_config(_valid_config_payload())
+
+    assert isinstance(cfg, ExperimentConfig)
 
 
 def test_legacy_seed_is_migrated_to_rng_seed() -> None:

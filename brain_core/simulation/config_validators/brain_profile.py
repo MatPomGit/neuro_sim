@@ -11,7 +11,25 @@ from brain_core.simulation.config_validators.common import (
 
 
 def validate_brain_profile_config(brain_profile: dict[str, Any]) -> dict[str, Any]:
-    """Waliduje bazowy profil mózgu niezależny od profilu klinicznego."""
+    """Waliduje bazowy profil mózgu niezależny od profilu klinicznego.
+
+    Parameters
+    ----------
+    brain_profile:
+        Sekcja konfiguracji identyfikująca bazowy profil mózgu i opcjonalny
+        opis metadanych.
+
+    Returns
+    -------
+    dict[str, Any]
+        Znormalizowana sekcja ``brain_profile`` z niepustym identyfikatorem.
+
+    Raises
+    ------
+    ConfigValidationError
+        Gdy brakuje pola ``id`` albo wartości tekstowe są puste lub mają
+        niepoprawny typ.
+    """
     if "id" not in brain_profile:
         raise ConfigValidationError("Brak pola brain_profile.id")
     brain_profile["id"] = require_non_empty_string(
