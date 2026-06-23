@@ -422,9 +422,10 @@ def _field_path_from_message(message: str, fallback_field_path: str) -> str:
         return message.removeprefix("Brak wymaganej sekcji ").split()[0]
     if message.startswith("Brak wymaganego pola "):
         return message.removeprefix("Brak wymaganego pola ").split()[0]
-    first_token = message.split(maxsplit=1)[0] if message else ""
-    if "." in first_token or first_token in REQUIRED_CONFIG_SECTIONS:
-        return first_token
+    for token in message.split():
+        clean_token = token.strip(",;:()[]{}'\"")
+        if "." in clean_token or clean_token in REQUIRED_CONFIG_SECTIONS:
+            return clean_token
     return fallback_field_path
 
 
