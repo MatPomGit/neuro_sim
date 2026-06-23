@@ -35,6 +35,15 @@ def _valid_config_payload() -> dict[str, Any]:
             "expected_direction": "stable_reference",
             "primary_metric": "mean_abs_difference",
             "severity_level": {"small": 0.0, "medium": 0.02, "large": 0.05},
+            "tolerance": {
+                "absolute": 0.005,
+                "relative": 0.0,
+                "unit": "mean_abs_difference",
+            },
+            "applicability_scope": (
+                "Porównania regresyjne profilu referencyjnego przy stałym seedzie."
+            ),
+            "benchmark_source": "Syntetyczny profil bazowy utrzymywany w repozytorium.",
         },
         "connectome": {
             "atlas": "default_regions",
@@ -146,6 +155,81 @@ def test_invalid_task_duration_type_reports_field_path() -> None:
         validate_config(payload)
 
 
+@pytest.mark.parametrize(
+    ("section_name", "mutate_payload", "expected_message"),
+    [
+        (
+            "model",
+            lambda payload: payload["model"].update({"regions": ["A", "A"]}),
+            "model.regions musi być unikalne",
+        ),
+        (
+            "integrator",
+            lambda payload: payload["integrator"].pop("method"),
+            r"Brak pola integrator\.method",
+        ),
+        (
+            "task",
+            lambda payload: payload["task"].pop("scenario"),
+            r"Brak pola task\.scenario",
+        ),
+        (
+            "stimulus",
+            lambda payload: payload["stimulus"].pop("source"),
+            r"Brak pola stimulus\.source",
+        ),
+        (
+            "brain_profile",
+            lambda payload: payload["brain_profile"].pop("id"),
+            r"Brak pola brain_profile\.id",
+        ),
+        (
+            "clinical_profile",
+            lambda payload: payload["clinical_profile"].update({"tolerance": "zła"}),
+            r"clinical_profile\.tolerance",
+        ),
+        (
+            "connectome",
+            lambda payload: payload["connectome"].pop("atlas"),
+            r"Brak pola connectome\.atlas",
+        ),
+        (
+            "pathology",
+            lambda payload: payload["pathology"].pop("enabled"),
+            r"Brak pola pathology\.enabled",
+        ),
+        (
+            "snn",
+            lambda payload: payload["snn"].pop("enabled"),
+            r"Brak pola snn\.enabled",
+        ),
+        (
+            "analysis",
+            lambda payload: payload["analysis"].update(
+                {"sets": ["spectral", "spectral"]}
+            ),
+            r"analysis\.sets musi zawierać unikalne nazwy",
+        ),
+        (
+            "output",
+            lambda payload: payload["output"].pop("label"),
+            r"Brak pola output\.label",
+        ),
+    ],
+)
+def test_each_config_section_reports_domain_error_message(
+    section_name: str,
+    mutate_payload: Any,
+    expected_message: str,
+) -> None:
+    """Każdy walidator sekcji ma zwracać czytelny komunikat błędu z nazwą pola."""
+    payload = _valid_config_payload()
+    mutate_payload(payload)
+
+    with pytest.raises(ConfigValidationError, match=expected_message):
+        validate_config(payload)
+
+
 def test_yaml_and_json_use_same_validation_path() -> None:
     """Loader YAML i JSON ma zwracać taki sam obiekt po wspólnej walidacji."""
     yaml_payload = """
@@ -170,6 +254,12 @@ clinical_profile:
   affected_regions: []
   cognitive_functions: []
   expected_effects: {}
+  tolerance:
+    absolute: 0.005
+    relative: 0.0
+    unit: mean_abs_difference
+  applicability_scope: Porównania regresyjne profilu referencyjnego.
+  benchmark_source: Syntetyczny profil bazowy utrzymywany w repozytorium.
 connectome:
   atlas: default_regions
 pathology:
@@ -330,6 +420,13 @@ def test_clinical_profile_validation_accepts_known_profile() -> None:
         "affected_regions": ["VAL"],
         "cognitive_functions": ["uczenie ze wzmocnieniem"],
         "expected_effects": {"learning_rate_value": "niższe"},
+        "tolerance": {
+            "absolute": 0.005,
+            "relative": 0.0,
+            "unit": "mean_abs_difference",
+        },
+        "applicability_scope": "Profil dydaktyczny do porównań regresyjnych.",
+        "benchmark_source": "Syntetyczny profil utrzymywany w repozytorium.",
     }
 
     cfg = validate_config(payload)

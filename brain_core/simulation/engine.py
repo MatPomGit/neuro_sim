@@ -538,8 +538,8 @@ def run_experiment(
         trial_events=trial_events,
         analysis_report=analysis_report.payload,
         output_dir=output_dir,
-        git_info=_get_git_info(),
-        environment_info=_get_env_info(),
+        git_info=collect_git_info(REPO_ROOT),
+        environment_info=collect_environment_info(),
         trial_results=trial_results,
         trial_report_context={
             "scenario": str(config.task.get("scenario", "run")),

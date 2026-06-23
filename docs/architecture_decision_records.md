@@ -101,6 +101,7 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0037 | proposed | Granice odpowiedzialności modułów symulacji | [`docs/adr/0037-granice-modulow-symulacji.md`](adr/0037-granice-modulow-symulacji.md) | — |
 | ADR-0038 | proposed | Jawna struktura wyniku eksperymentu | [`docs/adr/0038-struktura-wyniku-eksperymentu.md`](adr/0038-struktura-wyniku-eksperymentu.md) | — |
 | ADR-0039 | proposed | Wspólna akumulacja czasu współsymulacji | [`docs/adr/0039-wspolna-akumulacja-czasu-wspolsymulacji.md`](adr/0039-wspolna-akumulacja-czasu-wspolsymulacji.md) | — |
+| ADR-0040 | proposed | Modularne walidatory sekcji konfiguracji symulacji | [`docs/adr/0040-modularne-walidatory-konfiguracji.md`](adr/0040-modularne-walidatory-konfiguracji.md) | — |
 
 ## Procedura dodawania kolejnego ADR
 
