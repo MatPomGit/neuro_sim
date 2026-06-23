@@ -57,6 +57,7 @@ Ten dokument definiuje mapowanie nazw technicznych używanych w kodzie (angielsk
 | batch | seria uruchomień | Komenda akcji |
 | save_results | zapisz wyniki | Opcja wyjścia |
 | quick_start | szybki start | Główna sekcja konfiguracji GUI |
+| tutorial_mode | tryb samouczka | Przewodnik po pierwszej symulacji w GUI |
 | advanced_options | opcje zaawansowane | Sekcja technicznych parametrów uruchomienia GUI |
 | results_and_plots | wyniki i wykresy | Panel wyboru wyników i wykresów GUI |
 | plot_preset | preset wykresów | Szybki wybór zakresu generowanych wykresów |

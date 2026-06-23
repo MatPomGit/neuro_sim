@@ -8,7 +8,7 @@ from dataclasses import asdict, fields, replace
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import QThread
+from PySide6.QtCore import QSettings, QThread, QTimer
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QApplication,
@@ -60,6 +60,19 @@ from .report_export import (
     export_experiment_report,
     export_teaching_package,
 )
+
+TUTORIAL_COMPLETED_SETTING = "tutorial/completed"
+TUTORIAL_SETTING_SCOPE = "NeuroSim"
+TUTORIAL_SETTING_APP = "CognitiveBrainModel"
+
+TUTORIAL_STEPS = (
+    "lesson_or_yaml",
+    "yaml_applied",
+    "duration_applied",
+    "simulation_started",
+    "simulation_finished",
+)
+
 
 
 class QtDataclassParameterDialog(QDialog):
@@ -187,16 +200,24 @@ class BrainModelQtWindow(QMainWindow):
         self.worker: SimulationWorker | None = None
         self.last_result_payload: tuple[Any, ...] | None = None
         self.last_run_state_config: dict[str, Any] | None = None
+        self.tutorial_active = False
+        self.tutorial_step_index = 0
+        self.tutorial_mark_completed = False
         self.sections = QtSections(
             self.state,
             {
                 "start_simulation": self.start_simulation,
                 "show_status": self.show_status,
                 "show_clinical_profile": self.show_clinical_profile,
+                "show_tutorial": self.show_tutorial,
+                "tutorial_yaml_selected": self.on_tutorial_yaml_selected,
+                "tutorial_yaml_applied": self.on_tutorial_yaml_applied,
+                "tutorial_duration_applied": self.on_tutorial_duration_applied,
             },
         )
         self._build_menu()
         self._build_layout()
+        QTimer.singleShot(0, self.show_tutorial_on_first_run)
 
     def _build_menu(self) -> None:
         """Zbuduj menu aplikacji z akcjami konfiguracji i pomocy."""
@@ -237,6 +258,8 @@ class BrainModelQtWindow(QMainWindow):
         reset_defaults_action.triggered.connect(self.reset_defaults)
 
         help_menu = menu_bar.addMenu("Pomoc")
+        tutorial_action = help_menu.addAction("Samouczek pierwszej symulacji")
+        tutorial_action.triggered.connect(self.show_tutorial)
         usage_action = help_menu.addAction("Jak używać")
         usage_action.triggered.connect(self.show_usage_help)
         about_action = help_menu.addAction("O programie")
@@ -296,9 +319,9 @@ class BrainModelQtWindow(QMainWindow):
         actions = QHBoxLayout()
         reset_button = QPushButton("Przywróć domyślne")
         reset_button.clicked.connect(self.reset_defaults)
-        run_button = QPushButton("Uruchom symulację")
-        run_button.setObjectName("primaryButton")
-        run_button.clicked.connect(self.start_simulation)
+        self.run_button = QPushButton("Uruchom symulację")
+        self.run_button.setObjectName("primaryButton")
+        self.run_button.clicked.connect(self.start_simulation)
         self.export_pdf_button = QPushButton("Eksportuj raport PDF")
         self.export_pdf_button.setEnabled(False)
         self.export_pdf_button.setToolTip(
@@ -327,7 +350,7 @@ class BrainModelQtWindow(QMainWindow):
         close_button.clicked.connect(self.close)
         actions.addWidget(reset_button)
         actions.addStretch(1)
-        actions.addWidget(run_button)
+        actions.addWidget(self.run_button)
         actions.addWidget(self.export_pdf_button)
         actions.addWidget(self.export_comparison_report_button)
         actions.addWidget(self.export_teaching_package_button)
@@ -460,6 +483,7 @@ class BrainModelQtWindow(QMainWindow):
             QMessageBox.information(self, "Informacja", "Symulacja już trwa.")
             return
         self.sections.sync_state_from_controls()
+        QTimer.singleShot(0, self.on_tutorial_simulation_started)
         self.last_result_payload = None
         self.last_run_state_config = state_to_config(self.state)
         self.export_pdf_action.setEnabled(False)
@@ -525,6 +549,7 @@ class BrainModelQtWindow(QMainWindow):
         self.export_teaching_package_action.setEnabled(True)
         self.export_teaching_package_button.setEnabled(True)
         self.tabs.setCurrentIndex(1 if has_plots else 0)
+        QTimer.singleShot(0, self.on_tutorial_simulation_finished)
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
 
@@ -760,6 +785,152 @@ class BrainModelQtWindow(QMainWindow):
             )
             return
         self.status_label.setText(f"Wczytano konfigurację: {source}")
+
+    def tutorial_settings(self) -> QSettings:
+        """Zwróć ustawienia aplikacji przechowujące status samouczka."""
+        return QSettings(TUTORIAL_SETTING_SCOPE, TUTORIAL_SETTING_APP)
+
+    def show_tutorial_on_first_run(self) -> None:
+        """Automatycznie pokaż samouczek, jeśli użytkownik nie zakończył go wcześniej."""
+        settings = self.tutorial_settings()
+        if settings.value(TUTORIAL_COMPLETED_SETTING, False, bool):
+            return
+        self.show_tutorial(mark_completed=True)
+
+    def show_tutorial(self, mark_completed: bool = False) -> None:
+        """Rozpocznij monitorowany samouczek pierwszej symulacji.
+
+        Parameters
+        ----------
+        mark_completed:
+            Gdy `True`, zakończenie samouczka zapisuje, że automatyczny start
+            nie powinien wracać przy kolejnym uruchomieniu.
+        """
+        self.tutorial_active = True
+        self.tutorial_step_index = 0
+        self.tutorial_mark_completed = mark_completed
+        self.tabs.setCurrentIndex(0)
+        self.sections.ready_lesson_combo.setFocus()
+        self.show_tutorial_step(
+            "Krok 1 z 5 — wybierz lekcję albo konfigurację YAML",
+            "Co nacisnąć: w sekcji „Szybki start” wybierz pozycję w polu "
+            "„Lekcja” albo „konfiguracja YAML”.\n\n"
+            "Dlaczego: wybór wskazuje zwalidowany plik YAML, czyli źródło "
+            "parametrów pierwszej powtarzalnej symulacji.\n\n"
+            "Co się stanie: po wyborze samouczek automatycznie pokaże następne "
+            "polecenie i poprosi o zastosowanie konfiguracji.",
+        )
+
+    def show_tutorial_step(self, title: str, body: str) -> None:
+        """Pokaż użytkownikowi aktualne polecenie monitorowanego samouczka.
+
+        Parameters
+        ----------
+        title:
+            Tytuł okna opisujący numer i cel kroku.
+        body:
+            Instrukcja wyjaśniająca co nacisnąć, dlaczego i jaki będzie skutek.
+        """
+        QTimer.singleShot(0, lambda: QMessageBox.information(self, title, body))
+
+    def on_tutorial_yaml_selected(self) -> None:
+        """Przejdź do instrukcji zastosowania YAML po wyborze lekcji lub presetu."""
+        if not self._advance_tutorial_from("lesson_or_yaml"):
+            return
+        self.sections.apply_yaml_button.setFocus()
+        self.show_tutorial_step(
+            "Krok 2 z 5 — zastosuj konfigurację YAML",
+            "Co nacisnąć: kliknij „Zastosuj konfigurację YAML”.\n\n"
+            "Dlaczego: formularz GUI przepisze z YAML scenariusz, czas, dt, seed "
+            "i ustawienie zapisu wyników bez kopiowania logiki silnika.\n\n"
+            "Co się stanie: zobaczysz podgląd profilu oraz następne polecenie "
+            "dotyczące czasu pierwszej symulacji.",
+        )
+
+    def on_tutorial_yaml_applied(self) -> None:
+        """Przejdź do instrukcji ustawienia sugerowanego czasu po aplikacji YAML."""
+        if not self._advance_tutorial_from("yaml_applied"):
+            return
+        self.sections.suggested_duration_button.setFocus()
+        self.show_tutorial_step(
+            "Krok 3 z 5 — ustaw sugerowany czas",
+            "Co nacisnąć: kliknij „Użyj sugerowanego czasu”.\n\n"
+            "Dlaczego: pierwszy przebieg powinien używać czasu dobranego do "
+            "scenariusza, aby wynik był czytelny i łatwy do odtworzenia.\n\n"
+            "Co się stanie: pole czasu zostanie zaktualizowane, a samouczek "
+            "przejdzie do uruchomienia symulacji.",
+        )
+
+    def on_tutorial_duration_applied(self) -> None:
+        """Przejdź do instrukcji uruchomienia symulacji po ustawieniu czasu."""
+        if not self._advance_tutorial_from("duration_applied"):
+            return
+        self.run_button.setFocus()
+        self.show_tutorial_step(
+            "Krok 4 z 5 — uruchom symulację",
+            "Co nacisnąć: kliknij „Uruchom symulację”.\n\n"
+            "Dlaczego: aplikacja przekaże aktualny stan formularza do workera Qt "
+            "i zapisze migawkę konfiguracji użytej w przebiegu.\n\n"
+            "Co się stanie: pasek postępu pokaże obliczenia, a po ich zakończeniu "
+            "samouczek wyświetli ostatnie okno z miejscem odczytu wyników.",
+        )
+
+    def on_tutorial_simulation_started(self) -> None:
+        """Zarejestruj kliknięcie uruchomienia jako kolejny postęp samouczka."""
+        if not self._advance_tutorial_from("simulation_started"):
+            return
+        self.show_tutorial_step(
+            "Symulacja została uruchomiona",
+            "Teraz niczego nie klikaj. Poczekaj na zakończenie obliczeń.\n\n"
+            "Samouczek monitoruje postęp i pokaże ostatnie polecenie, gdy wyniki "
+            "będą dostępne w panelach GUI.",
+        )
+
+    def on_tutorial_simulation_finished(self) -> None:
+        """Zakończ samouczek po otrzymaniu wyników pierwszej symulacji."""
+        if not self._advance_tutorial_from("simulation_finished"):
+            return
+        self.tabs.setCurrentIndex(1)
+        self.show_tutorial_step(
+            "Krok 5 z 5 — odczytaj wynik",
+            "Co nacisnąć: przejrzyj zakładki „Wykresy”, „Oś czasu zdarzeń” "
+            "i „Co obserwujesz?”.\n\n"
+            "Dlaczego: te panele pokazują wynik obliczeń, przebieg zdarzeń i "
+            "interpretację dydaktyczną bez traktowania wyniku jako diagnozy.\n\n"
+            "Co się stało: pierwsza symulacja została wykonana, a samouczek "
+            "oznaczono jako zakończony.",
+        )
+        self.finish_tutorial()
+
+    def finish_tutorial(self) -> None:
+        """Zapisz zakończenie samouczka i wyłącz monitorowanie kolejnych akcji."""
+        if self.tutorial_mark_completed:
+            self.tutorial_settings().setValue(TUTORIAL_COMPLETED_SETTING, True)
+        self.tutorial_active = False
+        self.tutorial_step_index = 0
+        self.tutorial_mark_completed = False
+
+    def _advance_tutorial_from(self, expected_step: str) -> bool:
+        """Sprawdź oczekiwany etap i przesuń wskaźnik postępu samouczka.
+
+        Parameters
+        ----------
+        expected_step:
+            Nazwa kroku, który powinien zostać właśnie wykonany.
+
+        Returns
+        -------
+        bool
+            `True`, gdy monitorowany krok pasuje do aktualnego stanu samouczka.
+        """
+        if not self.tutorial_active:
+            return False
+        if self.tutorial_step_index >= len(TUTORIAL_STEPS):
+            return False
+        if TUTORIAL_STEPS[self.tutorial_step_index] != expected_step:
+            return False
+        self.tutorial_step_index += 1
+        return True
 
     def show_usage_help(self) -> None:
         """Pokaż krótką instrukcję obsługi aplikacji PySide6."""
