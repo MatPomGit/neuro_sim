@@ -49,15 +49,15 @@ class StimulusLike(Protocol):
         """Dodatkowe dane bodźca, w tym starsze ``regional_input``."""
         ...
 
+    @property
+    def regional_input(self) -> Mapping[str, object] | None:
+        """Opcjonalna jawna mapa region→amplituda dla aktywacji bodźca."""
+        ...
+
 
 @runtime_checkable
 class RegionalStimulusLike(StimulusLike, Protocol):
-    """Kontrakt bodźca z jawną mapą wejść regionalnych."""
-
-    @property
-    def regional_input(self) -> Mapping[str, object]:
-        """Jawna mapa region→amplituda dla aktywacji bodźca."""
-        ...
+    """Zgodnościowy alias kontraktu bodźca z wejściem regionalnym."""
 
 
 class SimulationModule(Protocol):
@@ -195,9 +195,7 @@ class TaskStimulusPlayer:
         dict[str, float]
             Kopia mapy region→amplituda z wartościami liczbowymi typu ``float``.
         """
-        regional_input: Mapping[str, object] = {}
-        if isinstance(stimulus, RegionalStimulusLike):
-            regional_input = stimulus.regional_input
+        regional_input = stimulus.regional_input or {}
         if not regional_input:
             legacy_regional_input = stimulus.payload.get("regional_input", {})
             if not isinstance(legacy_regional_input, Mapping):

@@ -1,11 +1,9 @@
 """Testy regresyjne odtwarzacza bodźców zadań poznawczych."""
 
+from typing import cast
+
 from brain_core.experiments.protocols import TrialStimulus
-from brain_core.simulation.scheduler import (
-    RegionalStimulusLike,
-    StimulusLike,
-    TaskStimulusPlayer,
-)
+from brain_core.simulation.scheduler import StimulusLike, TaskStimulusPlayer
 from brain_core.simulation.state import SimulationState
 
 
@@ -22,12 +20,12 @@ def test_trial_stimulus_matches_scheduler_stimulus_contract() -> None:
 
     assert compatible_stimuli[0] is stimulus
     assert isinstance(stimulus, StimulusLike)
-    assert isinstance(stimulus, RegionalStimulusLike)
+    assert stimulus.regional_input == {}
 
 
 def test_task_stimulus_player_sorts_stimuli_before_playback() -> None:
     """Weryfikuje, że nieposortowane wejście jest odtwarzane chronologicznie."""
-    stimuli = [
+    stimuli: list[StimulusLike] = [
         TrialStimulus(
             trial_id=2, onset_s=2.0, duration_s=0.5, payload={}, condition="late"
         ),
@@ -104,7 +102,7 @@ def test_task_stimulus_player_keeps_input_active_for_full_duration() -> None:
 
 def test_task_stimulus_player_sums_overlapping_active_inputs() -> None:
     """Weryfikuje sumowanie jednocześnie aktywnych wejść dla tego samego regionu."""
-    stimuli = [
+    stimuli: list[StimulusLike] = [
         TrialStimulus(
             trial_id=1,
             onset_s=0.0,
@@ -140,7 +138,9 @@ def test_task_stimulus_player_handles_invalid_regional_input_safely(caplog) -> N
         duration_s=0.5,
         payload={},
         condition="invalid",
-        regional_input={"ACC": None, "DLPFC": object(), "VIS": "1.25"},
+        regional_input=cast(
+            "dict[str, float]", {"ACC": None, "DLPFC": object(), "VIS": "1.25"}
+        ),
     )
     player = TaskStimulusPlayer(stimuli=[stimulus])
     state = SimulationState(time=0.0)
