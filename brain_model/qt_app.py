@@ -831,7 +831,7 @@ class BrainModelQtWindow(QMainWindow):
         body:
             Instrukcja wyjaśniająca co nacisnąć, dlaczego i jaki będzie skutek.
         """
-        QMessageBox.information(self, title, body)
+        QTimer.singleShot(0, lambda: QMessageBox.information(self, title, body))
 
     def on_tutorial_yaml_selected(self) -> None:
         """Przejdź do instrukcji zastosowania YAML po wyborze lekcji lub presetu."""
