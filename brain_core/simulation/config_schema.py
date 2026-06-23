@@ -395,6 +395,7 @@ def _collect_scalar_seed_issues(cfg: ExperimentConfig, issues: list[ConfigValida
         cfg.seed = require_non_negative_int(cfg.seed, "seed")
     except ConfigValidationError as exc:
         issues.append(_issue_from_error(exc))
+        cfg.seed = 7
     if cfg.rng_seed is None:
         cfg.rng_seed = cfg.seed
     try:
