@@ -14,7 +14,25 @@ from brain_core.simulation.config_validators.common import (
 
 
 def validate_analysis_config(analysis: dict[str, Any]) -> dict[str, Any]:
-    """Waliduje wybór zestawów analiz uruchamianych po symulacji."""
+    """Waliduje wybór zestawów analiz uruchamianych po symulacji.
+
+    Parameters
+    ----------
+    analysis:
+        Sekcja konfiguracji z listą zestawów analiz oraz opcjonalnymi
+        parametrami raportowania triali.
+
+    Returns
+    -------
+    dict[str, Any]
+        Znormalizowana sekcja ``analysis`` z unikalnymi nazwami analiz.
+
+    Raises
+    ------
+    ConfigValidationError
+        Gdy lista analiz ma niepoprawny typ, zawiera puste lub nieznane nazwy
+        albo parametry raportowania mają niepoprawny typ.
+    """
     sets_val = require_list(analysis.get("sets", []), "analysis.sets")
     sets_val = [
         require_non_empty_string(set_name, f"analysis.sets[{idx}]")

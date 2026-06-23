@@ -14,7 +14,25 @@ from brain_core.simulation.config_validators.common import (
 
 
 def validate_pathology_config(pathology: dict[str, Any]) -> dict[str, Any]:
-    """Waliduje konfigurację patologii i mutacji stanu symulacji."""
+    """Waliduje konfigurację patologii i mutacji stanu symulacji.
+
+    Parameters
+    ----------
+    pathology:
+        Sekcja konfiguracji określająca włączenie patologii, scenariusz oraz
+        listę mutacji stanu.
+
+    Returns
+    -------
+    dict[str, Any]
+        Znormalizowana sekcja ``pathology`` z listą zwalidowanych mutacji.
+
+    Raises
+    ------
+    ConfigValidationError
+        Gdy flaga ``enabled`` ma niepoprawny typ, mutacje nie są listą obiektów
+        albo wymagane pola mutacji są puste.
+    """
     if "enabled" not in pathology:
         raise ConfigValidationError("Brak pola pathology.enabled")
     pathology["enabled"] = require_bool(pathology["enabled"], "pathology.enabled")

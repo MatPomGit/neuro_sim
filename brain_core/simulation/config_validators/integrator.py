@@ -12,7 +12,25 @@ from brain_core.simulation.config_validators.common import (
 
 
 def validate_integrator_config(integrator: dict[str, Any]) -> dict[str, Any]:
-    """Waliduje parametry integratora numerycznego."""
+    """Waliduje parametry integratora numerycznego symulacji.
+
+    Parameters
+    ----------
+    integrator:
+        Sekcja konfiguracji opisująca metodę całkowania oraz opcjonalne
+        parametry oscylatora.
+
+    Returns
+    -------
+    dict[str, Any]
+        Znormalizowana sekcja ``integrator`` z obsługiwaną metodą numeryczną.
+
+    Raises
+    ------
+    ConfigValidationError
+        Gdy brakuje pola ``method``, metoda nie jest obsługiwana albo
+        opcjonalna sekcja oscylatora nie jest obiektem.
+    """
     if "method" not in integrator:
         raise ConfigValidationError("Brak pola integrator.method")
     method = require_non_empty_string(integrator["method"], "integrator.method")

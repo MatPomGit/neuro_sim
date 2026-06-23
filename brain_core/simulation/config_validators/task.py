@@ -14,7 +14,25 @@ from brain_core.simulation.config_validators.common import (
 
 
 def validate_task_config(task: dict[str, Any]) -> dict[str, Any]:
-    """Waliduje parametry zadania eksperymentalnego."""
+    """Waliduje parametry zadania eksperymentalnego.
+
+    Parameters
+    ----------
+    task:
+        Sekcja konfiguracji z nazwą scenariusza, czasem trwania oraz
+        opcjonalnymi parametrami liczbowymi zadania.
+
+    Returns
+    -------
+    dict[str, Any]
+        Znormalizowana sekcja ``task`` gotowa do użycia przez silnik.
+
+    Raises
+    ------
+    ConfigValidationError
+        Gdy wymagane pola są nieobecne albo pola liczbowe, tekstowe lub
+        całkowite mają niepoprawny typ bądź zakres.
+    """
     if "scenario" not in task:
         raise ConfigValidationError("Brak pola task.scenario")
     task["scenario"] = require_non_empty_string(task["scenario"], "task.scenario")

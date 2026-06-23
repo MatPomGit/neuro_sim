@@ -11,7 +11,24 @@ from brain_core.simulation.config_validators.common import (
 
 
 def validate_connectome_config(connectome: dict[str, Any]) -> dict[str, Any]:
-    """Waliduje sekcję atlasu i macierzy connectome."""
+    """Waliduje sekcję atlasu i macierzy connectome.
+
+    Parameters
+    ----------
+    connectome:
+        Sekcja konfiguracji opisująca atlas oraz opcjonalne ścieżki wag i
+        długości włókien.
+
+    Returns
+    -------
+    dict[str, Any]
+        Znormalizowana sekcja ``connectome`` z niepustymi wartościami tekstowymi.
+
+    Raises
+    ------
+    ConfigValidationError
+        Gdy brakuje nazwy atlasu albo pola tekstowe nie są niepustymi napisami.
+    """
     if "atlas" not in connectome:
         raise ConfigValidationError("Brak pola connectome.atlas")
     connectome["atlas"] = require_non_empty_string(

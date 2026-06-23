@@ -13,7 +13,25 @@ from brain_core.simulation.config_validators.common import (
 
 
 def validate_output_config(output: dict[str, Any]) -> dict[str, Any]:
-    """Waliduje i normalizuje parametry zapisu artefaktów eksperymentu."""
+    """Waliduje i normalizuje parametry zapisu artefaktów eksperymentu.
+
+    Parameters
+    ----------
+    output:
+        Sekcja konfiguracji kontrolująca zapis wyników, etykietę uruchomienia
+        i katalog artefaktów.
+
+    Returns
+    -------
+    dict[str, Any]
+        Znormalizowana sekcja ``output`` z tekstową ścieżką katalogu wyników.
+
+    Raises
+    ------
+    ConfigValidationError
+        Gdy wymagane pola mają niepoprawny typ albo etykieta lub katalog są
+        pustymi tekstami.
+    """
     if "save_results" not in output:
         raise ConfigValidationError("Brak pola output.save_results")
     output["save_results"] = require_bool(output["save_results"], "output.save_results")
