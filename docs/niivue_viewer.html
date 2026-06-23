@@ -252,10 +252,13 @@
     }
 
     function applyColorMap() {
-      if (nv.volumes.length === 0) return;
+      if (nv.volumes.length <= 1) {
+        setStatus("Skalę koloru można zmieniać tylko po wczytaniu nakładki.", true);
+        return;
+      }
       nv.volumes[nv.volumes.length - 1].colormap = colorMapSelect.value;
       nv.updateGLVolume();
-      setStatus("Zmieniono skalę koloru ostatniego wolumenu.");
+      setStatus("Zmieniono skalę koloru nakładki.");
     }
 
     async function loadOverlay() {
