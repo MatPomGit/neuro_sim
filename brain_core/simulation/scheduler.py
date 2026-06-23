@@ -195,7 +195,7 @@ class TaskStimulusPlayer:
         dict[str, float]
             Kopia mapy region→amplituda z wartościami liczbowymi typu ``float``.
         """
-        regional_input = stimulus.regional_input or {}
+        regional_input = getattr(stimulus, "regional_input", None) or {}
         if not regional_input:
             legacy_regional_input = stimulus.payload.get("regional_input", {})
             if not isinstance(legacy_regional_input, Mapping):
