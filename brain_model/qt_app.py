@@ -549,7 +549,7 @@ class BrainModelQtWindow(QMainWindow):
         self.export_teaching_package_action.setEnabled(True)
         self.export_teaching_package_button.setEnabled(True)
         self.tabs.setCurrentIndex(1 if has_plots else 0)
-        self.on_tutorial_simulation_finished()
+        QTimer.singleShot(0, self.on_tutorial_simulation_finished)
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
 
