@@ -369,6 +369,9 @@ class QtSections:
         self.ready_lesson_combo.currentTextChanged.connect(
             lambda _text: self.apply_ready_lesson()
         )
+        self.ready_lesson_combo.currentTextChanged.connect(
+            lambda _text: self._notify_tutorial_yaml_selected()
+        )
         layout.addRow("Lekcja", self.ready_lesson_combo)
 
         self.lesson_preview_label = QLabel(
@@ -392,6 +395,9 @@ class QtSections:
         self.scenario_config_combo.currentTextChanged.connect(
             lambda _text: self.apply_scenario_yaml_config()
         )
+        self.scenario_config_combo.currentTextChanged.connect(
+            lambda _text: self._notify_tutorial_yaml_selected()
+        )
         layout.addRow("konfiguracja YAML", self.scenario_config_combo)
 
         self.scenario_config_description_label = QLabel("")
@@ -403,9 +409,9 @@ class QtSections:
         self.scenario_config_description = self.scenario_config_description_label
         layout.addRow("po co ten wybór", self.scenario_config_description_label)
 
-        apply_yaml_button = QPushButton("Zastosuj konfigurację YAML")
-        apply_yaml_button.clicked.connect(self.apply_scenario_yaml_config)
-        layout.addRow(apply_yaml_button)
+        self.apply_yaml_button = QPushButton("Zastosuj konfigurację YAML")
+        self.apply_yaml_button.clicked.connect(self.apply_scenario_yaml_config)
+        layout.addRow(self.apply_yaml_button)
 
         self.comparison_config_combo = QComboBox()
         self.comparison_config_combo.addItems(comparison_config_preset_labels())
@@ -453,9 +459,9 @@ class QtSections:
         self.T_edit.textChanged.connect(lambda _text: self.on_duration_changed())
         layout.addRow("czas symulacji [s]", self.T_edit)
 
-        suggested_duration_button = QPushButton("Użyj sugerowanego czasu")
-        suggested_duration_button.clicked.connect(self.apply_suggested_duration)
-        layout.addRow(suggested_duration_button)
+        self.suggested_duration_button = QPushButton("Użyj sugerowanego czasu")
+        self.suggested_duration_button.clicked.connect(self.apply_suggested_duration)
+        layout.addRow(self.suggested_duration_button)
 
         self.save_results_check = QCheckBox("Zapisz wyniki po symulacji")
         self.save_results_check.setChecked(self.state.save_results)
@@ -473,6 +479,12 @@ class QtSections:
         self.refresh_comparison_config_description()
         self.sync_run_mode_controls_from_state()
         return group
+
+    def _notify_tutorial_yaml_selected(self) -> None:
+        """Powiadom okno główne, że użytkownik wykonał wybór YAML w samouczku."""
+        tutorial_callback = self.callbacks.get("tutorial_yaml_selected")
+        if tutorial_callback is not None:
+            tutorial_callback()
 
     def on_run_mode_changed(self, checked: bool) -> None:
         """Przełącz jawnie między pojedynczym eksperymentem i porównaniem profili."""
@@ -624,6 +636,14 @@ class QtSections:
         form.addRow("", self.batch_scenarios_hint_label)
         form.addRow("parametry wrażliwości", self.sensitivity_edit)
         form.addRow("delta wrażliwości", self.sensitivity_delta_edit)
+        tutorial_button = QPushButton("Uruchom samouczek pierwszej symulacji")
+        tutorial_button.setToolTip(
+            "Otwiera przewodnik po środowisku i pierwszym uruchomieniu symulacji."
+        )
+        tutorial_callback = self.callbacks.get("show_tutorial")
+        if tutorial_callback is not None:
+            tutorial_button.clicked.connect(tutorial_callback)
+        form.addRow("samouczek", tutorial_button)
         outer.addWidget(self.advanced_group)
         self.toggle_advanced_options(False)
         self.on_auto_dt_toggled(self.state.auto_dt)
@@ -861,6 +881,9 @@ class QtSections:
         status_callback = self.callbacks.get("show_status")
         if status_callback is not None:
             status_callback("Zastosowano konfigurację YAML scenariusza.")
+        tutorial_callback = self.callbacks.get("tutorial_yaml_applied")
+        if tutorial_callback is not None:
+            tutorial_callback()
 
     def on_scenario_changed(self, _scenario_id: str) -> None:
         """Odśwież opis i automatyczny czas po zmianie scenariusza.
@@ -917,6 +940,10 @@ class QtSections:
         status_callback = self.callbacks.get("show_status")
         if show_status and status_callback is not None:
             status_callback("Ustawiono sugerowany czas scenariusza.")
+        if show_status:
+            tutorial_callback = self.callbacks.get("tutorial_duration_applied")
+            if tutorial_callback is not None:
+                tutorial_callback()
 
     def toggle_advanced_options(self, checked: bool) -> None:
         """Pokaż albo ukryj grupę opcji zaawansowanych."""

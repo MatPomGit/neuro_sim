@@ -232,3 +232,71 @@ def test_quick_start_lesson_preview_uses_yaml_catalog() -> None:
     assert "lesson.pre_run_questions_pl" in format_source
     assert "lesson.scenario_config" in format_source
     assert "lesson.comparison_config" in format_source
+
+
+def test_advanced_options_can_open_first_simulation_tutorial() -> None:
+    """Opcje zaawansowane zawierają przycisk wywołujący samouczek."""
+    source = _method_source(QT_SECTIONS_PATH, "build_advanced_options_section")
+
+    assert "QPushButton('Uruchom samouczek pierwszej symulacji')" in source
+    assert "tutorial_callback = self.callbacks.get('show_tutorial')" in source
+    assert "tutorial_button.clicked.connect(tutorial_callback)" in source
+    assert "form.addRow('samouczek', tutorial_button)" in source
+
+
+def test_qt_window_starts_tutorial_once_and_exposes_menu_action() -> None:
+    """Główne okno pokazuje samouczek przy pierwszym starcie i z menu Pomoc."""
+    constructor_source = _method_source(QT_APP_PATH, "__init__", "BrainModelQtWindow")
+    menu_source = _method_source(QT_APP_PATH, "_build_menu", "BrainModelQtWindow")
+    first_run_source = _method_source(
+        QT_APP_PATH, "show_tutorial_on_first_run", "BrainModelQtWindow"
+    )
+    tutorial_source = _method_source(QT_APP_PATH, "show_tutorial", "BrainModelQtWindow")
+    finish_source = _method_source(QT_APP_PATH, "finish_tutorial", "BrainModelQtWindow")
+    advance_source = _method_source(
+        QT_APP_PATH, "_advance_tutorial_from", "BrainModelQtWindow"
+    )
+    module_source = QT_APP_PATH.read_text(encoding="utf-8")
+
+    assert "'show_tutorial': self.show_tutorial" in constructor_source
+    assert "QTimer.singleShot(0, self.show_tutorial_on_first_run)" in constructor_source
+    assert "Samouczek pierwszej symulacji" in menu_source
+    assert "tutorial_action.triggered.connect(self.show_tutorial)" in menu_source
+    assert "TUTORIAL_COMPLETED_SETTING" in module_source
+    assert "settings.value(TUTORIAL_COMPLETED_SETTING, False, bool)" in first_run_source
+    assert "self.tutorial_active = True" in tutorial_source
+    assert "self.tutorial_step_index = 0" in tutorial_source
+    assert "self.show_tutorial_step" in tutorial_source
+    assert "TUTORIAL_STEPS[self.tutorial_step_index] != expected_step" in advance_source
+    assert "self.tutorial_step_index += 1" in advance_source
+    assert "setValue(TUTORIAL_COMPLETED_SETTING, True)" in finish_source
+
+
+
+def test_tutorial_progress_is_driven_by_user_operations() -> None:
+    """Samouczek przechodzi dalej po monitorowanych operacjach użytkownika."""
+    app_source = QT_APP_PATH.read_text(encoding="utf-8")
+    sections_source = QT_SECTIONS_PATH.read_text(encoding="utf-8")
+    quick_start_source = _method_source(QT_SECTIONS_PATH, "build_quick_start_section")
+    yaml_source = _method_source(QT_SECTIONS_PATH, "apply_scenario_yaml_config")
+    duration_source = _method_source(QT_SECTIONS_PATH, "apply_suggested_duration")
+    result_source = _method_source(QT_APP_PATH, "on_simulation_result", "BrainModelQtWindow")
+    start_source = _method_source(QT_APP_PATH, "start_simulation", "BrainModelQtWindow")
+
+    assert "tutorial_yaml_selected" in app_source
+    assert "tutorial_yaml_applied" in app_source
+    assert "tutorial_duration_applied" in app_source
+    assert "self.on_tutorial_simulation_started()" in start_source
+    assert "self.on_tutorial_simulation_finished()" in result_source
+    assert (
+        "self.apply_yaml_button = QPushButton('Zastosuj konfigurację YAML')"
+        in quick_start_source
+    )
+    assert (
+        "self.suggested_duration_button = QPushButton('Użyj sugerowanego czasu')"
+        in quick_start_source
+    )
+    assert "self._notify_tutorial_yaml_selected()" in quick_start_source
+    assert "tutorial_callback = self.callbacks.get('tutorial_yaml_applied')" in yaml_source
+    assert "tutorial_callback = self.callbacks.get('tutorial_duration_applied')" in duration_source
+    assert "def _notify_tutorial_yaml_selected" in sections_source

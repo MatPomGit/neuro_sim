@@ -86,6 +86,51 @@ Po instalacji pakietu dostępny jest również skrypt konsolowy:
 neuro-sim-gui
 ```
 
+
+### Tryb samouczka pierwszej symulacji
+
+Przy pierwszym uruchomieniu desktopowego GUI aplikacja automatycznie otwiera
+tryb samouczka. Samouczek jest monitorowany krok po kroku: po wykonaniu
+każdej wskazanej operacji pokazuje kolejne okno z następnym poleceniem.
+
+Przebieg samouczka:
+
+1. **Wybierz lekcję albo konfigurację YAML.**
+   - Co nacisnąć: wybierz pozycję w polu **Lekcja** albo
+     **konfiguracja YAML** w sekcji **Szybki start**.
+   - Dlaczego: ten wybór wskazuje zwalidowany plik YAML z parametrami
+     powtarzalnej symulacji.
+   - Co się stanie: samouczek rozpozna wybór i pokaże polecenie zastosowania
+     konfiguracji.
+2. **Zastosuj konfigurację YAML.**
+   - Co nacisnąć: kliknij **Zastosuj konfigurację YAML**.
+   - Dlaczego: GUI przepisuje z pliku scenariusz, czas, krok `dt`, ziarno
+     losowości i ustawienia zapisu wyników.
+   - Co się stanie: formularz zostanie uzupełniony, a samouczek wskaże krok
+     ustawienia czasu symulacji.
+3. **Ustaw sugerowany czas.**
+   - Co nacisnąć: kliknij **Użyj sugerowanego czasu**.
+   - Dlaczego: pierwszy przebieg powinien używać czasu dobranego do
+     scenariusza, aby wynik był czytelny i replikowalny.
+   - Co się stanie: pole czasu zostanie zaktualizowane, a samouczek przejdzie
+     do uruchomienia obliczeń.
+4. **Uruchom symulację.**
+   - Co nacisnąć: kliknij **Uruchom symulację**.
+   - Dlaczego: aplikacja przekazuje bieżący stan formularza do workera Qt i
+     zapisuje migawkę konfiguracji użytej w przebiegu.
+   - Co się stanie: pasek postępu pokaże obliczenia, a samouczek poczeka na
+     zakończenie symulacji.
+5. **Odczytaj wynik.**
+   - Co nacisnąć: przejrzyj zakładki **Wykresy**, **Oś czasu zdarzeń** i
+     **Co obserwujesz?**.
+   - Dlaczego: te panele pokazują wynik, zdarzenia i interpretację dydaktyczną
+     bez traktowania wyniku jako diagnozy klinicznej.
+   - Co się stanie: samouczek zostanie oznaczony jako zakończony.
+
+Po pierwszym uruchomieniu samouczek można ponownie otworzyć z menu
+**Pomoc → Samouczek pierwszej symulacji** albo przyciskiem
+**Uruchom samouczek pierwszej symulacji** w sekcji **Opcje zaawansowane**.
+
 ## Scenariusze dydaktyczne
 
 Do demonstracji efektów w protokole roving oddball służą przykładowe pliki
