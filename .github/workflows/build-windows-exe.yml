@@ -1,0 +1,66 @@
+name: Budowanie EXE dla Windows
+
+"on":
+  workflow_dispatch:
+    inputs:
+      python-version:
+        description: "Wersja Pythona używana do budowania aplikacji"
+        required: true
+        default: "3.11"
+        type: choice
+        options:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows-exe:
+    name: Budowanie paczki NeuroSim EXE
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Pobierz kod repozytorium
+        uses: actions/checkout@v4
+
+      - name: Skonfiguruj Pythona
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: pip
+
+      - name: Zainstaluj zależności aplikacji i PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+          python -m pip install pyinstaller pyinstaller-hooks-contrib
+
+      - name: Zbuduj aplikację standalone
+        run: python scripts/build_exe.py
+
+      - name: Sprawdź wynik budowania
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "dist/NeuroSim/NeuroSim.exe")) {
+            Write-Error "Nie znaleziono pliku dist/NeuroSim/NeuroSim.exe"
+          }
+
+      - name: Spakuj katalog aplikacji
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact | Out-Null
+          Compress-Archive `
+            -Path dist/NeuroSim/* `
+            -DestinationPath artifact/NeuroSim-Windows.zip `
+            -Force
+
+      - name: Udostępnij artefakt do pobrania
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeuroSim-Windows-${{ github.run_number }}
+          path: artifact/NeuroSim-Windows.zip
+          if-no-files-found: error
+          retention-days: 14
