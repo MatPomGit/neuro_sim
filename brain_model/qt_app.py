@@ -483,7 +483,7 @@ class BrainModelQtWindow(QMainWindow):
             QMessageBox.information(self, "Informacja", "Symulacja już trwa.")
             return
         self.sections.sync_state_from_controls()
-        self.on_tutorial_simulation_started()
+        QTimer.singleShot(0, self.on_tutorial_simulation_started)
         self.last_result_payload = None
         self.last_run_state_config = state_to_config(self.state)
         self.export_pdf_action.setEnabled(False)
