@@ -176,13 +176,13 @@ def test_markdown_export_can_switch_between_full_and_limited_trial_table() -> No
         "Tryb eksportu: pełna tabela triali; liczba triali: 3; "
         "pokazano: 3; pominięto: 0."
     ) in full_markdown
-    assert "| 3 | standard |" in full_markdown
+    assert "| 3 | n/a | standard | standard |" in full_markdown
     assert (
         "tabela ograniczona do 1 triali; liczba triali: 3; "
         "pokazano: 1; pominięto: 2."
     ) in limited_markdown
-    assert "| 1 | standard |" in limited_markdown
-    assert "| 2 | standard |" not in limited_markdown
+    assert "| 1 | n/a | standard | standard |" in limited_markdown
+    assert "| 2 | n/a | standard | standard |" not in limited_markdown
 
     html = _markdown_to_simple_html(full_markdown)
     assert "<pre>" not in html
@@ -259,7 +259,7 @@ def test_export_reports_include_detailed_trial_observations(tmp_path: Path) -> N
         clinical_profile=clinical_profile,
         analysis_report=analysis_report,
     )
-    assert "| Trial | Warunek | Bodziec | Odpowiedź | Wynik |" in markdown
+    assert "| Trial | Nr trialu | Warunek | Typ bodźca | Bodziec |" in markdown
     assert "dewiant" in markdown
     assert "Profil testowy" in markdown
     assert "Wynik behawioralny" in markdown
