@@ -501,3 +501,48 @@ animacja / suwak / analiza regionu
 [1]: https://niivue.com/docs/?utm_source=chatgpt.com "Getting started"
 [2]: https://pmc.ncbi.nlm.nih.gov/articles/PMC4292582/?utm_source=chatgpt.com "BrainBrowser: distributed, web-based neurological data ..."
 [3]: https://nilearn.github.io/dev/modules/generated/nilearn.plotting.plot_stat_map.html?utm_source=chatgpt.com "nilearn.plotting.plot_stat_map"
+
+## 13. Aktualny status implementacji NiiVue
+
+Pierwszy etap trybu zaawansowanego jest dostępny jako statyczna strona
+`docs/niivue_viewer.html`. Strona ładuje NiiVue/WebGL, pokazuje demonstracyjne
+tło MNI152, pozwala przełączać rzuty i umożliwia wczytanie zewnętrznej nakładki
+NIfTI przez URL. Dokumentacja użycia, kontrakt danych i plan implementacji
+desktopowej znajdują się w `docs/niivue_viewer.md`.
+
+To nie jest jeszcze pełna integracja z symulatorem. Brakujący etap to eksport
+`regional_activity` do jawnego artefaktu pochodnego NIfTI oraz metadanych JSON w
+katalogu wynikowym eksperymentu. Do czasu wdrożenia tego eksportu widok NiiVue
+należy traktować jako demonstrator i narzędzie inspekcji przygotowanych plików.
+
+## 14. Plan wersji desktopowej
+
+Wersja desktopowa powinna osadzić ten sam komponent NiiVue w `QWebEngineView` z
+PySide6, aby nie utrzymywać osobnej implementacji WebGL. Komunikację między GUI
+Qt a JavaScriptem należy zrealizować przez `QWebChannel` i mały obiekt mostu,
+który waliduje wybrane pliki NIfTI oraz przekazuje do widoku tylko jawnie
+zatwierdzone artefakty.
+
+Proponowany przepływ:
+
+```text
+GUI Qt → wybór artefaktu NIfTI → walidacja w Pythonie → QWebChannel → NiiVue
+```
+
+Priorytety implementacyjne:
+
+1. dodać widget `brain_model/qt_niivue_viewer.py` ładujący lokalną stronę HTML;
+2. dodać `brain_model/qt_niivue_bridge.py` z walidacją ścieżek i metadanych;
+3. dopisać statyczne testy zakazujące `tkinter` w tym przepływie;
+4. dopiero potem podłączyć eksport `regional_activity` do NIfTI/BIDS derivatives.
+
+Jeżeli Qt WebEngine lub OpenGL nie są dostępne w środowisku użytkownika, GUI
+powinno pokazać polski komunikat diagnostyczny i zaproponować webowy widok albo
+prosty eksport SVG/PNG jako tryb awaryjny.
+
+`ipyniivue` może być użyte jako dodatkowy tryb notebookowy, ale nie powinno być
+podstawowym widgetem desktopowego GUI. Jest to komponent Jupyter/anywidget, więc
+w Qt wymagałby lokalnego Jupyter Server, obsługi tokenów, kernela i menedżera
+widgetów w `QWebEngineView`. Dla głównego GUI prostsze i stabilniejsze pozostaje
+bezpośrednie osadzenie NiiVue w Qt WebEngine.
+
