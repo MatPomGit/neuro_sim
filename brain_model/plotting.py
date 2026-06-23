@@ -1049,11 +1049,15 @@ def draw_activity_with_stimulus_channels(
 
         Callback jest podłączony do zmiany ``xlim`` górnej osi aktywacji, więc
         synchronizacja przebiega jednokierunkowo: z ``activity_ax`` do
-        ``stimulus_ax``. Nie należy w tym miejscu zmieniać ponownie zakresu osi
-        aktywacji ani podłączać analogicznego callbacku w drugą stronę, bo
-        mogłoby to wywołać rekurencyjne odświeżanie limitów osi.
+        ``stimulus_ax``. Aktualizacja dolnej osi nie emituje kolejnego zdarzenia
+        Matplotlib, ponieważ osie mają wspólne ``sharex`` i ponowna emisja może
+        uruchomić rekurencyjne odświeżanie limitów osi.
         """
-        stimulus_ax.set_xlim(changed_ax.get_xlim())
+        requested_xlim = changed_ax.get_xlim()
+        if stimulus_ax.get_xlim() == requested_xlim:
+            return
+
+        stimulus_ax.set_xlim(requested_xlim, emit=False)
         fig.canvas.draw_idle()
 
     def on_scroll(event: MouseEvent) -> None:
@@ -1095,7 +1099,6 @@ def draw_activity_with_stimulus_channels(
             new_left = time_end - new_width
 
         activity_ax.set_xlim(new_left, new_right)
-        stimulus_ax.set_xlim(new_left, new_right)
         fig.canvas.draw_idle()
 
     activity_ax.callbacks.connect("xlim_changed", synchronize_stimulus_xlim)
