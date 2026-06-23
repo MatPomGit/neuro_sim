@@ -286,8 +286,8 @@ def test_tutorial_progress_is_driven_by_user_operations() -> None:
     assert "tutorial_yaml_selected" in app_source
     assert "tutorial_yaml_applied" in app_source
     assert "tutorial_duration_applied" in app_source
-    assert "self.on_tutorial_simulation_started()" in start_source
-    assert "self.on_tutorial_simulation_finished()" in result_source
+    assert "QTimer.singleShot(0, self.on_tutorial_simulation_started)" in start_source
+    assert "QTimer.singleShot(0, self.on_tutorial_simulation_finished)" in result_source
     assert (
         "self.apply_yaml_button = QPushButton('Zastosuj konfigurację YAML')"
         in quick_start_source
