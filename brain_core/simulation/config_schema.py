@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from brain_core.simulation.config_validators.analysis import validate_analysis_config
 from brain_core.simulation.config_validators.brain_profile import (
@@ -32,6 +33,9 @@ from brain_core.simulation.config_validators.snn import validate_snn_config
 from brain_core.simulation.config_validators.stimulus import validate_stimulus_config
 from brain_core.simulation.config_validators.task import validate_task_config
 
+ValidationSeverity = Literal["error"]
+
+
 REQUIRED_CONFIG_SECTIONS = (
     "model",
     "integrator",
@@ -45,6 +49,26 @@ REQUIRED_CONFIG_SECTIONS = (
     "analysis",
     "output",
 )
+
+
+@dataclass(frozen=True)
+class ConfigValidationIssue:
+    """Opis pojedynczego problemu wykrytego podczas walidacji konfiguracji.
+
+    Parameters
+    ----------
+    field_path:
+        Ścieżka pola konfiguracji, którego dotyczy problem.
+    message:
+        Czytelny komunikat po polsku opisujący naruszenie kontraktu schematu.
+    severity:
+        Poziom ważności problemu; obecnie walidacja konfiguracji raportuje
+        błędy blokujące uruchomienie eksperymentu.
+    """
+
+    field_path: str
+    message: str
+    severity: ValidationSeverity = "error"
 
 
 @dataclass
@@ -140,9 +164,7 @@ class ExperimentConfig:
     pathology: dict[str, Any] = field(
         default_factory=lambda: {"enabled": False, "mutations": [], "scenario": None}
     )
-    snn: dict[str, Any] = field(
-        default_factory=lambda: {"enabled": False, "circuits": []}
-    )
+    snn: dict[str, Any] = field(default_factory=lambda: {"enabled": False, "circuits": []})
     analysis: dict[str, Any] = field(
         default_factory=lambda: {
             "sets": ["spectral", "phase_locking", "connectivity", "information_flow"],
@@ -160,8 +182,8 @@ class ExperimentConfig:
 
 
 def validate_config(
-    raw: dict[str, Any], *, require_sections: bool = True
-) -> ExperimentConfig:
+    raw: dict[str, Any], *, require_sections: bool = True, collect_errors: bool = False
+) -> ExperimentConfig | list[ConfigValidationIssue]:
     """Waliduje surową konfigurację i zwraca obiekt `ExperimentConfig`.
 
     Parameters
@@ -172,17 +194,24 @@ def validate_config(
         Gdy `True`, wymaga jawnych sekcji docelowego schematu eksperymentu.
         Loader profili klinicznych może ustawić `False`, ponieważ waliduje
         fragment konfiguracji używany jako nakładka.
+    collect_errors:
+        Gdy `True`, zbiera problemy walidacji z wielu sekcji i zwraca listę
+        `ConfigValidationIssue` bez przerywania po pierwszym błędzie.
 
     Returns
     -------
-    ExperimentConfig
-        Zweryfikowany obiekt konfiguracji z ujednoliconym `seed` i `rng_seed`.
+    ExperimentConfig | list[ConfigValidationIssue]
+        Zweryfikowany obiekt konfiguracji z ujednoliconym `seed` i `rng_seed`
+        albo lista problemów, gdy włączono `collect_errors`.
 
     Raises
     ------
     ConfigValidationError
         Gdy konfiguracja jest niepoprawna.
     """
+    if collect_errors:
+        return collect_config_validation_issues(raw, require_sections=require_sections)
+
     if not isinstance(raw, dict):
         raise ConfigValidationError("Konfiguracja musi być obiektem mapującym (dict).")
 
@@ -230,6 +259,173 @@ def validate_config(
     cfg.analysis = validate_analysis_config(cfg.analysis)
     cfg.output = validate_output_config(cfg.output)
     return cfg
+
+
+def collect_config_validation_issues(
+    raw: dict[str, Any], *, require_sections: bool = True
+) -> list[ConfigValidationIssue]:
+    """Zbierz problemy walidacji konfiguracji bez przerywania po pierwszym błędzie.
+
+    Parameters
+    ----------
+    raw:
+        Surowa konfiguracja odczytana z YAML/JSON.
+    require_sections:
+        Gdy `True`, raportuje brak jawnych sekcji docelowego schematu
+        eksperymentu oraz wymaganych pól `seed`/`rng_seed` i `timestep`.
+
+    Returns
+    -------
+    list[ConfigValidationIssue]
+        Lista błędów blokujących poprawne uruchomienie eksperymentu. Pusta
+        lista oznacza, że konfiguracja przechodzi tę samą ścieżkę walidacji co
+        domyślny tryb `validate_config`.
+    """
+    issues: list[ConfigValidationIssue] = []
+    if not isinstance(raw, dict):
+        return [
+            ConfigValidationIssue(
+                field_path="<root>",
+                message="Konfiguracja musi być obiektem mapującym (dict).",
+            )
+        ]
+
+    if require_sections:
+        issues.extend(_collect_required_section_issues(raw))
+
+    try:
+        normalized_raw = _normalize_seed_fields(raw)
+    except ConfigValidationError as exc:
+        issues.append(_issue_from_error(exc))
+        normalized_raw = deepcopy(raw)
+
+    cfg = ExperimentConfig(
+        **{
+            key: value
+            for key, value in normalized_raw.items()
+            if key in ExperimentConfig.__dataclass_fields__
+        }
+    )
+
+    section_names = (
+        "model",
+        "integrator",
+        "task",
+        "stimulus",
+        "brain_profile",
+        "clinical_profile",
+        "connectome",
+        "pathology",
+        "snn",
+        "analysis",
+        "output",
+    )
+    for section_name in section_names:
+        try:
+            setattr(cfg, section_name, require_mapping(getattr(cfg, section_name), section_name))
+        except ConfigValidationError as exc:
+            issues.append(_issue_from_error(exc))
+            setattr(cfg, section_name, {})
+
+    validated_timestep = ExperimentConfig().timestep
+    try:
+        cfg.timestep = require_positive_number(cfg.timestep, "timestep")
+        validated_timestep = cfg.timestep
+    except ConfigValidationError as exc:
+        issues.append(_issue_from_error(exc))
+    _collect_scalar_seed_issues(cfg, issues)
+
+    section_validators: tuple[tuple[str, Callable[[], dict[str, Any]]], ...] = (
+        ("integrator", lambda: validate_integrator_config(cfg.integrator)),
+        ("model", lambda: validate_model_config(cfg.model)),
+        ("task", lambda: validate_task_config(cfg.task)),
+        ("stimulus", lambda: validate_stimulus_config(cfg.stimulus)),
+        ("brain_profile", lambda: validate_brain_profile_config(cfg.brain_profile)),
+        ("connectome", lambda: validate_connectome_config(cfg.connectome)),
+        ("pathology", lambda: validate_pathology_config(cfg.pathology)),
+        (
+            "clinical_profile",
+            lambda: validate_clinical_profile_config(
+                cfg.clinical_profile, require_tolerance=not require_sections
+            ),
+        ),
+        ("snn", lambda: validate_snn_config(cfg.snn, validated_timestep)),
+        ("analysis", lambda: validate_analysis_config(cfg.analysis)),
+        ("output", lambda: validate_output_config(cfg.output)),
+    )
+    for section_name, validate_section in section_validators:
+        try:
+            setattr(cfg, section_name, validate_section())
+        except ConfigValidationError as exc:
+            issues.append(_issue_from_error(exc, fallback_field_path=section_name))
+
+    return issues
+
+
+def _collect_required_section_issues(raw: dict[str, Any]) -> list[ConfigValidationIssue]:
+    """Zbierz braki wymaganych sekcji najwyższego poziomu konfiguracji."""
+    issues = [
+        ConfigValidationIssue(
+            field_path=section_name,
+            message=f"Brak wymaganej sekcji {section_name}",
+        )
+        for section_name in REQUIRED_CONFIG_SECTIONS
+        if section_name not in raw
+    ]
+    if "rng_seed" not in raw and "seed" not in raw:
+        issues.append(
+            ConfigValidationIssue(
+                field_path="rng_seed",
+                message="Brak wymaganego pola rng_seed albo seed",
+            )
+        )
+    if "timestep" not in raw:
+        issues.append(
+            ConfigValidationIssue(
+                field_path="timestep",
+                message="Brak wymaganego pola timestep",
+            )
+        )
+    return issues
+
+
+def _collect_scalar_seed_issues(cfg: ExperimentConfig, issues: list[ConfigValidationIssue]) -> None:
+    """Dopisz problemy walidacji pól ziarna losowości do listy błędów."""
+    try:
+        cfg.seed = require_non_negative_int(cfg.seed, "seed")
+    except ConfigValidationError as exc:
+        issues.append(_issue_from_error(exc))
+    if cfg.rng_seed is None:
+        cfg.rng_seed = cfg.seed
+    try:
+        cfg.rng_seed = require_non_negative_int(cfg.rng_seed, "rng_seed")
+    except ConfigValidationError as exc:
+        issues.append(_issue_from_error(exc))
+
+
+def _issue_from_error(
+    error: ConfigValidationError, *, fallback_field_path: str = "<root>"
+) -> ConfigValidationIssue:
+    """Zamień wyjątek walidacji na strukturalny opis problemu konfiguracji."""
+    message = str(error)
+    return ConfigValidationIssue(
+        field_path=_field_path_from_message(message, fallback_field_path),
+        message=message,
+    )
+
+
+def _field_path_from_message(message: str, fallback_field_path: str) -> str:
+    """Wyznacz najlepszą ścieżkę pola na podstawie istniejącego komunikatu błędu."""
+    if message.startswith("Brak pola "):
+        return message.removeprefix("Brak pola ").split()[0]
+    if message.startswith("Brak wymaganej sekcji "):
+        return message.removeprefix("Brak wymaganej sekcji ").split()[0]
+    if message.startswith("Brak wymaganego pola "):
+        return message.removeprefix("Brak wymaganego pola ").split()[0]
+    first_token = message.split(maxsplit=1)[0] if message else ""
+    if "." in first_token or first_token in REQUIRED_CONFIG_SECTIONS:
+        return first_token
+    return fallback_field_path
 
 
 def _require_top_level_sections(raw: dict[str, Any]) -> None:
