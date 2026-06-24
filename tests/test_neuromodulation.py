@@ -64,6 +64,7 @@ def test_wilson_cowan_accepts_neuromodulation_vector() -> Any:
         np.array([0.2, 0.2]),
         np.array([0.1, 0.1]),
         neuromodulators=neuromodulators,
+        rng=np.random.default_rng(123),
     )
     assert e.shape == (2,)
     assert i.shape == (2,)

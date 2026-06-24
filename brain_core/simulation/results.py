@@ -56,6 +56,8 @@ class ExperimentResult:
         Ścieżki artefaktów zwrócone przez zapis wyników.
     elapsed:
         Czas wykonania symulacji w sekundach.
+    randomness:
+        Sekcja replikowalności opisująca ziarna i komponenty korzystające z RNG.
     """
 
     config: ExperimentConfig
@@ -75,6 +77,7 @@ class ExperimentResult:
     snn_comparison: dict[str, Any] | None
     save_info: dict[str, Any] | None
     elapsed: float
+    randomness: dict[str, Any]
 
     def to_legacy_dict(self) -> dict[str, Any]:
         """Zwróć wynik w dotychczasowym słownikowym formacie API.
@@ -104,4 +107,5 @@ class ExperimentResult:
             "snn_comparison": self.snn_comparison,
             "save_info": self.save_info,
             "elapsed": self.elapsed,
+            "randomness": self.randomness,
         }

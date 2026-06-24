@@ -23,6 +23,7 @@ LEGACY_RESULT_KEYS = {
     "snn_comparison",
     "save_info",
     "elapsed",
+    "randomness",
 }
 
 
@@ -69,6 +70,7 @@ def test_experiment_result_exports_stable_legacy_keys() -> Any:
         snn_comparison=None,
         save_info=None,
         elapsed=0.1,
+        randomness={"seed": 7, "rng_seed": 7},
     )
 
     legacy_result = experiment_result.to_legacy_dict()
@@ -77,3 +79,4 @@ def test_experiment_result_exports_stable_legacy_keys() -> Any:
     assert legacy_result["trial_events"] == experiment_result.trial_events
     assert legacy_result["analysis_report"] == experiment_result.analysis_report
     assert legacy_result["save_info"] is None
+    assert legacy_result["randomness"] == experiment_result.randomness
