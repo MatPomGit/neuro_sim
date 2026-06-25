@@ -92,7 +92,7 @@ def compute_time_stride(candidate_dt: float, base_dt: float) -> int:
     """
     if not is_time_multiple(candidate_dt, base_dt):
         raise ValueError("candidate_dt musi być całkowitą wielokrotnością base_dt")
-    return max(1, int(round(float(candidate_dt) / float(base_dt))))
+    return int(round(candidate_dt / base_dt))
 
 
 class TimeSteppedModule(Protocol):
