@@ -8,7 +8,7 @@ from typing import Protocol
 import numpy as np
 
 from .state import SimulationState
-from .timebase import TimeAccumulator
+from .timebase import TimeAccumulator, is_time_multiple
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,8 +41,7 @@ class MultiScaleIOContract:
             raise ValueError("base_dt kontraktu musi być > 0")
         if self.snn_sync_dt <= 0:
             raise ValueError("snn_sync_dt kontraktu musi być > 0")
-        ratio = self.snn_sync_dt / self.base_dt
-        if abs(round(ratio) - ratio) > 1e-9:
+        if not is_time_multiple(self.snn_sync_dt, self.base_dt):
             raise ValueError("snn_sync_dt musi być całkowitą wielokrotnością base_dt")
         if self.rate_unit != "Hz":
             raise ValueError("rate_unit musi być równe 'Hz'")
@@ -160,11 +159,9 @@ class TimeScaleTask:
         if self._accumulator is None:
             self._accumulator = TimeAccumulator(self.dt)
         try:
-            runs = self._accumulator.advance(base_dt)
+            runs = self._accumulator.run_due_steps(self.module, state, base_dt)
         except ValueError as error:
             raise ValueError(f"Task '{self.name}' ma niepoprawny krok czasu") from error
-        for _ in range(runs):
-            self.module.update(state, self.dt)
         return runs
 
 

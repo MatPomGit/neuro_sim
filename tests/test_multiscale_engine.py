@@ -174,3 +174,16 @@ def test_delay_buffer_rejects_negative_delays_with_contract_name() -> None:
     """Ujemne opóźnienia przewodzenia są błędem kontraktu B."""
     with pytest.raises(ValueError, match="Kontrakt B"):
         DelayBuffer(n_regions=2, delays_steps=np.array([[0, -1], [1, 0]]))
+
+
+def test_io_contract_accepts_timebase_tolerance_for_sync_multiple() -> None:
+    """Kontrakt I/O używa wspólnej tolerancji osi czasu dla wielokrotności."""
+    contract = MultiScaleIOContract(
+        base_dt=0.1 - 1e-12,
+        snn_sync_dt=0.3 - 3e-12,
+        rate_unit="Hz",
+        activity_unit="fraction",
+        mapped_populations=("HIP",),
+    )
+
+    contract.validate()
