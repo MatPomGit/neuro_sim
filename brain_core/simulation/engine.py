@@ -101,7 +101,6 @@ def _build_randomness_section(
     """
     randomness = random_sources.metadata()
     randomness["seed"] = int(config.seed)
-    randomness["rng_seed"] = _effective_rng_seed(config)
     return randomness
 
 
