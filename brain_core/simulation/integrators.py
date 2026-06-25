@@ -135,7 +135,7 @@ class IntegratorRegistryEntry:
     """
 
     technical_name: str
-    integrator_class: type[object]
+    integrator_class: type[BaseIntegrator]
     required_parameters: tuple[str, ...]
     noise_and_determinism_constraints: str
 
