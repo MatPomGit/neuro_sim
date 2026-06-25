@@ -16,6 +16,11 @@ from brain_core.simulation.config_schema import (
     validate_config,
 )
 from brain_core.simulation.engine import run_experiment
+from brain_core.simulation.integrators import (
+    INTEGRATOR_REGISTRY,
+    IntegratorRegistryEntry,
+    RK4Integrator,
+)
 from brain_core.simulation.signal_adapter import SNNPopulationMapping
 
 
@@ -60,6 +65,48 @@ def _valid_config_payload() -> dict[str, Any]:
         "analysis": {"sets": ["spectral", "phase_locking"]},
         "output": {"save_results": False, "label": "test", "output_dir": "outputs"},
     }
+
+
+def test_integrator_registry_accepts_known_method() -> None:
+    """Walidacja integratora korzysta z rejestru i zachowuje nazwę `euler`."""
+    payload = _valid_config_payload()
+
+    cfg = validate_config(payload)
+
+    assert cfg.integrator["method"] == "euler"
+
+
+def test_integrator_registry_rejects_unknown_method() -> None:
+    """Nieznana metoda integratora ma dawać błąd oparty na rejestrze metod."""
+    payload = _valid_config_payload()
+    payload["integrator"]["method"] = "unknown"
+
+    with pytest.raises(ConfigValidationError, match="integrator.method"):
+        validate_config(payload)
+
+
+def test_integrator_registry_reports_missing_required_parameters(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Brak parametrów wymaganych przez wpis rejestru blokuje konfigurację."""
+    payload = _valid_config_payload()
+    payload["integrator"]["method"] = "test_required"
+    registry = dict(INTEGRATOR_REGISTRY)
+    registry["test_required"] = IntegratorRegistryEntry(
+        technical_name="test_required",
+        integrator_class=RK4Integrator,
+        required_parameters=("step_scale",),
+        noise_and_determinism_constraints=(
+            "Testowa metoda deterministyczna wymaga jawnej skali kroku."
+        ),
+    )
+    monkeypatch.setattr(
+        "brain_core.simulation.config_validators.integrator.INTEGRATOR_REGISTRY",
+        registry,
+    )
+
+    with pytest.raises(ConfigValidationError, match=r"integrator\.step_scale"):
+        validate_config(payload)
 
 
 def test_complete_target_schema_accepts_seed_and_rng_seed() -> None:
@@ -217,7 +264,9 @@ def test_invalid_task_duration_type_reports_field_path() -> None:
         ),
         (
             "analysis",
-            lambda payload: payload["analysis"].update({"sets": ["spectral", "spectral"]}),
+            lambda payload: payload["analysis"].update(
+                {"sets": ["spectral", "spectral"]}
+            ),
             r"analysis\.sets musi zawierać unikalne nazwy",
         ),
         (
@@ -365,7 +414,9 @@ def test_analysis_include_full_trial_table_rejects_non_bool() -> None:
     payload = _valid_config_payload()
     payload["analysis"]["include_full_trial_table"] = "tak"
 
-    with pytest.raises(ConfigValidationError, match="analysis.include_full_trial_table"):
+    with pytest.raises(
+        ConfigValidationError, match="analysis.include_full_trial_table"
+    ):
         validate_config(payload)
 
 
@@ -437,7 +488,9 @@ def test_explicit_snn_sync_dt_still_must_match_timestep() -> None:
     payload["timestep"] = 0.02
     payload["snn"] = {"enabled": True, "circuits": [], "sync_dt": 0.005}
 
-    with pytest.raises(ConfigValidationError, match="snn.sync_dt musi być wielokrotnością"):
+    with pytest.raises(
+        ConfigValidationError, match="snn.sync_dt musi być wielokrotnością"
+    ):
         validate_config(payload)
 
 
