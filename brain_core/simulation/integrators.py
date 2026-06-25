@@ -116,3 +116,49 @@ class RK4Integrator:
         k3 = f(t + 0.5 * dt, y + 0.5 * dt * k2)
         k4 = f(t + dt, y + dt * k3)
         return y + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+
+
+@dataclass(frozen=True, slots=True)
+class IntegratorRegistryEntry:
+    """Opis metody integracji dopuszczonej w konfiguracji symulacji.
+
+    Parameters
+    ----------
+    technical_name:
+        Stabilna nazwa techniczna używana w polu ``integrator.method``.
+    integrator_class:
+        Klasa implementująca pojedynczy krok całkowania.
+    required_parameters:
+        Nazwy pól wymaganych w sekcji ``integrator`` dla danej metody.
+    noise_and_determinism_constraints:
+        Opis ograniczeń dotyczących szumu oraz warunków deterministyczności.
+    """
+
+    technical_name: str
+    integrator_class: type[BaseIntegrator]
+    required_parameters: tuple[str, ...]
+    noise_and_determinism_constraints: str
+
+
+INTEGRATOR_REGISTRY: dict[str, IntegratorRegistryEntry] = {
+    "euler": IntegratorRegistryEntry(
+        technical_name="euler",
+        integrator_class=EulerMaruyamaIntegrator,
+        required_parameters=(),
+        noise_and_determinism_constraints=(
+            "Historyczna nazwa konfiguracji zachowana dla kompatybilności; "
+            "implementacja używa kroku Eulera-Maruyamy. Wynik jest "
+            "deterministyczny tylko przy jawnie przekazanym generatorze RNG o "
+            "ustalonym seedzie oraz deterministycznej funkcji szumu."
+        ),
+    ),
+    "rk4": IntegratorRegistryEntry(
+        technical_name="rk4",
+        integrator_class=RK4Integrator,
+        required_parameters=(),
+        noise_and_determinism_constraints=(
+            "Metoda deterministyczna dla ODE; nie obsługuje składowej szumu w "
+            "pojedynczym kroku i wymaga deterministycznej funkcji dynamiki."
+        ),
+    ),
+}
