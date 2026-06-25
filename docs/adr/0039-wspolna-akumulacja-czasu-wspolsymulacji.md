@@ -51,3 +51,4 @@ Negatywne / koszty:
 - `brain_core/simulation/scheduler.py`
 - `brain_core/simulation/multiscale_engine.py`
 - `brain_core/simulation/timebase.py`
+- `docs/simulation_time_flow.md`

@@ -88,10 +88,7 @@ class CoSimulationHook:
             raise ValueError("state nie może być None")
         if self._accumulator is None:
             self._accumulator = TimeAccumulator(self.dt)
-        runs = self._accumulator.advance(base_dt)
-        for _ in range(runs):
-            self.module.update(state, self.dt)
-        return runs
+        return self._accumulator.run_due_steps(self.module, state, base_dt)
 
 
 @dataclass(slots=True)

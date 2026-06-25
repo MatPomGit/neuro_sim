@@ -7,7 +7,12 @@ import pytest
 from brain_core.simulation.multiscale_engine import TimeScaleTask
 from brain_core.simulation.scheduler import CoSimulationHook
 from brain_core.simulation.state import SimulationState
-from brain_core.simulation.timebase import TimeAccumulator
+from brain_core.simulation.timebase import (
+    TimeAccumulator,
+    compute_step_count,
+    compute_time_stride,
+    is_time_multiple,
+)
 
 
 class CountingModule:
@@ -77,3 +82,53 @@ def test_time_accumulator_can_report_multiple_runs_after_large_base_step() -> No
 
     assert accumulator.advance(0.005) == 2
     assert accumulator.advance(0.001) == 1
+
+
+def test_time_accumulator_run_due_steps_matches_reported_runs() -> None:
+    """Wspólny helper wykonuje moduł dokładnie tyle razy, ile raportuje."""
+    module = CountingModule()
+    state = SimulationState()
+    accumulator = TimeAccumulator(dt=0.002)
+
+    first_count = accumulator.run_due_steps(module, state, 0.001)
+    second_count = accumulator.run_due_steps(module, state, 0.001)
+
+    assert [first_count, second_count] == [0, 1]
+    assert module.runs == 1
+    assert state.metrics["runs"] == 1
+
+
+@pytest.mark.parametrize("base_dt", [0.001, 0.001 - 1e-12])
+def test_hook_and_task_report_same_counts_for_shared_timebase(base_dt: float) -> None:
+    """Hook schedulera i zadanie silnika raportują identyczne liczniki uruchomień."""
+    hook_module = CountingModule()
+    task_module = CountingModule()
+    hook = CoSimulationHook("shared", hook_module, 0.003)
+    task = TimeScaleTask("shared", task_module, 0.003)
+    hook_state = SimulationState()
+    task_state = SimulationState()
+
+    hook_counts = [hook.tick(hook_state, base_dt) for _ in range(6)]
+    task_counts = [task.tick(task_state, base_dt) for _ in range(6)]
+
+    assert hook_counts == task_counts
+    assert hook_module.runs == task_module.runs
+
+
+def test_time_multiple_helper_uses_shared_tolerance() -> None:
+    """Walidacja wielokrotności korzysta z tej samej tolerancji co akumulator."""
+    assert is_time_multiple(0.3 - 3e-12, 0.1 - 1e-12)
+    assert not is_time_multiple(0.25, 0.1)
+
+
+def test_compute_step_count_uses_shared_validation_for_app_loop() -> None:
+    """Liczba kroków pętli aplikacji wynika jawnie z czasu trwania i dt."""
+    assert compute_step_count(1.0, 0.1) == 10
+    assert compute_step_count(0.0, 0.1) == 0
+
+
+def test_compute_time_stride_uses_shared_multiple_tolerance() -> None:
+    """Odstęp synchronizacji jest liczony tylko dla poprawnej wielokrotności."""
+    assert compute_time_stride(0.3 - 3e-12, 0.1 - 1e-12) == 3
+    with pytest.raises(ValueError, match="candidate_dt"):
+        compute_time_stride(0.25, 0.1)

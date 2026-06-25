@@ -16,6 +16,7 @@ from brain_core.simulation.signal_adapter import (
     DEMO_SNN_REGION_NAME,
     SNNPopulationMapping,
 )
+from brain_core.simulation.timebase import is_time_multiple
 
 
 def validate_snn_config(snn: dict[str, Any], timestep: float) -> dict[str, Any]:
@@ -77,8 +78,7 @@ def validate_snn_config(snn: dict[str, Any], timestep: float) -> dict[str, Any]:
         else require_positive_number(sync_dt_val, "snn.sync_dt")
     )
 
-    ratio = sync_dt / timestep
-    if abs(round(ratio) - ratio) > 1e-9:
+    if not is_time_multiple(sync_dt, timestep):
         raise ConfigValidationError("snn.sync_dt musi być wielokrotnością timestep")
 
     coupling_mode = str(snn.get("mode", "report_only"))

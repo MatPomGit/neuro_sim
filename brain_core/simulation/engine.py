@@ -62,6 +62,7 @@ from .snn_runtime import (
     summarize_trace_metrics,
 )
 from .state import SimulationState
+from .timebase import compute_step_count
 
 
 def _effective_rng_seed(config: ExperimentConfig) -> int:
@@ -324,7 +325,7 @@ def _simulate_task_trials(
 
     scheduler = SimulationScheduler(stimuli=[TaskStimulusPlayer(stimuli=stimuli)])
     state = SimulationState()
-    for _ in range(round(duration / config.timestep)):
+    for _ in range(compute_step_count(duration, config.timestep)):
         scheduler.run_step(state, config.timestep)
 
     trial_results: list[dict[str, Any]] = []

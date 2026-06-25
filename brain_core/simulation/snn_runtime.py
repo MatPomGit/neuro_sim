@@ -13,6 +13,7 @@ from brain_model.params import BrainParams
 
 from .config_schema import ExperimentConfig
 from .signal_adapter import CouplingSignalAdapter, SNNPopulationMapping
+from .timebase import compute_time_stride
 
 SNN_METRIC_DISCLAIMER_PL = (
     "metryka demonstracyjna SNN; służy do kontroli kontraktu HIP, "
@@ -158,7 +159,7 @@ def simulate_closed_loop_snn_activity(
         config=config,
         region_names=region_names,
     )
-    sync_stride = max(1, int(round(float(config.snn["sync_dt"]) / config.timestep)))
+    sync_stride = compute_time_stride(float(config.snn["sync_dt"]), config.timestep)
     max_feedback_amplitude = float(config.snn.get("max_feedback_amplitude", 0.15))
     pending_drive = np.zeros(len(region_names), dtype=float)
     applied_drives: list[np.ndarray] = []
@@ -257,7 +258,7 @@ def run_local_snn_comparison(
     if excitatory.shape != activity.shape or inhibitory.shape != activity.shape:
         raise ValueError("Sygnały oscylacji nie pasują do macierzy aktywności")
 
-    sync_stride = max(1, int(round(float(config.snn["sync_dt"]) / config.timestep)))
+    sync_stride = compute_time_stride(float(config.snn["sync_dt"]), config.timestep)
     snn_activity = np.zeros_like(activity, dtype=float)
     report_only_activity = np.array(activity, dtype=float, copy=True)
     last_regional = np.zeros(activity.shape[1], dtype=float)
