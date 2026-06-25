@@ -51,6 +51,7 @@ from .profile_comparison import (
 from .profile_comparison import (
     run_task_across_clinical_profiles as _run_task_across_clinical_profiles,
 )
+from .random_sources import RandomSources
 from .results import ExperimentResult
 from .scheduler import SimulationScheduler, TaskStimulusPlayer
 from .snn_runtime import (
@@ -61,6 +62,46 @@ from .snn_runtime import (
     summarize_trace_metrics,
 )
 from .state import SimulationState
+
+
+def _effective_rng_seed(config: ExperimentConfig) -> int:
+    """Wyznacz ziarno RNG używane przez komponenty symulacji.
+
+    Parameters
+    ----------
+    config:
+        Konfiguracja eksperymentu z historycznym polem ``seed`` i docelowym
+        polem ``rng_seed``.
+
+    Returns
+    -------
+    int
+        Jawne ziarno generatora losowego; gdy ``rng_seed`` nie jest ustawione,
+        zachowywana jest zgodność z polem ``seed``.
+    """
+    return int(config.rng_seed if config.rng_seed is not None else config.seed)
+
+
+def _build_randomness_section(
+    config: ExperimentConfig, random_sources: RandomSources
+) -> dict[str, Any]:
+    """Zbuduj sekcję replikowalności opisującą kontrolę losowości.
+
+    Parameters
+    ----------
+    config:
+        Konfiguracja eksperymentu zawierająca jawne pola ziarna.
+    random_sources:
+        Rejestr nazw komponentów, które pobrały deterministyczne strumienie RNG.
+
+    Returns
+    -------
+    dict[str, Any]
+        Sekcja ``randomness`` do zapisu w metrykach, raporcie i wyniku API.
+    """
+    randomness = random_sources.metadata()
+    randomness["seed"] = int(config.seed)
+    return randomness
 
 
 def _deterministic_observed_response(
@@ -380,6 +421,13 @@ def run_experiment(
     dict[str, Any]
         Wyniki symulacji, triali, raportów i opcjonalnego zapisu artefaktów.
     """
+    rng_seed = _effective_rng_seed(config)
+    random_sources = RandomSources(seed=rng_seed)
+    random_sources.get("cognitive_brain_model")
+    random_sources.get("task_stimulus_generator")
+    random_sources.get("task_response_model")
+    random_sources.get("wilson_cowan_oscillator_bank")
+
     model_params = BrainParams(dt=config.timestep, **config.model)
     osc_params = WilsonCowanParams(**config.integrator.get("oscillator", {}))
     stimulus_scenario = str(config.task.get("scenario", "reward-learning"))
@@ -387,14 +435,14 @@ def run_experiment(
         model = CognitiveBrainModel(
             params=model_params,
             oscillator_params=osc_params,
-            seed=config.seed,
+            seed=rng_seed,
             stimulus=stimulus_scenario,
         )
     except ValueError:
         model = CognitiveBrainModel(
             params=model_params,
             oscillator_params=osc_params,
-            seed=config.seed,
+            seed=rng_seed,
             stimulus="reward-learning",
         )
 
@@ -486,7 +534,9 @@ def run_experiment(
         region_names=list(model.names),
     )
     analysis_report.payload["event_timeline"] = event_timeline
+    randomness = _build_randomness_section(config, random_sources)
     analysis_report.payload["stimulus_sequence_signature"] = stimulus_sequence_signature
+    analysis_report.payload["randomness"] = randomness
     analysis_report.payload["clinical_profile"] = dict(config.clinical_profile)
     analysis_report.payload["analysis"] = dict(config.analysis)
 
@@ -509,12 +559,14 @@ def run_experiment(
             model_params=model.p,
             oscillator_params=model.oscillator_bank.params,
             scenario=oscillations.get("metadata"),
-            seed=config.seed,
+            seed=rng_seed,
             duration_s=elapsed,
             config=config,
+            extra_metadata={"randomness": randomness},
             metrics={
                 "metrics": analysis_report.payload.get("metrics", {}),
                 "comparison": analysis_report.payload.get("comparison", {}),
+                "randomness": randomness,
             },
             event_timeline=event_timeline,
         )
@@ -534,6 +586,7 @@ def run_experiment(
         metrics={
             "metrics": analysis_report.payload.get("metrics", {}),
             "comparison": analysis_report.payload.get("comparison", {}),
+            "randomness": randomness,
         },
         trial_events=trial_events,
         analysis_report=analysis_report.payload,
@@ -554,6 +607,7 @@ def run_experiment(
         snn_comparison=snn_comparison,
         save_info=save_info,
         elapsed=elapsed,
+        randomness=randomness,
     )
     return experiment_result.to_legacy_dict()
 

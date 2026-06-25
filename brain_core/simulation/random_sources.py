@@ -40,7 +40,12 @@ class RandomSources:
 
         Returns:
             np.random.Generator: Generator losowy.
+
+        Raises:
+            ValueError: Jeśli nazwa komponentu jest pusta.
         """
+        if not name:
+            raise ValueError("Nazwa komponentu RNG nie może być pusta.")
         if name not in self._streams:
             child = self._root.spawn(1)[0]
             self._streams[name] = np.random.default_rng(child)
@@ -55,7 +60,34 @@ class RandomSources:
 
         Returns:
             np.random.Generator: Nowy generator losowy.
+
+        Raises:
+            ValueError: Jeśli nazwa komponentu jest pusta.
         """
+        if not name:
+            raise ValueError("Nazwa komponentu RNG nie może być pusta.")
         child = self._root.spawn(1)[0]
         self._streams[name] = np.random.default_rng(child)
         return self._streams[name]
+
+    def component_names(self) -> list[str]:
+        """Zwróć nazwy komponentów, które pobrały strumień RNG.
+
+        Returns:
+            list[str]: Posortowane nazwy komponentów korzystających z RNG.
+        """
+        return sorted(self._streams)
+
+    def metadata(self) -> dict[str, object]:
+        """Zbuduj metadane losowości zapisywane w artefaktach wyniku.
+
+        Returns:
+            dict[str, object]: Ziarno, komponenty RNG i flaga deterministyczności.
+        """
+        return {
+            "rng_seed": self.seed,
+            "rng_components": self.component_names(),
+            "deterministic_generator": True,
+            "generator": "numpy.random.Generator",
+            "bit_generator": "PCG64",
+        }

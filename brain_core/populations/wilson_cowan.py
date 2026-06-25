@@ -292,10 +292,11 @@ class RegionWilsonCowanModel:
             noise_scale = np.maximum(
                 0.0, 0.03 + 0.05 * na + 0.03 * adr + 0.02 * da - 0.05 * gaba
             )
-            rng_to_use = rng if rng is not None else np.random.default_rng()
-            external_e = external_e + rng_to_use.normal(
-                0.0, noise_scale, size=self.E.shape
-            )
+            if rng is None:
+                raise ValueError(
+                    "rng jest wymagany dla szumu neuromodulowanego Wilsona-Cowana"
+                )
+            external_e = external_e + rng.normal(0.0, noise_scale, size=self.E.shape)
 
         input_E = w_EE * self.E - w_EI * self.I + external_e
         input_I = w_IE * self.E - w_II * self.I + external_i

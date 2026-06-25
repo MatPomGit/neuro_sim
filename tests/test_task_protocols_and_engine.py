@@ -1,5 +1,8 @@
+import json
+from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pytest
 
 from brain_core.analysis.reports import AnalysisReport, build_trial_observation_rows
@@ -41,6 +44,69 @@ def test_tasks_generate_deterministic_stimuli() -> Any:
         n_runs=3, run_length_min=2, run_length_max=4, jitter=0.05
     ).generate_stimuli(seed=7, duration_s=duration)
     assert r1 == r2
+
+
+def test_run_experiment_records_randomness_and_repeats_key_metrics(tmp_path: Path) -> None:
+    """Sprawdza artefakty RNG i powtarzalność lekkiej symulacji dla stałego seeda."""
+    cfg = ExperimentConfig(
+        seed=123,
+        rng_seed=123,
+        task={"name": "stroop", "scenario": "stroop", "duration": 0.2},
+        output={"save_results": True, "label": "rng-test", "output_dir": str(tmp_path)},
+    )
+
+    first = run_experiment(cfg)
+    second = run_experiment(cfg)
+
+    assert first["randomness"] == {
+        "rng_seed": 123,
+        "rng_components": [
+            "cognitive_brain_model",
+            "task_response_model",
+            "task_stimulus_generator",
+            "wilson_cowan_oscillator_bank",
+        ],
+        "deterministic_generator": True,
+        "generator": "numpy.random.Generator",
+        "bit_generator": "PCG64",
+        "seed": 123,
+    }
+    assert first["analysis_report"]["randomness"] == first["randomness"]
+    metrics_path = Path(first["save_info"]["metrics"])
+    metadata_path = Path(first["save_info"]["metadata"])
+    saved_metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    saved_metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    assert saved_metrics["randomness"] == first["randomness"]
+    assert saved_metadata["extra"]["randomness"] == first["randomness"]
+    assert np.array_equal(first["activity"], second["activity"])
+    assert first["analysis_report"]["metrics"] == second["analysis_report"]["metrics"]
+    assert first["trial_results"] == second["trial_results"]
+
+
+def test_run_experiment_changes_key_metrics_when_seed_changes() -> None:
+    """Potwierdza kontrolowaną zmianę lekkiej symulacji po zmianie seeda."""
+    base_task = {"name": "stroop", "scenario": "stroop", "duration": 0.2}
+    first = run_experiment(
+        ExperimentConfig(
+            seed=123,
+            rng_seed=123,
+            task=base_task,
+            output={"save_results": False},
+        )
+    )
+    second = run_experiment(
+        ExperimentConfig(
+            seed=124,
+            rng_seed=124,
+            task=base_task,
+            output={"save_results": False},
+        )
+    )
+
+    assert first["randomness"]["rng_seed"] == 123
+    assert second["randomness"]["rng_seed"] == 124
+    assert not np.array_equal(first["activity"], second["activity"])
+    assert first["analysis_report"]["metrics"] != second["analysis_report"]["metrics"]
 
 
 def test_trial_results_have_unified_schema_and_are_deterministic() -> Any:
