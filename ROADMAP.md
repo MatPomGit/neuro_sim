@@ -511,7 +511,159 @@ Najważniejsze zależności blokujące:
 
 ---
 
-## 10. Zasady utrzymania roadmapy
+## 10. Plan dalszego rozwoju i ulepszeń od 2026-06-26
+
+Ten plan porządkuje dalszy rozwój programu po aktualnym stanie roadmapy. Nie
+zastępuje backlogu operacyjnego; wskazuje kolejność decyzji produktowych,
+technicznych i walidacyjnych, które powinny najpierw zwiększyć użyteczność
+dydaktyczną, a dopiero później rozszerzać złożoność biologiczną modelu.
+
+### 10.1. Priorytet A — stabilne jądro eksperymentu
+
+**Cel:** użytkownik uruchamia eksperyment z jednego pliku konfiguracji, a wynik
+można odtworzyć i porównać między profilami.
+
+**Zakres prac:**
+
+- domknąć walidację konfiguracji YAML/JSON dla wszystkich publicznych punktów
+  wejścia, tak aby błędy były po polsku i wskazywały konkretną sekcję;
+- utrwalić `healthy_v1` jako wersjonowany baseline regresyjny z metrykami,
+  tolerancjami i opisem ograniczeń;
+- rozszerzyć artefakty wyniku o jednoznaczny indeks uruchomienia: konfigurację,
+  seed, commit Git, środowisko, metryki, log i ścieżki danych;
+- utrzymać kompatybilność dotychczasowego słownika wynikowego tylko na granicy
+  API, a wewnętrznie rozwijać jawny kontrakt `ExperimentResult`;
+- dodać szybkie testy regresyjne dla deterministyczności seeda, stabilności
+  kształtów tablic i walidacji konfiguracji.
+
+**Kryteria ukończenia:**
+
+- ta sama konfiguracja i seed dają powtarzalny wynik w przyjętej tolerancji;
+- niepoprawna konfiguracja kończy się czytelnym błędem walidacji;
+- każdy publiczny eksperyment zapisuje minimalny zestaw artefaktów
+  reprodukowalności.
+
+### 10.2. Priorytet B — interpretowalne raporty i analiza trial-by-trial
+
+**Cel:** raport ma wyjaśniać mechanizm wyniku bez konieczności czytania kodu lub
+surowych tablic.
+
+**Zakres prac:**
+
+- domknąć grupowanie osi czasu per trial dla `roving_oddball`;
+- pokazywać w raporcie typ bodźca, odpowiedź, metryki amplitudy i latencji,
+  habituację, readaptację oraz krótki komentarz mechanizmu;
+- powiązać zdarzenia timeline z wykresami i eksportem HTML/PDF;
+- dodać jawne ostrzeżenia, że profile clinical/lesion są dydaktyczne i nie są
+  narzędziem diagnostycznym;
+- utrzymywać słownictwo użytkowe zgodnie z `docs/english_polish_glossary.md`.
+
+**Kryteria ukończenia:**
+
+- raport `roving_oddball` pozwala prześledzić każdy trial od bodźca do
+  interpretacji;
+- eksport HTML/PDF zawiera konfigurację, seed, metryki, wykresy i ograniczenia;
+- testy sprawdzają obecność kluczowych pól trial-by-trial i komentarzy
+  dydaktycznych.
+
+### 10.3. Priorytet C — porównania healthy/disorder/lesion i walidacja jakościowa
+
+**Cel:** ten sam scenariusz można bezpiecznie porównać między profilami, a
+raport pokazuje oczekiwany kierunek zmian i zakres zaufania.
+
+**Zakres prac:**
+
+- uruchomić porównania `roving_oddball` dla healthy, disorder i lesion na
+  wspólnym seedzie oraz wspólnym zestawie metryk;
+- skalibrować progi profili klinicznych względem rejestru walidacji i
+  benchmarków jakościowych;
+- dla każdego profilu opisać `primary_metric`, `expected_direction`,
+  `severity_level`, tolerancje i ograniczenia stosowalności;
+- wprowadzić raport porównawczy z tabelą różnic oraz komentarzem
+  amplitude-latency-mechanism;
+- oznaczyć efekty jako odtworzone jakościowo, częściowo odtworzone albo poza
+  zakresem modelu.
+
+**Kryteria ukończenia:**
+
+- porównanie trzech profili działa z jednego zestawu konfiguracji;
+- rejestr walidacji wskazuje źródło i kryterium zgodności dla każdej metryki;
+- raport nie sugeruje zastosowań klinicznych poza edukacją i eksploracją
+  hipotez.
+
+### 10.4. Priorytet D — ulepszenie desktopowego GUI i przepływu nauczyciela
+
+**Cel:** prowadzący może przeprowadzić zajęcia bez edycji kodu, a GUI pozostaje
+cienką warstwą nad konfiguracją i silnikiem.
+
+**Zakres prac:**
+
+- rozwinąć wybór presetów YAML w GUI PySide6 o polskie opisy celu, oczekiwanych
+  obserwacji, ograniczeń i powiązanej lekcji;
+- dodać widok porównania profili z tym samym seedem i jasnym wskazaniem
+  różnic;
+- rozbudować tryb nauczyciela o kroki: hipoteza, uruchomienie, obserwacja,
+  interpretacja, ograniczenia i pytania kontrolne;
+- zapewnić eksport pakietu zajęciowego: raport, karta pracy, konfiguracja,
+  metadane uruchomienia i wykresy;
+- nie dodawać nowych przepływów `tkinter`; nowe elementy desktopowe rozwijać
+  wyłącznie w PySide6/Qt.
+
+**Kryteria ukończenia:**
+
+- użytkownik wybiera lekcję i uruchamia powiązany eksperyment bez ręcznej edycji
+  YAML;
+- GUI nie duplikuje logiki walidacji ani obliczeń z `brain_core`;
+- statyczne testy zależności potwierdzają brak nowych przepływów `tkinter`.
+
+### 10.5. Priorytet E — rozszerzenia biologiczne po ustabilizowaniu raportów
+
+**Cel:** rozwijać model biologiczny tylko tam, gdzie raporty i walidacja potrafią
+wyjaśnić wpływ nowej złożoności.
+
+**Zakres prac:**
+
+- dopracować konektom, opóźnienia przewodzenia i sanity checks stabilności
+  neural mass;
+- rozwijać neuromodulację jako jawne parametry profili, nie ukryte stałe w
+  kodzie;
+- mierzyć koszt współsymulacji SNN w trybach `report_only` i `closed_loop` na
+  tych samych konfiguracjach;
+- utrzymywać kontrakt wymiany sygnałów neural-mass ↔ SNN z jawnie opisanymi
+  jednostkami i skalowaniem;
+- rozszerzać EEG/BOLD dopiero po zdefiniowaniu kryteriów jakości i ograniczeń
+  interpretacyjnych.
+
+**Kryteria ukończenia:**
+
+- nowe parametry biologiczne są konfigurowalne i testowane;
+- raport pokazuje wpływ rozszerzenia na metryki i stabilność;
+- koszt obliczeniowy wariantu SNN jest opisany przed udostępnieniem go w GUI.
+
+### 10.6. Kolejność najbliższych iteracji
+
+| Iteracja | Główny rezultat | Minimalna weryfikacja |
+| --- | --- | --- |
+| I1 | trial-by-trial timeline dla `roving_oddball` | testy raportu i protokołu zadania |
+| I2 | porównanie healthy/disorder/lesion na wspólnym seedzie | uruchomienie trzech konfiguracji i tabela metryk |
+| I3 | kalibracja progów profili i rejestru walidacji | testy benchmark metadata oraz kontrola raportu |
+| I4 | GUI presetów i tryb nauczyciela oparty o lekcje | testy Qt, statyczna kontrola zależności GUI |
+| I5 | pomiar kosztu SNN `report_only` vs `closed_loop` | raport czasu wykonania i stabilności sygnałów |
+
+### 10.7. Zasady ograniczające zakres
+
+- Nie dodawać nowego modelu biologicznego, jeśli nie ma planu raportowania,
+  walidacji i testów regresyjnych.
+- Nie rozszerzać GUI przez kopiowanie logiki silnika; GUI ma przygotowywać
+  konfigurację, uruchamiać eksperyment i prezentować wynik.
+- Nie nadawać profilom clinical znaczenia diagnostycznego; komunikaty dla
+  użytkownika muszą jasno mówić o charakterze dydaktycznym i eksploracyjnym.
+- Nie zmieniać schematu konfiguracji bez walidacji, przykładu migracji albo
+  czytelnego błędu dla starszych plików.
+
+---
+
+## 11. Zasady utrzymania roadmapy
 
 1. Roadmapa opisuje **kierunek i zależności**, a nie zastępuje `BACKLOG.md`.
 2. Po zakończeniu większego etapu należy zaktualizować:
