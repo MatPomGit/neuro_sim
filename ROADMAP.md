@@ -555,7 +555,7 @@ surowych tablic.
   habituację, readaptację oraz krótki komentarz mechanizmu;
 - powiązać zdarzenia timeline z wykresami i eksportem HTML/PDF;
 - dodać jawne ostrzeżenia, że profile clinical/lesion są dydaktyczne i nie są
-  narzędziem diagnostycznym;
+  narzędziami diagnostycznymi;
 - utrzymywać słownictwo użytkowe zgodnie z `docs/english_polish_glossary.md`.
 
 **Kryteria ukończenia:**
