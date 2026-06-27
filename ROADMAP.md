@@ -656,7 +656,7 @@ wyjaśnić wpływ nowej złożoności.
   walidacji i testów regresyjnych.
 - Nie rozszerzać GUI przez kopiowanie logiki silnika; GUI ma przygotowywać
   konfigurację, uruchamiać eksperyment i prezentować wynik.
-- Nie nadawać profilom clinical znaczenia diagnostycznego; komunikaty dla
+- Nie nadawać profilom clinical/lesion znaczenia diagnostycznego; komunikaty dla
   użytkownika muszą jasno mówić o charakterze dydaktycznym i eksploracyjnym.
 - Nie zmieniać schematu konfiguracji bez walidacji, przykładu migracji albo
   czytelnego błędu dla starszych plików.
