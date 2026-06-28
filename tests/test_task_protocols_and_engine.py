@@ -46,7 +46,9 @@ def test_tasks_generate_deterministic_stimuli() -> Any:
     assert r1 == r2
 
 
-def test_run_experiment_records_randomness_and_repeats_key_metrics(tmp_path: Path) -> None:
+def test_run_experiment_records_randomness_and_repeats_key_metrics(
+    tmp_path: Path,
+) -> None:
     """Sprawdza artefakty RNG i powtarzalność lekkiej symulacji dla stałego seeda."""
     cfg = ExperimentConfig(
         seed=123,
@@ -269,8 +271,37 @@ def test_roving_oddball_trial_results_include_metrics() -> Any:
         result["trial_number"] == result["trial_id"] for result in r1["trial_results"]
     )
     assert all("model_response" in result for result in r1["trial_results"])
+    roving_events = [
+        event for event in r1["event_timeline"] if event.get("trial_id") != "n/a"
+    ]
+    assert roving_events == sorted(
+        roving_events,
+        key=lambda event: (event["time_s"], event["event_type"]),
+    )
+    assert all(
+        {"trial_id", "trial_number", "stimulus_type", "time_s"}.issubset(event)
+        for event in roving_events
+    )
+    stimulus_events = [
+        event for event in roving_events if event["event_type"] == "stimulus_onset"
+    ]
+    assert {event["stimulus_type"] for event in stimulus_events} >= {
+        "standard",
+        "deviant",
+    }
+    assert any(
+        event["details"].get("payload", {}).get("is_new_standard")
+        for event in stimulus_events
+    )
+    response_events = [
+        event for event in roving_events if event["event_type"] == "response"
+    ]
+    assert response_events
+    assert all("model_response" in event["details"] for event in response_events)
     roving_report = r1["analysis_report"]["roving_oddball"]
     assert len(roving_report["trial_by_trial"]) == len(r1["trial_results"])
+    assert len(roving_report["trial_event_groups"]) == len(r1["trial_results"])
+    assert roving_report["trial_event_groups"][0]["trial_number"] == 0
     assert {
         "trial_number",
         "standard",

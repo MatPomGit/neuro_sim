@@ -123,6 +123,9 @@ class TaskStimulusPlayer:
                     "onset_s": stimulus.onset_s,
                     "duration_s": stimulus.duration_s,
                     "condition": stimulus.condition,
+                    "stimulus_type": str(
+                        stimulus.payload.get("stimulus_type", stimulus.condition)
+                    ),
                     "payload": stimulus.payload,
                     "regional_input": regional_input,
                 }
