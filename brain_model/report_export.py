@@ -50,6 +50,33 @@ def _stringify_value(value: Any) -> str:
     return str(value)
 
 
+def _format_trial_metric_value(value: Any) -> str:
+    """Sformatuj wartość metryki trialu do tabeli Markdown/HTML.
+
+    Parameters
+    ----------
+    value:
+        Wartość metryki z sekcji trial-by-trial, np. czas, flaga poprawności
+        albo agregat habituacji.
+
+    Returns
+    -------
+    str
+        Jednowierszowa reprezentacja zachowująca stabilne formatowanie liczb
+        zmiennoprzecinkowych i czytelne wartości puste.
+    """
+
+    if value is None:
+        return "n/a"
+    if isinstance(value, bool):
+        return "tak" if value else "nie"
+    if isinstance(value, float):
+        return f"{value:.6g}"
+    if isinstance(value, (dict, list)):
+        return _stringify_value(value)
+    return str(value)
+
+
 def _draw_wrapped_text_page(
     pdf: PdfPages,
     title: str,
@@ -556,13 +583,27 @@ def _roving_trial_event_group_lines(analysis_report: dict[str, Any]) -> list[str
                 f"{key}={_format_trial_metric_value(value)}"
                 for key, value in metrics.items()
             )
+            table_row = {
+                "trial_id": row.get("trial_id", "n/a"),
+                "trial_number": row.get("trial_number", "n/a"),
+                "stimulus_type": row.get("stimulus_type", "n/a"),
+                "time_s": _format_trial_metric_value(row.get("time_s", "n/a")),
+                "response": (
+                    row.get("model_response") or row.get("observed_response") or "n/a"
+                ),
+                "metrics": metrics_text or "brak metryk",
+            }
+            escaped_row = {
+                key: _escape_markdown_table_cell(value)
+                for key, value in table_row.items()
+            }
             lines.append(
-                f"| {row.get('trial_id', 'n/a')} "
-                f"| {row.get('trial_number', 'n/a')} "
-                f"| {row.get('stimulus_type', 'n/a')} "
-                f"| {_format_trial_metric_value(row.get('time_s', 'n/a'))} "
-                f"| {row.get('model_response') or row.get('observed_response') or 'n/a'} "
-                f"| {metrics_text or 'brak metryk'} |"
+                f"| {escaped_row['trial_id']} "
+                f"| {escaped_row['trial_number']} "
+                f"| {escaped_row['stimulus_type']} "
+                f"| {escaped_row['time_s']} "
+                f"| {escaped_row['response']} "
+                f"| {escaped_row['metrics']} |"
             )
         lines.append("")
     return lines
