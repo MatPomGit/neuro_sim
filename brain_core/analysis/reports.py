@@ -1857,7 +1857,7 @@ class AnalysisReport:
                         f"| {row.get('trial_number', 'n/a')} "
                         f"| {row.get('stimulus_type', 'n/a')} "
                         f"| {_format_trial_metric_value(row.get('time_s', 'n/a'))} "
-                        f"| {row.get('model_response', row.get('observed_response', 'n/a'))} "
+                        f"| {row.get('model_response') or row.get('observed_response') or 'n/a'} "
                         f"| {metrics_text or 'brak metryk'} "
                         f"| {row.get('event_indices', [])} |"
                     )
