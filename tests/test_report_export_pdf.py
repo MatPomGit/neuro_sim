@@ -208,6 +208,43 @@ def test_html_report_keeps_escaped_pipes_inside_table_cells() -> None:
     assert html.count("<td>") == 2
 
 
+def test_roving_trial_event_group_table_escapes_metric_pipes() -> None:
+    """Tabela agregacji roving oddball nie rozpada się od separatorów w metrykach."""
+    markdown = _experiment_report_markdown(
+        title="Raport testowy",
+        status_message="Symulacja zakończona.",
+        summary_text="",
+        state_config={"task": "roving_oddball"},
+        event_timeline=[],
+        clinical_profile={},
+        analysis_report={
+            "roving_oddball": {
+                "trial_event_groups": [
+                    {
+                        "trial_id": 1,
+                        "trial_number": 1,
+                        "stimulus_type": "deviant | novelty",
+                        "time_s": 0.5,
+                        "model_response": "reakcja | poprawna",
+                        "metrics": {
+                            "surprise_index": 1.25,
+                            "opis": "lewa | prawa",
+                        },
+                    }
+                ]
+            }
+        },
+    )
+
+    html = _markdown_to_simple_html(markdown)
+
+    assert "deviant \\| novelty" in markdown
+    assert "opis=lewa \\| prawa" in markdown
+    assert "<td>deviant | novelty</td>" in html
+    assert "<td>reakcja | poprawna</td>" in html
+    assert "<td>surprise_index=1.25; opis=lewa | prawa</td>" in html
+
+
 def test_pdf_trial_lines_keep_limit_and_report_omitted_trials() -> None:
     """Skrót PDF zachowuje limit i informuje, ile triali pominięto."""
     lines = _trial_observation_lines(
