@@ -68,6 +68,8 @@ def _format_trial_metric_value(value: Any) -> str:
 
     if value is None:
         return "n/a"
+    if isinstance(value, bool):
+        return "tak" if value else "nie"
     if isinstance(value, float):
         return f"{value:.6g}"
     if isinstance(value, (dict, list)):
