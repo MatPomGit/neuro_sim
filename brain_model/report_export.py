@@ -552,13 +552,16 @@ def _roving_trial_event_group_lines(analysis_report: dict[str, Any]) -> list[str
         )
         for row in event_groups:
             metrics = row.get("metrics") or {}
-            metrics_text = "; ".join(f"{key}={value}" for key, value in metrics.items())
+            metrics_text = "; ".join(
+                f"{key}={_format_trial_metric_value(value)}"
+                for key, value in metrics.items()
+            )
             lines.append(
                 f"| {row.get('trial_id', 'n/a')} "
                 f"| {row.get('trial_number', 'n/a')} "
                 f"| {row.get('stimulus_type', 'n/a')} "
-                f"| {row.get('time_s', 'n/a')} "
-                f"| {row.get('model_response', row.get('observed_response', 'n/a'))} "
+                f"| {_format_trial_metric_value(row.get('time_s', 'n/a'))} "
+                f"| {row.get('model_response') or row.get('observed_response') or 'n/a'} "
                 f"| {metrics_text or 'brak metryk'} |"
             )
         lines.append("")
