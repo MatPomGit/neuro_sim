@@ -498,6 +498,76 @@ def _glossary_markdown_lines() -> list[str]:
     ]
 
 
+def _roving_trial_event_group_lines(analysis_report: dict[str, Any]) -> list[str]:
+    """Zbuduj polską sekcję eksportu z agregacją triali roving oddball.
+
+    Parameters
+    ----------
+    analysis_report:
+        Raport analityczny zawierający sekcję ``roving_oddball`` z grupami
+        zdarzeń per trial.
+
+    Returns
+    -------
+    list[str]
+        Linie Markdown opisujące mechanizm habituacji/readaptacji i tabelę
+        trial-by-trial bez sugestii diagnozy klinicznej.
+    """
+    roving_report = analysis_report.get("roving_oddball", {}) if analysis_report else {}
+    if not isinstance(roving_report, dict):
+        return []
+    event_groups = roving_report.get("trial_event_groups") or []
+    mechanism = roving_report.get("amplitude_latency_mechanism") or {}
+    if not event_groups and not mechanism:
+        return []
+    lines = [
+        "## Roving oddball — agregacja trial po trialu",
+        "",
+        (
+            "Ta sekcja pokazuje mechanizm habituacji i readaptacji w modelu: "
+            "powtarzane standardy zwykle obniżają zaskoczenie, dewiant zwiększa "
+            "błąd predykcji, a nowy standard rozpoczyna kolejną adaptację. "
+            "Opis ma charakter dydaktyczny i nie stanowi sugestii diagnozy klinicznej."
+        ),
+        "",
+    ]
+    if mechanism:
+        lines.extend(
+            [
+                f"- **Amplituda proxy**: {mechanism.get('response_amplitude', 'n/a')}",
+                "- **Latencja odpowiedzi modelu [s]**: "
+                f"{mechanism.get('mean_response_latency_s', 'n/a')}",
+                f"- **Latencja readaptacji**: {mechanism.get('mean_readaptation_latency', 'n/a')}",
+                f"- **Komentarz mechanizmu**: {mechanism.get('mechanism_comment', 'n/a')}",
+                f"- **Komentarz dydaktyczny**: {mechanism.get('educational_comment', 'n/a')}",
+                "",
+            ]
+        )
+    if event_groups:
+        lines.extend(
+            [
+                "| Trial | Nr trialu | Typ bodźca | Czas [s] | Odpowiedź | Metryki dydaktyczne |",
+                "| --- | --- | --- | --- | --- | --- |",
+            ]
+        )
+        for row in event_groups:
+            metrics = row.get("metrics") or {}
+            metrics_text = "; ".join(
+                f"{key}={_format_trial_metric_value(value)}"
+                for key, value in metrics.items()
+            )
+            lines.append(
+                f"| {row.get('trial_id', 'n/a')} "
+                f"| {row.get('trial_number', 'n/a')} "
+                f"| {row.get('stimulus_type', 'n/a')} "
+                f"| {_format_trial_metric_value(row.get('time_s', 'n/a'))} "
+                f"| {row.get('model_response') or row.get('observed_response') or 'n/a'} "
+                f"| {metrics_text or 'brak metryk'} |"
+            )
+        lines.append("")
+    return lines
+
+
 def _experiment_report_markdown(
     *,
     title: str,
@@ -616,6 +686,7 @@ def _experiment_report_markdown(
             )
         else:
             lines.append("Brak triali w osi czasu.")
+    lines.extend(["", *_roving_trial_event_group_lines(analysis_report)])
     lines.extend(["", "## Raport analityczny brain_core", ""])
     lines.extend(_report_markdown_lines(analysis_report))
     lines.extend(["", "## Konfiguracja", *_flatten_mapping(state_config), ""])

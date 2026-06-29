@@ -508,14 +508,6 @@ def run_experiment(
         task_name=str(config.task.get("name") or "n/a"),
     )
     analysis_report = _attach_task_activation_section(analysis_report, task_activation)
-    if str(config.task.get("name") or "") in {"roving_oddball", "roving-oddball"}:
-        analysis_report.payload["roving_oddball"] = build_roving_oddball_report(
-            trial_results,
-            profile_id=str(
-                config.clinical_profile.get("id") or config.output.get("label") or "run"
-            ),
-            clinical_profile=config.clinical_profile,
-        )
     snn_comparison = _run_local_snn_comparison(
         config=config,
         region_names=list(model.names),
@@ -535,6 +527,15 @@ def run_experiment(
         region_names=list(model.names),
     )
     analysis_report.payload["event_timeline"] = event_timeline
+    if str(config.task.get("name") or "") in {"roving_oddball", "roving-oddball"}:
+        analysis_report.payload["roving_oddball"] = build_roving_oddball_report(
+            trial_results,
+            profile_id=str(
+                config.clinical_profile.get("id") or config.output.get("label") or "run"
+            ),
+            clinical_profile=config.clinical_profile,
+            event_timeline=event_timeline,
+        )
     randomness = _build_randomness_section(config, random_sources)
     analysis_report.payload["stimulus_sequence_signature"] = stimulus_sequence_signature
     analysis_report.payload["randomness"] = randomness

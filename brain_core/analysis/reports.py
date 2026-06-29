@@ -194,7 +194,9 @@ def _build_eeg_bold_report_sections(
                 "reference_or_expected_direction": (
                     expected_direction
                     if expected_direction != "stable_reference"
-                    else metadata.get("reference_or_expected_direction", expected_direction)
+                    else metadata.get(
+                        "reference_or_expected_direction", expected_direction
+                    )
                 ),
                 "profile_id": profile_id,
                 "profile_group": profile_group,
@@ -1832,6 +1834,33 @@ class AnalysisReport:
                     f"- **komentarz dydaktyczny**: "
                     f"{mechanism.get('educational_comment', 'n/a')}"
                 )
+            event_groups = roving_report.get("trial_event_groups") or []
+            if event_groups:
+                lines.extend(["", "### Agregacja zdarzeń per trial"])
+                lines.append(
+                    "Sekcja grupuje pełną oś czasu po `trial_id` i `trial_number`, "
+                    "aby pokazać bodziec, odpowiedź oraz metryki dydaktyczne bez "
+                    "sugerowania diagnozy klinicznej."
+                )
+                lines.append(
+                    "| Trial | Nr trialu | Typ bodźca | Czas [s] | Odpowiedź "
+                    "| Metryki | Indeksy zdarzeń |"
+                )
+                lines.append("| --- | --- | --- | --- | --- | --- | --- |")
+                for row in event_groups:
+                    metrics_text = "; ".join(
+                        f"{key}={_format_trial_metric_value(value)}"
+                        for key, value in (row.get("metrics") or {}).items()
+                    )
+                    lines.append(
+                        f"| {row.get('trial_id', 'n/a')} "
+                        f"| {row.get('trial_number', 'n/a')} "
+                        f"| {row.get('stimulus_type', 'n/a')} "
+                        f"| {_format_trial_metric_value(row.get('time_s', 'n/a'))} "
+                        f"| {row.get('model_response') or row.get('observed_response') or 'n/a'} "
+                        f"| {metrics_text or 'brak metryk'} "
+                        f"| {row.get('event_indices', [])} |"
+                    )
             trial_rows = roving_report.get("trial_by_trial") or []
             if trial_rows:
                 lines.extend(["", "### Trial-by-trial roving oddball"])
@@ -2371,11 +2400,83 @@ class AnalysisReport:
         return rows
 
 
+def _build_roving_event_trial_groups(
+    event_timeline: list[dict[str, Any]],
+) -> list[dict[str, object]]:
+    """Agreguj oś czasu roving oddball do grup per trial.
+
+    Parameters
+    ----------
+    event_timeline:
+        Pełna chronologiczna lista zdarzeń z polami ``trial_id`` i
+        ``trial_number``.
+
+    Returns
+    -------
+    list[dict[str, object]]
+        Wiersze grupujące bodziec, odpowiedź, metryki i indeksy zdarzeń dla
+        każdego trialu bez zmiany kolejności osi czasu.
+    """
+    rows: list[dict[str, object]] = []
+    for group in _group_event_timeline_by_trial(event_timeline):
+        stimulus = group.get("stimulus") or {}
+        response = group.get("response") or {}
+        correctness = group.get("correctness") or {}
+        stimulus_details = stimulus.get("details") or {}
+        response_details = response.get("details") or {}
+        correctness_details = correctness.get("details") or {}
+        payload = stimulus_details.get("payload") or {}
+        metric_sources = (payload, response_details, correctness_details)
+        metrics: dict[str, object] = {}
+        for source in metric_sources:
+            if isinstance(source, dict):
+                for key in (
+                    "surprise_index",
+                    "habituation_level",
+                    "readaptation_latency",
+                    "reaction_time_s",
+                    "correct",
+                ):
+                    if key in source and source[key] is not None:
+                        metrics[key] = source[key]
+        events = [
+            event
+            for event in (
+                stimulus,
+                response,
+                correctness,
+                *group.get("activity_changes", []),
+                *group.get("mechanism_comments", []),
+            )
+            if isinstance(event, dict) and event
+        ]
+        condition = group.get("condition", "n/a")
+        rows.append(
+            {
+                "trial_id": group.get("trial_id", "n/a"),
+                "trial_number": group.get("trial_number", "n/a"),
+                "condition": condition,
+                "stimulus_type": stimulus.get("stimulus_type")
+                or stimulus_details.get("stimulus_type")
+                or condition,
+                "time_s": group.get("first_time_s", "n/a"),
+                "model_response": response_details.get("model_response"),
+                "observed_response": response_details.get("observed_response"),
+                "expected_response": response_details.get("expected_response"),
+                "correct": correctness_details.get("correct"),
+                "metrics": metrics,
+                "event_indices": [event.get("event_index") for event in events],
+            }
+        )
+    return rows
+
+
 def build_roving_oddball_report(
     trial_results: list[dict[str, Any]],
     *,
     profile_id: str | None = None,
     clinical_profile: dict[str, Any] | None = None,
+    event_timeline: list[dict[str, Any]] | None = None,
 ) -> dict[str, object]:
     """Agreguje metryki sekwencji roving oddball z wyników triali.
 
@@ -2391,6 +2492,9 @@ def build_roving_oddball_report(
     clinical_profile:
         Opcjonalne metadane profilu klinicznego używane do sekcji
         ``amplitude_latency_mechanism``.
+    event_timeline:
+        Opcjonalna pełna oś czasu zdarzeń używana do agregacji per trial bez
+        utraty kolejności zdarzeń.
 
     Returns
     -------
@@ -2409,6 +2513,7 @@ def build_roving_oddball_report(
             "mean_readaptation_latency": 0.0,
             "sequence_signature": [],
             "trial_by_trial": [],
+            "trial_event_groups": [],
             "amplitude_latency_mechanism": _build_amplitude_latency_mechanism_section(
                 trial_results=[],
                 summary={"profile_id": profile_id, "mean_readaptation_latency": 0.0},
@@ -2477,6 +2582,7 @@ def build_roving_oddball_report(
         "trial_by_trial": _build_roving_trial_by_trial_rows(
             trial_results, clinical_profile=clinical_profile
         ),
+        "trial_event_groups": _build_roving_event_trial_groups(event_timeline or []),
     }
     if profile_id is not None:
         summary["profile_id"] = profile_id

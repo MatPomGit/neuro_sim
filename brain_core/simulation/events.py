@@ -72,6 +72,9 @@ class SimulationEvent:
         ``None`` oznacza zdarzenie globalne.
     condition:
         Warunek eksperymentalny trialu albo ``n/a`` dla zdarzeń globalnych.
+    stimulus_type:
+        Jawny typ bodźca używany w protokole, np. ``standard``, ``deviant``
+        albo ``new_standard`` zakodowany w metadanych roving oddball.
     details:
         Dodatkowe metadane potrzebne do reprodukcji i filtrowania osi czasu.
     plot_anchor:
@@ -86,6 +89,7 @@ class SimulationEvent:
     trial_id: int | str = "n/a"
     trial_number: int | None = None
     condition: str = "n/a"
+    stimulus_type: str = "n/a"
     details: dict[str, Any] = field(default_factory=dict)
     plot_anchor: str | None = None
 
@@ -174,7 +178,10 @@ def build_event_timeline(
     )
 
     ordered = sorted(events, key=lambda event: (event.time_s, event.event_type))
-    return [event.to_dict() for event in ordered]
+    timeline = [event.to_dict() for event in ordered]
+    for event_index, event in enumerate(timeline):
+        event["event_index"] = event_index
+    return timeline
 
 
 def _stimulus_onset_events(trial_events: list[dict[str, Any]]) -> list[SimulationEvent]:
@@ -194,10 +201,20 @@ def _stimulus_onset_events(trial_events: list[dict[str, Any]]) -> list[Simulatio
                 trial_id=trial_id,
                 trial_number=trial_number,
                 condition=condition,
+                stimulus_type=str(
+                    trial_event.get("stimulus_type")
+                    or (trial_event.get("payload") or {}).get("stimulus_type")
+                    or condition
+                ),
                 details={
                     "trial_id": trial_id,
                     "trial_number": trial_number,
                     "condition": condition,
+                    "stimulus_type": str(
+                        trial_event.get("stimulus_type")
+                        or (trial_event.get("payload") or {}).get("stimulus_type")
+                        or condition
+                    ),
                     "duration_s": trial_event.get("duration_s"),
                     "regional_input": trial_event.get("regional_input", {}),
                     "payload": trial_event.get("payload", {}),
@@ -241,10 +258,16 @@ def _response_and_error_events(
                 trial_id=trial_id,
                 trial_number=trial_number,
                 condition=str(result.get("condition", "n/a")),
+                stimulus_type=str(
+                    result.get("stimulus_type", result.get("condition", "n/a"))
+                ),
                 details={
                     "trial_id": trial_id,
                     "trial_number": trial_number,
                     "condition": result.get("condition", "n/a"),
+                    "stimulus_type": result.get(
+                        "stimulus_type", result.get("condition", "n/a")
+                    ),
                     "model_response": result.get("model_response"),
                     "observed_response": result.get("observed_response"),
                     "expected_response": result.get("expected_response"),
@@ -270,10 +293,16 @@ def _response_and_error_events(
                 trial_id=trial_id,
                 trial_number=trial_number,
                 condition=str(result.get("condition", "n/a")),
+                stimulus_type=str(
+                    result.get("stimulus_type", result.get("condition", "n/a"))
+                ),
                 details={
                     "trial_id": trial_id,
                     "trial_number": trial_number,
                     "condition": result.get("condition", "n/a"),
+                    "stimulus_type": result.get(
+                        "stimulus_type", result.get("condition", "n/a")
+                    ),
                     "correct": correct,
                     "error_type": error_type,
                     "reaction_time_s": reaction_time,
@@ -294,10 +323,16 @@ def _response_and_error_events(
                     trial_id=trial_id,
                     trial_number=trial_number,
                     condition=str(result.get("condition", "n/a")),
+                    stimulus_type=str(
+                        result.get("stimulus_type", result.get("condition", "n/a"))
+                    ),
                     details={
                         "trial_id": trial_id,
                         "trial_number": trial_number,
                         "condition": result.get("condition", "n/a"),
+                        "stimulus_type": result.get(
+                            "stimulus_type", result.get("condition", "n/a")
+                        ),
                         "error_type": error_type,
                     },
                 )

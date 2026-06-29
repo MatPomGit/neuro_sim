@@ -601,6 +601,7 @@ def test_roving_oddball_report_groups_trials_and_exports_text_reports(
     html_text = html_path.read_text(encoding="utf-8")
     assert "### Grupy triali" in markdown
     assert "### Trial-by-trial roving oddball" in markdown
+    assert "### Agregacja zdarzeń per trial" in markdown
     assert "| Trial | Standard | Dewiant | Nowy standard | Odpowiedź" in markdown
     assert result["analysis_report"]["roving_oddball"]["trial_by_trial"]
     assert "**bodziec**" in markdown
@@ -613,6 +614,9 @@ def test_roving_oddball_report_groups_trials_and_exports_text_reports(
     assert "| Trial | Nr trialu | Warunek | Typ bodźca | Bodziec |" in md_text
     assert "Powiązane wykresy" in md_text
     assert "model_response" in md_text
+    assert "Roving oddball — agregacja trial po trialu" in md_text
+    assert "nie stanowi sugestii diagnozy klinicznej" in md_text
+    assert "Metryki dydaktyczne" in md_text
     assert "## Skrót metryk" in md_text
     assert "## Polski słownik pojęć" in md_text
     assert "początek bodźca" in md_text
