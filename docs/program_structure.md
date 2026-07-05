@@ -23,7 +23,7 @@ neuro_sim/
 ```
 
 Role katalogów root-level są jawne: kod źródłowy trafia do pakietów
-`brain_core/`, `brain_model/`, `brain_viewer/` oraz fasad `analysis/`;
+`brain_core/`, `brain_model/`, `brain_viewer/` oraz katalogu fasad `analysis/`;
 konfiguracje eksperymentów do `configs/`; małe dane referencyjne do `data/`;
 dane wejściowe użytkownika powinny pochodzić z jawnie skonfigurowanej ścieżki
 poza repozytorium albo z wersjonowanego podkatalogu `data/`, jeśli są małe,
