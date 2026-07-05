@@ -11,7 +11,7 @@ neuro_sim/
 ├── brain_model.py                  # tymczasowy skrypt legacy dla `python brain_model.py`
 ├── brain_model/                    # kod źródłowy: model poznawczy, GUI, raporty, IO
 ├── brain_core/                     # kod źródłowy: symulacja, anatomia, eksperymenty i analizy
-├── brain_viewer/                   # kod źródłowy i opis viewerów mózgu
+├── brain_viewer/                   # kod źródłowy: opis i mapowanie viewerów mózgu
 ├── analysis/                       # kod źródłowy: cienkie fasady zgodności wstecznej
 ├── configs/                        # konfiguracje eksperymentów YAML/JSON
 ├── data/                           # dane referencyjne: atlasy, konektomy i walidacja
