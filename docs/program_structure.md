@@ -306,7 +306,7 @@ Katalogi wynikowe nie są źródłem prawdy i są ignorowane przez Git:
 
 Nowe wyniki eksperymentów muszą trafiać do katalogu wynikowego, który jest
 albo ignorowany przez Git, albo jawnie wersjonowany jako mały, opisany i
-replikowalny przykład dokumentacyjny. Domyślną lokalizacją dla zwykłych
+reprodukowalny przykład dokumentacyjny. Domyślną lokalizacją dla zwykłych
 uruchomień pozostaje ignorowane `outputs/<run_id>/` lub `results/<run_id>/`;
 wersjonowanie artefaktu wynikowego wymaga uzasadnienia w dokumentacji albo PR.
 
