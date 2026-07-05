@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pytest
@@ -22,7 +21,7 @@ from brain_core.simulation.engine import (
 )
 
 
-def test_tasks_generate_deterministic_stimuli() -> Any:
+def test_tasks_generate_deterministic_stimuli() -> None:
     """Sprawdza deterministyczne generowanie bodźców dla zadań poznawczych."""
     duration = 10.0
     s1 = StroopTask().generate_stimuli(seed=7, duration_s=duration)
@@ -111,7 +110,7 @@ def test_run_experiment_changes_key_metrics_when_seed_changes() -> None:
     assert first["analysis_report"]["metrics"] != second["analysis_report"]["metrics"]
 
 
-def test_trial_results_have_unified_schema_and_are_deterministic() -> Any:
+def test_trial_results_have_unified_schema_and_are_deterministic() -> None:
     """Sprawdza jednolity schemat wyników prób i ich deterministyczność."""
     cfg = ExperimentConfig(
         task={"name": "stroop", "scenario": "stroop", "duration": 5.0},
@@ -146,7 +145,7 @@ def test_trial_results_have_unified_schema_and_are_deterministic() -> Any:
     assert r1["trial_report_context"]["scenario"] == "stroop"
 
 
-def test_all_task_configs_exist() -> Any:
+def test_all_task_configs_exist() -> None:
     """Sprawdza dostępność konfiguracji YAML dla obsługiwanych zadań."""
     pytest.importorskip("yaml")
     from pathlib import Path
@@ -165,7 +164,7 @@ def test_all_task_configs_exist() -> Any:
         assert payload["task"]["name"]
 
 
-def test_roving_oddball_sequence_aliases_and_metrics() -> Any:
+def test_roving_oddball_sequence_aliases_and_metrics() -> None:
     """Sprawdza strukturę sekwencji i metryk trial-level dla roving oddball."""
     assert get_task("roving-oddball").name == "roving_oddball"
     task = RovingOddballTask(
@@ -197,7 +196,7 @@ def test_roving_oddball_sequence_aliases_and_metrics() -> Any:
         )
 
 
-def test_roving_oddball_metrics_have_stable_sequence_definitions() -> Any:
+def test_roving_oddball_metrics_have_stable_sequence_definitions() -> None:
     """Sprawdza deterministyczną sekwencję, habituację i reset po zmianie standardu."""
     task = RovingOddballTask(
         n_runs=3,
@@ -240,7 +239,7 @@ def test_roving_oddball_metrics_have_stable_sequence_definitions() -> Any:
     assert first_sequence[6].payload["readaptation_latency"] == 0
 
 
-def test_roving_oddball_trial_results_include_metrics() -> Any:
+def test_roving_oddball_trial_results_include_metrics() -> None:
     """Sprawdza deterministyczność wyników i obecność metryk w silniku."""
     cfg = ExperimentConfig(
         task={
@@ -315,7 +314,7 @@ def test_roving_oddball_trial_results_include_metrics() -> Any:
     }.issubset(roving_report["trial_by_trial"][0])
 
 
-def test_task_functional_mapping_examples() -> Any:
+def test_task_functional_mapping_examples() -> None:
     """Sprawdza przykładowe mapowania task→funkcje→regiony."""
     assert regions_for_task("stroop") == ("ACC", "DLPFC")
     assert regions_for_task("go-nogo") == ("PFC", "basal-ganglia-proxy")
@@ -324,7 +323,7 @@ def test_task_functional_mapping_examples() -> Any:
     assert "pamięć robocza" in functions_for_task("n-back")
 
 
-def test_trial_stimulus_stores_regional_input_separately() -> Any:
+def test_trial_stimulus_stores_regional_input_separately() -> None:
     """Sprawdza jawne przechowywanie wejścia regionalnego poza payload."""
     stimulus = StroopTask().generate_stimuli(seed=7, duration_s=1.0)[0]
 
@@ -336,7 +335,7 @@ def test_trial_stimulus_stores_regional_input_separately() -> Any:
     assert enriched.payload == stimulus.payload
 
 
-def test_run_experiment_reports_task_activation() -> Any:
+def test_run_experiment_reports_task_activation() -> None:
     """Sprawdza raportowanie regionów i funkcji pobudzonych przez zadanie."""
     cfg = ExperimentConfig(
         task={"name": "go_nogo", "scenario": "go_nogo", "duration": 3.0},
@@ -353,7 +352,7 @@ def test_run_experiment_reports_task_activation() -> Any:
     assert result["analysis_report"]["task_activation"] == task_activation
 
 
-def test_run_experiment_returns_event_timeline_and_report_section() -> Any:
+def test_run_experiment_returns_event_timeline_and_report_section() -> None:
     """Oś czasu zawiera bodźce, odpowiedzi i sekcję raportu Markdown."""
     cfg = ExperimentConfig(
         output={"save_results": False, "label": "test", "output_dir": "outputs"},
@@ -378,7 +377,7 @@ def test_run_experiment_returns_event_timeline_and_report_section() -> Any:
     assert "stimulus_onset" in report
 
 
-def test_run_experiment_records_clinical_pathology_event() -> Any:
+def test_run_experiment_records_clinical_pathology_event() -> None:
     """Profil kliniczny jest widoczny jako zdarzenie lezji lub patologii."""
     cfg = ExperimentConfig(
         output={"save_results": False, "label": "test", "output_dir": "outputs"},
@@ -405,7 +404,7 @@ def test_run_experiment_records_clinical_pathology_event() -> Any:
     assert pathology_events[0]["details"]["profile_id"] == "dopamine_deficit"
 
 
-def test_roving_oddball_report_contains_conditions_and_habituation_metrics() -> Any:
+def test_roving_oddball_report_contains_conditions_and_habituation_metrics() -> None:
     """Raport Markdown roving oddball pokazuje warunki i metryki habituacji."""
     cfg = ExperimentConfig(
         task={
@@ -437,7 +436,7 @@ def test_roving_oddball_report_contains_conditions_and_habituation_metrics() -> 
     assert "latencja readaptacji" in markdown
 
 
-def test_roving_oddball_report_contains_amplitude_latency_mechanism_section() -> Any:
+def test_roving_oddball_report_contains_amplitude_latency_mechanism_section() -> None:
     """Raport roving oddball zawiera sekcję amplituda-latencja-mechanizm."""
     cfg = load_config("configs/roving_oddball_healthy.yaml")
 
@@ -455,7 +454,7 @@ def test_roving_oddball_report_contains_amplitude_latency_mechanism_section() ->
 
 
 def test_roving_oddball_profile_comparison_reports_direction_threshold_and_comment() -> (
-    Any
+    None
 ):
     """Porównanie profili zawiera kierunek, różnicę, próg i polski komentarz."""
     healthy = load_config("configs/roving_oddball_healthy.yaml")
@@ -526,7 +525,7 @@ def test_roving_oddball_profile_comparison_reports_direction_threshold_and_comme
     assert "komentarz dydaktyczny" in markdown
 
 
-def test_roving_oddball_event_timeline_has_trials_order_and_polish_labels() -> Any:
+def test_roving_oddball_event_timeline_has_trials_order_and_polish_labels() -> None:
     """Oś czasu roving oddball zawiera triale, chronologię i polskie etykiety."""
     cfg = ExperimentConfig(
         task={
@@ -599,7 +598,7 @@ def test_roving_oddball_event_timeline_has_trials_order_and_polish_labels() -> A
     assert "dewiant" in report
 
 
-def test_clinical_profile_yaml_metadata_is_complete_for_examples() -> Any:
+def test_clinical_profile_yaml_metadata_is_complete_for_examples() -> None:
     """Profile kliniczne muszą mieć kierunek, metrykę, progi i polski mechanizm."""
     pytest.importorskip("yaml")
     from pathlib import Path
@@ -629,7 +628,7 @@ def test_clinical_profile_yaml_metadata_is_complete_for_examples() -> Any:
     assert required_profile_ids.issubset(loaded_profile_ids)
 
 
-def test_clinical_profile_batch_reuses_seed_and_stimulus_sequence() -> Any:
+def test_clinical_profile_batch_reuses_seed_and_stimulus_sequence() -> None:
     """Porównanie trzech profili używa tego samego seeda i podpisu bodźców."""
     pytest.importorskip("yaml")
     from pathlib import Path
@@ -668,7 +667,7 @@ def test_clinical_profile_batch_reuses_seed_and_stimulus_sequence() -> Any:
         assert "nie stanowi diagnozy" in item["non_diagnostic_disclaimer"]
 
 
-def test_profile_comparison_sets_cover_required_tasks() -> Any:
+def test_profile_comparison_sets_cover_required_tasks() -> None:
     """Zestawy porównawcze wskazują healthy_v1 oraz 1–2 profile kliniczne."""
     expected_tasks = {"roving_oddball", "stroop", "go_nogo", "n_back"}
     loaded_tasks: set[str] = set()
@@ -691,7 +690,7 @@ def test_profile_comparison_sets_cover_required_tasks() -> Any:
     assert loaded_tasks == expected_tasks
 
 
-def test_clinical_profile_batch_returns_stable_api_and_report_table() -> Any:
+def test_clinical_profile_batch_returns_stable_api_and_report_table() -> None:
     """API batch zwraca podpis bodźców, profile, różnice i tabelę raportową."""
     pytest.importorskip("yaml")
     from pathlib import Path
