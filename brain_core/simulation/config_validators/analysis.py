@@ -22,12 +22,12 @@ def validate_analysis_config(analysis: dict[str, Any]) -> dict[str, Any]:
         Sekcja konfiguracji z listą zestawów analiz oraz opcjonalnymi
         parametrami raportowania triali.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Znormalizowana sekcja ``analysis`` z unikalnymi nazwami analiz.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy lista analiz ma niepoprawny typ, zawiera puste lub nieznane nazwy

@@ -1,3 +1,5 @@
+"""Biblioteka scenariuszy bodźców używanych w eksperymentach poznawczych."""
+
 from __future__ import annotations
 
 from .types import (

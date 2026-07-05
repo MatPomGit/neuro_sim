@@ -1,3 +1,5 @@
+"""Parametry konfiguracyjne mezoskopowego modelu mózgu."""
+
 from dataclasses import dataclass, field
 
 from .plasticity import (

@@ -1,3 +1,5 @@
+"""Stan neuromodulatorów i parametrów synaptycznych dla pojedynczej symulacji."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

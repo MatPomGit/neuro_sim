@@ -146,7 +146,7 @@ def _read_yaml_mapping(path: Path) -> dict[str, Any]:
     path:
         Ścieżka do pliku YAML w repozytorium.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Zawartość YAML albo pusty słownik, gdy plik jest niedostępny lub ma
@@ -168,7 +168,7 @@ def comparison_profile_rows_for_label(label: str) -> list[dict[str, str]]:
         Polska etykieta zestawu z kontrolki ``comparison_config_combo`` albo
         ścieżka do pliku ``configs/comparisons/*.yaml``.
 
-    Returns
+    Returns:
     -------
     list[dict[str, str]]
         Wiersze zawierające nazwę profilu, oczekiwany kierunek i ścieżkę YAML.
@@ -210,7 +210,7 @@ def comparison_profile_list_text_for_label(label: str) -> str:
     label:
         Polska etykieta albo ścieżka zestawu porównawczego.
 
-    Returns
+    Returns:
     -------
     str
         Wielowierszowy opis profili gotowy do pokazania w GUI.
@@ -236,7 +236,7 @@ def _scenario_yaml_teaching_goal(
     clinical_profile:
         Sekcja `clinical_profile` z pliku YAML opisująca profil odniesienia.
 
-    Returns
+    Returns:
     -------
     str
         Krótki opis po polsku wyjaśniający, po co wybrać daną konfigurację.
@@ -303,7 +303,7 @@ def _scenario_yaml_difference_hint(
     clinical_profile:
         Sekcja `clinical_profile` z pliku YAML.
 
-    Returns
+    Returns:
     -------
     str
         Jednozdaniowa podpowiedź różnicująca preset w GUI.
@@ -426,7 +426,7 @@ def scenario_yaml_description_for_label(label: str) -> str:
     label:
         Etykieta konfiguracji YAML wybrana przez użytkownika w GUI.
 
-    Returns
+    Returns:
     -------
     str
         Krótki opis celu dydaktycznego i różnic względem pozostałych presetów.

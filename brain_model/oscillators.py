@@ -1,3 +1,5 @@
+"""Analiza oscylacji aktywności modelu poznawczego w domenie czasu i częstotliwości."""
+
 from dataclasses import dataclass
 
 import numpy as np

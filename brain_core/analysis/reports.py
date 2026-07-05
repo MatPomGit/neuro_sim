@@ -46,7 +46,7 @@ VALIDATION_METRIC_REGISTRY_COLUMNS = (
 def _metric_catalog_by_name() -> dict[str, dict[str, object]]:
     """Zindeksuj katalog metryk EEG/sieciowych gotowych do raportowania.
 
-    Returns
+    Returns:
     -------
     dict[str, dict[str, object]]
         Słownik nazwa metryki → metadane interpretacyjne po polsku.
@@ -63,7 +63,7 @@ def _profile_group_from_id(profile_id: str) -> str:
     profile_id:
         Identyfikator profilu klinicznego z konfiguracji eksperymentu.
 
-    Returns
+    Returns:
     -------
     str
         Jedna z grup ``healthy``, ``disorder`` albo ``lesion``.
@@ -100,7 +100,7 @@ def _build_metric_profile_task_context(
     task_name:
         Nazwa tasku, w którym obliczono metrykę.
 
-    Returns
+    Returns:
     -------
     str
         Polski komentarz raportowy bez wnioskowania diagnostycznego.
@@ -138,7 +138,7 @@ def _build_eeg_bold_report_sections(
     task_name:
         Nazwa tasku, z którym raportowana jest metryka.
 
-    Returns
+    Returns:
     -------
     list[dict[str, object]]
         Wiersze sekcji EEG/BOLD gotowe do Markdown, CSV i eksportu PDF.
@@ -288,7 +288,7 @@ def _condition_label_pl(condition: Any) -> str:
     condition:
         Techniczna nazwa warunku zapisana w zdarzeniu albo wyniku trialu.
 
-    Returns
+    Returns:
     -------
     str
         Polska etykieta warunku przeznaczona do raportu użytkownika.
@@ -305,7 +305,7 @@ def _clinical_profile_label(clinical_profile: dict[str, Any] | None) -> str:
     clinical_profile:
         Metadane profilu klinicznego z konfiguracji eksperymentu.
 
-    Returns
+    Returns:
     -------
     str
         Jednowierszowy opis profilu lub ``n/a``, gdy profil nie jest dostępny.
@@ -327,7 +327,7 @@ def _format_trial_metric_value(value: Any) -> str:
     value:
         Wartość metryki zapisana w szczegółach zdarzenia.
 
-    Returns
+    Returns:
     -------
     str
         Krótki tekst metryki bez utraty istotnych cyfr.
@@ -347,7 +347,7 @@ def _metric_summary_from_mapping(mapping: dict[str, Any]) -> list[str]:
     mapping:
         Słownik szczegółów zdarzenia lub payload bodźca.
 
-    Returns
+    Returns:
     -------
     list[str]
         Lista krótkich opisów ``nazwa=wartość`` w stabilnej kolejności.
@@ -369,7 +369,7 @@ def _build_trial_comment(row: dict[str, str]) -> str:
     row:
         Ujednolicony wiersz trialu z polami używanymi w eksporcie i GUI.
 
-    Returns
+    Returns:
     -------
     str
         Jednozdaniowy komentarz po polsku łączący warunek, zachowanie i aktywność.
@@ -422,7 +422,7 @@ def build_trial_observation_rows(
     max_trials:
         Maksymalna liczba triali opisywana w raporcie.
 
-    Returns
+    Returns:
     -------
     list[dict[str, str]]
         Wiersze z polami: czas, warunek, aktywne regiony, profil kliniczny,
@@ -530,7 +530,7 @@ def _stimulus_category_label(condition: Any, *, is_new_standard: bool) -> str:
     is_new_standard:
         Czy bodziec jest pierwszym standardem po dewiancie w roving oddball.
 
-    Returns
+    Returns:
     -------
     str
         Polska kategoria bodźca wymagana w raporcie trial-by-trial.
@@ -548,7 +548,7 @@ def _plot_anchors_from_group(group: dict[str, Any]) -> list[str]:
     group:
         Grupa zdarzeń jednego trialu zbudowana z ``event_timeline``.
 
-    Returns
+    Returns:
     -------
     list[str]
         Unikalne kotwice wykresów, np. ``task_timeline`` albo ``activity.SAL``.
@@ -575,7 +575,7 @@ def _trial_group_key(event: dict[str, Any]) -> tuple[str, str]:
     event:
         Pojedynczy wpis osi czasu eksperymentu.
 
-    Returns
+    Returns:
     -------
     tuple[str, str]
         Para tekstowa używana jako klucz słownika grup triali.
@@ -596,7 +596,7 @@ def _group_event_timeline_by_trial(
         Chronologiczna lista zdarzeń z ujednoliconymi polami ``trial_id`` i
         ``condition``.
 
-    Returns
+    Returns:
     -------
     list[dict[str, Any]]
         Lista grup triali z polami: bodziec, odpowiedź, ocena poprawności,
@@ -657,7 +657,7 @@ def _trial_group_markdown_lines(
     max_trials:
         Maksymalna liczba triali opisywana w sekcji Markdown.
 
-    Returns
+    Returns:
     -------
     list[str]
         Linie raportu w kolejności: bodziec, odpowiedź, poprawność/błąd,
@@ -714,7 +714,7 @@ def _build_roving_trial_by_trial_rows(
     clinical_profile:
         Profil kliniczny użyty do komentarza mechanizmu.
 
-    Returns
+    Returns:
     -------
     list[dict[str, object]]
         Wiersze z numerem triala, standardem, dewiantem, nowym standardem,
@@ -775,7 +775,7 @@ def _mean_regional_response_amplitude(trial_results: list[dict[str, Any]]) -> fl
     trial_results:
         Lista wyników triali z polem ``regional_input`` zapisanym przez silnik.
 
-    Returns
+    Returns:
     -------
     float
         Średnia z wartości bezwzględnych wejść regionalnych. Wartość jest
@@ -800,7 +800,7 @@ def _mean_response_latency_s(trial_results: list[dict[str, Any]]) -> float:
     trial_results:
         Lista wyników triali z polem ``reaction_time_s`` zapisanym przez silnik.
 
-    Returns
+    Returns:
     -------
     float
         Średni czas reakcji w sekundach dla triali z odpowiedzią. Wartość jest
@@ -840,7 +840,7 @@ def _build_amplitude_latency_mechanism_section(
     clinical_profile:
         Metadane profilu klinicznego z konfiguracji.
 
-    Returns
+    Returns:
     -------
     dict[str, object]
         Sekcja raportu ``amplitude_latency_mechanism`` dla scenariusza
@@ -909,12 +909,12 @@ def _require_clinical_severity_thresholds(
     severity_thresholds:
         Progi ``small``, ``medium`` i ``large`` zapisane w profilu klinicznym.
 
-    Returns
+    Returns:
     -------
     dict[str, float]
         Znormalizowane progi jakościowe.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy profil nie zawiera kompletnego zestawu progów albo kolejność progów
@@ -960,7 +960,7 @@ def _classify_clinical_difference(
         i ``large`` są traktowane jako dolne granice odpowiednio średniej
         oraz dużej różnicy.
 
-    Returns
+    Returns:
     -------
     str
         Polska etykieta: ``mała różnica``, ``średnia różnica`` albo
@@ -983,7 +983,7 @@ def _format_qualitative_threshold(severity_thresholds: dict[str, Any] | None) ->
     severity_thresholds:
         Progi ``small``, ``medium`` i ``large`` z metadanych profilu klinicznego.
 
-    Returns
+    Returns:
     -------
     str
         Polski opis progów używany w raporcie różnic klinicznych.
@@ -1032,7 +1032,7 @@ def _build_educational_comment(
     observed_direction:
         Kierunek zmiany aktywności względem profilu referencyjnego.
 
-    Returns
+    Returns:
     -------
     str
         Jednozdaniowy komentarz do raportu klinicznego.
@@ -1065,7 +1065,7 @@ def _build_baseline_reference_section(profile: dict[str, Any]) -> dict[str, str]
     profile:
         Metadane profilu klinicznego zapisane w payloadzie raportu.
 
-    Returns
+    Returns:
     -------
     dict[str, str] | None
         Słownik z polami sekcji baseline albo ``None``, jeśli raport nie
@@ -1119,7 +1119,7 @@ class ValidationComplianceEntry:
     def to_dict(self) -> dict[str, str]:
         """Zwróć wiersz zgodności w formie serializowalnej do JSON.
 
-        Returns
+        Returns:
         -------
         dict[str, str]
             Słownik z nazwą benchmarku, poziomem, tolerancją, statusem
@@ -1154,12 +1154,12 @@ def load_validation_metric_registry(
         metryk z polskimi etykietami, źródłem danych walidacyjnych, zakresem
         interpretacji i ograniczeniami.
 
-    Returns
+    Returns:
     -------
     dict[str, dict[str, str]]
         Rejestr indeksowany techniczną nazwą metryki raportowanej.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy plik rejestru nie istnieje albo tabela metryk jest pusta.
@@ -1205,13 +1205,13 @@ def _collect_interpretation_limitations(
     registry_path:
         Ścieżka do rejestru walidacji z tabelą metryk.
 
-    Returns
+    Returns:
     -------
     list[dict[str, str]]
         Wiersze z techniczną nazwą, polską etykietą, zakresem interpretacji
         i ograniczeniami metryki.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy raportowana metryka nie ma wpisu w rejestrze metryk.
@@ -1248,7 +1248,7 @@ def _resolve_interpretation_limitations(
         Dane raportu zawierające metryki albo gotową sekcję
         ``interpretation_limitations``.
 
-    Returns
+    Returns:
     -------
     list[dict[str, str]]
         Wiersze sekcji „Ograniczenia interpretacji”.
@@ -1274,13 +1274,13 @@ def load_validation_registry(
         Ścieżka do pliku ``docs/validation_registry.md`` zawierającego tabelę
         z kolumnami benchmarku, poziomu, tolerancji i statusu.
 
-    Returns
+    Returns:
     -------
     dict[str, dict[str, str]]
         Rejestr indeksowany nazwą benchmarku. Każdy wpis zawiera m.in. pola
         ``level``, ``tolerance`` i ``status``.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy plik rejestru nie istnieje albo tabela nie zawiera żadnego wpisu.
@@ -1324,7 +1324,7 @@ def _summarize_last_comparison(benchmark_name: str, comparison: dict[str, Any]) 
         Słownik metryk porównawczych zapisany w raporcie, z kluczami
         prefiksowanymi nazwą benchmarku.
 
-    Returns
+    Returns:
     -------
     str
         Opis w formacie ``metryka=wartość`` albo ``n/a``, jeżeli raport nie
@@ -1379,12 +1379,12 @@ def collect_validation_compliance(
     registry_path:
         Ścieżka do tabelarycznego rejestru walidacji.
 
-    Returns
+    Returns:
     -------
     list[dict[str, str]]
         Lista wierszy sekcji „Zgodność walidacyjna” gotowa do serializacji.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy metadane wskazują benchmark bez wpisu w rejestrze walidacji.
@@ -1441,7 +1441,7 @@ def _resolve_validation_compliance_rows(
         Dane raportu zawierające opcjonalne sekcje ``benchmark_metadata``,
         ``comparison`` i ``validation_compliance``.
 
-    Returns
+    Returns:
     -------
     list[dict[str, str]]
         Gotowe wiersze sekcji „Zgodność walidacyjna”. Jeśli payload zawiera już
@@ -2411,7 +2411,7 @@ def _build_roving_event_trial_groups(
         Pełna chronologiczna lista zdarzeń z polami ``trial_id`` i
         ``trial_number``.
 
-    Returns
+    Returns:
     -------
     list[dict[str, object]]
         Wiersze grupujące bodziec, odpowiedź, metryki i indeksy zdarzeń dla
@@ -2496,7 +2496,7 @@ def build_roving_oddball_report(
         Opcjonalna pełna oś czasu zdarzeń używana do agregacji per trial bez
         utraty kolejności zdarzeń.
 
-    Returns
+    Returns:
     -------
     dict[str, object]
         Podsumowanie liczby standardów, dewiantów, nowych standardów, średniego
@@ -2772,13 +2772,13 @@ def build_clinical_difference_report(
     profile_results:
         Mapa identyfikator profilu→wynik eksperymentu dla porównywanych profili.
 
-    Returns
+    Returns:
     -------
     AnalysisReport
         Raport opisujący największą różnicę według regionu, czasu, funkcji
         poznawczej i mechanizmu profilu klinicznego.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy aktywność referencyjna lub porównywana jest pusta.

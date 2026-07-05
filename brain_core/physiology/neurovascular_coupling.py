@@ -20,7 +20,7 @@ def neural_drive_from_activity(
         np.ndarray: Nieujemny napęd naczyniowy/BOLD proxy w względnych
         jednostkach aktywności po odjęciu baseline.
 
-    Notes
+    Notes:
     -----
     Funkcja opisuje metodologiczny etap sprzężenia neuro-naczyniowego: ujemne
     odchylenia od baseline nie zwiększają napędu BOLD, dlatego wynik należy

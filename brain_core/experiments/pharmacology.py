@@ -1,3 +1,5 @@
+"""Definicje interwencji farmakologicznych dla kontrolowanych eksperymentów."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

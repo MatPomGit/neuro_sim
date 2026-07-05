@@ -96,7 +96,7 @@ class SimulationEvent:
     def to_dict(self) -> dict[str, Any]:
         """Zwraca zdarzenie jako słownik bez obiektów NumPy.
 
-        Returns
+        Returns:
         -------
         dict[str, Any]
             Serializowalny słownik z czasem, typem, etykietą i metadanymi.
@@ -149,7 +149,7 @@ def build_event_timeline(
     max_neuromodulation_events:
         Maksymalna liczba zdarzeń neuromodulacyjnych dopisana do osi czasu.
 
-    Returns
+    Returns:
     -------
     list[dict[str, Any]]
         Lista zdarzeń posortowana według czasu i typu, gotowa do zapisu JSON.
@@ -572,7 +572,7 @@ def _trial_number_from_id(trial_id: Any) -> int | None:
     trial_id:
         Identyfikator trialu zapisany w bodźcu, wyniku albo osi czasu.
 
-    Returns
+    Returns:
     -------
     int | None
         Numer trialu używany do stabilnego grupowania raportów roving oddball.
@@ -595,7 +595,7 @@ def _trial_number_from_event(event: dict[str, Any]) -> int | None:
         ``trial_number``; gdy go brakuje, funkcja odtwarza dotychczasowe
         zachowanie na podstawie ``trial_id``.
 
-    Returns
+    Returns:
     -------
     int | None
         Numer trialu używany w raportach albo ``None`` dla zdarzeń globalnych.

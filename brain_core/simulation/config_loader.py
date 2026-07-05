@@ -21,12 +21,12 @@ def _parse_payload(payload: str, suffix: str = "") -> dict[str, Any]:
     suffix:
         Rozszerzenie pliku albo sztuczna podpowiedź formatu.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Surowy słownik konfiguracji kierowany do wspólnej walidacji schematu.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy payload nie jest obiektem YAML/JSON.
@@ -52,7 +52,7 @@ def load_config(path: str | Path) -> ExperimentConfig:
     path:
         Ścieżka do pliku konfiguracyjnego YAML albo JSON.
 
-    Returns
+    Returns:
     -------
     ExperimentConfig
         Zweryfikowany obiekt konfiguracji.
@@ -76,7 +76,7 @@ def load_config_from_string(
     format_hint:
         Podpowiedź formatu: `yaml` albo `json`.
 
-    Returns
+    Returns:
     -------
     ExperimentConfig
         Zweryfikowany obiekt konfiguracji.
@@ -94,12 +94,12 @@ def load_clinical_profile(path: str | Path) -> dict[str, Any]:
     path:
         Ścieżka do pliku profilu klinicznego z katalogu `configs/clinical_profiles`.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Zweryfikowany fragment konfiguracji zawierający sekcję `clinical_profile`.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy profil nie spełnia schematu konfiguracji eksperymentu.
@@ -120,7 +120,7 @@ def load_clinical_profiles(paths: list[str | Path]) -> list[dict[str, Any]]:
     paths:
         Lista ścieżek do plików profili klinicznych.
 
-    Returns
+    Returns:
     -------
     list[dict[str, Any]]
         Lista zweryfikowanych fragmentów konfiguracji profili klinicznych.
@@ -137,13 +137,13 @@ def load_profile_comparison_set(path: str | Path) -> dict[str, Any]:
         Ścieżka do pliku YAML/JSON z polami ``base_config`` i
         ``clinical_profiles``.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Znormalizowany opis zestawu: metadane, ścieżka konfiguracji bazowej oraz
         lista 2–3 profili klinicznych z pierwszym profilem referencyjnym.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy zestaw nie wskazuje profilu referencyjnego i co najmniej jednego

@@ -198,13 +198,13 @@ def validate_config(
         Gdy `True`, zbiera problemy walidacji z wielu sekcji i zwraca listę
         `ConfigValidationIssue` bez przerywania po pierwszym błędzie.
 
-    Returns
+    Returns:
     -------
     ExperimentConfig | list[ConfigValidationIssue]
         Zweryfikowany obiekt konfiguracji z ujednoliconym `seed` i `rng_seed`
         albo lista problemów, gdy włączono `collect_errors`.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy konfiguracja jest niepoprawna.
@@ -274,7 +274,7 @@ def collect_config_validation_issues(
         Gdy `True`, raportuje brak jawnych sekcji docelowego schematu
         eksperymentu oraz wymaganych pól `seed`/`rng_seed` i `timestep`.
 
-    Returns
+    Returns:
     -------
     list[ConfigValidationIssue]
         Lista błędów blokujących poprawne uruchomienie eksperymentu. Pusta

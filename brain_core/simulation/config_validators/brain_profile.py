@@ -19,12 +19,12 @@ def validate_brain_profile_config(brain_profile: dict[str, Any]) -> dict[str, An
         Sekcja konfiguracji identyfikująca bazowy profil mózgu i opcjonalny
         opis metadanych.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Znormalizowana sekcja ``brain_profile`` z niepustym identyfikatorem.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy brakuje pola ``id`` albo wartości tekstowe są puste lub mają

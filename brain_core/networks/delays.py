@@ -1,3 +1,5 @@
+"""Obliczenia opóźnień przewodzenia w sieciach połączeń mózgowych."""
+
 from __future__ import annotations
 
 import numpy as np

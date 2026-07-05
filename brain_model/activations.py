@@ -1,3 +1,5 @@
+"""Funkcje aktywacji populacyjnej używane przez mezoskopowy model mózgu."""
+
 import numpy as np
 
 

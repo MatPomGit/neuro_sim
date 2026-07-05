@@ -33,7 +33,7 @@ def _stringify_value(value: Any) -> str:
     value:
         Wartość metryki, parametru albo pola raportowego.
 
-    Returns
+    Returns:
     -------
     str
         Jednowierszowy tekst z zachowaniem istotnych wartości liczbowych.
@@ -59,7 +59,7 @@ def _format_trial_metric_value(value: Any) -> str:
         Wartość metryki z sekcji trial-by-trial, np. czas, flaga poprawności
         albo agregat habituacji.
 
-    Returns
+    Returns:
     -------
     str
         Jednowierszowa reprezentacja zachowująca stabilne formatowanie liczb
@@ -151,7 +151,7 @@ def _flatten_mapping(mapping: dict[str, Any], prefix: str = "") -> list[str]:
     prefix:
         Prefiks używany rekurencyjnie dla pól zagnieżdżonych.
 
-    Returns
+    Returns:
     -------
     list[str]
         Linie tekstu gotowe do umieszczenia na stronie PDF.
@@ -175,7 +175,7 @@ def _report_markdown_lines(analysis_report: dict[str, Any]) -> list[str]:
     analysis_report:
         Słownik `analysis_report` zwrócony przez `run_experiment()`.
 
-    Returns
+    Returns:
     -------
     list[str]
         Linie raportu Markdown bez odtwarzania logiki protokołów w GUI.
@@ -197,7 +197,7 @@ def _event_timeline_lines(events: list[dict[str, Any]], limit: int = 40) -> list
     limit:
         Maksymalna liczba zdarzeń wypisywana w PDF, aby raport pozostał czytelny.
 
-    Returns
+    Returns:
     -------
     list[str]
         Linie tekstowe z czasem, typem i opisem zdarzenia.
@@ -229,7 +229,7 @@ def _plot_description(title: str) -> str:
     title:
         Tytuł zakładki wykresu w GUI.
 
-    Returns
+    Returns:
     -------
     str
         Polski opis interpretacyjny dopisywany przed stroną z wykresem.
@@ -286,7 +286,7 @@ def _resolve_max_report_trials(state_config: dict[str, Any]) -> int:
         Migawka konfiguracji GUI/YAML, opcjonalnie z polem
         ``analysis.max_report_trials``.
 
-    Returns
+    Returns:
     -------
     int
         Nieujemny limit triali dla skróconych sekcji raportowych.
@@ -319,7 +319,7 @@ def _resolve_full_trial_table(
         Jawna wartość przekazana przez wywołujący kod; gdy nie jest ``None``,
         ma pierwszeństwo przed konfiguracją.
 
-    Returns
+    Returns:
     -------
     bool
         ``True`` dla pełnej tabeli HTML/Markdown albo ``False`` dla tabeli
@@ -352,7 +352,7 @@ def _trial_limit_summary(
     full_table:
         Czy sekcja jest pełną tabelą bez skracania.
 
-    Returns
+    Returns:
     -------
     str
         Polski opis liczby triali pokazanych i pominiętych.
@@ -379,7 +379,7 @@ def _escape_markdown_table_cell(value: object) -> str:
     value:
         Wartość raportowa umieszczana w tabeli.
 
-    Returns
+    Returns:
     -------
     str
         Tekst bez pionowych separatorów tabeli i znaków nowej linii.
@@ -404,7 +404,7 @@ def _trial_table_rows(
     max_trials:
         Maksymalna liczba triali w tabeli. Wartość ``None`` oznacza pełną tabelę.
 
-    Returns
+    Returns:
     -------
     list[dict[str, str]]
         Wiersze zawierające czas, warunek, aktywne regiony, profil kliniczny,
@@ -435,7 +435,7 @@ def _trial_observation_lines(
     max_trials:
         Maksymalna liczba triali opisywana w skróconej sekcji PDF.
 
-    Returns
+    Returns:
     -------
     list[str]
         Linie tekstowe z tymi samymi polami co tabela Markdown.
@@ -492,7 +492,7 @@ def _metrics_summary_lines(
     limit:
         Maksymalna liczba metryk w skrócie.
 
-    Returns
+    Returns:
     -------
     list[str]
         Linie listy punktowanej z nazwą i wartością metryki.
@@ -509,7 +509,7 @@ def _metrics_summary_lines(
 def _glossary_markdown_lines() -> list[str]:
     """Zwróć polski słownik pojęć używany w eksporcie raportu.
 
-    Returns
+    Returns:
     -------
     list[str]
         Linie Markdown z angielską nazwą techniczną i polskim objaśnieniem.
@@ -534,7 +534,7 @@ def _roving_trial_event_group_lines(analysis_report: dict[str, Any]) -> list[str
         Raport analityczny zawierający sekcję ``roving_oddball`` z grupami
         zdarzeń per trial.
 
-    Returns
+    Returns:
     -------
     list[str]
         Linie Markdown opisujące mechanizm habituacji/readaptacji i tabelę
@@ -643,7 +643,7 @@ def _experiment_report_markdown(
         ``False``, stosuje ``analysis.max_report_trials`` z konfiguracji.
         Wartość ``None`` odczytuje ``analysis.include_full_trial_table``.
 
-    Returns
+    Returns:
     -------
     str
         Treść raportu Markdown.
@@ -744,7 +744,7 @@ def _split_markdown_table_row(line: str) -> list[str]:
     line:
         Pojedynczy wiersz tabeli Markdown.
 
-    Returns
+    Returns:
     -------
     list[str]
         Lista komórek bez zewnętrznych separatorów tabeli.
@@ -785,7 +785,7 @@ def _markdown_table_to_html(table_lines: list[str]) -> str:
     table_lines:
         Kolejne linie tabeli Markdown z nagłówkiem i separatorem.
 
-    Returns
+    Returns:
     -------
     str
         Fragment HTML z elementami ``table``, ``thead`` i ``tbody``.
@@ -821,7 +821,7 @@ def _markdown_to_simple_html(markdown: str) -> str:
     markdown:
         Treść raportu Markdown wygenerowana przez `_experiment_report_markdown`.
 
-    Returns
+    Returns:
     -------
     str
         Samodzielny dokument HTML z nagłówkami, listami i tabelami raportu.
@@ -912,12 +912,12 @@ def export_experiment_report(
         Opcja „pełna tabela triali” dla eksportu Markdown/HTML. Wartość
         ``None`` odczytuje ``analysis.include_full_trial_table``.
 
-    Returns
+    Returns:
     -------
     Path
         Ścieżka zapisanego raportu.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy rozszerzenie pliku nie jest `.md` ani `.html`.
@@ -980,7 +980,7 @@ def export_experiment_pdf(
     plot_descriptions:
         Opcjonalne opisy konkretnych wykresów, np. z dotychczasowego eksportu.
 
-    Returns
+    Returns:
     -------
     Path
         Ścieżka zapisanego pliku PDF.
@@ -1072,7 +1072,7 @@ def _control_question_lines(analysis_report: dict[str, Any]) -> list[str]:
     analysis_report:
         Raport analityczny zwrócony przez silnik symulacji.
 
-    Returns
+    Returns:
     -------
     list[str]
         Linie Markdown gotowe do zapisania w pakiecie zajęciowym.
@@ -1119,7 +1119,7 @@ def _instructor_summary_lines(
 ) -> list[str]:
     """Zbuduj krótki skrót dla prowadzącego zajęcia.
 
-    Returns
+    Returns:
     -------
     list[str]
         Linie Markdown z najważniejszymi informacjami organizacyjnymi.
@@ -1154,7 +1154,7 @@ def _next_run_change_table_lines(
         Lista propozycji zmian. Każdy słownik może zawierać pola ``element``,
         ``current_value``, ``next_value`` i ``reason``.
 
-    Returns
+    Returns:
     -------
     list[str]
         Linie Markdown z tabelą albo pusta lista, gdy nie podano propozycji.
@@ -1212,7 +1212,7 @@ def _lesson_plan_lines(
     next_run_changes:
         Opcjonalne propozycje zmian do kolejnego uruchomienia.
 
-    Returns
+    Returns:
     -------
     list[str]
         Linie Markdown pliku ``plan_lekcji.md``.
@@ -1294,7 +1294,7 @@ def _student_worksheet_lines(lesson_metadata: dict[str, Any] | None) -> list[str
     lesson_metadata:
         Metadane wybranej lekcji albo ``None``.
 
-    Returns
+    Returns:
     -------
     list[str]
         Linie Markdown przeznaczone do samodzielnego uzupełnienia.
@@ -1341,7 +1341,7 @@ def _sha256_file(path: Path) -> str:
     path:
         Ścieżka do pliku, którego integralność ma być opisana w pakiecie.
 
-    Returns
+    Returns:
     -------
     str
         Szesnastkowy skrót SHA-256 zawartości pliku.
@@ -1361,7 +1361,7 @@ def _resolve_scenario_config_path(scenario_path: object) -> Path | None:
     scenario_path:
         Wartość pola konfiguracji GUI opisującego użyty plik YAML.
 
-    Returns
+    Returns:
     -------
     Path | None
         Bezwzględna ścieżka do istniejącego pliku albo ``None``, gdy ścieżka
@@ -1392,7 +1392,7 @@ def _teaching_package_readme_lines(
     yaml_copy_name:
         Nazwa skopiowanego pliku YAML, jeśli konfiguracja była dostępna.
 
-    Returns
+    Returns:
     -------
     list[str]
         Linie dokumentu Markdown gotowe do zapisu w ``README_pakietu.md``.
@@ -1488,7 +1488,7 @@ def export_teaching_package(
     next_run_changes:
         Opcjonalna lista zmian do tabeli „co zmienić w kolejnym uruchomieniu”.
 
-    Returns
+    Returns:
     -------
     Path
         Katalog zapisanego pakietu zajęciowego.

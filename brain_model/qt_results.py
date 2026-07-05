@@ -59,7 +59,7 @@ class EducationalLimitationLabel(QLabel):
 def _load_glossary_terms() -> dict[str, tuple[str, str]]:
     """Wczytaj polskie etykiety i konteksty z dokumentu słownika EN→PL.
 
-    Returns
+    Returns:
     -------
     dict[str, tuple[str, str]]
         Mapowanie nazwy technicznej na parę: polska etykieta, kontekst użycia.
@@ -144,7 +144,7 @@ def _metric_educational_warnings(
     terms:
         Słownik EN→PL używany do spójnych nazw metryk w interfejsie.
 
-    Returns
+    Returns:
     -------
     list[str]
         Lista ostrzeżeń po polsku, bez sugestii diagnozy klinicznej.
@@ -185,7 +185,7 @@ def _extract_tones(
     is_new_standard:
         Opcjonalny filtr triali oznaczonych jako nowy standard po dewiancie.
 
-    Returns
+    Returns:
     -------
     str
         Lista maksymalnie czterech unikalnych tonów w Hz albo `n/a`, gdy raport

@@ -1,3 +1,5 @@
+"""Model populacyjny Wilsona-Cowana dla dynamiki pobudzenia i hamowania."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

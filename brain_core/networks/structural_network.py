@@ -1,3 +1,5 @@
+"""Reprezentacja strukturalnej sieci mózgu używana przez silnik symulacji."""
+
 from __future__ import annotations
 
 import numpy as np

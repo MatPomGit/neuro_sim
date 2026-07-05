@@ -1,3 +1,5 @@
+"""Kalibracja parametrów modelu poznawczego na podstawie metryk stabilności."""
+
 from __future__ import annotations
 
 import argparse

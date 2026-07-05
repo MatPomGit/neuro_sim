@@ -1,3 +1,5 @@
+"""Wizualizacje przebiegów, diagnostyki i metryk eksperymentów symulacyjnych."""
+
 from __future__ import annotations
 
 import re
@@ -70,7 +72,7 @@ def _parse_svg_translate(transform: str | None) -> tuple[float, float]:
     transform:
         Wartość atrybutu `transform` z elementu SVG.
 
-    Returns
+    Returns:
     -------
     tuple[float, float]
         Przesunięcie x/y dodawane do współrzędnych ścieżki.
@@ -125,7 +127,7 @@ def _extract_svg_underlay_paths(svg_text: str) -> list[tuple[str, str, str | Non
     svg_text:
         Treść pliku SVG z warstwą bazową i nakładkami regionów.
 
-    Returns
+    Returns:
     -------
     list[tuple[str, str, str | None]]
         Lista krotek `d`, `fill`, `transform` dla ścieżek bez `data-region`.
@@ -313,7 +315,7 @@ def _load_svg_underlay_shapes(
     svg_path:
         Ścieżka do pliku SVG zawierającego bazowy rysunek mózgu i regiony.
 
-    Returns
+    Returns:
     -------
     tuple[tuple[tuple[float, ...], tuple[float, ...], str], ...]
         Niemutowalna lista ścieżek podkładu: współrzędne x, współrzędne y i kolor.
@@ -560,7 +562,7 @@ def _calculate_scroll_zoom_limits(
     scale_factor:
         Mnożnik szerokości zakresu; wartości poniżej 1.0 przybliżają widok.
 
-    Returns
+    Returns:
     -------
     tuple[float, float]
         Nowy zakres osi, ograniczony do początkowego widoku.
@@ -1022,7 +1024,7 @@ def draw_activity_with_stimulus_channels(
     scenario:
         Scenariusz bodźców używany do odtworzenia kanałów wejściowych.
 
-    Returns
+    Returns:
     -------
     list[Axes]
         Lista zawierająca górną oś aktywacji i dolną oś kanałów bodźców.
@@ -1284,7 +1286,7 @@ def draw_diagnostics(ax: Any, time: Any, diagnostics: Any) -> Any:
     diagnostics:
         Słownik serii diagnostycznych modelu.
 
-    Returns
+    Returns:
     -------
     list[Any]
         Lista osi: panel zmiennych teoretycznych i panel neuromodulatorów.

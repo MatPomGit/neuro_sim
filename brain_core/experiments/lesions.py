@@ -1,3 +1,5 @@
+"""Definicje eksperymentalnych lezji modyfikujących aktywność regionów mózgu."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

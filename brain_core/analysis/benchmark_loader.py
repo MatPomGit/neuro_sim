@@ -32,7 +32,7 @@ def _resolve_benchmark_base_dir(base_dir: str | Path) -> Path:
         PyInstaller albo katalogu obok pliku EXE jest stosowany wyłącznie dla
         domyślnego katalogu projektu.
 
-    Returns
+    Returns:
     -------
     Path
         Ścieżka do katalogu benchmarków używana przez loader.
@@ -113,7 +113,7 @@ class BenchmarkMetadata:
     def comparison_origin_pl(self) -> str:
         """Zwróć polski opis, czy porównanie ma charakter syntetyczny czy empiryczny.
 
-        Returns
+        Returns:
         -------
         str
             ``empiryczny`` dla poziomu ``empirical`` oraz ``syntetyczny`` dla
@@ -127,7 +127,7 @@ class BenchmarkMetadata:
     def to_dict(self) -> dict[str, object]:
         """Przekształć metadane benchmarku do słownika serializowalnego do JSON.
 
-        Returns
+        Returns:
         -------
         dict[str, str]
             Słownik z polami ``source``, ``scope``, ``limitations``, ``level``,
@@ -173,7 +173,7 @@ class ReferenceBenchmarkBundle:
     def metadata_payload(self) -> dict[str, dict[str, object]]:
         """Zwróć metadane w formie gotowej do zapisania w raporcie.
 
-        Returns
+        Returns:
         -------
         dict[str, dict[str, object]]
             Zagnieżdżony słownik metadanych benchmarków.
@@ -243,12 +243,12 @@ def _validate_text_field(
     field_name:
         Nazwa wymaganego pola tekstowego.
 
-    Returns
+    Returns:
     -------
     str
         Oczyszczona wartość tekstowa.
 
-    Raises
+    Raises:
     ------
     BenchmarkValidationError
         Gdy pole jest nieobecne, nie jest tekstem albo zawiera pusty tekst.
@@ -273,12 +273,12 @@ def _validate_compliance_checks(
     metadata:
         Surowe metadane odczytane z pliku JSON.
 
-    Returns
+    Returns:
     -------
     dict[str, object]
         Kryteria zgodności opisane w pliku metadanych.
 
-    Raises
+    Raises:
     ------
     BenchmarkValidationError
         Gdy kryteria są nieobecne albo nie zawierają wymaganych pól.
@@ -360,12 +360,12 @@ def _validate_thresholds(
     metadata:
         Surowe metadane odczytane z pliku JSON.
 
-    Returns
+    Returns:
     -------
     dict[str, float]
         Progi ``small``, ``medium`` i ``large`` uporządkowane niemalejąco.
 
-    Raises
+    Raises:
     ------
     BenchmarkValidationError
         Gdy progi są nieobecne, nienumeryczne albo nieuporządkowane.
@@ -406,12 +406,12 @@ def _validate_tolerance(
     metadata:
         Surowe metadane odczytane z pliku JSON.
 
-    Returns
+    Returns:
     -------
     dict[str, object]
         Słownik z polami ``absolute``, ``relative`` i ``unit``.
 
-    Raises
+    Raises:
     ------
     BenchmarkValidationError
         Gdy tolerancja jest nieobecna albo zawiera wartości ujemne.
@@ -455,12 +455,12 @@ def _build_metadata(
     metadata:
         Surowy słownik metadanych z pliku JSON.
 
-    Returns
+    Returns:
     -------
     BenchmarkMetadata
         Zwalidowane metadane benchmarku.
 
-    Raises
+    Raises:
     ------
     BenchmarkValidationError
         Gdy poziom lub wymagane pola metadanych są niepoprawne.
@@ -529,12 +529,12 @@ def load_reference_benchmark_metadata(
     base_dir:
         Katalog bazowy zawierający plik ``benchmark_metadata.json``.
 
-    Returns
+    Returns:
     -------
     dict[str, BenchmarkMetadata]
         Metadane indeksowane nazwami ``eeg``, ``fmri`` i ``behavior``.
 
-    Raises
+    Raises:
     ------
     BenchmarkValidationError
         Gdy plik metadanych nie istnieje, jest niekompletny albo zawiera
@@ -583,12 +583,12 @@ def load_reference_benchmark_bundle(
     base_dir:
         Katalog bazowy z plikami CSV i plikiem metadanych benchmarków.
 
-    Returns
+    Returns:
     -------
     ReferenceBenchmarkBundle
         Pakiet macierzy benchmarków i zwalidowanych metadanych.
 
-    Raises
+    Raises:
     ------
     BenchmarkValidationError
         Gdy dane lub metadane benchmarków są niepoprawne.

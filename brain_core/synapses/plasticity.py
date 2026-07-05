@@ -1,3 +1,5 @@
+"""Reguły plastyczności synaptycznej używane w modelach populacyjnych."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

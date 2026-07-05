@@ -1,3 +1,5 @@
+"""Mezoskopowy model dynamiki poznawczej i jego krok symulacyjny."""
+
 from typing import Any, Callable
 
 import numpy as np
@@ -289,12 +291,12 @@ class CognitiveBrainModel:
             Opcjonalny, jawny wektor dodatkowego wejścia regionalnego, np.
             opóźnione sprzężenie zwrotne SNN dla regionu HIP.
 
-        Returns
+        Returns:
         -------
         tuple[np.ndarray, dict[str, Any]]
             Następny stan aktywacji i diagnostyka kroku.
 
-        Raises
+        Raises:
         ------
         ValueError
             Gdy external_drive ma niepoprawny kształt lub wartości nieskończone.
@@ -412,7 +414,7 @@ class CognitiveBrainModel:
             Funkcja zwracająca dodatkowe wejście regionalne dla bieżącego kroku.
             Używana do jawnego sprzężenia zwrotnego SNN -> neural-mass.
 
-        Returns
+        Returns:
         -------
         tuple[np.ndarray, np.ndarray, dict[str, Any], dict[str, Any], dict[str, Any]]
             Czas, aktywność, diagnostyka, oscylacje i zachowanie.

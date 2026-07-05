@@ -1,3 +1,5 @@
+"""Budowanie funkcji bodźców czasowych na podstawie scenariuszy eksperymentalnych."""
+
 from __future__ import annotations
 
 from typing import Any, Callable, Dict
@@ -17,13 +19,13 @@ def build_stimulus_fn(scenario: StimulusScenario) -> StimulusFn:
         Scenariusz z kanałami bodźców, pulsami i perturbacjami opisanymi
         w sekundach oraz bezwymiarowych amplitudach.
 
-    Returns
+    Returns:
     -------
     StimulusFn
         Funkcja ``stimulus(t)``, która dla czasu ``t`` w sekundach zwraca
         słownik amplitud kanałów ``{channel: amplitude}`` w skali scenariusza.
 
-    Raises
+    Raises:
     ------
     ValueError
         Zgłaszany dopiero podczas wywołania zwróconej funkcji, jeśli aktywna
@@ -80,12 +82,12 @@ def resolve_stimulus_scenario(
         Gotowy obiekt scenariusza. Jeśli jest podany, ma pierwszeństwo nad
         ``scenario_id`` i nie jest kopiowany.
 
-    Returns
+    Returns:
     -------
     StimulusScenario
         Scenariusz wejściowy albo scenariusz odczytany z rejestru.
 
-    Raises
+    Raises:
     ------
     KeyError
         Może zostać propagowany z ``get_scenario`` dla nieznanego

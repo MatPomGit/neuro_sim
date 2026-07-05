@@ -1,3 +1,5 @@
+"""Miary behawioralne wyprowadzane z aktywności modułów poznawczych."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -8,7 +10,7 @@ from typing import Any
 class BehaviorSample:
     """Pojedynczy odczyt behawioralny modelu w danym kroku symulacji.
 
-    Attributes
+    Attributes:
     ----------
     decision:
         Etykieta decyzji użytkowej. Wartość ``"wait"`` oznacza brak
@@ -64,13 +66,13 @@ def map_behavior_state(
     confidence_gain:
         Wzmocnienie przeliczające odległość od progu na pewność.
 
-    Returns
+    Returns:
     -------
     BehaviorSample
         Próbka zawierająca etykietę decyzji, latencję w sekundach, pewność
         ``[0, 1]`` oraz surowy wynik decyzyjny.
 
-    Raises
+    Raises:
     ------
     KeyError
         Gdy ``idx`` nie zawiera wymaganego modułu.
