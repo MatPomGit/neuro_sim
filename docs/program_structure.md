@@ -273,7 +273,7 @@ assets/svg/
 Katalogi źródłowe i dokumentacyjne są wersjonowane, ponieważ zawierają kod,
 konfiguracje, dane walidacyjne albo ręcznie zatwierdzone materiały użytkowe:
 
-- `brain_model/`, `brain_core/`, `analysis/`, `brain_viewer/` i `scripts/` — kod źródłowy oraz narzędzia;
+- `brain_model/`, `brain_core/`, `analysis/`, `brain_viewer/`, `scripts/` oraz `tests/` — kod źródłowy, narzędzia i testy;
 - `configs/` — wersjonowane konfiguracje uruchomień i profili;
 - `data/` — małe, jawnie opisane dane walidacyjne, atlasy i konektomy używane przez testy;
 - `assets/` — źródłowe zasoby SVG;
