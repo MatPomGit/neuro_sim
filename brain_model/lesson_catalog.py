@@ -96,12 +96,12 @@ def _load_lesson_payload(path: Path) -> dict[str, Any]:
     path:
         Ścieżka do pliku ``configs/lessons/*.yaml``.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Surowe mapowanie pól lekcji.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy dokument YAML nie jest mapowaniem.
@@ -127,7 +127,7 @@ def _require_lesson_fields(path: Path, payload: dict[str, Any]) -> None:
     payload:
         Surowe mapowanie YAML lekcji.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy brakuje co najmniej jednego wymaganego pola.
@@ -151,12 +151,12 @@ def _as_string_list(path: Path, payload: dict[str, Any], field_name: str) -> lis
     field_name:
         Nazwa walidowanego pola.
 
-    Returns
+    Returns:
     -------
     list[str]
         Lista niepustych tekstów z pola lekcji.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy pole nie jest niepustą listą tekstów.
@@ -181,12 +181,12 @@ def _as_next_run_changes(path: Path, payload: dict[str, Any]) -> list[dict[str, 
     payload:
         Surowe mapowanie YAML lekcji.
 
-    Returns
+    Returns:
     -------
     list[dict[str, str]]
         Lista mapowań tekstowych opisujących zmianę kolejnego uruchomienia.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy pole nie jest niepustą listą mapowań tekstowych.
@@ -221,12 +221,12 @@ def _lesson_from_payload(path: Path, payload: dict[str, Any]) -> LessonCatalogIt
     payload:
         Surowe mapowanie YAML lekcji.
 
-    Returns
+    Returns:
     -------
     LessonCatalogItem
         Niemutowalny opis lekcji używany przez GUI i testy statyczne.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy wymagane pole jest nieobecne albo ma nieobsługiwany typ.
@@ -283,12 +283,12 @@ def _lesson_from_payload(path: Path, payload: dict[str, Any]) -> LessonCatalogIt
 def load_lesson_catalog() -> list[LessonCatalogItem]:
     """Wczytaj katalog lekcji dydaktycznych z ``configs/lessons``.
 
-    Returns
+    Returns:
     -------
     list[LessonCatalogItem]
         Lekcje posortowane deterministycznie według nazwy pliku YAML.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy katalog lekcji nie istnieje albo dowolny plik ma niepełną strukturę.
@@ -309,7 +309,7 @@ def load_lesson_catalog() -> list[LessonCatalogItem]:
 def lesson_labels() -> list[str]:
     """Zwróć polskie etykiety lekcji dostępnych w katalogu.
 
-    Returns
+    Returns:
     -------
     list[str]
         Etykiety ``label_pl`` zachowujące kolejność katalogu lekcji.
@@ -326,7 +326,7 @@ def lesson_by_label(label: str) -> LessonCatalogItem | None:
     label:
         Polska etykieta lekcji z kontrolki wyboru.
 
-    Returns
+    Returns:
     -------
     LessonCatalogItem | None
         Dopasowana lekcja albo ``None``, gdy etykieta nie istnieje w katalogu.

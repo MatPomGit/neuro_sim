@@ -19,12 +19,12 @@ def validate_stimulus_config(stimulus: dict[str, Any]) -> dict[str, Any]:
         Sekcja konfiguracji opisująca scenariusz bodźca i źródło jego
         parametrów.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Znormalizowana sekcja ``stimulus`` z niepustymi polami tekstowymi.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy brakuje pól ``scenario`` lub ``source`` albo ich wartości nie są

@@ -194,12 +194,12 @@ def build_engine_config(
         Parametry oscylatorów zachowane w sygnaturze workera; preset YAML
         pozostaje źródłem właściwej konfiguracji integratora.
 
-    Returns
+    Returns:
     -------
     ExperimentConfig
         Konfiguracja zwalidowana wyłącznie przez loader i schemat `brain_core`.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy stan GUI nie wskazuje pliku konfiguracyjnego scenariusza.
@@ -263,7 +263,7 @@ def run_profile_comparison(
     progress_callback:
         Callback postępu przekazywany do silnika.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Wynik referencyjny rozszerzony o raport batch bez ciężkich obiektów w

@@ -82,7 +82,7 @@ class ExperimentResult:
     def to_legacy_dict(self) -> dict[str, Any]:
         """Zwróć wynik w dotychczasowym słownikowym formacie API.
 
-        Returns
+        Returns:
         -------
         dict[str, Any]
             Słownik zgodny z wcześniejszym wynikiem ``run_experiment``. Klucze

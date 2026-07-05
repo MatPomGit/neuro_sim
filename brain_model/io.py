@@ -1,3 +1,5 @@
+"""Zapis i odczyt artefaktów uruchomienia dla replikowalnych eksperymentów."""
+
 from __future__ import annotations
 
 import json
@@ -36,7 +38,7 @@ def _to_jsonable(value: Any) -> Any:
     value:
         Dowolna wartość metadanych, konfiguracji albo wyniku symulacji.
 
-    Returns
+    Returns:
     -------
     Any
         Wartość złożona wyłącznie z typów obsługiwanych przez ``json.dumps``.
@@ -66,7 +68,7 @@ def _run_git_command(args: list[str], *, repo_path: Path | None = None) -> str |
     repo_path:
         Opcjonalna ścieżka katalogu repozytorium.
 
-    Returns
+    Returns:
     -------
     str | None
         Przycięty wynik standardowego wyjścia albo `None`, gdy Git nie jest
@@ -86,7 +88,7 @@ def _run_git_command(args: list[str], *, repo_path: Path | None = None) -> str |
 def _git_commit_hash() -> str | None:
     """Zwróć hash bieżącego commita repozytorium projektu.
 
-    Returns
+    Returns:
     -------
     str | None
         Pełny hash commita Git albo ``None``, gdy katalog projektu nie jest
@@ -106,7 +108,7 @@ def collect_git_info(
         Opcjonalna ścieżka katalogu repozytorium. Gdy nie podano, używany jest
         bieżący katalog procesu.
 
-    Returns
+    Returns:
     -------
     dict[str, str | bool | None]
         Słownik z hashem commita, nazwą gałęzi i informacją, czy repozytorium
@@ -134,7 +136,7 @@ def collect_environment_info(
         Nazwy dystrybucji Pythona, których wersje mają być zapisane w
         artefakcie reprodukcji.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Informacje o środowisku uruchomieniowym w formacie gotowym do JSON.
@@ -192,7 +194,7 @@ def _file_sha256(path: Path) -> str:
         Ścieżka pliku, którego integralność ma być zapisana w manifeście
         uruchomienia.
 
-    Returns
+    Returns:
     -------
     str
         Szesnastkowy skrót SHA-256 zawartości pliku.
@@ -264,7 +266,7 @@ def build_output_dir(
     root:
         Katalog bazowy, w którym zostanie utworzony katalog wynikowy.
 
-    Returns
+    Returns:
     -------
     Path
         Ścieżka istniejącego katalogu wynikowego z prefiksem czasu UTC.
@@ -327,7 +329,7 @@ def save_run(
     event_timeline:
         Oś czasu zdarzeń. Gdy ``None``, zapisywana jest pusta lista.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Ścieżki do zapisanych artefaktów reprodukowalności.
@@ -449,13 +451,13 @@ def load_run(output_dir: str | Path) -> dict[str, Any]:
         Katalog zawierający ``run_data.npz`` i ``metadata.json`` utworzone przez
         ``save_run``.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Dane czasu, aktywności, diagnostyk, oscylacji, metadanych oraz ścieżka
         katalogu uruchomienia.
 
-    Raises
+    Raises:
     ------
     FileNotFoundError
         Gdy wymagane artefakty nie istnieją w katalogu wynikowym.

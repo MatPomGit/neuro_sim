@@ -21,12 +21,12 @@ def validate_integrator_config(integrator: dict[str, Any]) -> dict[str, Any]:
         Sekcja konfiguracji opisująca metodę całkowania oraz opcjonalne
         parametry oscylatora.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Znormalizowana sekcja ``integrator`` z obsługiwaną metodą numeryczną.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy brakuje pola ``method``, metoda nie jest obsługiwana albo

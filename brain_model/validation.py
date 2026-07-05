@@ -1,3 +1,5 @@
+"""Walidacja przebiegów symulacji i heurystyczna ocena stabilności modelu."""
+
 from __future__ import annotations
 
 import numpy as np

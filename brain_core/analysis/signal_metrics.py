@@ -28,7 +28,7 @@ def _with_report_context(item: dict[str, object]) -> dict[str, object]:
     item:
         Definicja metryki z modułów analitycznych.
 
-    Returns
+    Returns:
     -------
     dict[str, object]
         Kopia definicji z polami wymaganymi przez raport profili klinicznych.
@@ -68,7 +68,7 @@ REPORTABLE_SIGNAL_METRICS = (
 def reportable_signal_metrics() -> tuple[dict[str, object], ...]:
     """Zwróć katalog metryk gotowych do raportowania profili klinicznych.
 
-    Returns
+    Returns:
     -------
     tuple[dict[str, object], ...]
         Niemodyfikowalny katalog metryk EEG/sieciowych z polską interpretacją,

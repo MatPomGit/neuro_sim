@@ -1,3 +1,5 @@
+"""Adaptery sygnałów łączące wyniki symulacji z analizą i raportowaniem."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -47,7 +49,7 @@ class SNNPopulationMapping:
         Nazwy regionów neural-mass w kolejności kolumn sygnału. Krotka musi
         zawierać ``HIP``, aby mapowanie było jawne i nazwane.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy konfiguracja próbuje mapować więcej niż jeden obwód SNN albo region
@@ -169,13 +171,13 @@ class CouplingSignalAdapter:
         max_abs_amplitude:
             Górne ograniczenie bezwzględnej amplitudy wejścia zwrotnego.
 
-        Returns
+        Returns:
         -------
         ClosedLoopCouplingDrive
             Wektor wejścia, który należy zastosować dopiero w następnym kroku
             neural-mass, oraz aktywność regionalna użyta do jego wyznaczenia.
 
-        Raises
+        Raises:
         ------
         ValueError
             Gdy wzmocnienie lub amplituda są niepoprawne.

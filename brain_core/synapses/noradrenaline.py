@@ -1,3 +1,5 @@
+"""Modulacja noradrenergiczna parametrów synaptycznych w symulacji."""
+
 from __future__ import annotations
 
 

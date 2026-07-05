@@ -132,7 +132,7 @@ def read_line_edit(control: QLineEdit) -> str:
     control:
         Kontrolka tekstowa edytowana przez użytkownika.
 
-    Returns
+    Returns:
     -------
     str
         Aktualna wartość tekstowa kontrolki.
@@ -163,7 +163,7 @@ def read_check_box(control: QCheckBox) -> bool:
     control:
         Kontrolka przechowująca wybór logiczny użytkownika.
 
-    Returns
+    Returns:
     -------
     bool
         `True`, gdy kontrolka jest zaznaczona.
@@ -194,7 +194,7 @@ def read_combo_box(control: QComboBox) -> str:
     control:
         Lista wyboru prezentowana użytkownikowi.
 
-    Returns
+    Returns:
     -------
     str
         Aktualnie wybrany tekst kontrolki.
@@ -273,7 +273,7 @@ def _format_polish_bullets(values: list[str]) -> str:
     values:
         Lista pytań lub obserwacji z katalogu lekcji.
 
-    Returns
+    Returns:
     -------
     str
         Wielowierszowa lista pytań albo komunikat o braku pytań.
@@ -292,7 +292,7 @@ def format_lesson_preview(lesson: LessonCatalogItem) -> str:
     lesson:
         Element katalogu lekcji wczytany z ``configs/lessons``.
 
-    Returns
+    Returns:
     -------
     str
         Gotowy tekst dla etykiety podglądu w sekcji szybkiego startu.
@@ -712,7 +712,7 @@ class QtSections:
         binding:
             Powiązanie pola `GuiState` z atrybutem kontrolki Qt.
 
-        Returns
+        Returns:
         -------
         object
             Wartość gotowa do zapisania w polu stanu GUI.

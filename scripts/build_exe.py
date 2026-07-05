@@ -24,7 +24,7 @@ SPEC_FILE = REPO_ROOT / "neuro_sim_gui.spec"
 def check_pyinstaller() -> None:
     """Sprawdź, czy PyInstaller jest zainstalowany; zgłoś błąd, jeśli nie.
 
-    Raises
+    Raises:
     ------
     SystemExit
         Gdy PyInstaller nie jest zainstalowany w bieżącym środowisku.
@@ -44,7 +44,7 @@ def check_pyinstaller() -> None:
 def build() -> None:
     """Uruchom PyInstaller z plikiem specyfikacji neuro_sim_gui.spec.
 
-    Raises
+    Raises:
     ------
     SystemExit
         Gdy PyInstaller zakończy działanie z kodem błędu różnym od zera.

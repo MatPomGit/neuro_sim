@@ -46,12 +46,12 @@ def validate_amplitude_latency_mechanism_config(
     profile:
         Sekcja ``clinical_profile`` po podstawowej walidacji pól tekstowych.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Znormalizowane metadane sekcji raportowej.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy sekcja ma niepoprawny typ, brakuje wymaganych pól albo próg nie

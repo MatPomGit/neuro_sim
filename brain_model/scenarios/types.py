@@ -1,3 +1,5 @@
+"""Typy scenariuszy bodźców i zdarzeń dla eksperymentów poznawczych."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

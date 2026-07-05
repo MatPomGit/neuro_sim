@@ -9,6 +9,8 @@ PRODUCTION_DOCSTRING_SCOPES = (
     "brain_core/**/*.py",
     "brain_model/**/*.py",
     "scripts/**/*.py",
+)
+PRODUCTION_SCOPES_WITHOUT_DOCSTRING_IGNORES = (
     "analysis/**/*.py",
 )
 STRICT_MYPY_MODULES = {
@@ -35,11 +37,13 @@ def test_production_docstring_ignores_are_precise() -> None:
     pyproject = _load_pyproject()
     per_file_ignores = pyproject["tool"]["ruff"]["lint"]["per-file-ignores"]
 
+    for scope in PRODUCTION_SCOPES_WITHOUT_DOCSTRING_IGNORES:
+        assert scope not in per_file_ignores
+
     for scope in PRODUCTION_DOCSTRING_SCOPES:
         ignored_rules = set(per_file_ignores[scope])
         assert "D" not in ignored_rules
         assert ignored_rules <= {
-            "D100",
             "D104",
             "D107",
             "D200",
@@ -53,7 +57,6 @@ def test_production_docstring_ignores_are_precise() -> None:
             "D411",
             "D413",
             "D415",
-            "D416",
             "D417",
         }
 

@@ -73,19 +73,25 @@ interpretację eksperymentów i raportów:
   diagnostyki, EEG, mocy pasm i zachowania.
 
 Dla produkcyjnych pakietów `brain_core` i `brain_model` nie wolno już wyłączać
-całej rodziny reguł `D`. Etap 2026-06 rozszerza tę zasadę na katalogi `scripts`
-oraz `analysis`: one również nie mogą używać globalnego ignorowania `D`, ale
-nadal korzystają z tej samej, jawnej listy tymczasowych wyjątków. Zakres jest
-celowo ograniczony do tych dwóch katalogów, ponieważ obejmowanie całego
-repozytorium w jednym kroku wymagałoby masowych poprawek docstringów w kodzie
-legacy i utrudniłoby ocenę merytorycznego diffu.
+całej rodziny reguł `D`. Etap 2026-06 rozszerzył tę zasadę na katalogi `scripts`
+oraz `analysis`: one również nie mogą używać globalnego ignorowania `D`.
+Przegląd 2026-07 potwierdził, że moduły `analysis/**/*.py` przechodzą kontrolę
+`ruff --select D` bez wyjątków, dlatego usunięto dla nich tymczasową listę
+ignorowanych reguł. Przegląd 2026-07 usunął także dług `D100` i `D416` w
+zakresach `brain_core/**/*.py`, `brain_model/**/*.py` oraz `scripts/**/*.py`:
+moduły produkcyjne mają docstring modułu, a nagłówki sekcji docstringów kończą
+się dwukropkiem zgodnie z konwencją Google. Pozostałe jawne wyjątki są nadal
+ograniczone, ponieważ ich pełne usunięcie wymagałoby masowych poprawek
+stylistycznych w kodzie legacy i utrudniłoby ocenę merytorycznego diffu.
 
 Zmiana w tym etapie oznacza, że:
 
-- `analysis/**/*.py` i `scripts/**/*.py` mają w `pyproject.toml` identyczną listę
-  reguł migracyjnych jak `brain_core/**/*.py` oraz `brain_model/**/*.py`;
-- nie wolno zastępować tej listy skrótem `D`, ponieważ ukrywałoby to nowe klasy
-  naruszeń docstringów;
+- `analysis/**/*.py` nie ma już wyjątków docstringowych w `pyproject.toml`;
+- `scripts/**/*.py` ma w `pyproject.toml` identyczną listę pozostałych reguł
+  migracyjnych jak `brain_core/**/*.py` oraz `brain_model/**/*.py`;
+- `D100` i `D416` nie są już dozwolone jako wyjątki produkcyjne;
+- nie wolno zastępować żadnej jawnej listy skrótem `D`, ponieważ ukrywałoby to
+  nowe klasy naruszeń docstringów;
 - kolejne PR-y dotykające tych katalogów powinny usuwać konkretne wyjątki
   lokalnie, gdy poprawiają odpowiadające im docstringi;
 - pozostałe obszary legacy, np. pojedyncze punkty wejścia i moduły
@@ -94,12 +100,11 @@ Zmiana w tym etapie oznacza, że:
 Tymczasowe wyjątki w `pyproject.toml` są ograniczone do jawnie wymienionych
 reguł długu migracyjnego:
 
-- `D100` — brak docstringa modułu;
 - `D104` — brak docstringa pakietu;
 - `D107` — brak docstringa metody `__init__`, gdy klasa lub metoda publiczna ma
   osobny opis semantyki;
 - `D200`, `D202`, `D205`, `D212`, `D214`, `D301`, `D401`, `D405`,
-  `D411`, `D413`, `D415`, `D416`, `D417` — istniejące niespójności
+  `D411`, `D413`, `D415`, `D417` — istniejące niespójności
   stylu docstringów w starszych modułach, usuwane partiami bez masowego
   formatowania całego repozytorium.
 
@@ -133,8 +138,10 @@ Test `tests/test_quality_policy_static.py` pilnuje, aby:
 
 - produkcyjne moduły `brain_core`, `brain_model`, `scripts` i `analysis` nie
   wróciły do globalnego ignorowania `D`;
-- zakresy objęte etapową migracją miały wyłącznie jawnie zaakceptowane reguły
-  `D*`, dzięki czemu dodanie nowego wyjątku wymaga świadomej aktualizacji
+- `analysis/**/*.py` pozostał bez wyjątków docstringowych po zakończeniu lokalnej
+  migracji;
+- zakresy nadal objęte etapową migracją miały wyłącznie jawnie zaakceptowane
+  reguły `D*`, dzięki czemu dodanie nowego wyjątku wymaga świadomej aktualizacji
   polityki jakości;
 - zaostrzone opcje `mypy` pozostały włączone dla kluczowych modułów naukowych;
 - wybrane moduły naukowe nie zawierały nieuzasadnionego importu ani użycia

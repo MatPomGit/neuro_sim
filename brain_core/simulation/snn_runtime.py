@@ -44,7 +44,7 @@ def build_snn_runtime(
     region_names:
         Nazwy regionów neural-mass w kolejności modelu.
 
-    Returns
+    Returns:
     -------
     tuple
         Regiony SNN, mapowanie, adapter sygnału, populacja SNN, indeksy regionów
@@ -89,7 +89,7 @@ def summarize_trace_metrics(
     feedback_trace:
         Opcjonalny przebieg amplitudy wejścia zwrotnego SNN.
 
-    Returns
+    Returns:
     -------
     dict[str, float | int]
         Zaokrąglone metryki aktywności, długości i różnic względem baseline.
@@ -119,7 +119,7 @@ def classify_snn_feedback_amplitude(
     max_feedback_amplitude:
         Skonfigurowany limit bezwymiarowej amplitudy sprzężenia closed-loop.
 
-    Returns
+    Returns:
     -------
     dict[str, str | float]
         Poziom ostrzeżenia, progi i krótki opis po polsku.

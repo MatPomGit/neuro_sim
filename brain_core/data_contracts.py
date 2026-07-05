@@ -37,7 +37,7 @@ def validate_region_atlas_contract(atlas: RegionAtlas) -> None:
     atlas:
         Atlas regionów z nazwami i stałymi czasowymi ``tau`` w sekundach [s].
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy atlas nie spełnia kontraktu A z ``docs/data_contracts.md``.
@@ -79,7 +79,7 @@ def validate_connectome_contract(
     expected_region_names:
         Opcjonalna kolejność regionów wymagana przez atlas wejściowy.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy konektom nie spełnia kontraktu A z ``docs/data_contracts.md``.
@@ -148,12 +148,12 @@ def validate_square_matrix_contract(
     contract_name:
         Nazwa kontraktu z ``docs/data_contracts.md``.
 
-    Returns
+    Returns:
     -------
     np.ndarray
         Macierz ``float`` spełniająca kontrakt kształtu i skończoności.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy macierz ma zły kształt lub wartości nienumeryczne/nieskończone.
@@ -183,12 +183,12 @@ def validate_delay_steps_contract(delays_steps: Any, n_regions: int) -> np.ndarr
     n_regions:
         Liczba regionów w sieci.
 
-    Returns
+    Returns:
     -------
     np.ndarray
         Macierz opóźnień typu ``int``.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy opóźnienia mają zły kształt albo nieujemną całkowitość.
@@ -223,12 +223,12 @@ def validate_regional_vector_contract(
     field_name:
         Nazwa pola raportowana w błędzie.
 
-    Returns
+    Returns:
     -------
     np.ndarray
         Wektor ``float`` spełniający kontrakt.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy wektor ma zły kształt lub wartości nieskończone.
@@ -260,12 +260,12 @@ def validate_leadfield_contract(leadfield: Any) -> np.ndarray:
     leadfield:
         Macierz operatora forward EEG ``[n_sensors, n_sources]``.
 
-    Returns
+    Returns:
     -------
     np.ndarray
         Macierz ``float`` spełniająca kontrakt.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy macierz jest pusta, nie-2D albo nieskończona.
@@ -296,12 +296,12 @@ def validate_source_activity_contract(
     n_sources:
         Liczba źródeł wymagana przez leadfield.
 
-    Returns
+    Returns:
     -------
     np.ndarray
         Tablica aktywności źródłowej ``float``.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy kształt nie odpowiada liczbie źródeł albo wartości nie są skończone.
@@ -338,12 +338,12 @@ def validate_eeg_signal_contract(eeg: Any, n_sensors: int) -> np.ndarray:
     n_sensors:
         Liczba sensorów oczekiwana przez operator odwrotny.
 
-    Returns
+    Returns:
     -------
     np.ndarray
         Sygnał ``float`` spełniający kontrakt.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy kształt nie odpowiada liczbie sensorów albo wartości nie są skończone.
@@ -375,12 +375,12 @@ def validate_hrf_contract(hrf: Any) -> np.ndarray:
     hrf:
         Bezwymiarowy wektor odpowiedzi hemodynamicznej ``[length]``.
 
-    Returns
+    Returns:
     -------
     np.ndarray
         Wektor HRF ``float``.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy HRF nie jest niepustym, skończonym wektorem 1D.
@@ -406,12 +406,12 @@ def validate_bold_drive_contract(neural_drive: Any) -> np.ndarray:
     neural_drive:
         Napęd ``[n_samples]`` albo ``[n_samples, n_regions]``.
 
-    Returns
+    Returns:
     -------
     np.ndarray
         Tablica napędu BOLD ``float``.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy napęd ma zły kształt, wartości nieskończone lub ujemne.

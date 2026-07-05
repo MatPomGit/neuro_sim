@@ -1,3 +1,5 @@
+"""Model populacji neuronów impulsowych dla eksperymentów sieciowych."""
+
 from __future__ import annotations
 
 from collections.abc import Sequence

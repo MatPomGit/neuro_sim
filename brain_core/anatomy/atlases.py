@@ -1,3 +1,5 @@
+"""Ładowanie atlasów regionów mózgu i macierzy połączeń strukturalnych."""
+
 from __future__ import annotations
 
 import csv

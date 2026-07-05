@@ -1,4 +1,4 @@
-from typing import Callable, cast
+from typing import Any, Callable, cast
 
 import numpy as np
 
@@ -329,12 +329,12 @@ class CognitiveBrainModel:
             Opcjonalny, jawny wektor dodatkowego wejścia regionalnego, np.
             opóźnione sprzężenie zwrotne SNN dla regionu HIP.
 
-        Returns
+        Returns:
         -------
         tuple[np.ndarray, StepDiagnostics]
             Następny stan aktywacji i diagnostyka kroku.
 
-        Raises
+        Raises:
         ------
         ValueError
             Gdy external_drive ma niepoprawny kształt lub wartości nieskończone.
@@ -452,7 +452,7 @@ class CognitiveBrainModel:
             Funkcja zwracająca dodatkowe wejście regionalne dla bieżącego kroku.
             Używana do jawnego sprzężenia zwrotnego SNN -> neural-mass.
 
-        Returns
+        Returns:
         -------
         SimulationResult
             Krotka zawierająca wektor czasu, macierz aktywności modułów,

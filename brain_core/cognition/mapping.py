@@ -1,3 +1,5 @@
+"""Mapowanie regionów mózgu na funkcje poznawcze używane w symulacji."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -75,7 +77,7 @@ def normalize_task_name(task_name: str) -> str:
     task_name:
         Nazwa zadania z konfiguracji lub protokołu.
 
-    Returns
+    Returns:
     -------
     str
         Kanoniczna nazwa zadania używana w mapowaniach.
@@ -113,12 +115,12 @@ def mapping_for_task(task_name: str) -> TaskFunctionalMapping:
     task_name:
         Techniczna nazwa zadania poznawczego.
 
-    Returns
+    Returns:
     -------
     TaskFunctionalMapping
         Deterministyczne mapowanie task→funkcje→regiony.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy zadanie nie ma zdefiniowanego mapowania.
@@ -138,7 +140,7 @@ def regions_for_task(task_name: str) -> tuple[str, ...]:
     task_name:
         Techniczna nazwa zadania poznawczego.
 
-    Returns
+    Returns:
     -------
     tuple[str, ...]
         Krotka regionów lub proxy regionów powiązanych z zadaniem.
@@ -154,7 +156,7 @@ def functions_for_task(task_name: str) -> tuple[str, ...]:
     task_name:
         Techniczna nazwa zadania poznawczego.
 
-    Returns
+    Returns:
     -------
     tuple[str, ...]
         Polskie nazwy funkcji kognitywnych powiązanych z zadaniem.

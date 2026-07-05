@@ -1,3 +1,5 @@
+"""Tekstowe raportowanie wyników symulacji i walidacji eksperymentów."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -19,14 +21,14 @@ def _run_metrics(run: dict) -> dict:
         ``diagnostics`` oraz ``oscillations.band_power`` z seriami liczbowymi
         długości liczby kroków symulacji.
 
-    Returns
+    Returns:
     -------
     dict[str, float]
         Płaski słownik średnich lub maksimów diagnostycznych. Metryki mocy pasm
         są bezwymiarowymi średnimi sum kwadratów, a serie czasowe są agregowane
         po całym horyzoncie symulacji w sekundach.
 
-    Raises
+    Raises:
     ------
     KeyError
         Gdy brakuje wymaganych sekcji ``diagnostics`` albo ``oscillations``.
@@ -61,19 +63,19 @@ def generate_comparison_report(
         Ścieżka pliku PNG raportu. Katalog nadrzędny zostanie utworzony, jeśli
         nie istnieje.
 
-    Returns
+    Returns:
     -------
     Path
         Ścieżka zapisanego pliku raportu.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy ``run_dirs`` jest puste.
     OSError
         Gdy nie można odczytać danych wejściowych albo zapisać pliku PNG.
 
-    Notes
+    Notes:
     -----
     Raport jest użytkowym artefaktem porównawczym: zestawia przebiegi aktywacji,
     uproszczoną moc pasm EEG i tabelę zagregowanych metryk bez zmiany danych

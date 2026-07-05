@@ -19,12 +19,12 @@ def validate_connectome_config(connectome: dict[str, Any]) -> dict[str, Any]:
         Sekcja konfiguracji opisująca atlas oraz opcjonalne ścieżki wag i
         długości włókien.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Znormalizowana sekcja ``connectome`` z niepustymi wartościami tekstowymi.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy brakuje nazwy atlasu albo pola tekstowe nie są niepustymi napisami.

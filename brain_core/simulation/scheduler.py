@@ -170,7 +170,7 @@ class TaskStimulusPlayer:
         time_s:
             Bieżący czas symulacji w sekundach.
 
-        Returns
+        Returns:
         -------
         bool
             ``True``, gdy czas należy do półotwartego przedziału aktywności
@@ -190,7 +190,7 @@ class TaskStimulusPlayer:
             Bodziec zawierający jawne ``regional_input`` albo starszy wpis
             ``payload["regional_input"]``.
 
-        Returns
+        Returns:
         -------
         dict[str, float]
             Kopia mapy region→amplituda z wartościami liczbowymi typu ``float``.
@@ -221,7 +221,7 @@ class TaskStimulusPlayer:
         raw_value:
             Surowa wartość amplitudy pochodząca z konfiguracji bodźca.
 
-        Returns
+        Returns:
         -------
         float
             Skonwertowana amplituda albo ``0.0``, gdy wartość jest pusta lub

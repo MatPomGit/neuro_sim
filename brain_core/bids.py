@@ -77,7 +77,7 @@ def _split_bids_extension(file_name: str) -> tuple[str, str]:
     file_name:
         Nazwa pliku BIDS bez ścieżki katalogu.
 
-    Returns
+    Returns:
     -------
     tuple[str, str]
         Para zawierająca nazwę bez rozszerzenia i rozszerzenie.
@@ -97,7 +97,7 @@ def validate_bids_file_name(file_name: str) -> BidsValidationResult:
         Nazwa pliku, np. ``sub-001_task-rest_eeg.edf`` albo
         ``sub-001_task-rest_events.tsv``.
 
-    Returns
+    Returns:
     -------
     BidsValidationResult
         Wynik walidacji obejmujący kolejność encji, sufiks i rozszerzenie.
@@ -158,7 +158,7 @@ def validate_dataset_description(path: Path) -> BidsValidationResult:
     path:
         Ścieżka do pliku ``dataset_description.json``.
 
-    Returns
+    Returns:
     -------
     BidsValidationResult
         Wynik walidacji pól wymaganych dla zbioru BIDS.

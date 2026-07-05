@@ -21,12 +21,12 @@ def validate_output_config(output: dict[str, Any]) -> dict[str, Any]:
         Sekcja konfiguracji kontrolująca zapis wyników, etykietę uruchomienia
         i katalog artefaktów.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Znormalizowana sekcja ``output`` z tekstową ścieżką katalogu wyników.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy wymagane pola mają niepoprawny typ albo etykieta lub katalog są

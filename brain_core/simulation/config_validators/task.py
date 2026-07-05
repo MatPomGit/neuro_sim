@@ -22,12 +22,12 @@ def validate_task_config(task: dict[str, Any]) -> dict[str, Any]:
         Sekcja konfiguracji z nazwą scenariusza, czasem trwania oraz
         opcjonalnymi parametrami liczbowymi zadania.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Znormalizowana sekcja ``task`` gotowa do użycia przez silnik.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy wymagane pola są nieobecne albo pola liczbowe, tekstowe lub

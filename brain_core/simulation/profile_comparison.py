@@ -26,7 +26,7 @@ def build_stimulus_sequence_signature(
         Bodźce wygenerowane raz dla wspólnego seeda i przekazywane do wszystkich
         profili klinicznych w porównaniu.
 
-    Returns
+    Returns:
     -------
     list[dict[str, Any]]
         Minimalna lista pól determinujących sekwencję bodźców, bez wyników modelu

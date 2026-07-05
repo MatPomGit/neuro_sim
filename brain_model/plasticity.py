@@ -1,3 +1,5 @@
+"""Aktualizacje plastyczności synaptycznej dla połączeń modelu poznawczego."""
+
 from dataclasses import dataclass, field
 from typing import Any, Mapping, MutableMapping, Protocol, Sequence, TypedDict, cast
 
@@ -76,12 +78,12 @@ def _get_weight_updates(diagnostics: MutableMapping[str, Any]) -> WeightUpdateMa
     diagnostics:
         Modyfikowalny słownik diagnostyczny pojedynczego kroku symulacji.
 
-    Returns
+    Returns:
     -------
     WeightUpdateMap
         Słownik mapujący etykietę połączenia na wagę po aktualizacji i deltę.
 
-    Raises
+    Raises:
     ------
     TypeError
         Gdy istniejące pole ``weight_updates`` nie jest słownikiem. Taki stan

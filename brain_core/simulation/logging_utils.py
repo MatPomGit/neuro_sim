@@ -27,7 +27,7 @@ def configure_simulation_logger(
     level:
         Minimalny poziom komunikatów logowania.
 
-    Returns
+    Returns:
     -------
     logging.Logger
         Skonfigurowany logger bez propagacji do loggera głównego, aby uniknąć

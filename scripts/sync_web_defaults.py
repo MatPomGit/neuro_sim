@@ -1,3 +1,5 @@
+"""Synchronizacja domyślnych parametrów aplikacji webowej z konfiguracją Pythona."""
+
 from __future__ import annotations
 
 import ast
@@ -17,7 +19,7 @@ def read_dataclass_defaults(path: Path, class_name: str) -> dict[str, object]:
     class_name:
         Nazwa klasy, której adnotowane przypisania pól mają zostać odczytane.
 
-    Returns
+    Returns:
     -------
     dict[str, object]
         Płaski słownik ``{nazwa_pola: wartość_domyslna}``. Klucz jest nazwą
@@ -25,7 +27,7 @@ def read_dataclass_defaults(path: Path, class_name: str) -> dict[str, object]:
         liczbą, napisem, wartością logiczną, ``None`` albo zagnieżdżoną strukturą
         literalną obsługiwaną przez AST.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy wskazana klasa nie istnieje albo co najmniej jedno pole ma wartość,
@@ -52,12 +54,12 @@ def _read_defaults_from_class(
     class_node:
         Węzeł AST klasy dataclass.
 
-    Returns
+    Returns:
     -------
     dict[str, object]
         Słownik wartości domyślnych możliwych do odczytania statycznie.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy co najmniej jedno pole ma wartość spoza zakresu ``ast.literal_eval``.
@@ -95,13 +97,13 @@ def _read_supported_default_value(node: ast.expr) -> object:
     node:
         Wyrażenie AST przypisane jako domyślna wartość pola dataclass.
 
-    Returns
+    Returns:
     -------
     object
         Wartość literalna albo jawny opis ``field(default_factory=lambda: ...)``
         używany dla zagnieżdżonych konfiguracji dataclass.
 
-    Raises
+    Raises:
     ------
     ValueError, TypeError
         Gdy wyrażenie nie jest literałem ani obsługiwanym wywołaniem
@@ -125,12 +127,12 @@ def _read_field_default_factory(node: ast.expr) -> dict[str, object]:
     node:
         Wyrażenie AST potencjalnego wywołania ``field``.
 
-    Returns
+    Returns:
     -------
     dict[str, object]
         Słownik z nazwą fabryki i literalnymi argumentami kluczowymi.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy wyrażenie nie ma obsługiwanego, statycznego kształtu.
@@ -167,12 +169,12 @@ def _read_constructor_call(node: ast.Call) -> dict[str, object]:
     node:
         Wywołanie AST konstruktora konfiguracji.
 
-    Returns
+    Returns:
     -------
     dict[str, object]
         Nazwa konstruktora oraz słownik literalnych argumentów kluczowych.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy konstruktor nie jest nazwą albo używa argumentów pozycyjnych.
@@ -205,7 +207,7 @@ def read_param_desc(path: Path) -> dict[str, str]:
         Ścieżka do modułu, w którym szukana jest stała
         ``PARAMETER_DESCRIPTIONS``.
 
-    Returns
+    Returns:
     -------
     dict[str, str]
         Płaski słownik ``{nazwa_parametru: polski_opis}`` z literalnej wartości
@@ -213,7 +215,7 @@ def read_param_desc(path: Path) -> dict[str, str]:
         występuje. Klucze odpowiadają technicznym nazwom parametrów, a wartości
         są polskimi opisami prezentowanymi w warstwie web/GUI.
 
-    Raises
+    Raises:
     ------
     ValueError
         Może zostać zgłoszony przez ``ast.literal_eval``, jeśli znaleziona stała
