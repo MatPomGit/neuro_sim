@@ -146,6 +146,9 @@ Test `tests/test_quality_policy_static.py` pilnuje, aby:
 - zaostrzone opcje `mypy` pozostały włączone dla kluczowych modułów naukowych;
 - wybrane moduły naukowe nie zawierały nieuzasadnionego importu ani użycia
   `typing.Any`.
+- testy nie zwiększały liczby funkcji testowych z adnotacją zwrotu `-> Any`;
+  pozostały dług legacy jest opisany jako licznik bazowy w teście statycznym i
+  powinien maleć przy kolejnych lokalnych migracjach.
 
 Po każdej zmianie w `pyproject.toml` dotyczącej `tool.ruff.lint.per-file-ignores`
 należy uruchomić:
