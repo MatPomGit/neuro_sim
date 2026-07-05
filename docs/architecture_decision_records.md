@@ -104,6 +104,7 @@ Jeśli decyzja zostaje zastąpiona, nie usuwamy jej historii — zmieniamy statu
 | ADR-0040 | proposed | Modularne walidatory sekcji konfiguracji symulacji | [`docs/adr/0040-modularne-walidatory-konfiguracji.md`](adr/0040-modularne-walidatory-konfiguracji.md) | — |
 | ADR-0041 | accepted | Zaawansowany widok neuroanatomiczny NiiVue/WebGL | [`docs/adr/0041-zaawansowany-widok-niivue.md`](adr/0041-zaawansowany-widok-niivue.md) | — |
 | ADR-0042 | proposed | Status legacy pliku `brain_model.py` | [`docs/adr/0042-status-modulu-brain-model-py.md`](adr/0042-status-modulu-brain-model-py.md) | — |
+| ADR-0043 | proposed | Granice warstwy analizy i raportów kompatybilnościowych | [`docs/adr/0043-granice-warstwy-analizy.md`](adr/0043-granice-warstwy-analizy.md) | — |
 
 ## Procedura dodawania kolejnego ADR
 
