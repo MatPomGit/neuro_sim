@@ -132,6 +132,14 @@ python main.py
 
 Repozytorium jest podzielone na warstwę modelu poznawczego (`brain_model/`), warstwę eksperymentów i analiz (`brain_core/`), konfiguracje (`configs/`), dane (`data/`), dokumentację (`docs/`) oraz testy (`tests/`). Szczegółowy i aktualny opis znajduje się w `docs/program_structure.md`.
 
+Katalogi `brain_model/`, `brain_core/`, `configs/`, `data/`, `assets/`, `docs/`
+i `tests/` są źródłowe albo dokumentacyjne. Katalogi `outputs/`, `results/`,
+`reports/`, `artifacts/` oraz `docs/generated/` są przeznaczone na lokalne
+artefakty wynikowe i pozostają ignorowane przez Git. Zatwierdzone statyczne demo
+viewerów HTML znajduje się w `docs/viewers/`; raporty PDF z pojedynczych
+uruchomień należy odtwarzać z kodu raportującego i zapisywać poza wersjonowanym
+kodem źródłowym.
+
 Najważniejsze katalogi:
 
 ```text
@@ -140,9 +148,10 @@ neuro_sim/
 ├── brain_core/      # symulacja, anatomia, eksperymenty, analiza
 ├── configs/         # konfiguracje YAML/JSON
 ├── data/            # atlasy, konektomy, dane walidacyjne
-├── docs/            # dokumentacja, ADR, zasoby statyczne
+├── docs/            # dokumentacja, ADR, zatwierdzone zasoby statyczne
+├── docs/viewers/    # statyczne demonstratory HTML viewerów
 ├── tests/           # testy jednostkowe i integracyjne
-└── outputs/         # zapisane wyniki przykładowych uruchomień
+└── outputs/         # ignorowane lokalne wyniki uruchomień
 ```
 
 ## Konfiguracje i silnik eksperymentów (brain_core)

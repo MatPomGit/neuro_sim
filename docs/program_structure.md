@@ -9,20 +9,17 @@ neuro_sim/
 ├── main.py                         # szybkie uruchomienie symulacji poznawczej
 ├── main_gui.py                     # punkt wejścia GUI desktopowego
 ├── brain_model.py                  # tymczasowy skrypt legacy dla `python brain_model.py`
-├── brain_viewer.html               # samodzielny widok viewer
-├── brain_viewer_compact.html       # kompaktowy wariant viewer
-├── brain_sagittal_inline_regions.html
 ├── brain_model/                    # model poznawczy, GUI, raporty, IO
 ├── brain_core/                     # warstwa symulacji, anatomii, eksperymentów i analiz
 ├── brain_viewer/                   # mapowanie regionów i opis viewer
 ├── analysis/                       # zgodność wsteczna dla raportów
 ├── configs/                        # gotowe konfiguracje YAML/JSON
 ├── data/                           # atlasy, konektomy i dane walidacyjne
-├── docs/                           # dokumentacja, ADR, grafiki i widoki statyczne
+├── docs/                           # dokumentacja, ADR, grafiki i zatwierdzone widoki statyczne
 ├── assets/                         # źródłowe zasoby SVG
 ├── scripts/                        # skrypty narzędziowe
 ├── tests/                          # testy jednostkowe i integracyjne
-└── outputs/                        # przykładowe zapisane wyniki uruchomień
+└── outputs/                        # ignorowane wyniki lokalnych uruchomień
 ```
 
 ## 2. Punkty wejścia i uruchamianie
@@ -255,6 +252,7 @@ docs/
 ├── index.html
 ├── program_structure.md
 ├── snn_cosimulation_demo.md
+├── viewers/                        # zatwierdzone statyczne demonstratory HTML
 └── grafiki SVG/PNG/HTML przekrojów mózgu
 
 brain_viewer/
@@ -268,6 +266,31 @@ assets/svg/
 - ADR dla zmian strukturalnych są utrzymywane w `docs/adr/` zgodnie z `docs/architecture_decision_records.md`.
 - `docs/english_polish_glossary.md` jest źródłem polskich odpowiedników terminów technicznych w warstwie prezentacji.
 - Grafiki w `docs/` i `assets/svg/` wspierają widoki mózgu oraz dokumentację edukacyjną.
+- `docs/viewers/README.md` klasyfikuje przeniesione demonstratory HTML i opisuje ich źródło generowania.
+
+## 6A. Klasyfikacja katalogów źródłowych i wynikowych
+
+Katalogi źródłowe i dokumentacyjne są wersjonowane, ponieważ zawierają kod,
+konfiguracje, dane walidacyjne albo ręcznie zatwierdzone materiały użytkowe:
+
+- `brain_model/`, `brain_core/`, `analysis/`, `brain_viewer/` i `scripts/` — kod źródłowy oraz narzędzia;
+- `configs/` — wersjonowane konfiguracje uruchomień i profili;
+- `data/` — małe, jawnie opisane dane walidacyjne, atlasy i konektomy używane przez testy;
+- `assets/` — źródłowe zasoby SVG;
+- `docs/` — dokumentacja, ADR oraz zatwierdzone zasoby demonstracyjne;
+- `docs/viewers/` — statyczne demo dokumentacyjne viewerów HTML.
+
+Katalogi wynikowe nie są źródłem prawdy i są ignorowane przez Git:
+
+- `outputs/` — lokalne wyniki przykładowych uruchomień i eksperymentów;
+- `results/`, `reports/`, `artifacts/` — lokalne katalogi raportów, metryk i artefaktów;
+- `docs/generated/` — tymczasowe lub automatycznie wygenerowane materiały dokumentacyjne przed ręcznym zatwierdzeniem.
+
+Plik `raport_eksperymentu.pdf` z katalogu głównego został sklasyfikowany jako
+artefakt wynikowy konkretnego eksportu i usunięty z repozytorium. Raporty PDF
+powinny być odtwarzane przez kod raportujący i zapisywane w ignorowanym katalogu
+wynikowym, chyba że osobna decyzja dokumentacyjna uzasadnia zatwierdzenie
+konkretnego, małego przykładu w `docs/`.
 
 ## 7. Testy i jakość
 
