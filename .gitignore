@@ -10,6 +10,10 @@ __pycache__/
 .Python
 build/
 outputs/
+results/
+reports/
+artifacts/
+docs/generated/
 develop-eggs/
 dist/
 downloads/
@@ -37,6 +41,17 @@ MANIFEST
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+
+# Wyniki eksperymentów, raporty i tymczasowe eksporty
+raport_eksperymentu*.pdf
+experiment_report*.pdf
+*_report.pdf
+*_raport.pdf
+brain_viewer*.html
+brain_sagittal_inline_regions.html
+!docs/viewers/*.html
+*.tmp
+*.temp
 
 # Unit test / coverage reports
 htmlcov/
