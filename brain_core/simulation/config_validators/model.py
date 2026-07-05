@@ -24,12 +24,12 @@ def validate_model_config(model: dict[str, Any]) -> dict[str, Any]:
     model:
         Sekcja modelu z opcjonalną listą regionów oraz polami macierzowymi.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Znormalizowana sekcja modelu po walidacji kontraktu danych.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy lista regionów, konektywność, opóźnienia albo napędy regionalne

@@ -1,3 +1,5 @@
+"""Struktury danych opisujące połączenia anatomiczne między regionami mózgu."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

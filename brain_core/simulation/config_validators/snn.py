@@ -30,12 +30,12 @@ def validate_snn_config(snn: dict[str, Any], timestep: float) -> dict[str, Any]:
         Krok czasowy symulacji neural-mass w sekundach, używany jako domyślne
         ``sync_dt`` i baza sprawdzenia wielokrotności.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Znormalizowana sekcja ``snn`` gotowa do użycia przez silnik symulacji.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy typy pól, nazwy obwodów, tryb sprzężenia albo jednostki naruszają

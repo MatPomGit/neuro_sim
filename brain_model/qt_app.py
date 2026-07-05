@@ -918,7 +918,7 @@ class BrainModelQtWindow(QMainWindow):
         expected_step:
             Nazwa kroku, który powinien zostać właśnie wykonany.
 
-        Returns
+        Returns:
         -------
         bool
             `True`, gdy monitorowany krok pasuje do aktualnego stanu samouczka.

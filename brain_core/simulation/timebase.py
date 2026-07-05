@@ -22,13 +22,13 @@ def is_time_multiple(candidate_dt: float, base_dt: float) -> bool:
     base_dt:
         Bazowy krok czasu w sekundach.
 
-    Returns
+    Returns:
     -------
     bool
         ``True``, gdy ``candidate_dt / base_dt`` jest całkowite w granicach
         wspólnej tolerancji numerycznej osi czasu.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy którykolwiek krok czasu nie jest dodatnią skończoną liczbą.
@@ -51,12 +51,12 @@ def compute_step_count(duration_s: float, dt_s: float) -> int:
     dt_s:
         Bazowy krok czasu w sekundach.
 
-    Returns
+    Returns:
     -------
     int
         Liczba dyskretnych kroków do wykonania przez główną pętlę symulacji.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy czas trwania jest ujemny, nieskończony albo krok czasu nie jest
@@ -79,12 +79,12 @@ def compute_time_stride(candidate_dt: float, base_dt: float) -> int:
     base_dt:
         Bazowy krok symulacji w sekundach.
 
-    Returns
+    Returns:
     -------
     int
         Liczba bazowych kroków przypadających na jeden krok ``candidate_dt``.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy ``candidate_dt`` nie jest całkowitą wielokrotnością ``base_dt``
@@ -121,13 +121,13 @@ class TimeAccumulator:
         Względna tolerancja numeryczna używana przy porównaniu czasu
         zakumulowanego z lokalnym krokiem.
 
-    Raises
+    Raises:
     ------
     ValueError
         Gdy ``dt`` albo ``relative_tolerance`` nie są skończone lub mają
         niepoprawny zakres.
 
-    Notes
+    Notes:
     -----
     Klasa może raportować liczbę deterministycznych uruchomień albo wykonać
     wskazany moduł. Dzięki temu scheduler i silnik wieloskalowy stosują tę samą
@@ -159,12 +159,12 @@ class TimeAccumulator:
             Bazowy krok symulacji w sekundach, który ma zostać dodany do
             zakumulowanego czasu.
 
-        Returns
+        Returns:
         -------
         int
             Liczba pełnych lokalnych kroków ``dt`` dostępnych po akumulacji.
 
-        Raises
+        Raises:
         ------
         ValueError
             Gdy ``base_dt`` nie jest dodatnią skończoną liczbą.
@@ -194,12 +194,12 @@ class TimeAccumulator:
         base_dt:
             Bazowy krok symulacji w sekundach dodawany do akumulatora.
 
-        Returns
+        Returns:
         -------
         int
             Liczba wywołań ``module.update`` wykonanych w tej akumulacji.
 
-        Raises
+        Raises:
         ------
         ValueError
             Gdy ``state`` jest ``None`` albo ``base_dt`` jest niepoprawny.

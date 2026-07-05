@@ -1,3 +1,5 @@
+"""Struktury danych dla regionów mózgu i atlasów anatomicznych."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

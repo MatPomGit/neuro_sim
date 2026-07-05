@@ -1,3 +1,5 @@
+"""Protokoły eksperymentalne opisujące przebieg symulacji poznawczych."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
@@ -70,7 +72,7 @@ class TrialStimulus:
         regional_input:
             Mapa nazw regionów lub proxy regionów na amplitudy wejścia.
 
-        Returns
+        Returns:
         -------
         TrialStimulus
             Nowy bodziec z zachowanymi danymi trialu i przypisanym wejściem.

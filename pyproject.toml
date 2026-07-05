@@ -64,10 +64,9 @@ select = ["E", "F", "I", "D"]
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-# Tymczasowe wyjątki migracyjne: brak docstringów modułów/pakietów oraz __init__
+# Tymczasowe wyjątki migracyjne: brak docstringów pakietów oraz __init__
 # jest dopuszczony tylko do czasu zakończenia migracji opisanej w docs/developer_quality_checks.md.
 "brain_core/**/*.py" = [
-  "D100",
   "D104",
   "D107",
   "D200",
@@ -81,11 +80,9 @@ convention = "google"
   "D411",
   "D413",
   "D415",
-  "D416",
   "D417",
 ]
 "brain_model/**/*.py" = [
-  "D100",
   "D104",
   "D107",
   "D200",
@@ -99,25 +96,6 @@ convention = "google"
   "D411",
   "D413",
   "D415",
-  "D416",
-  "D417",
-]
-"analysis/**/*.py" = [
-  "D100",
-  "D104",
-  "D107",
-  "D200",
-  "D202",
-  "D205",
-  "D212",
-  "D214",
-  "D301",
-  "D401",
-  "D405",
-  "D411",
-  "D413",
-  "D415",
-  "D416",
   "D417",
 ]
 "tests/**/*.py" = ["D"]
@@ -125,7 +103,6 @@ convention = "google"
 "main_gui.py" = ["D"]
 "run_gui.py" = ["D"]
 "scripts/**/*.py" = [
-  "D100",
   "D104",
   "D107",
   "D200",
@@ -139,7 +116,6 @@ convention = "google"
   "D411",
   "D413",
   "D415",
-  "D416",
   "D417",
 ]
 "brain_viewer/**/*.py" = ["D"]

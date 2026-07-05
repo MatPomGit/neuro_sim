@@ -28,7 +28,7 @@ def draw_report_metric_bars(
         Wiersze ``eeg_bold_sections`` przygotowane w ``brain_core``. Funkcja
         nie liczy metryk analitycznych; tylko prezentuje przekazane wartości.
 
-    Returns
+    Returns:
     -------
     list[Any]
         Lista osi Matplotlib użytych do prezentacji.
@@ -161,7 +161,7 @@ class QtPlotPanel(QTabWidget):
     def plots_for_export(self) -> list[tuple[str, Figure]]:
         """Zwróć aktualne figury z tytułami zakładek do eksportu PDF.
 
-        Returns
+        Returns:
         -------
         list[tuple[str, Figure]]
             Lista par zawierających polski tytuł zakładki i figurę Matplotlib.

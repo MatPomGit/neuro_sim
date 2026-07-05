@@ -74,7 +74,7 @@ def _effective_rng_seed(config: ExperimentConfig) -> int:
         Konfiguracja eksperymentu z historycznym polem ``seed`` i docelowym
         polem ``rng_seed``.
 
-    Returns
+    Returns:
     -------
     int
         Jawne ziarno generatora losowego; gdy ``rng_seed`` nie jest ustawione,
@@ -95,7 +95,7 @@ def _build_randomness_section(
     random_sources:
         Rejestr nazw komponentów, które pobrały deterministyczne strumienie RNG.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Sekcja ``randomness`` do zapisu w metrykach, raporcie i wyniku API.
@@ -163,7 +163,7 @@ def _condition_gain(condition: str) -> float:
     condition:
         Nazwa warunku eksperymentalnego.
 
-    Returns
+    Returns:
     -------
     float
         Bezwymiarowe wzmocnienie amplitudy wejścia regionalnego.
@@ -188,7 +188,7 @@ def _regional_input_for_stimulus(task_name: str, condition: str) -> dict[str, fl
     condition:
         Warunek pojedynczego bodźca.
 
-    Returns
+    Returns:
     -------
     dict[str, float]
         Mapa region→amplituda wejścia dla bieżącego bodźca.
@@ -213,7 +213,7 @@ def _build_task_activation_summary(
     trial_events:
         Lista zdarzeń bodźcowych z wejściami regionalnymi.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Sekcja raportu opisująca funkcje, regiony i średnie pobudzenie.
@@ -251,7 +251,7 @@ def _attach_task_activation_section(
     task_activation:
         Podsumowanie pobudzenia regionów i funkcji przez zadanie.
 
-    Returns
+    Returns:
     -------
     AnalysisReport
         Nowy raport z dodatkową sekcją opisową.
@@ -277,7 +277,7 @@ def _generate_task_stimuli(config: ExperimentConfig) -> list[TrialStimulus]:
     config:
         Konfiguracja eksperymentu zawierająca nazwę zadania, czas trwania i seed.
 
-    Returns
+    Returns:
     -------
     list[TrialStimulus]
         Bodźce z przypisanym wejściem regionalnym, gotowe do ponownego użycia w
@@ -309,7 +309,7 @@ def _simulate_task_trials(
         uruchomienie wielu profili klinicznych na identycznym bodźcu bez zmian
         w logice punktacji silnika.
 
-    Returns
+    Returns:
     -------
     tuple[list[dict[str, Any]], list[dict[str, Any]]]
         Zdarzenia triali i wyniki punktacji.
@@ -417,7 +417,7 @@ def run_experiment(
         Opcjonalna wspólna sekwencja bodźców używana w porównaniach profili
         klinicznych przy tym samym seedzie.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Wyniki symulacji, triali, raportów i opcjonalnego zapisu artefaktów.
@@ -648,7 +648,7 @@ def run_task_across_clinical_profiles(
     progress_callback:
         Opcjonalna funkcja raportująca postęp pojedynczego uruchomienia.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Wyniki per profil oraz raport różnic względem profilu referencyjnego.

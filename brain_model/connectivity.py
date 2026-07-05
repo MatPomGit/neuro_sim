@@ -1,3 +1,5 @@
+"""Budowanie macierzy połączeń funkcjonalnych dla modułów poznawczych."""
+
 from typing import Sequence
 
 import numpy as np

@@ -1,3 +1,5 @@
+"""Definicje modułów poznawczych i ich parametrów bazowych."""
+
 import numpy as np
 
 from brain_core.anatomy.atlases import load_region_atlas

@@ -22,12 +22,12 @@ def validate_pathology_config(pathology: dict[str, Any]) -> dict[str, Any]:
         Sekcja konfiguracji określająca włączenie patologii, scenariusz oraz
         listę mutacji stanu.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Znormalizowana sekcja ``pathology`` z listą zwalidowanych mutacji.
 
-    Raises
+    Raises:
     ------
     ConfigValidationError
         Gdy flaga ``enabled`` ma niepoprawny typ, mutacje nie są listą obiektów

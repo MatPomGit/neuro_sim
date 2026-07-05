@@ -165,12 +165,12 @@ class GuiConfigMixin:
         raw_dt:
             Wartość kroku czasowego odczytana z konfiguracji albo kontrolki GUI.
 
-        Returns
+        Returns:
         -------
         float
             Skończona, dodatnia wartość kroku czasowego.
 
-        Raises
+        Raises:
         ------
         ValueError
             Gdy wartość nie jest liczbą skończoną większą od zera.
@@ -226,13 +226,13 @@ class GuiConfigMixin:
         config:
             Słownik konfiguracji odczytany z pliku JSON GUI.
 
-        Returns
+        Returns:
         -------
         _PreparedConfigStateValues
             Zwalidowane i przekonwertowane wartości gotowe do atomowego przypisania
             do `self.state`.
 
-        Raises
+        Raises:
         ------
         ValueError
             Gdy `dt` albo pole parametrów modelu ma niepoprawny typ lub wartość.

@@ -1,3 +1,5 @@
+"""Równowaga GABA-glutaminian dla parametrów pobudzenia i hamowania."""
+
 from __future__ import annotations
 
 
