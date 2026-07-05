@@ -68,8 +68,9 @@ def main() -> None:
             logger.info(
                 "Zapisano wyniki symulacji w katalogu: %s.", saved["output_dir"]
             )
-        except Exception as exc:
-            logger.warning("Nie udało się zapisać wyników symulacji: %s.", exc)
+        except (OSError, ValueError) as exc:
+            logger.error("Krytyczny błąd zapisu artefaktów symulacji: %s.", exc)
+            raise
 
     plot_activity(time, activity, model.names, model.idx)
     plot_diagnostics(time, diagnostics)
