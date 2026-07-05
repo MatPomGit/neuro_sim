@@ -1,4 +1,6 @@
-from typing import Any, Callable, cast
+"""Model poznawczy integrujący aktywacje, bodźce i oscylatory."""
+
+from typing import Callable, cast
 
 import numpy as np
 
@@ -32,6 +34,7 @@ SimulationResult = tuple[
     OscillationOutputs,
     BehaviorOutputs,
 ]
+
 
 class CognitiveBrainModel:
     """
@@ -82,7 +85,7 @@ class CognitiveBrainModel:
         oscillator_band_map:
             Opcjonalne przypisanie modułów do pasm EEG.
 
-        Raises
+        Raises:
         ------
         ValueError
             Gdy funkcja bodźca nie zwraca wszystkich wymaganych kanałów.
@@ -242,7 +245,9 @@ class CognitiveBrainModel:
             x[self.idx["EPIS"]],
             x[self.idx["SAL"]],
         )
-        return cast(float, sigmoid(candidate - self.p.gw_threshold, beta=self.p.gw_gain))
+        return cast(
+            float, sigmoid(candidate - self.p.gw_threshold, beta=self.p.gw_gain)
+        )
 
     def _add_drive_to_module_regions(
         self, external: np.ndarray, module_name: str, value: float

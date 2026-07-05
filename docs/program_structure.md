@@ -12,7 +12,7 @@ neuro_sim/
 ├── brain_model/                    # model poznawczy, GUI, raporty, IO
 ├── brain_core/                     # warstwa symulacji, anatomii, eksperymentów i analiz
 ├── brain_viewer/                   # mapowanie regionów i opis viewer
-├── analysis/                       # zgodność wsteczna dla raportów
+├── analysis/                       # cienkie fasady zgodności wstecznej
 ├── configs/                        # gotowe konfiguracje YAML/JSON
 ├── data/                           # atlasy, konektomy i dane walidacyjne
 ├── docs/                           # dokumentacja, ADR, grafiki i zatwierdzone widoki statyczne
@@ -183,6 +183,14 @@ brain_core/analysis/
 ```
 
 Warstwa analizy wylicza metryki spektralne, fazowe, łącznościowe i przepływu informacji. `signal_metrics.py` pełni rolę fasady kompatybilności, a `reports.py` agreguje metryki do raportów końcowych.
+
+Weryfikacja importów z 2026-07-05 pokazuje, że aktywny kod silnika, GUI i
+testów korzysta z `brain_core.analysis.*`. Katalog główny `analysis/` nie jest
+osobną warstwą aplikacyjną; pozostaje wyłącznie kompatybilnościową fasadą dla
+starszych importów. `analysis/reports.py` deleguje `final_experiment_report` do
+`brain_core.analysis.reports`, a nowy kod powinien używać bezpośrednio ścieżki
+`brain_core.analysis.reports.final_experiment_report`. Docelowy podział opisuje
+ADR-0043.
 
 **MVP istnieje — wynik eksperymentu:** `brain_core/simulation/results.py`
 porządkuje artefakty pojedynczego uruchomienia w `ExperimentResult`, a

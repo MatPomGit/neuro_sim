@@ -43,6 +43,50 @@ VALIDATION_METRIC_REGISTRY_COLUMNS = (
 )
 
 
+def final_experiment_report(
+    eeg_simulated: np.ndarray,
+    eeg_target: np.ndarray,
+    fmri_simulated: np.ndarray,
+    fmri_target: np.ndarray,
+    behavior_simulated: np.ndarray,
+    behavior_target: np.ndarray,
+) -> dict[str, dict[str, float]]:
+    """Zbuduj końcowy raport porównawczy dla głównych modalności eksperymentu.
+
+    Parameters
+    ----------
+    eeg_simulated:
+        Symulowany sygnał EEG używany do porównania metryk.
+    eeg_target:
+        Referencyjny sygnał EEG dla tej samej procedury eksperymentalnej.
+    fmri_simulated:
+        Symulowany sygnał fMRI/BOLD używany do porównania metryk.
+    fmri_target:
+        Referencyjny sygnał fMRI/BOLD dla tej samej procedury eksperymentalnej.
+    behavior_simulated:
+        Symulowany wektor albo macierz miar behawioralnych.
+    behavior_target:
+        Referencyjny wektor albo macierz miar behawioralnych.
+
+    Returns:
+    -------
+    dict[str, dict[str, float]]
+        Raport z sekcjami ``eeg``, ``fmri`` i ``behavior``; każda sekcja
+        zawiera metryki zwracane przez ``comparative_report``.
+
+    Raises:
+    ------
+    ValueError
+        Gdy przekazane pary tablic nie spełniają walidacji metryk sygnałowych.
+    """
+
+    return {
+        "eeg": comparative_report(eeg_simulated, eeg_target),
+        "fmri": comparative_report(fmri_simulated, fmri_target),
+        "behavior": comparative_report(behavior_simulated, behavior_target),
+    }
+
+
 def _metric_catalog_by_name() -> dict[str, dict[str, object]]:
     """Zindeksuj katalog metryk EEG/sieciowych gotowych do raportowania.
 

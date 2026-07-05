@@ -1,23 +1,12 @@
-"""Pomocnicze funkcje raportowania końcowego eksperymentu."""
+"""Kompatybilnościowy import raportu końcowego eksperymentu.
+
+Nowy kod powinien importować ``final_experiment_report`` z
+``brain_core.analysis.reports``. Ten moduł pozostaje cienką fasadą dla starszych
+skryptów, które używały ścieżki ``analysis.reports``.
+"""
 
 from __future__ import annotations
 
-import numpy as np
+from brain_core.analysis.reports import final_experiment_report
 
-from brain_core.analysis.signal_metrics import comparative_report
-
-
-def final_experiment_report(
-    eeg_simulated: np.ndarray,
-    eeg_target: np.ndarray,
-    fmri_simulated: np.ndarray,
-    fmri_target: np.ndarray,
-    behavior_simulated: np.ndarray,
-    behavior_target: np.ndarray,
-) -> dict[str, dict[str, float]]:
-    """Buduje raport porównawczy dla sygnałów EEG, fMRI i zachowania."""
-    return {
-        "eeg": comparative_report(eeg_simulated, eeg_target),
-        "fmri": comparative_report(fmri_simulated, fmri_target),
-        "behavior": comparative_report(behavior_simulated, behavior_target),
-    }
+__all__ = ["final_experiment_report"]
