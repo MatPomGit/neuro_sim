@@ -588,7 +588,7 @@ class CognitiveBrainModel:
             weight_history, steps
         )
 
-        oscillations: dict[str, object] = {
+        oscillations: OscillationOutputs = {
             "eeg": eeg,
             "excitatory": excitatory,
             "inhibitory": inhibitory,
