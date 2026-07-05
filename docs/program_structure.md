@@ -9,18 +9,28 @@ neuro_sim/
 ├── main.py                         # szybkie uruchomienie symulacji poznawczej
 ├── main_gui.py                     # punkt wejścia GUI desktopowego
 ├── brain_model.py                  # tymczasowy skrypt legacy dla `python brain_model.py`
-├── brain_model/                    # model poznawczy, GUI, raporty, IO
-├── brain_core/                     # warstwa symulacji, anatomii, eksperymentów i analiz
-├── brain_viewer/                   # mapowanie regionów i opis viewer
-├── analysis/                       # cienkie fasady zgodności wstecznej
-├── configs/                        # gotowe konfiguracje YAML/JSON
-├── data/                           # atlasy, konektomy i dane walidacyjne
-├── docs/                           # dokumentacja, ADR, grafiki i zatwierdzone widoki statyczne
-├── assets/                         # źródłowe zasoby SVG
-├── scripts/                        # skrypty narzędziowe
+├── brain_model/                    # kod źródłowy: model poznawczy, GUI, raporty, IO
+├── brain_core/                     # kod źródłowy: symulacja, anatomia, eksperymenty i analizy
+├── brain_viewer/                   # kod źródłowy: opis i mapowanie viewerów mózgu
+├── analysis/                       # kod źródłowy: cienkie fasady zgodności wstecznej
+├── configs/                        # konfiguracje eksperymentów YAML/JSON
+├── data/                           # dane referencyjne: atlasy, konektomy i walidacja
+├── docs/                           # dokumentacja statyczna, ADR i zatwierdzone widoki
+├── assets/                         # dokumentacja statyczna: źródłowe zasoby SVG
+├── scripts/                        # skrypty pomocnicze
 ├── tests/                          # testy jednostkowe i integracyjne
-└── outputs/                        # ignorowane wyniki lokalnych uruchomień
+└── outputs/                        # artefakty wynikowe lokalnych uruchomień, ignorowane przez Git
 ```
+
+Role katalogów root-level są jawne: kod źródłowy trafia do pakietów
+`brain_core/`, `brain_model/`, `brain_viewer/` oraz katalogu fasad `analysis/`;
+konfiguracje eksperymentów do `configs/`; małe dane referencyjne do `data/`;
+dane wejściowe użytkownika powinny pochodzić z jawnie skonfigurowanej ścieżki
+poza repozytorium albo z wersjonowanego podkatalogu `data/`, jeśli są małe,
+anonimowe i opisane; artefakty wynikowe trafiają do ignorowanych katalogów
+`outputs/`, `results/`, `reports/` albo `artifacts/`; dokumentacja statyczna
+i zatwierdzone demonstratory należą do `docs/` oraz `assets/`; skrypty
+pomocnicze należy umieszczać w `scripts/`.
 
 ## 2. Punkty wejścia i uruchamianie
 
@@ -293,6 +303,22 @@ Katalogi wynikowe nie są źródłem prawdy i są ignorowane przez Git:
 - `outputs/` — lokalne wyniki przykładowych uruchomień i eksperymentów;
 - `results/`, `reports/`, `artifacts/` — lokalne katalogi raportów, metryk i artefaktów;
 - `docs/generated/` — tymczasowe lub automatycznie wygenerowane materiały dokumentacyjne przed ręcznym zatwierdzeniem.
+
+Nowe wyniki eksperymentów muszą trafiać do katalogu wynikowego, który jest
+albo ignorowany przez Git, albo jawnie wersjonowany jako mały, opisany i
+reprodukowalny przykład dokumentacyjny. Domyślną lokalizacją dla zwykłych
+uruchomień pozostaje ignorowane `outputs/<run_id>/` lub `results/<run_id>/`;
+wersjonowanie artefaktu wynikowego wymaga uzasadnienia w dokumentacji albo PR.
+
+Przykłady poprawnych ścieżek dla nowych plików:
+
+- nowy raport z lokalnego uruchomienia: `outputs/2026-07-05_roving_oddball/report.html`;
+- nowy scenariusz YAML eksperymentu: `configs/roving_oddball_teacher_demo.yaml`;
+- nowy moduł naukowy: `brain_core/analysis/evoked_responses.py`.
+
+Jeżeli przegląd dokumentacji ujawni potrzebę przeniesienia istniejących plików
+między powyższymi kategoriami, przeniesienie należy wykonać w osobnym PR. Ta
+zasada ogranicza diff i oddziela zmianę dokumentacyjną od zmiany historii plików.
 
 Plik `raport_eksperymentu.pdf` z katalogu głównego został sklasyfikowany jako
 artefakt wynikowy konkretnego eksportu i usunięty z repozytorium. Raporty PDF
