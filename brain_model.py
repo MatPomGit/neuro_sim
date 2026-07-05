@@ -31,8 +31,8 @@ def main() -> None:
         Matplotlib, zgodnie z zachowaniem legacy.
     """
     model = CognitiveBrainModel()
-    time, activity, diagnostics = model.simulate(T=45.0)
-    model.plot(time, activity, diagnostics)
+    time, activity, diagnostics, oscillations, behavior = model.simulate(T=45.0)
+    # TODO: Use the appropriate plotting function from brain_model.plotting
 
 
 if __name__ == "__main__":
