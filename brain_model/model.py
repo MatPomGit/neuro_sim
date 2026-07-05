@@ -483,7 +483,7 @@ class CognitiveBrainModel:
             "decision_event": np.zeros(steps, dtype=bool),
         }
 
-        diagnostics: dict[str, object] = {
+        diagnostics: SimulationDiagnostics = {
             "prediction_error": np.zeros(steps),
             "dopamine_delta": np.zeros(steps),
             "noradrenaline": np.zeros(steps),
