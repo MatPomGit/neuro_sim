@@ -8,7 +8,7 @@ Ten dokument opisuje aktualny układ repozytorium na dzień 2026-06-02. Jest opi
 neuro_sim/
 ├── main.py                         # szybkie uruchomienie symulacji poznawczej
 ├── main_gui.py                     # punkt wejścia GUI desktopowego
-├── brain_model.py                  # starszy moduł kompatybilności modelu
+├── brain_model.py                  # tymczasowy skrypt legacy dla `python brain_model.py`
 ├── brain_viewer.html               # samodzielny widok viewer
 ├── brain_viewer_compact.html       # kompaktowy wariant viewer
 ├── brain_sagittal_inline_regions.html
@@ -48,6 +48,22 @@ modułów.
 | Timeline | `partial` | `brain_core/simulation/events.py`, `brain_core/simulation/engine.py`, `brain_core/analysis/reports.py`. Zdarzenia per trial mają `trial_id` oraz numeryczne `trial_number`, także dla błędów, neuromodulacji i zmian aktywności przypisanych do trialu. | Rozbudować linkowanie z wykresami i objaśnienia per profil kliniczny w istniejących modułach raportowania oraz eksportu. |
 | Benchmark metadata | `partial` | `data/validation/benchmark_metadata.json` i `brain_core/analysis/benchmark_loader.py`. | Uzupełniać kryteria zgodności i źródła w danych walidacyjnych oraz loaderze benchmarków. |
 | SNN demo | `partial` | `configs/snn_hippocampus_demo.yaml`, `docs/snn_cosimulation_demo.md`, `brain_core/simulation/signal_adapter.py`, `brain_core/simulation/multiscale_engine.py`. | Pełniejsze sprzężenie i backendy utrzymywać w warstwie `brain_core/simulation` oraz `brain_core/populations`. |
+
+## 2B. Status pliku `brain_model.py`
+
+`brain_model.py` w katalogu głównym nie jest aktywnym modułem domenowym.
+Weryfikacja referencji z 2026-07-05 nie wykazała importów tego pliku w kodzie,
+testach ani skryptach dystrybucyjnych, a `import brain_model` rozwiązuje się do
+pakietu `brain_model/`. Plik pozostaje wyłącznie tymczasowym skryptem legacy dla
+użytkowników uruchamiających starsze polecenie `python brain_model.py`; całą
+logikę deleguje do pakietu.
+
+Nowy kod powinien importować `CognitiveBrainModel` i `BrainParams` z pakietu
+`brain_model/` albo korzystać z punktów wejścia `main.py`, `neuro-sim` oraz
+`python -m brain_core.simulation.run`. Docelowe usunięcie `brain_model.py` jest
+opisane w ADR-0042 i powinno zostać wykonane w osobnym, małym PR po
+potwierdzeniu braku zewnętrznych zależności od bezpośredniego uruchamiania
+skryptu.
 
 ## 3. `brain_model/` — model poznawczy, GUI i prezentacja wyników
 

@@ -22,6 +22,16 @@ Najbliższe zaplanowane prace obejmują:
 
 Aktualny opis struktury repozytorium znajduje się w `docs/program_structure.md`.
 
+### Status legacy pliku `brain_model.py`
+
+Głównym miejscem rozwoju modelu jest pakiet `brain_model/`. Historyczny plik
+`brain_model.py` w katalogu głównym pozostaje tylko tymczasowym skryptem
+zgodności dla starszego polecenia `python brain_model.py`; import
+`import brain_model` wskazuje na pakiet, nie na ten plik. Nowe przykłady i kod
+powinny używać `main.py`, skryptów `neuro-sim`/`neuro-sim-run` albo modułów z
+pakietu `brain_model/`. Plan usunięcia skryptu legacy w osobnym, małym PR jest
+udokumentowany w `docs/adr/0042-status-modulu-brain-model-py.md`.
+
 ## Moduły poznawcze
 
 - przetwarzanie wzrokowe i słuchowe,

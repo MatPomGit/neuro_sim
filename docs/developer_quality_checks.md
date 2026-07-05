@@ -114,6 +114,12 @@ obowiązku posiadania docstringów zgodnych z konwencją Google.
 - `brain_model.calibration`;
 - `brain_model.validation`.
 
+Konfiguracja `tool.mypy.python_version` jest ustawiona na `3.12`, aby lokalna
+kontrola typów była zgodna z aktualnym środowiskiem narzędziowym i stubami
+NumPy/Matplotlib używanymi przez mypy. Zgodność składniowa kodu z minimalnym
+Pythonem projektu pozostaje pilnowana osobno przez `requires-python` oraz
+`ruff.target-version = "py310"`.
+
 Pełne włączenie dla całego repozytorium pozostaje osobnym etapem, ponieważ kod
 GUI i integracje Matplotlib/Qt nadal używają dynamicznych obiektów bibliotek
 zewnętrznych. Do czasu zakończenia migracji każda nowa funkcja w modułach
