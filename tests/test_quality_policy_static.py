@@ -134,6 +134,12 @@ def test_test_functions_do_not_add_any_return_annotations() -> None:
                 and return_annotation.attr == "Any"
             ):
                 any_return_lines.append(node.lineno)
+            elif (
+                isinstance(return_annotation, ast.Constant)
+                and isinstance(return_annotation.value, str)
+                and return_annotation.value in ("Any", "typing.Any")
+            ):
+                any_return_lines.append(node.lineno)
 
         observed_count = len(any_return_lines)
         if observed_count:
