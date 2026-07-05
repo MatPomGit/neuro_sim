@@ -1,6 +1,4 @@
-"""Mezoskopowy model dynamiki poznawczej i jego krok symulacyjny."""
-
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 import numpy as np
 
@@ -10,16 +8,30 @@ from .activations import sigmoid
 from .behavior import map_behavior_state
 from .connectivity import build_connectivity
 from .modules import MODULES, TAU
-from .oscillators import WilsonCowanOscillatorBank
+from .oscillators import WilsonCowanOscillatorBank, WilsonCowanParams
 from .params import BrainParams
 from .plasticity import (
+    WeightUpdateMap,
     apply_state_learning,
     build_weight_history_series,
     update_connectivity,
 )
 from .scenarios import CHANNELS, get_scenario
-from .stimuli import build_stimulus_fn
+from .scenarios.types import StimulusScenario
+from .stimuli import StimulusFn, build_stimulus_fn
 
+StimulusChannels = dict[str, float]
+StepDiagnostics = dict[str, float | WeightUpdateMap]
+SimulationDiagnostics = dict[str, np.ndarray]
+OscillationOutputs = dict[str, dict[str, np.ndarray]]
+BehaviorOutputs = dict[str, np.ndarray]
+SimulationResult = tuple[
+    np.ndarray,
+    np.ndarray,
+    SimulationDiagnostics,
+    OscillationOutputs,
+    BehaviorOutputs,
+]
 
 class CognitiveBrainModel:
     """
@@ -47,12 +59,36 @@ class CognitiveBrainModel:
     def __init__(
         self,
         params: BrainParams | None = None,
-        stimulus: Any = None,
+        stimulus: str | StimulusFn | None = None,
         seed: int = 7,
-        oscillator_params: Any = None,
+        oscillator_params: WilsonCowanParams | None = None,
         oscillator_band_map: dict[str, str] | None = None,
     ) -> None:
-        """Inicjalizuje mezoskopowy model dynamiki poznawczej z określonymi parametrami."""
+        """Przygotuj stan modelu poznawczego i źródło bodźców.
+
+        Parameters
+        ----------
+        params:
+            Parametry integracji, plastyczności i progów decyzyjnych. Brak
+            wartości tworzy domyślną konfigurację ``BrainParams``.
+        stimulus:
+            ``None`` wybiera scenariusz ``reward-learning``, napis wybiera
+            scenariusz z rejestru, a funkcja zwraca amplitudy kanałów bodźca
+            dla czasu w sekundach.
+        seed:
+            Ziarno generatora NumPy kontrolujące szum stanu i oscylatorów.
+        oscillator_params:
+            Parametry fenomenologicznego banku oscylatorów Wilsona-Cowana.
+        oscillator_band_map:
+            Opcjonalne przypisanie modułów do pasm EEG.
+
+        Raises
+        ------
+        ValueError
+            Gdy funkcja bodźca nie zwraca wszystkich wymaganych kanałów.
+        TypeError
+            Gdy ``stimulus`` nie jest identyfikatorem, funkcją ani ``None``.
+        """
         self.p: BrainParams = params or BrainParams()
         self.rng: np.random.Generator = np.random.default_rng(seed)
 
@@ -64,8 +100,8 @@ class CognitiveBrainModel:
         self.W: np.ndarray = build_connectivity(self.names)
 
         self.scenario_id: str | None = None
-        self.scenario: Any | None = None
-        self.stimulus_fn: Any | None = None
+        self.scenario: StimulusScenario | None = None
+        self.stimulus_fn: StimulusFn
         if stimulus is None:
             self.scenario_id = "reward-learning"
             self.scenario = get_scenario(self.scenario_id)
@@ -104,7 +140,7 @@ class CognitiveBrainModel:
         return x
 
     def compute_prediction_error(
-        self, x: np.ndarray, u: dict[str, float]
+        self, x: np.ndarray, u: StimulusChannels
     ) -> tuple[float, float, float]:
         """
         Uproszczony mechanizm predictive processing.
@@ -125,7 +161,9 @@ class CognitiveBrainModel:
 
         return err_visual, err_auditory, total_error
 
-    def compute_neuromodulation(self, x: Any, u: Any, prediction_error: Any) -> Any:
+    def compute_neuromodulation(
+        self, x: np.ndarray, u: StimulusChannels, prediction_error: float
+    ) -> tuple[float, float, float, float, float, float, float, float]:
         """
         Bardzo uproszczone zmienne neuromodulacyjne.
 
@@ -181,14 +219,14 @@ class CognitiveBrainModel:
         )
 
         return (
-            dopamine_delta,
-            noradrenaline,
-            acetylcholine,
-            serotonin,
-            gaba,
-            glutamate,
-            endorphins,
-            cortisol,
+            float(dopamine_delta),
+            float(noradrenaline),
+            float(acetylcholine),
+            float(serotonin),
+            float(gaba),
+            float(glutamate),
+            float(endorphins),
+            float(cortisol),
         )
 
     def compute_global_workspace(self, x: np.ndarray) -> float:
@@ -204,11 +242,11 @@ class CognitiveBrainModel:
             x[self.idx["EPIS"]],
             x[self.idx["SAL"]],
         )
-        return sigmoid(candidate - self.p.gw_threshold, beta=self.p.gw_gain)
+        return cast(float, sigmoid(candidate - self.p.gw_threshold, beta=self.p.gw_gain))
 
     def _add_drive_to_module_regions(
-        self, external: Any, module_name: Any, value: Any
-    ) -> Any:
+        self, external: np.ndarray, module_name: str, value: float
+    ) -> None:
         """Rozdziel zewnętrzny napęd modułu na odpowiadające mu regiony.
 
         ``external`` jest wektorem napędów o długości liczby modułów/regionów,
@@ -224,13 +262,13 @@ class CognitiveBrainModel:
 
     def build_external_drive(
         self,
-        x: Any,
-        u: Any,
-        err_visual: Any,
-        err_auditory: Any,
-        prediction_error: Any,
-        acetylcholine: Any,
-    ) -> Any:
+        x: np.ndarray,
+        u: StimulusChannels,
+        err_visual: float,
+        err_auditory: float,
+        prediction_error: float,
+        acetylcholine: float,
+    ) -> np.ndarray:
         """Zbuduj wektor zewnętrznego pobudzenia dla bieżącego kroku modelu.
 
         Łączy aktywność stanu ``x``, kanały bodźców ``u``, błędy predykcji i
@@ -263,7 +301,7 @@ class CognitiveBrainModel:
 
         return external
 
-    def build_global_broadcast(self, gw_ignition: Any) -> Any:
+    def build_global_broadcast(self, gw_ignition: float) -> np.ndarray:
         """
         Global workspace wzmacnia aktywność systemów zadaniowych
         i hamuje DMN w warunkach aktywnej kontroli.
@@ -278,7 +316,7 @@ class CognitiveBrainModel:
         x: np.ndarray,
         t: float,
         external_drive: np.ndarray | None = None,
-    ) -> tuple[np.ndarray, dict[str, Any]]:
+    ) -> tuple[np.ndarray, StepDiagnostics]:
         """Wykonuje pojedynczy krok integracji modelu dla czasu t.
 
         Parameters
@@ -293,7 +331,7 @@ class CognitiveBrainModel:
 
         Returns:
         -------
-        tuple[np.ndarray, dict[str, Any]]
+        tuple[np.ndarray, StepDiagnostics]
             Następny stan aktywacji i diagnostyka kroku.
 
         Raises:
@@ -367,7 +405,7 @@ class CognitiveBrainModel:
         x_next = x + p.dt * dx + np.sqrt(p.dt) * noise
         x_next = np.clip(x_next, 0.0, 1.0)
 
-        diagnostics = {
+        diagnostics: StepDiagnostics = {
             "prediction_error": prediction_error,
             "dopamine_delta": dopamine_delta,
             "noradrenaline": noradrenaline,
@@ -394,14 +432,14 @@ class CognitiveBrainModel:
     def simulate(
         self,
         T: float = 45.0,
-        progress_callback: Any = None,
+        progress_callback: Callable[[float], None] | None = None,
         external_drive_callback: (
             Callable[
                 [int, float, np.ndarray, np.ndarray, np.ndarray], np.ndarray | None
             ]
             | None
         ) = None,
-    ) -> tuple[np.ndarray, np.ndarray, dict[str, Any], dict[str, Any], dict[str, Any]]:
+    ) -> SimulationResult:
         """Przeprowadza pełną symulację modelu w przedziale czasowym od 0 do T.
 
         Parameters
@@ -416,8 +454,9 @@ class CognitiveBrainModel:
 
         Returns:
         -------
-        tuple[np.ndarray, np.ndarray, dict[str, Any], dict[str, Any], dict[str, Any]]
-            Czas, aktywność, diagnostyka, oscylacje i zachowanie.
+        SimulationResult
+            Krotka zawierająca wektor czasu, macierz aktywności modułów,
+            szeregi diagnostyczne, sygnały oscylacyjne oraz metryki zachowania.
         """
         steps = int(T / self.p.dt)
         time = np.arange(steps) * self.p.dt
@@ -436,7 +475,7 @@ class CognitiveBrainModel:
             "gamma": np.zeros(steps),
         }
 
-        behavior = {
+        behavior: BehaviorOutputs = {
             "decision": np.empty(steps, dtype=object),
             "latency": np.zeros(steps),
             "confidence": np.zeros(steps),
@@ -444,7 +483,7 @@ class CognitiveBrainModel:
             "decision_event": np.zeros(steps, dtype=bool),
         }
 
-        diagnostics = {
+        diagnostics: SimulationDiagnostics = {
             "prediction_error": np.zeros(steps),
             "dopamine_delta": np.zeros(steps),
             "noradrenaline": np.zeros(steps),
@@ -457,11 +496,24 @@ class CognitiveBrainModel:
             "gw_ignition": np.zeros(steps),
         }
 
-        weight_history = []
+        weight_history: list[WeightUpdateMap] = []
 
         prev_decision = "wait"
 
         progress_stride = max(1, steps // 100)
+
+        diagnostic_keys = (
+            "prediction_error",
+            "dopamine_delta",
+            "noradrenaline",
+            "acetylcholine",
+            "serotonin",
+            "gaba",
+            "glutamate",
+            "endorphins",
+            "cortisol",
+            "gw_ignition",
+        )
 
         for k, t in enumerate(time):
             activity[k] = x
@@ -508,10 +560,12 @@ class CognitiveBrainModel:
 
             x, diag = self.step(x, t, external_drive=external_drive)
 
-            for key in diagnostics:
-                diagnostics[key][k] = diag[key]
+            for key in diagnostic_keys:
+                diagnostic_series = cast(np.ndarray, diagnostics[key])
+                diagnostic_series[k] = cast(float, diag[key])
 
-            weight_history.append(diag.get("weight_updates", {}))
+            weight_updates = cast(WeightUpdateMap, diag.get("weight_updates", {}))
+            weight_history.append(weight_updates)
             if progress_callback and (k % progress_stride == 0 or k == steps - 1):
                 progress_callback((k + 1) / steps)
 
@@ -534,7 +588,7 @@ class CognitiveBrainModel:
             weight_history, steps
         )
 
-        oscillations = {
+        oscillations: OscillationOutputs = {
             "eeg": eeg,
             "excitatory": excitatory,
             "inhibitory": inhibitory,
@@ -544,4 +598,6 @@ class CognitiveBrainModel:
             "metadata": scenario_metadata,
         }
 
-        return time, activity, diagnostics, oscillations, behavior
+        return cast(
+            SimulationResult, (time, activity, diagnostics, oscillations, behavior)
+        )

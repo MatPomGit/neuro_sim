@@ -77,6 +77,8 @@ Kod w tym repozytorium należy traktować jako element metody badawczej. Oznacza
 
 1. **Zakaz over-engineeringu**
    - Nie wprowadzaj wzorców, protokołów ani frameworków „na przyszłość”, jeśli nie są teraz potrzebne.
+   - Nie twórz nowych warstw, aliasów, adapterów ani typów domenowych, gdy lokalna adnotacja lub prosta funkcja rozwiązuje bieżący problem.
+   - Każda abstrakcja musi mieć natychmiastowe, opisane zastosowanie w aktualnym diffie; w przeciwnym razie wybierz rozwiązanie zgodne z KISS.
 
 2. **Zakaz „silent breaking changes”**
    - Nie zmieniaj zachowania API, formatów danych, konfiguracji lub semantyki bez jawnej dokumentacji i migracji.
@@ -923,11 +925,12 @@ Agent AI ma obowiązek sprawdzić:
 ## 24) Preferowany styl pracy agenta
 
 1. Najpierw zrozum wymaganie, potem koduj.
-2. Najpierw lokalna poprawka, potem ewentualna generalizacja.
-3. Jeśli niepewność jest wysoka, zaproponuj 2–3 warianty i wybierz rekomendowany.
-4. Przy zmianach architektury: najpierw ADR (`proposed`), potem implementacja.
-5. Przy zmianach eksperymentalnych: najpierw konfiguracja i kryteria weryfikacji, potem kod.
-6. Po zmianach uruchom testy, linting i formatowanie, jeżeli środowisko na to pozwala.
+2. Stosuj KISS: wybieraj najmniejszą lokalną zmianę, która spełnia wymaganie i przechodzi weryfikację.
+3. Najpierw lokalna poprawka, potem ewentualna generalizacja. Generalizuj tylko wtedy, gdy obecne wymaganie tego potrzebuje.
+4. Jeśli niepewność jest wysoka, zaproponuj 2–3 warianty i wybierz rekomendowany.
+5. Przy zmianach architektury: najpierw ADR (`proposed`), potem implementacja.
+6. Przy zmianach eksperymentalnych: najpierw konfiguracja i kryteria weryfikacji, potem kod.
+7. Po zmianach uruchom testy, linting i formatowanie, jeżeli środowisko na to pozwala.
 
 ---
 
