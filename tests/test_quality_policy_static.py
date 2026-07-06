@@ -99,7 +99,7 @@ def test_production_docstring_ignores_are_precise() -> None:
     for scope in PRODUCTION_DOCSTRING_SCOPES:
         ignored_rules = set(per_file_ignores[scope])
         assert "D" not in ignored_rules
-        assert ignored_rules <= ALLOWED_PRODUCTION_DOCSTRING_IGNORES[scope]
+        assert ignored_rules == ALLOWED_PRODUCTION_DOCSTRING_IGNORES[scope]
 
 
 def test_key_scientific_modules_require_complete_type_annotations() -> None:
