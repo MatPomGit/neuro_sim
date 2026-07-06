@@ -80,16 +80,24 @@ Przegląd 2026-07 potwierdził, że moduły `analysis/**/*.py` przechodzą kontr
 ignorowanych reguł. Przegląd 2026-07 usunął także dług `D100` i `D416` w
 zakresach `brain_core/**/*.py`, `brain_model/**/*.py` oraz `scripts/**/*.py`:
 moduły produkcyjne mają docstring modułu, a nagłówki sekcji docstringów kończą
-się dwukropkiem zgodnie z konwencją Google. Pozostałe jawne wyjątki są nadal
-ograniczone, ponieważ ich pełne usunięcie wymagałoby masowych poprawek
-stylistycznych w kodzie legacy i utrudniłoby ocenę merytorycznego diffu.
+się dwukropkiem zgodnie z konwencją Google. Lokalny przegląd modułu
+`brain_model/oscillators.py`, objętego testami i zaostrzonym typowaniem,
+potwierdził, że zakres `brain_model/**/*.py` nie potrzebuje już wyjątków
+`D107`, `D401`, `D413` ani `D415`; były to wyjątki historyczne po wcześniejszej
+migracji docstringów. Pozostałe jawne wyjątki są nadal ograniczone, ponieważ
+ich pełne usunięcie wymagałoby masowych poprawek stylistycznych w kodzie legacy
+i utrudniłoby ocenę merytorycznego diffu.
 
 Zmiana w tym etapie oznacza, że:
 
 - `analysis/**/*.py` nie ma już wyjątków docstringowych w `pyproject.toml`;
 - `scripts/**/*.py` ma w `pyproject.toml` identyczną listę pozostałych reguł
-  migracyjnych jak `brain_core/**/*.py` oraz `brain_model/**/*.py`;
+  migracyjnych jak `brain_core/**/*.py`, a `brain_model/**/*.py` ma węższą listę
+  po lokalnym usunięciu historycznych wyjątków;
 - `D100` i `D416` nie są już dozwolone jako wyjątki produkcyjne;
+- `brain_model/**/*.py` nie może ponownie ignorować historycznych reguł `D107`,
+  `D401`, `D413` ani `D415` bez nowego, mierzalnego długu potwierdzonego
+  kontrolą `ruff` i opisanej ścieżki usunięcia;
 - nie wolno zastępować żadnej jawnej listy skrótem `D`, ponieważ ukrywałoby to
   nowe klasy naruszeń docstringów;
 - kolejne PR-y dotykające tych katalogów powinny usuwać konkretne wyjątki
@@ -98,18 +106,30 @@ Zmiana w tym etapie oznacza, że:
   kompatybilności, pozostają poza tym etapem do czasu osobnej migracji.
 
 Tymczasowe wyjątki w `pyproject.toml` są ograniczone do jawnie wymienionych
-reguł długu migracyjnego:
+reguł długu migracyjnego. Aktualny podział po przeglądzie 2026-07:
 
-- `D104` — brak docstringa pakietu;
-- `D107` — brak docstringa metody `__init__`, gdy klasa lub metoda publiczna ma
-  osobny opis semantyki;
-- `D200`, `D202`, `D205`, `D212`, `D214`, `D301`, `D401`, `D405`,
-  `D411`, `D413`, `D415`, `D417` — istniejące niespójności
-  stylu docstringów w starszych modułach, usuwane partiami bez masowego
-  formatowania całego repozytorium.
+- nadal konieczne w `brain_core/**/*.py` oraz `scripts/**/*.py`: `D104`, `D107`,
+  `D200`, `D202`, `D205`, `D212`, `D214`, `D301`, `D401`, `D405`, `D411`,
+  `D413`, `D415`, `D417`;
+- nadal konieczne w `brain_model/**/*.py`: `D104`, `D200`, `D202`, `D205`,
+  `D212`, `D214`, `D301`, `D405`, `D411`, `D417`;
+- historyczne i zbędne w `brain_model/**/*.py`: `D107`, `D401`, `D413`, `D415`,
+  ponieważ kontrola bez wyjątków dla reprezentatywnego modułu
+  `brain_model/oscillators.py` nie wykazała tych naruszeń, a pełny przegląd
+  `brain_model` potwierdził brak bieżących błędów tych klas;
+- zbyt szerokie były identyczne listy wyjątków dla `brain_core`, `brain_model`
+  i `scripts`, bo sugerowały ten sam dług w każdym obszarze mimo lokalnie
+  zakończonej migracji części reguł w `brain_model`.
 
-Wyjątki te są migracyjne: nie zwalniają nowych funkcji, klas ani metod z
-obowiązku posiadania docstringów zgodnych z konwencją Google.
+Uzasadnienie pozostawienia wyjątków: są to istniejące naruszenia stylu
+starszych docstringów albo brakujące docstringi pakietów, których usunięcie
+wymagałoby szerokiej edycji wielu plików bez zmiany zachowania naukowego.
+Kryterium usunięcia konkretnej reguły jest proste: uruchom
+`python -m ruff check <zakres> --select D --output-format concise` po lokalnych
+poprawkach docstringów i usuń regułę z `pyproject.toml`, gdy w danym zakresie
+nie występują już naruszenia tej klasy. Wyjątki te są migracyjne: nie zwalniają
+nowych funkcji, klas ani metod z obowiązku posiadania docstringów zgodnych z
+konwencją Google.
 
 ## 6) Zaostrzone typowanie modułów naukowych
 
