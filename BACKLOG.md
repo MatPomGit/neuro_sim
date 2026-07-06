@@ -780,15 +780,23 @@ Zadanie uznaje się za ukończone, gdy:
 ## Zadanie jakościowe (uzupełniające)
 
 ### Q1. Utrzymanie standardu docstringów i type hints w całym repozytorium
-**Status:** `done`
+**Status:** `partial`
 
 **Cel:** utrzymanie standardu dokumentacji i typowania dla wszystkich modułów Python.
 
-**Kontekst (weryfikacja 2026-05-29):**
-- Lokalny skan AST repozytorium zwrócił **0** braków docstringów.
-- Lokalny skan AST repozytorium zwrócił **0** braków pełnych adnotacji typów.
-- Historyczne dokumenty rollout/audit/progress zostały usunięte, ponieważ dublowały
-  zamknięty zakres i nie zawierały już decyzji potrzebnych do dalszego rozwoju.
+**Kontekst (weryfikacja 2026-07-06):**
+- Root-level `brain_model.py` został usunięty; decyzję opisuje ADR-0042, a
+  wspierane punkty wejścia pozostają w `main.py`, `neuro-sim`,
+  `neuro-sim-run`, `main_gui.py` oraz pakiecie `brain_model/`.
+- `analysis/` jest opisany jako cienka fasada kompatybilnościowa, a docelowa
+  logika analityczna należy do `brain_core/analysis/`; decyzję opisuje ADR-0043.
+- `main.py` nie wycisza już błędów zapisu artefaktów szerokim
+  `except Exception`; błędy `OSError` i `ValueError` są logowane jako krytyczne
+  i propagowane, a zachowanie zabezpiecza test regresyjny CLI.
+- `.gitignore` obejmuje lokalne katalogi wyników i artefaktów
+  (`outputs/`, `results/`, `reports/`, `artifacts/`) oraz tymczasowe eksporty.
+- Pozostaje kontrolowany dług migracyjny w wyjątkach docstringowych Ruff dla
+  wybranych zakresów produkcyjnych oraz bazowy licznik `Any` w części testów.
 
 **Zakres utrzymaniowy:**
 - Utrzymać docstringi dla wszystkich funkcji, klas i metod publicznych/prywatnych.
@@ -805,8 +813,57 @@ Zadanie uznaje się za ukończone, gdy:
 - Skan AST repozytorium zwraca brak braków docstringów i type hints.
 
 **Pozostały zakres:**
-- Brak znanych luk docstringów i adnotacji typów na dzień 2026-05-29.
+- Stopniowo zdejmować jawnie opisane wyjątki docstringowe Ruff z
+  `brain_core/**/*.py`, `brain_model/**/*.py` i `scripts/**/*.py`, zaczynając od
+  pojedynczych modułów objętych testami.
+- Zmniejszać bazowy licznik `-> Any` w testach przez lokalne zamiany na
+  `-> None` lub precyzyjne typy fixture, bez zmiany logiki testów.
 - Opcjonalnie dodać kontrolę CI egzekwującą minimalny poziom pokrycia.
+
+### Q2. Porządkowanie techniczne po przeglądzie struktury repozytorium
+**Status:** `partial`
+
+**Cel:** utrzymać wykonane decyzje porządkowe jako aktualny plan dalszych prac,
+bez ponownego otwierania zadań, które repozytorium już domknęło.
+
+**Zadania zamknięte w bieżącym stanie repozytorium:**
+- **Los `brain_model.py`: `done`.** Plik został usunięty zgodnie z ADR-0042;
+  nie planować wariantów B/C, dopóki nie pojawi się nowy wymagany punkt
+  kompatybilności.
+- **Dokumentacja struktury projektu: `done` dla zakresu porządkowego.**
+  `docs/program_structure.md` opisuje wspierane punkty wejścia, katalogi
+  wynikowe, status usuniętego `brain_model.py`, granicę `analysis/` vs
+  `brain_core/analysis/` oraz docelowy stos GUI PySide6/Qt.
+- **Polityka artefaktów i `.gitignore`: `done` dla lokalnych wyników.**
+  Utrzymywać ignorowanie katalogów wynikowych i tymczasowych raportów; nie
+  dodawać globalnego ignorowania wszystkich PDF/HTML bez wyjątków dla
+  dokumentacji referencyjnej.
+- **Obsługa błędów zapisu w CLI: `done`.** Zachować propagowanie błędów zapisu
+  artefaktów, bo brak zapisu wyników oznacza brak pełnej replikowalności.
+- **Granica warstwy analizy: `done` jako decyzja architektoniczna.** Nowa logika
+  analityczna trafia do `brain_core/analysis/`, a `analysis/` pozostaje fasadą
+  kompatybilnościową.
+
+**Zadania nadal otwarte:**
+- **Q2.1 — zawężanie wyjątków Ruff:** zdejmować tylko konkretne reguły `D` po
+  lokalnej naprawie docstringów w małym zakresie; aktualizować
+  `docs/developer_quality_checks.md` i `tests/test_quality_policy_static.py`.
+- **Q2.2 — typowanie testów:** zmniejszać liczniki `-> Any` zapisane w
+  `tests/test_quality_policy_static.py`, zaczynając od jednego pliku testowego
+  na PR.
+- **Q2.3 — utrzymanie polityki artefaktów:** przy nowych generatorach raportów
+  dopisywać precyzyjne wzorce `.gitignore` oraz dokumentować, które artefakty są
+  referencyjne i mogą być wersjonowane.
+- **Q2.4 — dalsze moduły jakościowe:** w pierwszej kolejności czyścić pliki
+  często importowane i objęte testami, np. `main.py`, `brain_core/analysis/reports.py`,
+  wybrane moduły `brain_core/simulation/` oraz publiczne moduły `brain_model/`.
+
+**Akceptacja:**
+- Nowe zadania porządkowe nie przywracają root-level `brain_model.py`.
+- `python -m ruff check .` nie wykazuje nowych naruszeń.
+- `python -m pytest tests/test_quality_policy_static.py tests/test_main_cli.py`
+  przechodzi po zmianach w polityce jakości albo CLI.
+- Dokumentacja jakości i struktury pozostaje zgodna z ADR-0042 oraz ADR-0043.
 
 ---
 
