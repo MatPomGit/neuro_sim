@@ -24,7 +24,7 @@ neuro-sim-run = "brain_core.simulation.run:main"
 
 [tool.setuptools]
 # Moduły root-level pozostają wyłącznie jawnie wspieranymi punktami wejścia.
-py-modules = ["main", "main_gui"]
+py-modules = ["main"]
 
 [tool.setuptools.packages.find]
 include = ["brain_model*", "brain_core*"]
