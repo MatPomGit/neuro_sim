@@ -1,55 +1,66 @@
-# ADR-0042: Status legacy pliku `brain_model.py`
+# ADR-0042: Usunięcie legacy pliku `brain_model.py`
 
-**Status:** proposed  
-**Data:** 2026-07-05
+**Status:** accepted  
+**Data:** 2026-07-06
 
 ## Kontekst
 
-Repozytorium zawiera jednocześnie pakiet `brain_model/` oraz historyczny plik
-`brain_model.py`. Wyszukanie referencji w kodzie, testach, dokumentacji i
-konfiguracji dystrybucyjnej nie wykazało aktywnych importów pliku
-`brain_model.py`. Import `import brain_model` jest rozwiązywany do pakietu
-`brain_model/__init__.py`, a nie do pliku modułu w katalogu głównym.
+Repozytorium zawiera pakiet `brain_model/`, który jest właściwym publicznym API
+modelu poznawczego. Historyczny plik `brain_model.py` w katalogu głównym pełnił
+wcześniej rolę przejściowego skryptu zgodności dla polecenia
+`python brain_model.py`.
 
-Plik może nadal być używany poza repozytorium jako skrypt uruchamiany bezpośrednio
-przez `python brain_model.py`, dlatego natychmiastowe usunięcie mogłoby być
-nieczytelną zmianą dla użytkowników starszych instrukcji.
+Weryfikacja referencji w kodzie, testach, dokumentacji i konfiguracji
+dystrybucyjnej nie wykazała aktywnych importów tego pliku. Import
+`import brain_model` jest rozwiązywany do pakietu `brain_model/__init__.py`, a
+nie do pliku modułu w katalogu głównym. Utrzymywanie dodatkowego skryptu legacy
+zwiększało niejednoznaczność nazw i wymagało osobnej ścieżki demonstracyjnej bez
+wartości dla aktywnej architektury.
 
 ## Decyzja
 
-Traktujemy `brain_model.py` jako tymczasowy skrypt zgodności, a nie jako część
-aktywnej architektury domenowej. Plik deleguje do pakietu `brain_model/`, ma
-jawny nagłówek legacy i nie jest utrwalany w wyjątkach `ruff` ani w wykluczeniu
-`mypy`.
+Usuwamy root-level `brain_model.py` jako skrypt legacy. Polecenie
+`python brain_model.py` nie jest już wspieranym sposobem uruchamiania
+demonstracji.
 
-Docelowym miejscem rozwoju modelu poznawczego pozostaje pakiet `brain_model/`.
-Nowe importy, testy i skrypty dystrybucyjne nie powinny odwoływać się do pliku
-`brain_model.py`. Usunięcie pliku powinno nastąpić w osobnym, małym PR po
-potwierdzeniu, że dokumentacja użytkowa i przykłady wskazują na `main.py`,
-`brain_model/` albo `python -m brain_core.simulation.run`.
+Docelowymi punktami wejścia pozostają:
+
+- `main.py` oraz skrypt `neuro-sim` dla szybkiej symulacji poznawczej;
+- `python -m brain_core.simulation.run` oraz skrypt `neuro-sim-run` dla
+  uruchomień konfigurowanych plikiem;
+- importy z pakietu `brain_model/` dla kodu bibliotecznego;
+- `main_gui.py` oraz `brain_model.gui:run_gui` dla desktopowego GUI.
+
+Nowe importy, testy, przykłady i skrypty dystrybucyjne nie powinny odwoływać się
+do usuniętego pliku `brain_model.py`.
 
 ## Konsekwencje
 
-- Podział między pakietem `brain_model/` i plikiem `brain_model.py` jest jawny.
-- Narzędzia jakości nie utrzymują specjalnej ścieżki dla pliku legacy.
-- Użytkownicy uruchamiający `python brain_model.py` nadal dostają demonstracyjną
-  symulację, ale widzą w kodzie, że jest to ścieżka przejściowa.
-- Następny PR usuwający plik będzie mały i łatwy do zrecenzowania.
+- Znika niejednoznaczność między pakietem `brain_model/` a plikiem
+  `brain_model.py` w katalogu głównym.
+- Nie utrzymujemy dodatkowej warstwy demonstracyjnej wyłącznie dla starszego
+  polecenia `python brain_model.py`.
+- Użytkownicy starszych instrukcji muszą przejść na `main.py`, `neuro-sim`,
+  `neuro-sim-run` albo `python -m brain_core.simulation.run`.
+- Konfiguracja dystrybucyjna pozostaje jawna: root-level modułami są tylko
+  wspierane punkty wejścia `main` i `main_gui`.
 
 ## Alternatywy rozważane
 
-1. **Natychmiastowe usunięcie `brain_model.py`** — odrzucone w tej zmianie, aby
-   nie łączyć dokumentacji statusu, konfiguracji jakości i usunięcia punktu
-   uruchomieniowego w jednym diffie.
-2. **Pozostawienie pełnej historycznej implementacji** — odrzucone, bo utrwala
-   niejasny podział odpowiedzialności i wymaga osobnych wyjątków jakości.
+1. **Pozostawienie cienkiego skryptu legacy** — odrzucone, ponieważ utrwala
+   historyczny punkt wejścia i wymaga dalszego utrzymywania równoległej ścieżki
+   demonstracyjnej.
+2. **Delegacja `brain_model.py` do `main.py`** — odrzucona, ponieważ nadal
+   pozostawiałaby konfliktującą nazwę root-level i wspierała starsze polecenie,
+   które ma zostać wycofane.
 3. **Dodanie `brain_model.py` do dystrybucji jako modułu** — odrzucone, bo
    konfliktowałoby nazwą z pakietem `brain_model/` i zwiększało ryzyko błędów
    importu.
 
 ## Powiązane dokumenty / issue / PR
 
-- `brain_model.py`
 - `brain_model/`
+- `main.py`
+- `main_gui.py`
 - `docs/program_structure.md`
 - `pyproject.toml`
