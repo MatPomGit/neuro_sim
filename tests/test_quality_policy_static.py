@@ -10,6 +10,52 @@ PRODUCTION_DOCSTRING_SCOPES = (
     "brain_model/**/*.py",
     "scripts/**/*.py",
 )
+ALLOWED_PRODUCTION_DOCSTRING_IGNORES = {
+    "brain_core/**/*.py": {
+        "D104",
+        "D107",
+        "D200",
+        "D202",
+        "D205",
+        "D212",
+        "D214",
+        "D301",
+        "D401",
+        "D405",
+        "D411",
+        "D413",
+        "D415",
+        "D417",
+    },
+    "brain_model/**/*.py": {
+        "D104",
+        "D200",
+        "D202",
+        "D205",
+        "D212",
+        "D214",
+        "D301",
+        "D405",
+        "D411",
+        "D417",
+    },
+    "scripts/**/*.py": {
+        "D104",
+        "D107",
+        "D200",
+        "D202",
+        "D205",
+        "D212",
+        "D214",
+        "D301",
+        "D401",
+        "D405",
+        "D411",
+        "D413",
+        "D415",
+        "D417",
+    },
+}
 PRODUCTION_SCOPES_WITHOUT_DOCSTRING_IGNORES = ("analysis/**/*.py",)
 STRICT_MYPY_MODULES = {
     "brain_model.oscillators",
@@ -53,22 +99,7 @@ def test_production_docstring_ignores_are_precise() -> None:
     for scope in PRODUCTION_DOCSTRING_SCOPES:
         ignored_rules = set(per_file_ignores[scope])
         assert "D" not in ignored_rules
-        assert ignored_rules <= {
-            "D104",
-            "D107",
-            "D200",
-            "D202",
-            "D205",
-            "D212",
-            "D214",
-            "D301",
-            "D401",
-            "D405",
-            "D411",
-            "D413",
-            "D415",
-            "D417",
-        }
+        assert ignored_rules == ALLOWED_PRODUCTION_DOCSTRING_IGNORES[scope]
 
 
 def test_key_scientific_modules_require_complete_type_annotations() -> None:
