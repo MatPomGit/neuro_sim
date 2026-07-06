@@ -855,7 +855,7 @@ bez ponownego otwierania zadań, które repozytorium już domknęło.
   dopisywać precyzyjne wzorce `.gitignore` oraz dokumentować, które artefakty są
   referencyjne i mogą być wersjonowane.
 - **Q2.4 — dalsze moduły jakościowe:** w pierwszej kolejności czyścić pliki
-  często importowane i objęte testami, np. `main.py`, `analysis/reports.py`,
+  często importowane i objęte testami, np. `main.py`, `brain_core/analysis/reports.py`,
   wybrane moduły `brain_core/simulation/` oraz publiczne moduły `brain_model/`.
 
 **Akceptacja:**
