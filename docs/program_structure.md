@@ -8,7 +8,6 @@ Ten dokument opisuje aktualny układ repozytorium na dzień 2026-06-02. Jest opi
 neuro_sim/
 ├── main.py                         # szybkie uruchomienie symulacji poznawczej
 ├── main_gui.py                     # punkt wejścia GUI desktopowego
-├── brain_model.py                  # tymczasowy skrypt legacy dla `python brain_model.py`
 ├── brain_model/                    # kod źródłowy: model poznawczy, GUI, raporty, IO
 ├── brain_core/                     # kod źródłowy: symulacja, anatomia, eksperymenty i analizy
 ├── brain_viewer/                   # kod źródłowy: opis i mapowanie viewerów mózgu
@@ -56,21 +55,19 @@ modułów.
 | Benchmark metadata | `partial` | `data/validation/benchmark_metadata.json` i `brain_core/analysis/benchmark_loader.py`. | Uzupełniać kryteria zgodności i źródła w danych walidacyjnych oraz loaderze benchmarków. |
 | SNN demo | `partial` | `configs/snn_hippocampus_demo.yaml`, `docs/snn_cosimulation_demo.md`, `brain_core/simulation/signal_adapter.py`, `brain_core/simulation/multiscale_engine.py`. | Pełniejsze sprzężenie i backendy utrzymywać w warstwie `brain_core/simulation` oraz `brain_core/populations`. |
 
-## 2B. Status pliku `brain_model.py`
+## 2B. Status usuniętego pliku `brain_model.py`
 
-`brain_model.py` w katalogu głównym nie jest aktywnym modułem domenowym.
-Weryfikacja referencji z 2026-07-05 nie wykazała importów tego pliku w kodzie,
-testach ani skryptach dystrybucyjnych, a `import brain_model` rozwiązuje się do
-pakietu `brain_model/`. Plik pozostaje wyłącznie tymczasowym skryptem legacy dla
-użytkowników uruchamiających starsze polecenie `python brain_model.py`; całą
-logikę deleguje do pakietu.
+`brain_model.py` w katalogu głównym nie jest już częścią repozytorium ani
+wspieranym punktem uruchomieniowym. Weryfikacja referencji nie wykazała
+aktywnych importów tego pliku w kodzie, testach ani skryptach dystrybucyjnych,
+a `import brain_model` rozwiązuje się do pakietu `brain_model/`. Starsze
+polecenie `python brain_model.py` zostało wycofane zamiast utrzymywania kolejnej
+warstwy legacy.
 
 Nowy kod powinien importować `CognitiveBrainModel` i `BrainParams` z pakietu
-`brain_model/` albo korzystać z punktów wejścia `main.py`, `neuro-sim` oraz
-`python -m brain_core.simulation.run`. Docelowe usunięcie `brain_model.py` jest
-opisane w ADR-0042 i powinno zostać wykonane w osobnym, małym PR po
-potwierdzeniu braku zewnętrznych zależności od bezpośredniego uruchamiania
-skryptu.
+`brain_model/` albo korzystać ze wspieranych punktów wejścia `main.py`,
+`neuro-sim` oraz `python -m brain_core.simulation.run`. Decyzję o usunięciu
+historycznego skryptu opisuje ADR-0042.
 
 ## 3. `brain_model/` — model poznawczy, GUI i prezentacja wyników
 
