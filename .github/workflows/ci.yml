@@ -35,10 +35,22 @@ jobs:
           python -m pip install pytest ruff mypy black tomli
 
       - name: Ruff changed contract
-        run: python -m ruff check main.py tests/test_public_entrypoints.py
+        run: >-
+          python -m ruff check
+          main.py
+          brain_core/simulation/engine.py
+          brain_core/simulation/behavior_readout.py
+          tests/test_public_entrypoints.py
+          tests/test_behavior_readout.py
 
       - name: Black changed contract
-        run: python -m black --check main.py tests/test_public_entrypoints.py
+        run: >-
+          python -m black --check
+          main.py
+          brain_core/simulation/engine.py
+          brain_core/simulation/behavior_readout.py
+          tests/test_public_entrypoints.py
+          tests/test_behavior_readout.py
 
       - name: Mypy critical modules
         run: >-
