@@ -9,6 +9,7 @@ from typing import Any, Callable, Sequence
 import numpy as np
 
 from brain_core.anatomy.atlases import DATA_ROOT, load_connectome, load_region_atlas
+from brain_core.cognition.mapping import mapping_for_task
 from brain_core.experiments.protocols import TrialStimulus
 from brain_core.networks.delays import DelayBuffer, delayed_coupling
 from brain_core.populations.wilson_cowan import (
@@ -132,13 +133,28 @@ def _active_stimulus(
     return None
 
 
-def _decision_signal(region_names: Sequence[str], excitatory: np.ndarray) -> np.ndarray:
-    """Derive a bounded decision variable from executive/motor regional state."""
+def _decision_signal(
+    task_name: str,
+    region_names: Sequence[str],
+    excitatory: np.ndarray,
+) -> np.ndarray:
+    """Derive a bounded task-specific decision variable from regional state."""
     index = {name: idx for idx, name in enumerate(region_names)}
-    executive = excitatory[:, index.get("EXEC", 0)]
-    motor = excitatory[:, index.get("MOT", index.get("EXEC", 0))]
-    attention = excitatory[:, index.get("ATT", index.get("EXEC", 0))]
-    score = 0.5 * executive + 0.3 * motor + 0.2 * attention
+    mapping = mapping_for_task(task_name)
+    readout_regions: list[str] = []
+    for module_name in mapping.module_names:
+        if module_name in index and module_name not in readout_regions:
+            readout_regions.append(module_name)
+
+    if not readout_regions:
+        readout_regions = [name for name in ("EXEC", "ATT", "SAL", "MOT") if name in index]
+    if not readout_regions:
+        readout_regions = [region_names[0]]
+
+    score = np.mean(
+        np.column_stack([excitatory[:, index[name]] for name in readout_regions]),
+        axis=1,
+    )
     baseline = float(np.median(score[: max(1, min(20, score.size))]))
     return np.clip((score - baseline) * 5.0, 0.0, 1.0)
 
@@ -215,7 +231,8 @@ def run_regional_wilson_cowan(
             progress_callback((step + 1) / n_steps)
 
     activity = excitatory - inhibitory
-    decision_score = _decision_signal(region_names, excitatory)
+    task_name = str(config.task.get("name", "stroop"))
+    decision_score = _decision_signal(task_name, region_names, excitatory)
     decision_threshold = float(config.model.get("decision_threshold", 0.01))
     decision_event = (decision_score >= decision_threshold).astype(float)
 
@@ -241,6 +258,7 @@ def run_regional_wilson_cowan(
                 "coupling_gain": coupling_gain,
                 "intrinsic_noise_std": intrinsic_noise_std,
                 "decision_threshold": decision_threshold,
+                "decision_readout_modules": list(mapping_for_task(task_name).module_names),
             },
         },
         diagnostics={
