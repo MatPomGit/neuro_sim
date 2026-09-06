@@ -60,12 +60,12 @@ def read_trial_behavior(
         Sygnały behawioralne modelu. Wymagane są ``decision_event`` i
         ``decision_score`` o długości zgodnej z ``time``.
 
-    Returns:
+    Returns
     -------
     TrialBehaviorReadout
         Odpowiedź, latencja i maksymalny wynik decyzyjny w oknie trialu.
 
-    Raises:
+    Raises
     ------
     ValueError
         Gdy tablice mają niespójne długości albo wektor czasu nie jest 1D.
@@ -78,7 +78,12 @@ def read_trial_behavior(
 
     if time_values.ndim != 1:
         raise ValueError("Wektor czasu musi być jednowymiarowy.")
-    if len(decision_events) != len(time_values) or len(decision_scores) != len(time_values):
+
+    lengths_match = (
+        len(decision_events) == len(time_values)
+        and len(decision_scores) == len(time_values)
+    )
+    if not lengths_match:
         raise ValueError("Sygnały behavior muszą mieć tę samą długość co time.")
 
     onset = float(stimulus.onset_s)
