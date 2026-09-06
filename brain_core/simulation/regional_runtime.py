@@ -138,7 +138,14 @@ def _decision_signal(
     region_names: Sequence[str],
     excitatory: np.ndarray,
 ) -> np.ndarray:
-    """Derive a bounded task-specific decision variable from regional state."""
+    """Derive task-specific decision-evidence magnitude from regional state.
+
+    The readout intentionally uses the magnitude of the stimulus-evoked change,
+    because a Wilson-Cowan circuit may encode relevant evidence as either an
+    excitatory increase or a suppression relative to baseline. Direction is
+    preserved in the regional E/I traces; ``decision_score`` represents only
+    the amount of evidence available to the behavioral readout.
+    """
     index = {name: idx for idx, name in enumerate(region_names)}
     mapping = mapping_for_task(task_name)
     readout_regions: list[str] = []
@@ -158,7 +165,7 @@ def _decision_signal(
         axis=1,
     )
     baseline = float(np.median(score[: max(1, min(20, score.size))]))
-    return np.clip((score - baseline) * 5.0, 0.0, 1.0)
+    return np.clip(np.abs(score - baseline) * 5.0, 0.0, 1.0)
 
 
 def _decision_events(
@@ -167,12 +174,12 @@ def _decision_events(
     stimuli: Sequence[TrialStimulus],
     threshold: float,
 ) -> np.ndarray:
-    """Detect responses from stimulus-locked score increases.
+    """Detect responses from stimulus-locked changes in decision evidence.
 
-    For each trial the threshold is applied to the increase relative to the
-    local prestimulus decision level. This makes the response criterion robust
-    to slow drift and small numerical differences while keeping reaction time a
-    consequence of the simulated regional state.
+    For each trial the threshold is applied relative to the local prestimulus
+    evidence level. This makes the response criterion robust to slow drift and
+    small numerical differences while keeping reaction time a consequence of
+    the simulated regional state.
     """
     if threshold < 0.0:
         raise ValueError("model.decision_threshold musi być >= 0")
@@ -180,7 +187,11 @@ def _decision_events(
     if decision_score.size == 0:
         return events
 
-    default_pre_window = max(0.05, 10.0 * float(np.median(np.diff(time)))) if time.size > 1 else 0.05
+    if time.size > 1:
+        default_pre_window = max(0.05, 10.0 * float(np.median(np.diff(time))))
+    else:
+        default_pre_window = 0.05
+
     for stimulus in stimuli:
         onset = float(stimulus.onset_s)
         offset = onset + float(stimulus.duration_s)
@@ -194,10 +205,12 @@ def _decision_events(
         if np.any(pre_mask):
             local_baseline = float(np.median(decision_score[pre_mask]))
         else:
-            local_baseline = float(decision_score[max(0, int(trial_indices[0]) - 1)])
+            local_baseline = float(
+                decision_score[max(0, int(trial_indices[0]) - 1)]
+            )
 
-        delta = decision_score[trial_indices] - local_baseline
-        crossings = np.flatnonzero(delta >= threshold)
+        evidence_change = np.abs(decision_score[trial_indices] - local_baseline)
+        crossings = np.flatnonzero(evidence_change >= threshold)
         if crossings.size:
             events[int(trial_indices[int(crossings[0])])] = 1.0
 
