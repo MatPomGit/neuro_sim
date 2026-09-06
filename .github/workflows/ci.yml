@@ -41,34 +41,23 @@ jobs:
           brain_core/simulation/behavior_readout.py
           brain_core/simulation/task_drive.py
           tests/test_public_entrypoints.py
+          tests/test_main_cli.py
           tests/test_behavior_readout.py
           tests/test_task_drive.py
 
-      - name: Black main.py
-        continue-on-error: true
-        run: python -m black --check main.py
-
-      - name: Black behavior_readout.py
-        continue-on-error: true
-        run: python -m black --check brain_core/simulation/behavior_readout.py
-
-      - name: Black task_drive.py
-        continue-on-error: true
-        run: python -m black --check brain_core/simulation/task_drive.py
-
-      - name: Black test_public_entrypoints.py
-        continue-on-error: true
-        run: python -m black --check tests/test_public_entrypoints.py
-
-      - name: Black test_behavior_readout.py
-        continue-on-error: true
-        run: python -m black --check tests/test_behavior_readout.py
-
-      - name: Black test_task_drive.py
-        continue-on-error: true
-        run: python -m black --check tests/test_task_drive.py
+      - name: Black new and changed modules
+        run: >-
+          python -m black --check
+          main.py
+          brain_core/simulation/behavior_readout.py
+          brain_core/simulation/task_drive.py
+          tests/test_public_entrypoints.py
+          tests/test_main_cli.py
+          tests/test_behavior_readout.py
+          tests/test_task_drive.py
 
       - name: Mypy critical modules
+        if: matrix.python-version == '3.12'
         run: >-
           python -m mypy --follow-imports=silent
           brain_model/oscillators.py
