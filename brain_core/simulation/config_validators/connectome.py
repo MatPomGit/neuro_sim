@@ -7,27 +7,28 @@ from typing import Any
 from brain_core.simulation.config_validators.common import (
     ConfigValidationError,
     require_non_empty_string,
+    require_positive_number,
 )
 
 
 def validate_connectome_config(connectome: dict[str, Any]) -> dict[str, Any]:
-    """Waliduje sekcję atlasu i macierzy connectome.
+    """Waliduje sekcję atlasu, konektomu i parametrów propagacji.
 
     Parameters
     ----------
     connectome:
-        Sekcja konfiguracji opisująca atlas oraz opcjonalne ścieżki wag i
-        długości włókien.
+        Sekcja konfiguracji opisująca atlas, ścieżki wag i długości włókien oraz
+        opcjonalną prędkość przewodzenia i wzmocnienie sprzężenia sieciowego.
 
-    Returns:
+    Returns
     -------
     dict[str, Any]
-        Znormalizowana sekcja ``connectome`` z niepustymi wartościami tekstowymi.
+        Znormalizowana sekcja ``connectome``.
 
-    Raises:
+    Raises
     ------
     ConfigValidationError
-        Gdy brakuje nazwy atlasu albo pola tekstowe nie są niepustymi napisami.
+        Gdy pola tekstowe są puste albo parametry propagacji nie są dodatnie.
     """
     if "atlas" not in connectome:
         raise ConfigValidationError("Brak pola connectome.atlas")
@@ -39,4 +40,14 @@ def validate_connectome_config(connectome: dict[str, Any]) -> dict[str, Any]:
             connectome[text_field] = require_non_empty_string(
                 connectome[text_field], f"connectome.{text_field}"
             )
+    if "conduction_speed_m_s" in connectome:
+        connectome["conduction_speed_m_s"] = require_positive_number(
+            connectome["conduction_speed_m_s"],
+            "connectome.conduction_speed_m_s",
+        )
+    if "coupling_gain" in connectome:
+        connectome["coupling_gain"] = require_positive_number(
+            connectome["coupling_gain"],
+            "connectome.coupling_gain",
+        )
     return connectome
