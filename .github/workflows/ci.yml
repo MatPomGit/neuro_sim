@@ -62,6 +62,7 @@ jobs:
           brain_model/plotting.py
 
       - name: Diagnostic typed API tests
+        if: matrix.python-version == '3.12'
         continue-on-error: true
         run: >-
           python -m pytest -q
@@ -69,6 +70,7 @@ jobs:
           tests/test_public_simulation_api.py
 
       - name: Diagnostic static and CLI tests
+        if: matrix.python-version == '3.12'
         continue-on-error: true
         run: >-
           python -m pytest -q
@@ -82,6 +84,7 @@ jobs:
           tests/test_qt_yaml_scenarios_static.py
 
       - name: Diagnostic engine integration tests
+        if: matrix.python-version == '3.12'
         continue-on-error: true
         run: >-
           python -m pytest -q
@@ -89,6 +92,49 @@ jobs:
           tests/test_observation_and_analysis.py
           tests/test_task_protocols_and_engine.py
           tests/test_spiking_population_adapter.py
+
+      - name: Diagnostic model and numerical tests
+        if: matrix.python-version == '3.12'
+        continue-on-error: true
+        run: >-
+          python -m pytest -q
+          tests/test_atlas_connectome.py
+          tests/test_bids_validation.py
+          tests/test_calibration.py
+          tests/test_lesions.py
+          tests/test_multiscale_engine.py
+          tests/test_neuromodulation.py
+          tests/test_oscillator_rng_contract.py
+          tests/test_oscillators.py
+          tests/test_plasticity_protocols.py
+          tests/test_scenarios.py
+          tests/test_signal_metrics_modules.py
+          tests/test_task_stimulus_player.py
+          tests/test_timebase.py
+          tests/test_wilson_cowan_network.py
+
+      - name: Diagnostic GUI and artifact tests
+        if: matrix.python-version == '3.12'
+        continue-on-error: true
+        run: >-
+          python -m pytest -q
+          tests/test_github_windows_exe_workflow.py
+          tests/test_gui_config_legacy.py
+          tests/test_gui_layout_static.py
+          tests/test_gui_state.py
+          tests/test_lesson_configs_static.py
+          tests/test_plotting_activity_xlim.py
+          tests/test_plotting_svg_and_interpretation.py
+          tests/test_qt_config.py
+          tests/test_qt_plot_presets.py
+          tests/test_qt_plotting_static.py
+          tests/test_qt_profile_comparison_static.py
+          tests/test_qt_runner_static.py
+          tests/test_qt_sections.py
+          tests/test_report_export_pdf.py
+          tests/test_reproducibility_artifacts.py
+          tests/test_sync_web_defaults.py
+          tests/test_sync_web_defaults_static.py
 
       - name: Unit and integration tests
         run: python -m pytest
