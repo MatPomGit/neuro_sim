@@ -9,6 +9,7 @@ from brain_core.experiments.protocols import TrialStimulus
 from brain_core.simulation.config_loader import load_config
 from brain_core.simulation.random_sources import RandomSources
 from brain_core.simulation.regional_runtime import (
+    _decision_events,
     _delay_steps,
     run_regional_wilson_cowan,
 )
@@ -73,6 +74,30 @@ def test_stronger_regional_stimulus_changes_neural_trajectory() -> None:
 
     assert np.max(strong.excitatory[:, vis]) > np.max(weak.excitatory[:, vis])
     assert not np.allclose(strong.activity, weak.activity)
+
+
+def test_decision_event_uses_local_prestimulus_change() -> None:
+    time = np.arange(0.0, 0.3, 0.01)
+    score = np.zeros_like(time)
+    score[(time >= 0.10) & (time <= 0.18)] = np.linspace(
+        0.0,
+        0.03,
+        np.count_nonzero((time >= 0.10) & (time <= 0.18)),
+    )
+    stimulus = TrialStimulus(
+        trial_id=1,
+        onset_s=0.10,
+        duration_s=0.08,
+        payload={},
+        condition="target",
+        regional_input={"SAL": 1.0},
+    )
+
+    events = _decision_events(time, score, [stimulus], threshold=0.005)
+    event_indices = np.flatnonzero(events)
+
+    assert event_indices.size == 1
+    assert 0.10 <= time[int(event_indices[0])] <= 0.18
 
 
 def test_fiber_length_controls_delay_steps() -> None:
