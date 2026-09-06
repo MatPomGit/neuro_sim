@@ -21,5 +21,4 @@ def test_root_main_accepts_config_driven_dry_run(monkeypatch: Any) -> None:
         "argv",
         ["main.py", "--config", "configs/default.yaml", "--dry-run"],
     )
-
     main.main()
