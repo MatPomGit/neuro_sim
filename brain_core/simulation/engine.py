@@ -33,6 +33,7 @@ from brain_model.model import CognitiveBrainModel
 from brain_model.oscillators import WilsonCowanParams
 from brain_model.params import BrainParams
 
+from .behavior_readout import read_trial_behavior
 from .config_schema import ExperimentConfig
 from .events import build_event_timeline
 from .profile_comparison import (
@@ -103,37 +104,6 @@ def _build_randomness_section(
     randomness = random_sources.metadata()
     randomness["seed"] = int(config.seed)
     return randomness
-
-
-def _deterministic_observed_response(
-    task_name: str,
-    condition: str,
-    trial_id: int,
-    seed: int,
-    expected: str | None = None,
-) -> str | None:
-    """Generuje deterministyczną odpowiedź obserwowaną do walidacji tasków."""
-    key = (trial_id + seed) % 7
-    if task_name == "stroop":
-        if key == 0:
-            return None
-        if key == 1:
-            colors = [c for c in ("red", "green", "blue", "yellow") if c != expected]
-            return colors[(trial_id + seed) % len(colors)]
-        return expected
-    if task_name == "go_nogo":
-        if condition == "go":
-            return "press" if key != 0 else None
-        return "press" if key == 0 else None
-    if task_name == "n_back":
-        if condition == "target":
-            return "match" if key != 0 else None
-        return "match" if key == 0 else None
-    if task_name == "roving_oddball":
-        if condition == "deviant":
-            return "detect" if key != 0 else None
-        return "detect" if key == 0 else None
-    return None
 
 
 def _align_rows(reference: np.ndarray, target_rows: int) -> np.ndarray:
@@ -296,14 +266,21 @@ def _generate_task_stimuli(config: ExperimentConfig) -> list[TrialStimulus]:
 
 def _simulate_task_trials(
     config: ExperimentConfig,
+    time: np.ndarray,
+    behavior: dict[str, np.ndarray],
     stimulus_sequence: list[TrialStimulus] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Symuluje przebieg triali i zwraca bodźce oraz wyniki punktacji.
+    """Symuluj przebieg triali i odczytaj odpowiedzi ze stanu modelu.
 
     Parameters
     ----------
     config:
         Konfiguracja eksperymentu z taskiem i seedem.
+    time:
+        Wektor czasu zakończonej symulacji modelu.
+    behavior:
+        Sygnały behawioralne modelu zawierające co najmniej ``decision_event``
+        i ``decision_score``.
     stimulus_sequence:
         Opcjonalna, wcześniej wygenerowana sekwencja bodźców. Umożliwia
         uruchomienie wielu profili klinicznych na identycznym bodźcu bez zmian
@@ -312,7 +289,7 @@ def _simulate_task_trials(
     Returns:
     -------
     tuple[list[dict[str, Any]], list[dict[str, Any]]]
-        Zdarzenia triali i wyniki punktacji.
+        Zdarzenia triali i wyniki punktacji zależne od przebiegu modelu.
     """
     task_name = str(config.task.get("name", "stroop"))
     task = get_task(task_name, **config.task)
@@ -330,20 +307,18 @@ def _simulate_task_trials(
 
     trial_results: list[dict[str, Any]] = []
     for stimulus in stimuli:
-        observed = _deterministic_observed_response(
-            task.name,
-            stimulus.condition,
-            stimulus.trial_id,
-            config.seed,
-            expected=task.expected_response(stimulus),
-        )
-        reaction_time = (
-            None
-            if observed is None
-            else round(0.25 + ((stimulus.trial_id + config.seed) % 5) * 0.05, 3)
-        )
         expected_response = task.expected_response(stimulus)
-        result: TrialResult = task.score_trial(stimulus, observed, reaction_time)
+        readout = read_trial_behavior(
+            task.name,
+            stimulus,
+            None if expected_response is None else str(expected_response),
+            time,
+            behavior,
+        )
+        observed = readout.observed_response
+        result: TrialResult = task.score_trial(
+            stimulus, observed, readout.reaction_time_s
+        )
         error_type = (
             result.error_type.value
             if isinstance(result.error_type, ErrorType)
@@ -353,6 +328,7 @@ def _simulate_task_trials(
             "reaction_time_s": result.reaction_time_s,
             "correct": result.correct,
             "error_type": error_type,
+            "peak_decision_score": readout.peak_decision_score,
         }
         try:
             trial_number = int(result.trial_id)
@@ -371,6 +347,7 @@ def _simulate_task_trials(
             "condition": result.condition,
             "scenario": str(config.task.get("scenario", task.name)),
             "profile_id": str((config.clinical_profile or {}).get("id", "healthy_v1")),
+            "peak_decision_score": readout.peak_decision_score,
         }
         trial_result["regional_input"] = dict(stimulus.regional_input)
         for metric_name in (
@@ -460,7 +437,10 @@ def run_experiment(
         else _generate_task_stimuli(config)
     )
     trial_events, trial_results = _simulate_task_trials(
-        config, stimulus_sequence=task_stimulus_sequence
+        config,
+        time,
+        behavior,
+        stimulus_sequence=task_stimulus_sequence,
     )
     stimulus_sequence_signature = _build_stimulus_sequence_signature(
         task_stimulus_sequence
