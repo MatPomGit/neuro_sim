@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import argparse
-from typing import Any
 
+from .api import run_experiment
 from .config_loader import load_config
-from .engine import run_experiment
 from .logging_utils import configure_simulation_logger
+from .results import ExperimentResult
 
 
 def main() -> None:
@@ -45,7 +45,7 @@ def main() -> None:
         )
         return
 
-    result: dict[str, Any] = run_experiment(cfg)
+    result: ExperimentResult = run_experiment(cfg)
     save_info = result.get("save_info")
     if save_info:
         logger = configure_simulation_logger(log_file=save_info["output_dir"])

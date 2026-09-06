@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -9,15 +10,36 @@ from typing import Any
 from brain_core.simulation.config_schema import ExperimentConfig
 
 
+LEGACY_RESULT_KEYS: tuple[str, ...] = (
+    "model",
+    "time",
+    "activity",
+    "diagnostics",
+    "oscillations",
+    "behavior",
+    "trial_events",
+    "trial_results",
+    "trial_report_context",
+    "stimulus_sequence_signature",
+    "event_timeline",
+    "analysis_report",
+    "task_activation",
+    "clinical_profile",
+    "snn_comparison",
+    "save_info",
+    "elapsed",
+    "randomness",
+)
+
+
 @dataclass(frozen=True)
-class ExperimentResult:
+class ExperimentResult(Mapping[str, Any]):
     """Kompletny wynik pojedynczego uruchomienia eksperymentu.
 
-    Klasa porządkuje artefakty powstające podczas symulacji tak, aby wewnętrzna
-    ścieżka wykonania operowała na jawnej strukturze danych zamiast na luźnym
-    słowniku. Metoda ``to_legacy_dict`` zachowuje dotychczasowy kontrakt API dla
-    istniejących odbiorców, którzy oczekują słownika z kluczami używanymi przez
-    wcześniejsze wersje ``run_experiment``.
+    Obiekt jest publicznym, typowanym kontraktem wyniku. Jednocześnie implementuje
+    interfejs ``Mapping`` dla kluczy historycznego API, dzięki czemu istniejący kod
+    korzystający z ``result["time"]`` lub ``result.get("save_info")`` pozostaje
+    zgodny podczas migracji z luźnego słownika do jawnej struktury danych.
 
     Parameters
     ----------
@@ -38,26 +60,6 @@ class ExperimentResult:
         Informacje Git wymagane do odtworzenia uruchomienia.
     environment_info:
         Informacje o środowisku uruchomieniowym i wersjach zależności.
-    trial_results:
-        Wyniki punktacji poszczególnych prób behawioralnych.
-    trial_report_context:
-        Kontekst raportowania prób używany przez warstwę prezentacji.
-    stimulus_sequence_signature:
-        Deterministyczny podpis sekwencji bodźców.
-    event_timeline:
-        Oś czasu zdarzeń modelu i prób.
-    task_activation:
-        Podsumowanie aktywacji regionów i funkcji dla zadania.
-    clinical_profile:
-        Profil kliniczny użyty w eksperymencie.
-    snn_comparison:
-        Opcjonalne porównanie lokalnej symulacji SNN.
-    save_info:
-        Ścieżki artefaktów zwrócone przez zapis wyników.
-    elapsed:
-        Czas wykonania symulacji w sekundach.
-    randomness:
-        Sekcja replikowalności opisująca ziarna i komponenty korzystające z RNG.
     """
 
     config: ExperimentConfig
@@ -80,15 +82,7 @@ class ExperimentResult:
     randomness: dict[str, Any]
 
     def to_legacy_dict(self) -> dict[str, Any]:
-        """Zwróć wynik w dotychczasowym słownikowym formacie API.
-
-        Returns:
-        -------
-        dict[str, Any]
-            Słownik zgodny z wcześniejszym wynikiem ``run_experiment``. Klucze
-            są utrzymywane jawnie, aby testy i odbiorcy API wykrywali każdą
-            niezamierzoną zmianę kontraktu kompatybilności.
-        """
+        """Zwróć wynik w dotychczasowym słownikowym formacie API."""
         return {
             "model": self.signals.get("model"),
             "time": self.signals.get("time"),
@@ -109,3 +103,17 @@ class ExperimentResult:
             "elapsed": self.elapsed,
             "randomness": self.randomness,
         }
+
+    def __getitem__(self, key: str) -> Any:
+        """Udostępnij wartość przez klucz zgodny z historycznym API."""
+        if key not in LEGACY_RESULT_KEYS:
+            raise KeyError(key)
+        return self.to_legacy_dict()[key]
+
+    def __iter__(self) -> Iterator[str]:
+        """Iteruj po stabilnych kluczach warstwy kompatybilności."""
+        return iter(LEGACY_RESULT_KEYS)
+
+    def __len__(self) -> int:
+        """Zwróć liczbę kluczy warstwy kompatybilności."""
+        return len(LEGACY_RESULT_KEYS)

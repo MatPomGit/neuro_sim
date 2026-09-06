@@ -38,6 +38,9 @@ jobs:
         run: >-
           python -m ruff check --select F
           main.py
+          brain_core/simulation/api.py
+          brain_core/simulation/results.py
+          brain_core/simulation/run.py
           brain_core/simulation/behavior_readout.py
           brain_core/simulation/task_drive.py
           brain_core/simulation/regional_runtime.py
@@ -46,6 +49,8 @@ jobs:
           tests/test_behavior_readout.py
           tests/test_task_drive.py
           tests/test_regional_runtime.py
+          tests/test_experiment_result.py
+          tests/test_public_simulation_api.py
 
       - name: Mypy critical modules
         if: matrix.python-version == '3.12'
@@ -56,71 +61,46 @@ jobs:
           brain_model/validation.py
           brain_model/plotting.py
 
-      - name: Diagnostic regional runtime tests
-        if: matrix.python-version == '3.12'
-        continue-on-error: true
-        run: python -m pytest tests/test_regional_runtime.py
-
-      - name: Diagnostic regional baseline metrics
-        if: matrix.python-version == '3.12'
-        continue-on-error: true
-        run: |
-          python - <<'PY'
-          import json
-          from brain_core.simulation.config_loader import load_config
-          from brain_core.simulation.engine import run_experiment
-
-          cfg = load_config("configs/roving_oddball_healthy.yaml")
-          result = run_experiment(cfg)
-          print("REGIONAL_BASELINE_METRICS=" + json.dumps(result["analysis_report"]["metrics"], sort_keys=True))
-          PY
-
-      - name: Diagnostic entry-point and adapter tests
+      - name: Diagnostic typed API tests
         if: matrix.python-version == '3.12'
         continue-on-error: true
         run: >-
-          python -m pytest
-          tests/test_main_cli.py
-          tests/test_public_entrypoints.py
-          tests/test_behavior_readout.py
-          tests/test_task_drive.py
+          python -m pytest -q
+          tests/test_experiment_result.py
+          tests/test_public_simulation_api.py
 
-      - name: Diagnostic task engine tests
-        if: matrix.python-version == '3.12'
-        continue-on-error: true
-        run: python -m pytest tests/test_task_protocols_and_engine.py
-
-      - name: Diagnostic config tests
-        if: matrix.python-version == '3.12'
-        continue-on-error: true
-        run: python -m pytest tests/test_config_schema.py
-
-      - name: Diagnostic analysis tests
-        if: matrix.python-version == '3.12'
-        continue-on-error: true
-        run: python -m pytest tests/test_observation_and_analysis.py
-
-      - name: Diagnostic static-policy tests
+      - name: Diagnostic static and CLI tests
         if: matrix.python-version == '3.12'
         continue-on-error: true
         run: >-
-          python -m pytest
+          python -m pytest -q
           tests/test_adr_registry_static.py
           tests/test_cli_no_print_static.py
           tests/test_docstring_quality.py
           tests/test_gui_dependencies_static.py
+          tests/test_main_cli.py
+          tests/test_public_entrypoints.py
           tests/test_quality_policy_static.py
-          tests/test_validation_metric_registry_static.py
+          tests/test_qt_yaml_scenarios_static.py
+
+      - name: Diagnostic engine integration tests
+        if: matrix.python-version == '3.12'
+        continue-on-error: true
+        run: >-
+          python -m pytest -q
+          tests/test_config_schema.py
+          tests/test_observation_and_analysis.py
+          tests/test_task_protocols_and_engine.py
+          tests/test_spiking_population_adapter.py
 
       - name: Diagnostic model and numerical tests
         if: matrix.python-version == '3.12'
         continue-on-error: true
         run: >-
-          python -m pytest
+          python -m pytest -q
           tests/test_atlas_connectome.py
           tests/test_bids_validation.py
           tests/test_calibration.py
-          tests/test_experiment_result.py
           tests/test_lesions.py
           tests/test_multiscale_engine.py
           tests/test_neuromodulation.py
@@ -129,7 +109,6 @@ jobs:
           tests/test_plasticity_protocols.py
           tests/test_scenarios.py
           tests/test_signal_metrics_modules.py
-          tests/test_spiking_population_adapter.py
           tests/test_task_stimulus_player.py
           tests/test_timebase.py
           tests/test_wilson_cowan_network.py
@@ -138,7 +117,7 @@ jobs:
         if: matrix.python-version == '3.12'
         continue-on-error: true
         run: >-
-          python -m pytest
+          python -m pytest -q
           tests/test_github_windows_exe_workflow.py
           tests/test_gui_config_legacy.py
           tests/test_gui_layout_static.py
@@ -152,7 +131,6 @@ jobs:
           tests/test_qt_profile_comparison_static.py
           tests/test_qt_runner_static.py
           tests/test_qt_sections.py
-          tests/test_qt_yaml_scenarios_static.py
           tests/test_report_export_pdf.py
           tests/test_reproducibility_artifacts.py
           tests/test_sync_web_defaults.py
@@ -164,18 +142,19 @@ jobs:
       - name: Validate default configuration
         run: python -m brain_core.simulation.run --config configs/default.yaml --dry-run
 
-      - name: Headless engine smoke test
+      - name: Headless public API smoke test
         env:
           MPLBACKEND: Agg
         run: |
           python - <<'PY'
+          from brain_core.simulation import ExperimentResult, run_experiment
           from brain_core.simulation.config_loader import load_config
-          from brain_core.simulation.engine import run_experiment
 
           cfg = load_config("configs/default.yaml")
           cfg.task["duration"] = 0.1
           cfg.output["save_results"] = False
           result = run_experiment(cfg)
+          assert isinstance(result, ExperimentResult)
           assert len(result["time"]) > 0
           assert "analysis_report" in result
           PY
