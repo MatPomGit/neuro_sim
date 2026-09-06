@@ -53,7 +53,7 @@ def build_task_stimulus_fn(
     stimuli:
         Uporządkowana sekwencja bodźców z czasem początku i trwania.
 
-    Returns:
+    Returns
     -------
     StimulusFn
         Funkcja ``f(t)`` zwracająca komplet kanałów wejściowych modelu.
@@ -62,6 +62,7 @@ def build_task_stimulus_fn(
     auditory_task = task_name in {"roving_oddball", "roving-oddball"}
 
     def stimulus_at_time(time_s: float) -> StimulusChannels:
+        """Zwróć kanały wejściowe aktywnego trialu dla chwili ``time_s``."""
         drive = _empty_drive()
         for stimulus in frozen_stimuli:
             onset = float(stimulus.onset_s)
