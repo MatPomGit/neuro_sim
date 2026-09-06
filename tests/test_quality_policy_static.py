@@ -3,7 +3,10 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility
+    import tomli as tomllib
 
 PRODUCTION_DOCSTRING_SCOPES = (
     "brain_core/**/*.py",
