@@ -4,20 +4,28 @@ Status: Accepted
 
 ## Kontekst
 
-Silnik eksperymentu od dłuższego czasu buduje `ExperimentResult`, ale na granicy `run_experiment()` natychmiast konwertuje go do luźnego słownika. Utrudnia to typowanie, odkrywanie pól API i kontrolę zmian kontraktu, a jednocześnie GUI, CLI i testy nadal korzystają z historycznego indeksowania słownikowego.
+Silnik eksperymentu buduje kompletny `ExperimentResult`, a publiczne API ma udostępniać ten typ bez utraty zgodności z historycznym indeksowaniem słownikowym używanym przez GUI, CLI i starsze integracje.
 
 ## Decyzja
 
-Publiczny punkt wejścia zostaje przeniesiony do `brain_core.simulation.api`:
+Publiczny punkt wejścia znajduje się w `brain_core.simulation.api`:
 
 - `run_experiment(...) -> ExperimentResult` jest docelowym API;
+- `brain_core.simulation.engine.run_experiment(...) -> ExperimentResult` zwraca ten sam typ bez pośredniej konwersji do słownika;
 - `ExperimentResult` implementuje `Mapping[str, Any]` dla stabilnych kluczy legacy;
-- `run_experiment_legacy(...) -> dict[str, Any]` jest jawną granicą kompatybilności dla integracji wymagających literalnego `dict`;
+- `run_experiment_legacy(...) -> dict[str, Any]` jest jedyną jawną granicą kompatybilności dla integracji wymagających literalnego `dict`;
 - CLI korzysta z publicznego typed API;
-- wewnętrzny `brain_core.simulation.engine.run_experiment` pozostaje tymczasowo backendem legacy, aby nie mieszać zmiany publicznego kontraktu z refaktorem dużego modułu silnika.
+- nowe integracje nie powinny importować silnika bezpośrednio, mimo że jego kontrakt jest już typowany.
 
 ## Konsekwencje
 
-Kod może korzystać z jawnych pól, np. `result.analysis_report`, `result.config` i `result.metrics`, bez utraty zgodności z istniejącym `result["time"]` oraz `result.get("save_info")`. Nowe integracje powinny importować API z `brain_core.simulation` albo `brain_core.simulation.api`, a nie bezpośrednio z `engine`.
+Kod może korzystać z jawnych pól, np. `result.analysis_report`, `result.config` i `result.metrics`, bez utraty zgodności z istniejącym `result["time"]` oraz `result.get("save_info")`.
 
-Kolejny etap może bezpiecznie zmienić wewnętrzny engine tak, aby zwracał `ExperimentResult` bez pośredniej konwersji do słownika; wtedy façade przestanie rekonstruować wynik z payloadu legacy.
+Przepływ wyniku jest jednokierunkowy:
+
+```text
+engine -> ExperimentResult -> public API
+                         \-> run_experiment_legacy() -> dict
+```
+
+Publiczna fasada nie rekonstruuje już `ExperimentResult` z payloadu legacy. Dzięki temu metadane reprodukowalności, sygnały, wyniki triali i raport analityczny mają jedno źródło prawdy tworzone w silniku.

@@ -323,7 +323,7 @@ def run_experiment(
     config: ExperimentConfig,
     progress_callback: Callable[[float], None] | None = None,
     stimulus_sequence: list[TrialStimulus] | None = None,
-) -> dict[str, Any]:
+) -> ExperimentResult:
     """Uruchom pełny eksperyment na regionalnym modelu Wilsona-Cowana."""
     rng_seed = _effective_rng_seed(config)
     random_sources = RandomSources(seed=rng_seed)
@@ -515,7 +515,7 @@ def run_experiment(
         elapsed=elapsed,
         randomness=randomness,
     )
-    return experiment_result.to_legacy_dict()
+    return experiment_result
 
 
 _classify_roving_profile_group = classify_roving_profile_group
