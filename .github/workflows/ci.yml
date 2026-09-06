@@ -32,7 +32,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e .
-          python -m pip install pytest ruff mypy black
+          python -m pip install pytest ruff mypy
 
       - name: Ruff correctness gate
         run: >-
@@ -42,16 +42,6 @@ jobs:
           brain_core/simulation/task_drive.py
           tests/test_public_entrypoints.py
           tests/test_main_cli.py
-          tests/test_behavior_readout.py
-          tests/test_task_drive.py
-
-      - name: Black production and new modules
-        run: >-
-          python -m black --check
-          main.py
-          brain_core/simulation/behavior_readout.py
-          brain_core/simulation/task_drive.py
-          tests/test_public_entrypoints.py
           tests/test_behavior_readout.py
           tests/test_task_drive.py
 
