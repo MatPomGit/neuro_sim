@@ -111,13 +111,35 @@ def _regional_params(
 
 
 def _stimulus_vector(
-    region_names: Sequence[str], stimulus: TrialStimulus | None
+    task_name: str,
+    region_names: Sequence[str],
+    stimulus: TrialStimulus | None,
 ) -> np.ndarray:
-    """Map an active trial's regional input onto atlas ordering."""
+    """Map active trial input onto atlas ordering.
+
+    Trial metadata historically stores descriptive anatomical labels such as
+    ``ACC`` or ``DLPFC``. The simulation atlas uses technical module names such
+    as ``ATT``, ``EXEC`` and ``SAL``. Direct atlas keys are preserved; when no
+    direct key is present, the mean semantic task drive is projected onto the
+    task's configured simulation modules. This keeps reports descriptive while
+    ensuring the stimulus actually enters the regional equations.
+    """
     if stimulus is None:
         return np.zeros(len(region_names), dtype=float)
+
+    direct = {
+        name: float(stimulus.regional_input.get(name, 0.0)) for name in region_names
+    }
+    if any(value != 0.0 for value in direct.values()):
+        return np.asarray([direct[name] for name in region_names], dtype=float)
+
+    semantic_values = [float(value) for value in stimulus.regional_input.values()]
+    if not semantic_values:
+        return np.zeros(len(region_names), dtype=float)
+    semantic_drive = float(np.mean(semantic_values))
+    module_names = set(mapping_for_task(task_name).module_names)
     return np.asarray(
-        [float(stimulus.regional_input.get(name, 0.0)) for name in region_names],
+        [semantic_drive if name in module_names else 0.0 for name in region_names],
         dtype=float,
     )
 
@@ -246,6 +268,7 @@ def run_regional_wilson_cowan(
     atlas = load_region_atlas(_atlas_path(atlas_name))
     connectome = load_connectome(atlas, _connectome_dir(config))
     region_names = list(atlas.names)
+    task_name = str(config.task.get("name", "stroop"))
 
     conduction_speed = float(config.connectome.get("conduction_speed_m_s", 5.0))
     coupling_gain = float(config.connectome.get("coupling_gain", 0.35))
@@ -273,6 +296,7 @@ def run_regional_wilson_cowan(
         delayed_matrix = delay_buffer.delayed_activity_matrix()
         network_drive = delayed_coupling(connectome.weights, delayed_matrix)
         task_drive = _stimulus_vector(
+            task_name,
             region_names,
             _active_stimulus(stimuli, float(time_s)),
         )
@@ -298,7 +322,6 @@ def run_regional_wilson_cowan(
             progress_callback((step + 1) / n_steps)
 
     activity = excitatory - inhibitory
-    task_name = str(config.task.get("name", "stroop"))
     decision_score = _decision_signal(task_name, region_names, excitatory)
     decision_threshold = float(config.model.get("decision_threshold", 1e-4))
     decision_event = _decision_events(
