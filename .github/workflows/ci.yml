@@ -61,6 +61,14 @@ jobs:
           brain_model/validation.py
           brain_model/plotting.py
 
+      - name: Diagnostic ExperimentResult contract
+        continue-on-error: true
+        run: python -m pytest tests/test_experiment_result.py -q
+
+      - name: Diagnostic public simulation API
+        continue-on-error: true
+        run: python -m pytest tests/test_public_simulation_api.py -q
+
       - name: Unit and integration tests
         run: python -m pytest
 
