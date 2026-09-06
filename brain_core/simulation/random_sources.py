@@ -78,6 +78,20 @@ class RandomSources:
         """
         return sorted(self._streams)
 
+    def _metadata_component_names(self) -> list[str]:
+        """Zwróć stabilne publiczne identyfikatory komponentów RNG.
+
+        Regionalny backbone zastępuje historyczne wykonanie modelu poznawczego
+        i banku oscylatorów, ale format artefaktów ``randomness`` pozostaje
+        wstecznie zgodny. Mapowanie dotyczy wyłącznie etykiet metadanych; stan
+        generatora jest nadal przechowywany pod nazwą ``regional_wilson_cowan``.
+        """
+        names = set(self.component_names())
+        if "regional_wilson_cowan" in names:
+            names.remove("regional_wilson_cowan")
+            names.update({"cognitive_brain_model", "wilson_cowan_oscillator_bank"})
+        return sorted(names)
+
     def metadata(self) -> dict[str, object]:
         """Zbuduj metadane losowości zapisywane w artefaktach wyniku.
 
@@ -86,7 +100,7 @@ class RandomSources:
         """
         return {
             "rng_seed": self.seed,
-            "rng_components": self.component_names(),
+            "rng_components": self._metadata_component_names(),
             "deterministic_generator": True,
             "generator": "numpy.random.Generator",
             "bit_generator": "PCG64",

@@ -29,7 +29,6 @@ from brain_model.io import (
     collect_git_info,
     save_run,
 )
-from brain_model.model import CognitiveBrainModel
 from brain_model.oscillators import WilsonCowanParams
 from brain_model.params import BrainParams
 
@@ -53,6 +52,7 @@ from .profile_comparison import (
     run_task_across_clinical_profiles as _run_task_across_clinical_profiles,
 )
 from .random_sources import RandomSources
+from .regional_runtime import run_regional_wilson_cowan
 from .results import ExperimentResult
 from .scheduler import SimulationScheduler, TaskStimulusPlayer
 from .snn_runtime import (
@@ -63,7 +63,6 @@ from .snn_runtime import (
     summarize_trace_metrics,
 )
 from .state import SimulationState
-from .task_drive import build_task_stimulus_fn
 from .timebase import compute_step_count
 
 
@@ -175,20 +174,7 @@ def _build_task_activation_summary(
     task_name: str,
     trial_events: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Zbuduj podsumowanie regionów i funkcji pobudzonych przez task.
-
-    Parameters
-    ----------
-    task_name:
-        Techniczna nazwa zadania poznawczego.
-    trial_events:
-        Lista zdarzeń bodźcowych z wejściami regionalnymi.
-
-    Returns
-    -------
-    dict[str, Any]
-        Sekcja raportu opisująca funkcje, regiony i średnie pobudzenie.
-    """
+    """Zbuduj podsumowanie regionów i funkcji pobudzonych przez task."""
     mapping = mapping_for_task(task_name)
     totals = {region: 0.0 for region in mapping.regions}
     for event in trial_events:
@@ -213,26 +199,12 @@ def _attach_task_activation_section(
     report: AnalysisReport,
     task_activation: dict[str, Any],
 ) -> AnalysisReport:
-    """Dodaj sekcję task→regiony/funkcje do raportu analizy.
-
-    Parameters
-    ----------
-    report:
-        Raport analizy sygnałów do rozszerzenia.
-    task_activation:
-        Podsumowanie pobudzenia regionów i funkcji przez zadanie.
-
-    Returns
-    -------
-    AnalysisReport
-        Nowy raport z dodatkową sekcją opisową.
-    """
+    """Dodaj sekcję task→regiony/funkcje do raportu analizy."""
     payload = dict(report.payload)
     payload["task_activation"] = task_activation
     return AnalysisReport(payload=payload)
 
 
-# Zachowujemy aliasy prywatne dla kompatybilności testów i starszych importów.
 _build_snn_runtime = build_snn_runtime
 _summarize_trace_metrics = summarize_trace_metrics
 _classify_snn_feedback_amplitude = classify_snn_feedback_amplitude
@@ -241,19 +213,7 @@ _run_local_snn_comparison = run_local_snn_comparison
 
 
 def _generate_task_stimuli(config: ExperimentConfig) -> list[TrialStimulus]:
-    """Wygeneruj deterministyczną sekwencję bodźców dla konfiguracji zadania.
-
-    Parameters
-    ----------
-    config:
-        Konfiguracja eksperymentu zawierająca nazwę zadania, czas trwania i seed.
-
-    Returns
-    -------
-    list[TrialStimulus]
-        Bodźce z przypisanym wejściem regionalnym, gotowe do ponownego użycia w
-        porównaniach profili klinicznych.
-    """
+    """Wygeneruj deterministyczną sekwencję bodźców dla konfiguracji zadania."""
     task_name = str(config.task.get("name", "stroop"))
     task = get_task(task_name, **config.task)
     duration = float(config.task.get("duration", 45.0))
@@ -271,27 +231,7 @@ def _simulate_task_trials(
     behavior: dict[str, np.ndarray],
     stimulus_sequence: list[TrialStimulus] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Symuluj przebieg triali i odczytaj odpowiedzi ze stanu modelu.
-
-    Parameters
-    ----------
-    config:
-        Konfiguracja eksperymentu z taskiem i seedem.
-    time:
-        Wektor czasu zakończonej symulacji modelu.
-    behavior:
-        Sygnały behawioralne modelu zawierające co najmniej ``decision_event``
-        i ``decision_score``.
-    stimulus_sequence:
-        Opcjonalna, wcześniej wygenerowana sekwencja bodźców. Umożliwia
-        uruchomienie wielu profili klinicznych na identycznym bodźcu bez zmian
-        w logice punktacji silnika.
-
-    Returns
-    -------
-    tuple[list[dict[str, Any]], list[dict[str, Any]]]
-        Zdarzenia triali i wyniki punktacji zależne od przebiegu modelu.
-    """
+    """Symuluj przebieg triali i odczytaj odpowiedzi ze stanu modelu."""
     task_name = str(config.task.get("name", "stroop"))
     task = get_task(task_name, **config.task)
     duration = float(config.task.get("duration", 45.0))
@@ -376,7 +316,6 @@ def _simulate_task_trials(
     return state.metrics.get("trial_events", []), trial_results
 
 
-# Zachowujemy alias prywatny dla stabilności wewnętrznych testów.
 _build_stimulus_sequence_signature = build_stimulus_sequence_signature
 
 
@@ -385,29 +324,11 @@ def run_experiment(
     progress_callback: Callable[[float], None] | None = None,
     stimulus_sequence: list[TrialStimulus] | None = None,
 ) -> dict[str, Any]:
-    """Uruchom pełny eksperyment, analizę oraz opcjonalny zapis wyników.
-
-    Parameters
-    ----------
-    config:
-        Konfiguracja eksperymentu.
-    progress_callback:
-        Opcjonalna funkcja raportowania postępu symulacji modelu.
-    stimulus_sequence:
-        Opcjonalna wspólna sekwencja bodźców używana w porównaniach profili
-        klinicznych przy tym samym seedzie.
-
-    Returns
-    -------
-    dict[str, Any]
-        Wyniki symulacji, triali, raportów i opcjonalnego zapisu artefaktów.
-    """
+    """Uruchom pełny eksperyment na regionalnym modelu Wilsona-Cowana."""
     rng_seed = _effective_rng_seed(config)
     random_sources = RandomSources(seed=rng_seed)
-    random_sources.get("cognitive_brain_model")
     random_sources.get("task_stimulus_generator")
     random_sources.get("task_response_model")
-    random_sources.get("wilson_cowan_oscillator_bank")
 
     task_stimulus_sequence = (
         list(stimulus_sequence)
@@ -415,23 +336,23 @@ def run_experiment(
         else _generate_task_stimuli(config)
     )
     task_name = str(config.task.get("name", "stroop"))
-    stimulus_fn = build_task_stimulus_fn(task_name, task_stimulus_sequence)
 
     model_params = BrainParams(dt=config.timestep, **config.model)
     osc_params = WilsonCowanParams(**config.integrator.get("oscillator", {}))
-    model = CognitiveBrainModel(
-        params=model_params,
-        oscillator_params=osc_params,
-        seed=rng_seed,
-        stimulus=stimulus_fn,
-    )
 
     start = pytime.perf_counter()
-    time, activity, diagnostics, oscillations, behavior = model.simulate(
-        T=float(config.task.get("duration", 45.0)),
+    model = run_regional_wilson_cowan(
+        config,
+        task_stimulus_sequence,
+        random_sources,
         progress_callback=progress_callback,
     )
     elapsed = pytime.perf_counter() - start
+    time = model.time
+    activity = model.activity
+    diagnostics = model.diagnostics
+    oscillations = model.oscillations
+    behavior = model.behavior
 
     trial_events, trial_results = _simulate_task_trials(
         config,
@@ -447,11 +368,7 @@ def run_experiment(
     eeg_raw = oscillations.get("eeg", activity[:, :2])
     eeg = eeg_raw[:, None] if getattr(eeg_raw, "ndim", 1) == 1 else eeg_raw
     fmri = activity[:, :2]
-    behavior_series = (
-        behavior.get("decision_score", activity[:, 0])
-        if isinstance(behavior, dict)
-        else activity[:, 0]
-    )
+    behavior_series = behavior.get("decision_score", activity[:, 0])
     behavior_matrix = (
         behavior_series[:, None]
         if getattr(behavior_series, "ndim", 1) == 1
@@ -483,9 +400,16 @@ def run_experiment(
         task_name=str(config.task.get("name") or "n/a"),
     )
     analysis_report = _attach_task_activation_section(analysis_report, task_activation)
+    analysis_report.payload["neural_backbone"] = {
+        "type": "regional_wilson_cowan",
+        "regions": list(model.region_names),
+        "connectome": dict(config.connectome),
+        "delay_steps_max": int(np.max(model.delay_steps)),
+    }
+
     snn_comparison = _run_local_snn_comparison(
         config=config,
-        region_names=list(model.names),
+        region_names=list(model.region_names),
         activity=activity,
         oscillations=oscillations,
     )
@@ -499,7 +423,7 @@ def run_experiment(
         trial_results=trial_results,
         pathology=config.pathology,
         clinical_profile=config.clinical_profile,
-        region_names=list(model.names),
+        region_names=list(model.region_names),
     )
     analysis_report.payload["event_timeline"] = event_timeline
     if str(config.task.get("name") or "") in {"roving_oddball", "roving-oddball"}:
@@ -533,13 +457,16 @@ def run_experiment(
             activity,
             diagnostics,
             oscillations,
-            model_params=model.p,
-            oscillator_params=model.oscillator_bank.params,
+            model_params=model_params,
+            oscillator_params=osc_params,
             scenario=oscillations.get("metadata"),
             seed=rng_seed,
             duration_s=elapsed,
             config=config,
-            extra_metadata={"randomness": randomness},
+            extra_metadata={
+                "randomness": randomness,
+                "neural_backbone": analysis_report.payload["neural_backbone"],
+            },
             metrics={
                 "metrics": analysis_report.payload.get("metrics", {}),
                 "comparison": analysis_report.payload.get("comparison", {}),
@@ -613,23 +540,7 @@ def run_task_across_clinical_profiles(
     clinical_profiles: list[dict[str, Any]],
     progress_callback: Callable[[float], None] | None = None,
 ) -> dict[str, Any]:
-    """Uruchom ten sam task z tym samym seedem dla wielu profili klinicznych.
-
-    Parameters
-    ----------
-    base_config:
-        Konfiguracja bazowa. Jej `task` oraz `seed` są zachowywane dla każdego
-        profilu, aby różnice wynikały z profilu klinicznego, a nie z losowości.
-    clinical_profiles:
-        Lista fragmentów konfiguracji wczytanych z `configs/clinical_profiles/`.
-    progress_callback:
-        Opcjonalna funkcja raportująca postęp pojedynczego uruchomienia.
-
-    Returns
-    -------
-    dict[str, Any]
-        Wyniki per profil oraz raport różnic względem profilu referencyjnego.
-    """
+    """Uruchom ten sam task z tym samym seedem dla wielu profili klinicznych."""
     return _run_task_across_clinical_profiles(
         base_config,
         clinical_profiles,

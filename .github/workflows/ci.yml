@@ -40,10 +40,12 @@ jobs:
           main.py
           brain_core/simulation/behavior_readout.py
           brain_core/simulation/task_drive.py
+          brain_core/simulation/regional_runtime.py
           tests/test_public_entrypoints.py
           tests/test_main_cli.py
           tests/test_behavior_readout.py
           tests/test_task_drive.py
+          tests/test_regional_runtime.py
 
       - name: Mypy critical modules
         if: matrix.python-version == '3.12'
@@ -53,6 +55,25 @@ jobs:
           brain_model/calibration.py
           brain_model/validation.py
           brain_model/plotting.py
+
+      - name: Diagnostic regional runtime tests
+        if: matrix.python-version == '3.12'
+        continue-on-error: true
+        run: python -m pytest tests/test_regional_runtime.py
+
+      - name: Diagnostic regional baseline metrics
+        if: matrix.python-version == '3.12'
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import json
+          from brain_core.simulation.config_loader import load_config
+          from brain_core.simulation.engine import run_experiment
+
+          cfg = load_config("configs/roving_oddball_healthy.yaml")
+          result = run_experiment(cfg)
+          print("REGIONAL_BASELINE_METRICS=" + json.dumps(result["analysis_report"]["metrics"], sort_keys=True))
+          PY
 
       - name: Diagnostic entry-point and adapter tests
         if: matrix.python-version == '3.12'
