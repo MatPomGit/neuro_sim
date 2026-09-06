@@ -1,51 +1,17 @@
+from collections.abc import Mapping
 from dataclasses import fields
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from brain_core.simulation.config_schema import ExperimentConfig
-from brain_core.simulation.results import ExperimentResult
-
-LEGACY_RESULT_KEYS = {
-    "model",
-    "time",
-    "activity",
-    "diagnostics",
-    "oscillations",
-    "behavior",
-    "trial_events",
-    "trial_results",
-    "trial_report_context",
-    "stimulus_sequence_signature",
-    "event_timeline",
-    "analysis_report",
-    "task_activation",
-    "clinical_profile",
-    "snn_comparison",
-    "save_info",
-    "elapsed",
-    "randomness",
-}
+from brain_core.simulation.results import ExperimentResult, LEGACY_RESULT_KEYS
 
 
-def test_experiment_result_has_required_reproducibility_fields() -> Any:
-    """Sprawdza jawne pola wyniku wymagane do reprodukcji eksperymentu."""
-    result_fields = {field.name for field in fields(ExperimentResult)}
-
-    assert {
-        "config",
-        "signals",
-        "metrics",
-        "trial_events",
-        "analysis_report",
-        "output_dir",
-        "git_info",
-        "environment_info",
-    }.issubset(result_fields)
-
-
-def test_experiment_result_exports_stable_legacy_keys() -> Any:
-    """Sprawdza stabilność kluczy eksportowanych do starszego formatu API."""
-    experiment_result = ExperimentResult(
+def _example_result() -> ExperimentResult:
+    """Zbuduj minimalny wynik do testów kontraktu publicznego."""
+    return ExperimentResult(
         config=ExperimentConfig(output={"save_results": False}),
         signals={
             "model": "model",
@@ -73,10 +39,47 @@ def test_experiment_result_exports_stable_legacy_keys() -> Any:
         randomness={"seed": 7, "rng_seed": 7},
     )
 
+
+def test_experiment_result_has_required_reproducibility_fields() -> Any:
+    """Sprawdza jawne pola wyniku wymagane do reprodukcji eksperymentu."""
+    result_fields = {field.name for field in fields(ExperimentResult)}
+
+    assert {
+        "config",
+        "signals",
+        "metrics",
+        "trial_events",
+        "analysis_report",
+        "output_dir",
+        "git_info",
+        "environment_info",
+    }.issubset(result_fields)
+
+
+def test_experiment_result_exports_stable_legacy_keys() -> Any:
+    """Sprawdza stabilność kluczy eksportowanych do starszego formatu API."""
+    experiment_result = _example_result()
     legacy_result = experiment_result.to_legacy_dict()
 
-    assert set(legacy_result) == LEGACY_RESULT_KEYS
+    assert set(legacy_result) == set(LEGACY_RESULT_KEYS)
     assert legacy_result["trial_events"] == experiment_result.trial_events
     assert legacy_result["analysis_report"] == experiment_result.analysis_report
     assert legacy_result["save_info"] is None
     assert legacy_result["randomness"] == experiment_result.randomness
+
+
+def test_experiment_result_behaves_like_legacy_mapping() -> None:
+    """Publiczny wynik obsługuje indeksowanie i ``get`` bez konwersji do dict."""
+    experiment_result = _example_result()
+
+    assert isinstance(experiment_result, Mapping)
+    assert experiment_result["time"] == [0.0]
+    assert experiment_result.get("save_info") is None
+    assert dict(experiment_result) == experiment_result.to_legacy_dict()
+    assert list(experiment_result) == list(LEGACY_RESULT_KEYS)
+
+
+def test_experiment_result_rejects_unknown_legacy_key() -> None:
+    """Nieznany klucz nie jest ukrywany przez warstwę zgodności."""
+    with pytest.raises(KeyError):
+        _ = _example_result()["unknown"]
