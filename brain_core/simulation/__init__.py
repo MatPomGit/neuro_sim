@@ -2,6 +2,7 @@
 Narzędzia warstwy symulacji `brain_core`.
 
 Moduł eksportuje publiczne klasy i protokoły używane do:
+- uruchamiania eksperymentów przez typowane API,
 - zarządzania stanem symulacji,
 - harmonogramowania kroków czasowych,
 - współsymulacji wieloskalowej,
@@ -9,6 +10,7 @@ Moduł eksportuje publiczne klasy i protokoły używane do:
 - zarządzania źródłami losowości.
 """
 
+from .api import run_experiment, run_experiment_legacy
 from .events import SimulationEvent, build_event_timeline
 from .integrators import (
     INTEGRATOR_REGISTRY,
@@ -19,6 +21,7 @@ from .integrators import (
 )
 from .multiscale_engine import ClosedLoopFeedbackPath, MultiScaleEngine, TimeScaleTask
 from .random_sources import RandomSources
+from .results import ExperimentResult
 from .scheduler import CoSimulationHook, SimulationModule, SimulationScheduler
 from .state import SimulationState
 from .timebase import (
@@ -30,6 +33,9 @@ from .timebase import (
 )
 
 __all__: list[str] = [
+    "run_experiment",
+    "run_experiment_legacy",
+    "ExperimentResult",
     "SimulationEvent",
     "build_event_timeline",
     "SimulationState",
