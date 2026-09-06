@@ -61,13 +61,34 @@ jobs:
           brain_model/validation.py
           brain_model/plotting.py
 
-      - name: Diagnostic ExperimentResult contract
+      - name: Diagnostic typed API tests
         continue-on-error: true
-        run: python -m pytest tests/test_experiment_result.py -q
+        run: >-
+          python -m pytest -q
+          tests/test_experiment_result.py
+          tests/test_public_simulation_api.py
 
-      - name: Diagnostic public simulation API
+      - name: Diagnostic static and CLI tests
         continue-on-error: true
-        run: python -m pytest tests/test_public_simulation_api.py -q
+        run: >-
+          python -m pytest -q
+          tests/test_adr_registry_static.py
+          tests/test_cli_no_print_static.py
+          tests/test_docstring_quality.py
+          tests/test_gui_dependencies_static.py
+          tests/test_main_cli.py
+          tests/test_public_entrypoints.py
+          tests/test_quality_policy_static.py
+          tests/test_qt_yaml_scenarios_static.py
+
+      - name: Diagnostic engine integration tests
+        continue-on-error: true
+        run: >-
+          python -m pytest -q
+          tests/test_config_schema.py
+          tests/test_observation_and_analysis.py
+          tests/test_task_protocols_and_engine.py
+          tests/test_spiking_population_adapter.py
 
       - name: Unit and integration tests
         run: python -m pytest
