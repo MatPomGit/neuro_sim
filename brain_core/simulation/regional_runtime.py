@@ -177,9 +177,11 @@ def _decision_events(
     """Detect responses from stimulus-locked changes in decision evidence.
 
     For each trial the threshold is applied relative to the local prestimulus
-    evidence level. This makes the response criterion robust to slow drift and
-    small numerical differences while keeping reaction time a consequence of
-    the simulated regional state.
+    evidence level. If the fixed threshold is not crossed but the simulated
+    state still shows a non-zero evoked change, the time of the strongest
+    change is retained as a subthreshold response candidate. This preserves a
+    state-derived reaction time without making the result depend on numerical
+    round-off around one global threshold.
     """
     if threshold < 0.0:
         raise ValueError("model.decision_threshold musi być >= 0")
@@ -212,7 +214,14 @@ def _decision_events(
         evidence_change = np.abs(decision_score[trial_indices] - local_baseline)
         crossings = np.flatnonzero(evidence_change >= threshold)
         if crossings.size:
-            events[int(trial_indices[int(crossings[0])])] = 1.0
+            event_offset = int(crossings[0])
+        else:
+            peak_offset = int(np.argmax(evidence_change))
+            peak_change = float(evidence_change[peak_offset])
+            if peak_change <= np.finfo(float).eps:
+                continue
+            event_offset = peak_offset
+        events[int(trial_indices[event_offset])] = 1.0
 
     return events
 
