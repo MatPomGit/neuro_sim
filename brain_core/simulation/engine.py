@@ -33,6 +33,7 @@ from brain_model.model import CognitiveBrainModel
 from brain_model.oscillators import WilsonCowanParams
 from brain_model.params import BrainParams
 
+from .behavior_readout import read_trial_behavior
 from .config_schema import ExperimentConfig
 from .events import build_event_timeline
 from .profile_comparison import (
@@ -62,6 +63,7 @@ from .snn_runtime import (
     summarize_trace_metrics,
 )
 from .state import SimulationState
+from .task_drive import build_task_stimulus_fn
 from .timebase import compute_step_count
 
 
@@ -74,7 +76,7 @@ def _effective_rng_seed(config: ExperimentConfig) -> int:
         Konfiguracja eksperymentu z historycznym polem ``seed`` i docelowym
         polem ``rng_seed``.
 
-    Returns:
+    Returns
     -------
     int
         Jawne ziarno generatora losowego; gdy ``rng_seed`` nie jest ustawione,
@@ -95,7 +97,7 @@ def _build_randomness_section(
     random_sources:
         Rejestr nazw komponentów, które pobrały deterministyczne strumienie RNG.
 
-    Returns:
+    Returns
     -------
     dict[str, Any]
         Sekcja ``randomness`` do zapisu w metrykach, raporcie i wyniku API.
@@ -105,39 +107,8 @@ def _build_randomness_section(
     return randomness
 
 
-def _deterministic_observed_response(
-    task_name: str,
-    condition: str,
-    trial_id: int,
-    seed: int,
-    expected: str | None = None,
-) -> str | None:
-    """Generuje deterministyczną odpowiedź obserwowaną do walidacji tasków."""
-    key = (trial_id + seed) % 7
-    if task_name == "stroop":
-        if key == 0:
-            return None
-        if key == 1:
-            colors = [c for c in ("red", "green", "blue", "yellow") if c != expected]
-            return colors[(trial_id + seed) % len(colors)]
-        return expected
-    if task_name == "go_nogo":
-        if condition == "go":
-            return "press" if key != 0 else None
-        return "press" if key == 0 else None
-    if task_name == "n_back":
-        if condition == "target":
-            return "match" if key != 0 else None
-        return "match" if key == 0 else None
-    if task_name == "roving_oddball":
-        if condition == "deviant":
-            return "detect" if key != 0 else None
-        return "detect" if key == 0 else None
-    return None
-
-
 def _align_rows(reference: np.ndarray, target_rows: int) -> np.ndarray:
-    """Dopasowuje liczbę wierszy macierzy referencyjnej do wymiaru docelowego."""
+    """Dopasuj liczbę wierszy macierzy referencyjnej do wymiaru docelowego."""
     if reference.shape[0] == target_rows:
         return reference
     idx = np.linspace(0, reference.shape[0] - 1, num=target_rows).astype(int)
@@ -145,7 +116,7 @@ def _align_rows(reference: np.ndarray, target_rows: int) -> np.ndarray:
 
 
 def _align_cols(reference: np.ndarray, target_cols: int) -> np.ndarray:
-    """Dopasowuje liczbę kolumn macierzy referencyjnej do wymiaru docelowego."""
+    """Dopasuj liczbę kolumn macierzy referencyjnej do wymiaru docelowego."""
     if reference.shape[1] == target_cols:
         return reference
     if reference.shape[1] > target_cols:
@@ -156,14 +127,14 @@ def _align_cols(reference: np.ndarray, target_cols: int) -> np.ndarray:
 
 
 def _condition_gain(condition: str) -> float:
-    """Zwraca deterministyczne wzmocnienie wejścia regionalnego dla warunku.
+    """Zwróć deterministyczne wzmocnienie wejścia regionalnego dla warunku.
 
     Parameters
     ----------
     condition:
         Nazwa warunku eksperymentalnego.
 
-    Returns:
+    Returns
     -------
     float
         Bezwymiarowe wzmocnienie amplitudy wejścia regionalnego.
@@ -179,7 +150,7 @@ def _condition_gain(condition: str) -> float:
 
 
 def _regional_input_for_stimulus(task_name: str, condition: str) -> dict[str, float]:
-    """Przekłada bodziec zadania na deterministyczne wejście regionalne.
+    """Przełóż bodziec zadania na deterministyczne wejście regionalne.
 
     Parameters
     ----------
@@ -188,7 +159,7 @@ def _regional_input_for_stimulus(task_name: str, condition: str) -> dict[str, fl
     condition:
         Warunek pojedynczego bodźca.
 
-    Returns:
+    Returns
     -------
     dict[str, float]
         Mapa region→amplituda wejścia dla bieżącego bodźca.
@@ -204,7 +175,7 @@ def _build_task_activation_summary(
     task_name: str,
     trial_events: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Buduje podsumowanie regionów i funkcji pobudzonych przez task.
+    """Zbuduj podsumowanie regionów i funkcji pobudzonych przez task.
 
     Parameters
     ----------
@@ -213,7 +184,7 @@ def _build_task_activation_summary(
     trial_events:
         Lista zdarzeń bodźcowych z wejściami regionalnymi.
 
-    Returns:
+    Returns
     -------
     dict[str, Any]
         Sekcja raportu opisująca funkcje, regiony i średnie pobudzenie.
@@ -242,7 +213,7 @@ def _attach_task_activation_section(
     report: AnalysisReport,
     task_activation: dict[str, Any],
 ) -> AnalysisReport:
-    """Dodaje sekcję task→regiony/funkcje do raportu analizy.
+    """Dodaj sekcję task→regiony/funkcje do raportu analizy.
 
     Parameters
     ----------
@@ -251,7 +222,7 @@ def _attach_task_activation_section(
     task_activation:
         Podsumowanie pobudzenia regionów i funkcji przez zadanie.
 
-    Returns:
+    Returns
     -------
     AnalysisReport
         Nowy raport z dodatkową sekcją opisową.
@@ -277,7 +248,7 @@ def _generate_task_stimuli(config: ExperimentConfig) -> list[TrialStimulus]:
     config:
         Konfiguracja eksperymentu zawierająca nazwę zadania, czas trwania i seed.
 
-    Returns:
+    Returns
     -------
     list[TrialStimulus]
         Bodźce z przypisanym wejściem regionalnym, gotowe do ponownego użycia w
@@ -296,23 +267,30 @@ def _generate_task_stimuli(config: ExperimentConfig) -> list[TrialStimulus]:
 
 def _simulate_task_trials(
     config: ExperimentConfig,
+    time: np.ndarray,
+    behavior: dict[str, np.ndarray],
     stimulus_sequence: list[TrialStimulus] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Symuluje przebieg triali i zwraca bodźce oraz wyniki punktacji.
+    """Symuluj przebieg triali i odczytaj odpowiedzi ze stanu modelu.
 
     Parameters
     ----------
     config:
         Konfiguracja eksperymentu z taskiem i seedem.
+    time:
+        Wektor czasu zakończonej symulacji modelu.
+    behavior:
+        Sygnały behawioralne modelu zawierające co najmniej ``decision_event``
+        i ``decision_score``.
     stimulus_sequence:
         Opcjonalna, wcześniej wygenerowana sekwencja bodźców. Umożliwia
         uruchomienie wielu profili klinicznych na identycznym bodźcu bez zmian
         w logice punktacji silnika.
 
-    Returns:
+    Returns
     -------
     tuple[list[dict[str, Any]], list[dict[str, Any]]]
-        Zdarzenia triali i wyniki punktacji.
+        Zdarzenia triali i wyniki punktacji zależne od przebiegu modelu.
     """
     task_name = str(config.task.get("name", "stroop"))
     task = get_task(task_name, **config.task)
@@ -330,20 +308,18 @@ def _simulate_task_trials(
 
     trial_results: list[dict[str, Any]] = []
     for stimulus in stimuli:
-        observed = _deterministic_observed_response(
-            task.name,
-            stimulus.condition,
-            stimulus.trial_id,
-            config.seed,
-            expected=task.expected_response(stimulus),
-        )
-        reaction_time = (
-            None
-            if observed is None
-            else round(0.25 + ((stimulus.trial_id + config.seed) % 5) * 0.05, 3)
-        )
         expected_response = task.expected_response(stimulus)
-        result: TrialResult = task.score_trial(stimulus, observed, reaction_time)
+        readout = read_trial_behavior(
+            task.name,
+            stimulus,
+            None if expected_response is None else str(expected_response),
+            time,
+            behavior,
+        )
+        observed = readout.observed_response
+        result: TrialResult = task.score_trial(
+            stimulus, observed, readout.reaction_time_s
+        )
         error_type = (
             result.error_type.value
             if isinstance(result.error_type, ErrorType)
@@ -353,6 +329,7 @@ def _simulate_task_trials(
             "reaction_time_s": result.reaction_time_s,
             "correct": result.correct,
             "error_type": error_type,
+            "peak_decision_score": readout.peak_decision_score,
         }
         try:
             trial_number = int(result.trial_id)
@@ -370,7 +347,10 @@ def _simulate_task_trials(
             "error_type": error_type,
             "condition": result.condition,
             "scenario": str(config.task.get("scenario", task.name)),
-            "profile_id": str((config.clinical_profile or {}).get("id", "healthy_v1")),
+            "profile_id": str(
+                (config.clinical_profile or {}).get("id", "healthy_v1")
+            ),
+            "peak_decision_score": readout.peak_decision_score,
         }
         trial_result["regional_input"] = dict(stimulus.regional_input)
         for metric_name in (
@@ -405,7 +385,7 @@ def run_experiment(
     progress_callback: Callable[[float], None] | None = None,
     stimulus_sequence: list[TrialStimulus] | None = None,
 ) -> dict[str, Any]:
-    """Uruchamia pełny eksperyment, analizę oraz opcjonalny zapis wyników.
+    """Uruchom pełny eksperyment, analizę oraz opcjonalny zapis wyników.
 
     Parameters
     ----------
@@ -417,7 +397,7 @@ def run_experiment(
         Opcjonalna wspólna sekwencja bodźców używana w porównaniach profili
         klinicznych przy tym samym seedzie.
 
-    Returns:
+    Returns
     -------
     dict[str, Any]
         Wyniki symulacji, triali, raportów i opcjonalnego zapisu artefaktów.
@@ -429,23 +409,22 @@ def run_experiment(
     random_sources.get("task_response_model")
     random_sources.get("wilson_cowan_oscillator_bank")
 
+    task_stimulus_sequence = (
+        list(stimulus_sequence)
+        if stimulus_sequence is not None
+        else _generate_task_stimuli(config)
+    )
+    task_name = str(config.task.get("name", "stroop"))
+    stimulus_fn = build_task_stimulus_fn(task_name, task_stimulus_sequence)
+
     model_params = BrainParams(dt=config.timestep, **config.model)
     osc_params = WilsonCowanParams(**config.integrator.get("oscillator", {}))
-    stimulus_scenario = str(config.task.get("scenario", "reward-learning"))
-    try:
-        model = CognitiveBrainModel(
-            params=model_params,
-            oscillator_params=osc_params,
-            seed=rng_seed,
-            stimulus=stimulus_scenario,
-        )
-    except ValueError:
-        model = CognitiveBrainModel(
-            params=model_params,
-            oscillator_params=osc_params,
-            seed=rng_seed,
-            stimulus="reward-learning",
-        )
+    model = CognitiveBrainModel(
+        params=model_params,
+        oscillator_params=osc_params,
+        seed=rng_seed,
+        stimulus=stimulus_fn,
+    )
 
     start = pytime.perf_counter()
     time, activity, diagnostics, oscillations, behavior = model.simulate(
@@ -454,20 +433,16 @@ def run_experiment(
     )
     elapsed = pytime.perf_counter() - start
 
-    task_stimulus_sequence = (
-        list(stimulus_sequence)
-        if stimulus_sequence is not None
-        else _generate_task_stimuli(config)
-    )
     trial_events, trial_results = _simulate_task_trials(
-        config, stimulus_sequence=task_stimulus_sequence
+        config,
+        time,
+        behavior,
+        stimulus_sequence=task_stimulus_sequence,
     )
     stimulus_sequence_signature = _build_stimulus_sequence_signature(
         task_stimulus_sequence
     )
-    task_activation = _build_task_activation_summary(
-        str(config.task.get("name", "stroop")), trial_events
-    )
+    task_activation = _build_task_activation_summary(task_name, trial_events)
 
     eeg_raw = oscillations.get("eeg", activity[:, :2])
     eeg = eeg_raw[:, None] if getattr(eeg_raw, "ndim", 1) == 1 else eeg_raw
@@ -599,7 +574,9 @@ def run_experiment(
         trial_report_context={
             "scenario": str(config.task.get("scenario", "run")),
             "task_name": str(config.task.get("name", "stroop")),
-            "profile_id": str((config.clinical_profile or {}).get("id", "healthy_v1")),
+            "profile_id": str(
+                (config.clinical_profile or {}).get("id", "healthy_v1")
+            ),
             "metrics": analysis_report.payload.get("metrics", {}),
         },
         stimulus_sequence_signature=stimulus_sequence_signature,
@@ -648,7 +625,7 @@ def run_task_across_clinical_profiles(
     progress_callback:
         Opcjonalna funkcja raportująca postęp pojedynczego uruchomienia.
 
-    Returns:
+    Returns
     -------
     dict[str, Any]
         Wyniki per profil oraz raport różnic względem profilu referencyjnego.
