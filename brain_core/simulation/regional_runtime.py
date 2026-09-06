@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Callable, Sequence
 
 import numpy as np
 
@@ -35,6 +35,11 @@ class RegionalSimulationResult:
     diagnostics: dict[str, Any]
     delay_steps: np.ndarray
     connectivity: np.ndarray
+
+    @property
+    def names(self) -> list[str]:
+        """Expose region names under the historical model attribute."""
+        return list(self.region_names)
 
 
 def _atlas_path(atlas_name: str) -> Path:
@@ -75,8 +80,12 @@ def _delay_steps(
     return np.rint(delay_s / float(timestep_s)).astype(int)
 
 
-def _regional_params(config: ExperimentConfig, region_names: Sequence[str]) -> dict[str, RegionWilsonCowanParams]:
-    """Build per-region Wilson-Cowan parameters from config overrides."""
+def _regional_params(
+    config: ExperimentConfig,
+    region_names: Sequence[str],
+    atlas_tau: Sequence[float],
+) -> dict[str, RegionWilsonCowanParams]:
+    """Build per-region Wilson-Cowan parameters from atlas and config overrides."""
     raw = config.integrator.get("regional_wilson_cowan", {})
     allowed = {
         "tau_E",
@@ -91,10 +100,13 @@ def _regional_params(config: ExperimentConfig, region_names: Sequence[str]) -> d
         "threshold_I",
     }
     shared = {key: float(value) for key, value in raw.items() if key in allowed}
-    return {
-        name: RegionWilsonCowanParams(**shared)
-        for name in region_names
-    }
+    params: dict[str, RegionWilsonCowanParams] = {}
+    for name, tau in zip(region_names, atlas_tau, strict=True):
+        values = dict(shared)
+        values.setdefault("tau_E", float(tau))
+        values.setdefault("tau_I", max(float(config.timestep), float(tau) * 0.5))
+        params[name] = RegionWilsonCowanParams(**values)
+    return params
 
 
 def _stimulus_vector(
@@ -135,6 +147,7 @@ def run_regional_wilson_cowan(
     config: ExperimentConfig,
     stimuli: Sequence[TrialStimulus],
     random_sources: RandomSources,
+    progress_callback: Callable[[float], None] | None = None,
 ) -> RegionalSimulationResult:
     """Run the atlas/connectome regional Wilson-Cowan network.
 
@@ -155,7 +168,7 @@ def run_regional_wilson_cowan(
     delay_buffer = DelayBuffer(len(region_names), delays)
     model = RegionWilsonCowanModel(
         region_names,
-        _regional_params(config, region_names),
+        _regional_params(config, region_names, atlas.tau_vector),
     )
     rng = random_sources.get("regional_wilson_cowan")
 
@@ -165,10 +178,14 @@ def run_regional_wilson_cowan(
     excitatory = np.zeros((n_steps, len(region_names)), dtype=float)
     inhibitory = np.zeros_like(excitatory)
 
+    progress_stride = max(1, n_steps // 100)
     for step, time_s in enumerate(time):
         delayed_matrix = delay_buffer.delayed_activity_matrix()
         network_drive = delayed_coupling(connectome.weights, delayed_matrix)
-        task_drive = _stimulus_vector(region_names, _active_stimulus(stimuli, float(time_s)))
+        task_drive = _stimulus_vector(
+            region_names,
+            _active_stimulus(stimuli, float(time_s)),
+        )
         external_e = task_drive + coupling_gain * network_drive
         external_i = np.zeros(len(region_names), dtype=float)
         e_state, i_state = model.step(
@@ -180,12 +197,15 @@ def run_regional_wilson_cowan(
         excitatory[step] = e_state
         inhibitory[step] = i_state
         delay_buffer.push(e_state)
+        if progress_callback is not None and (
+            step % progress_stride == 0 or step == n_steps - 1
+        ):
+            progress_callback((step + 1) / n_steps)
 
     activity = excitatory - inhibitory
     decision_score = _decision_signal(region_names, excitatory)
     decision_threshold = float(config.model.get("decision_threshold", 0.08))
     decision_event = (decision_score >= decision_threshold).astype(float)
-    eeg = activity.copy()
 
     return RegionalSimulationResult(
         region_names=region_names,
@@ -198,7 +218,9 @@ def run_regional_wilson_cowan(
             "decision_event": decision_event,
         },
         oscillations={
-            "eeg": eeg,
+            "eeg": activity.copy(),
+            "excitatory": excitatory,
+            "inhibitory": inhibitory,
             "regional_e": excitatory,
             "regional_i": inhibitory,
             "metadata": {
