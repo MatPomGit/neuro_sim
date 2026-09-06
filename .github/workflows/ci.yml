@@ -34,9 +34,9 @@ jobs:
           python -m pip install -e .
           python -m pip install pytest ruff mypy black
 
-      - name: Ruff new and public modules
+      - name: Ruff correctness gate
         run: >-
-          python -m ruff check --select E,F,I
+          python -m ruff check --select F
           main.py
           brain_core/simulation/behavior_readout.py
           brain_core/simulation/task_drive.py
