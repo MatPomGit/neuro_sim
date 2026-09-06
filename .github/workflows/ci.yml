@@ -54,6 +54,31 @@ jobs:
           brain_model/validation.py
           brain_model/plotting.py
 
+      - name: Diagnostic entry-point and adapter tests
+        if: matrix.python-version == '3.12'
+        continue-on-error: true
+        run: >-
+          python -m pytest
+          tests/test_main_cli.py
+          tests/test_public_entrypoints.py
+          tests/test_behavior_readout.py
+          tests/test_task_drive.py
+
+      - name: Diagnostic task engine tests
+        if: matrix.python-version == '3.12'
+        continue-on-error: true
+        run: python -m pytest tests/test_task_protocols_and_engine.py
+
+      - name: Diagnostic config tests
+        if: matrix.python-version == '3.12'
+        continue-on-error: true
+        run: python -m pytest tests/test_config_schema.py
+
+      - name: Diagnostic analysis tests
+        if: matrix.python-version == '3.12'
+        continue-on-error: true
+        run: python -m pytest tests/test_observation_and_analysis.py
+
       - name: Unit and integration tests
         run: python -m pytest
 
