@@ -32,11 +32,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e .
-          python -m pip install pytest ruff mypy black tomli
+          python -m pip install pytest ruff mypy black
 
       - name: Ruff new and public modules
         run: >-
-          python -m ruff check
+          python -m ruff check --select E,F,I
           main.py
           brain_core/simulation/behavior_readout.py
           brain_core/simulation/task_drive.py
