@@ -13,7 +13,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 def test_installed_cli_uses_single_experiment_engine() -> None:
     """Oba polecenia CLI mają delegować do tego samego engine config-driven."""
-    pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    pyproject_text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    pyproject = tomllib.loads(pyproject_text)
     scripts = pyproject["project"]["scripts"]
 
     expected = "brain_core.simulation.run:main"
