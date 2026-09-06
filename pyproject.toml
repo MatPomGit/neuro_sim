@@ -18,12 +18,14 @@ dependencies = [
 ]
 
 [project.scripts]
-neuro-sim = "main:main"
+# Oba publiczne polecenia CLI prowadzą do tego samego, konfigurowalnego silnika.
+neuro-sim = "brain_core.simulation.run:main"
 neuro-sim-gui = "brain_model.gui:run_gui"
 neuro-sim-run = "brain_core.simulation.run:main"
 
 [tool.setuptools]
-# Moduły root-level pozostają wyłącznie jawnie wspieranymi punktami wejścia.
+# Root-level main.py pozostaje wyłącznie przejściowym skryptem zgodności dla
+# uruchomień bez instalacji pakietu; publiczne entry pointy korzystają z engine.
 py-modules = ["main"]
 
 [tool.setuptools.packages.find]
@@ -117,4 +119,3 @@ convention = "google"
 "brain_viewer/**/*.py" = ["D"]
 [tool.pytest.ini_options]
 pythonpath = ["."]
-
