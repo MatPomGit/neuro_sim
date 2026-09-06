@@ -1,6 +1,7 @@
 """Testy readoutu odpowiedzi trialowych ze stanu modelu."""
 
 import numpy as np
+import pytest
 
 from brain_core.experiments.protocols import TrialStimulus
 from brain_core.simulation.behavior_readout import read_trial_behavior
@@ -28,8 +29,8 @@ def test_readout_uses_first_decision_event_for_latency() -> None:
     result = read_trial_behavior("go_nogo", _stimulus(), "press", time, behavior)
 
     assert result.observed_response == "press"
-    assert result.reaction_time_s == 0.1
-    assert result.peak_decision_score == 0.9
+    assert result.reaction_time_s == pytest.approx(0.1)
+    assert result.peak_decision_score == pytest.approx(0.9)
 
 
 def test_readout_returns_omission_without_decision_event() -> None:
@@ -40,11 +41,13 @@ def test_readout_returns_omission_without_decision_event() -> None:
         "decision_score": np.array([0.1, 0.2, 0.25, 0.3, 0.2]),
     }
 
-    result = read_trial_behavior("n_back", _stimulus("target"), "match", time, behavior)
+    result = read_trial_behavior(
+        "n_back", _stimulus("target"), "match", time, behavior
+    )
 
     assert result.observed_response is None
     assert result.reaction_time_s is None
-    assert result.peak_decision_score == 0.3
+    assert result.peak_decision_score == pytest.approx(0.3)
 
 
 def test_readout_for_stroop_preserves_expected_action_label() -> None:
@@ -55,7 +58,9 @@ def test_readout_for_stroop_preserves_expected_action_label() -> None:
         "decision_score": np.array([0.2, 0.8, 0.4]),
     }
 
-    result = read_trial_behavior("stroop", _stimulus("congruent"), "green", time, behavior)
+    result = read_trial_behavior(
+        "stroop", _stimulus("congruent"), "green", time, behavior
+    )
 
     assert result.observed_response == "green"
-    assert result.reaction_time_s == 0.1
+    assert result.reaction_time_s == pytest.approx(0.1)
