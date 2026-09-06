@@ -4,33 +4,33 @@
     "config_path": "configs/roving_oddball_healthy.yaml",
     "scenario": "roving_oddball",
     "seed": 21,
-    "source": "Deterministyczne uruchomienie edukacyjnej konfiguracji baseline w repozytorium; artefakt nie pochodzi z danych uczestników.",
-    "limitations": "Progi służą do regresji technicznej i jakościowej stabilności symulacji. Nie są normami klinicznymi ani kryteriami diagnostycznymi.",
+    "source": "Deterministyczne uruchomienie regionalnego modelu Wilsona-Cowana sprzężonego atlasem, konektomem i opóźnieniami propagacji; artefakt nie pochodzi z danych uczestników.",
+    "limitations": "Progi służą wyłącznie do regresji technicznej i jakościowej stabilności symulacji regionalnej. Nie są normami klinicznymi, estymatami parametrów biologicznych ani kryteriami diagnostycznymi.",
     "metrics": {
         "band_power_alpha": {
-            "expected": 5.163498755248209e-05,
-            "absolute_tolerance": 5e-06,
-            "quality_band": "niska moc alfa w demonstracyjnym sygnale baseline"
+            "expected": 4.926156471360266e-06,
+            "absolute_tolerance": 1e-06,
+            "quality_band": "stabilna niska moc alfa syntetycznego sygnału regionalnego"
         },
         "phase_locking_value": {
-            "expected": 0.03550658182822797,
-            "absolute_tolerance": 0.005,
-            "quality_band": "słabe sprzężenie fazowe bez modelowanej patologii"
+            "expected": 0.9999994929750647,
+            "absolute_tolerance": 0.01,
+            "quality_band": "silna synchronizacja fazowa w aktualnym demonstracyjnym backbone regionalnym"
         },
         "connectivity_abs_mean": {
-            "expected": 0.13332192067961846,
+            "expected": 0.7619585833166445,
             "absolute_tolerance": 0.02,
-            "quality_band": "umiarkowana syntetyczna spójność między regionami"
+            "quality_band": "wysoka średnia współzależność sygnałów wynikająca z silnego wspólnego sprzężenia sieciowego"
         },
         "behavior_mean": {
-            "expected": 0.8979078418525496,
-            "absolute_tolerance": 0.02,
-            "quality_band": "wysoka średnia poprawność w zadaniu edukacyjnym"
+            "expected": 0.00020178781840429728,
+            "absolute_tolerance": 0.005,
+            "quality_band": "niska średnia wartość ciągłej zmiennej decyzyjnej po korekcji względem baseline"
         },
         "fmri_mean": {
-            "expected": 0.5977634615063755,
+            "expected": -0.35442692477607374,
             "absolute_tolerance": 0.02,
-            "quality_band": "stabilna średnia aktywność proxy fMRI"
+            "quality_band": "stabilny średni poziom proxy fMRI wyprowadzony z różnicy E-I"
         }
     }
 }
