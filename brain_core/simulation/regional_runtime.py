@@ -140,7 +140,7 @@ def _decision_signal(region_names: Sequence[str], excitatory: np.ndarray) -> np.
     attention = excitatory[:, index.get("ATT", index.get("EXEC", 0))]
     score = 0.5 * executive + 0.3 * motor + 0.2 * attention
     baseline = float(np.median(score[: max(1, min(20, score.size))]))
-    return np.clip(score - baseline, 0.0, 1.0)
+    return np.clip((score - baseline) * 5.0, 0.0, 1.0)
 
 
 def run_regional_wilson_cowan(
@@ -155,7 +155,9 @@ def run_regional_wilson_cowan(
     delays derived from tract length and configured conduction speed. The same
     trial sequence used by the experiment scheduler supplies regional external
     input, so neural activity, behavioral readout and reports share one stimulus
-    timeline.
+    timeline. A small configurable intrinsic drive noise makes ``rng_seed`` a
+    genuine stochastic control parameter while preserving exact repeatability
+    for a fixed seed.
     """
     atlas_name = str(config.connectome.get("atlas", "default_regions"))
     atlas = load_region_atlas(_atlas_path(atlas_name))
@@ -164,6 +166,11 @@ def run_regional_wilson_cowan(
 
     conduction_speed = float(config.connectome.get("conduction_speed_m_s", 5.0))
     coupling_gain = float(config.connectome.get("coupling_gain", 0.35))
+    regional_options = config.integrator.get("regional_wilson_cowan", {})
+    intrinsic_noise_std = float(regional_options.get("noise_std", 0.002))
+    if intrinsic_noise_std < 0.0:
+        raise ValueError("integrator.regional_wilson_cowan.noise_std musi być >= 0")
+
     delays = _delay_steps(connectome.fiber_lengths, config.timestep, conduction_speed)
     delay_buffer = DelayBuffer(len(region_names), delays)
     model = RegionWilsonCowanModel(
@@ -186,7 +193,12 @@ def run_regional_wilson_cowan(
             region_names,
             _active_stimulus(stimuli, float(time_s)),
         )
-        external_e = task_drive + coupling_gain * network_drive
+        stochastic_drive = rng.normal(
+            0.0,
+            intrinsic_noise_std,
+            size=len(region_names),
+        )
+        external_e = task_drive + coupling_gain * network_drive + stochastic_drive
         external_i = np.zeros(len(region_names), dtype=float)
         e_state, i_state = model.step(
             float(config.timestep),
@@ -204,7 +216,7 @@ def run_regional_wilson_cowan(
 
     activity = excitatory - inhibitory
     decision_score = _decision_signal(region_names, excitatory)
-    decision_threshold = float(config.model.get("decision_threshold", 0.08))
+    decision_threshold = float(config.model.get("decision_threshold", 0.01))
     decision_event = (decision_score >= decision_threshold).astype(float)
 
     return RegionalSimulationResult(
@@ -227,6 +239,8 @@ def run_regional_wilson_cowan(
                 "backbone": "regional_wilson_cowan",
                 "conduction_speed_m_s": conduction_speed,
                 "coupling_gain": coupling_gain,
+                "intrinsic_noise_std": intrinsic_noise_std,
+                "decision_threshold": decision_threshold,
             },
         },
         diagnostics={
