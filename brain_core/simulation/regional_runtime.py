@@ -147,7 +147,9 @@ def _decision_signal(
             readout_regions.append(module_name)
 
     if not readout_regions:
-        readout_regions = [name for name in ("EXEC", "ATT", "SAL", "MOT") if name in index]
+        readout_regions = [
+            name for name in ("EXEC", "ATT", "SAL", "MOT") if name in index
+        ]
     if not readout_regions:
         readout_regions = [region_names[0]]
 
@@ -157,6 +159,49 @@ def _decision_signal(
     )
     baseline = float(np.median(score[: max(1, min(20, score.size))]))
     return np.clip((score - baseline) * 5.0, 0.0, 1.0)
+
+
+def _decision_events(
+    time: np.ndarray,
+    decision_score: np.ndarray,
+    stimuli: Sequence[TrialStimulus],
+    threshold: float,
+) -> np.ndarray:
+    """Detect responses from stimulus-locked score increases.
+
+    For each trial the threshold is applied to the increase relative to the
+    local prestimulus decision level. This makes the response criterion robust
+    to slow drift and small numerical differences while keeping reaction time a
+    consequence of the simulated regional state.
+    """
+    if threshold < 0.0:
+        raise ValueError("model.decision_threshold musi być >= 0")
+    events = np.zeros(decision_score.shape, dtype=float)
+    if decision_score.size == 0:
+        return events
+
+    default_pre_window = max(0.05, 10.0 * float(np.median(np.diff(time)))) if time.size > 1 else 0.05
+    for stimulus in stimuli:
+        onset = float(stimulus.onset_s)
+        offset = onset + float(stimulus.duration_s)
+        trial_mask = (time >= onset) & (time <= offset)
+        trial_indices = np.flatnonzero(trial_mask)
+        if trial_indices.size == 0:
+            continue
+
+        pre_window = max(default_pre_window, float(stimulus.duration_s) * 0.5)
+        pre_mask = (time >= max(0.0, onset - pre_window)) & (time < onset)
+        if np.any(pre_mask):
+            local_baseline = float(np.median(decision_score[pre_mask]))
+        else:
+            local_baseline = float(decision_score[max(0, int(trial_indices[0]) - 1)])
+
+        delta = decision_score[trial_indices] - local_baseline
+        crossings = np.flatnonzero(delta >= threshold)
+        if crossings.size:
+            events[int(trial_indices[int(crossings[0])])] = 1.0
+
+    return events
 
 
 def run_regional_wilson_cowan(
@@ -233,8 +278,13 @@ def run_regional_wilson_cowan(
     activity = excitatory - inhibitory
     task_name = str(config.task.get("name", "stroop"))
     decision_score = _decision_signal(task_name, region_names, excitatory)
-    decision_threshold = float(config.model.get("decision_threshold", 0.01))
-    decision_event = (decision_score >= decision_threshold).astype(float)
+    decision_threshold = float(config.model.get("decision_threshold", 1e-4))
+    decision_event = _decision_events(
+        time,
+        decision_score,
+        stimuli,
+        decision_threshold,
+    )
 
     return RegionalSimulationResult(
         region_names=region_names,
@@ -258,7 +308,9 @@ def run_regional_wilson_cowan(
                 "coupling_gain": coupling_gain,
                 "intrinsic_noise_std": intrinsic_noise_std,
                 "decision_threshold": decision_threshold,
-                "decision_readout_modules": list(mapping_for_task(task_name).module_names),
+                "decision_readout_modules": list(
+                    mapping_for_task(task_name).module_names
+                ),
             },
         },
         diagnostics={
