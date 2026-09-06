@@ -61,6 +61,20 @@ jobs:
         continue-on-error: true
         run: python -m pytest tests/test_regional_runtime.py
 
+      - name: Diagnostic regional baseline metrics
+        if: matrix.python-version == '3.12'
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import json
+          from brain_core.simulation.config_loader import load_config
+          from brain_core.simulation.engine import run_experiment
+
+          cfg = load_config("configs/roving_oddball_healthy.yaml")
+          result = run_experiment(cfg)
+          print("REGIONAL_BASELINE_METRICS=" + json.dumps(result["analysis_report"]["metrics"], sort_keys=True))
+          PY
+
       - name: Diagnostic entry-point and adapter tests
         if: matrix.python-version == '3.12'
         continue-on-error: true
